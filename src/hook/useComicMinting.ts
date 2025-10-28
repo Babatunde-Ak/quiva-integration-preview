@@ -238,7 +238,6 @@ export const useComicMinting = () => {
     listAfterMint();
   }, [isMintSuccess, hash, comicId, tokenId, isComplete, savedMonetizationData, chainId, address, writeContract]);
 
-  //   useEffect(() => {
   //   const extractedPriceCreator = async () => {
   //     if (isMintSuccess && receipt && !tokenId) {
   //       console.log('📄 Transaction receipt received:', receipt);
@@ -556,6 +555,7 @@ export const useComicMinting = () => {
                   !address ? 'No wallet address' : 'Unknown'
         });
         // If not minting NFT, mark as complete immediately
+
         setIsComplete(true);
       }
 

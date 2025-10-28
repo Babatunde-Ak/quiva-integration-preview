@@ -1,8 +1,10 @@
+
 'use client'
 
 import ComicDetail from '@/features/comic-library/components/ComicDetail'
 import ComicPreviewModal from '@/features/comic-library/components/ComicPreviewModal'
 import PurchaseNFTModal from '@/features/comic-library/components/PurchaseModal'
+import ClaimModal from '@/features/comic-library/components/ClaimModal'
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useAppDispatch, useAppSelector } from '@/redux/hook'
@@ -21,6 +23,7 @@ import {
 } from '@/redux/slices/transactionSlice'
 import { Loader2 } from 'lucide-react'
 import { useComicPurchase } from '../../../hook/usePurchaseComic'
+import { useClaimFreeComic, useCheckComicClaim } from '@/hook/useClaimFreeComic'
 import { parseEther } from 'viem'
 import { toast } from 'react-toastify'
 
@@ -44,6 +47,7 @@ function Page() {
   // Local state
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
   const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false)
+  const [isClaimModalOpen, setIsClaimModalOpen] = useState(false)
   const [hasNFTAccess, setHasNFTAccess] = useState<boolean | null>(null)
   const [accessCheckComplete, setAccessCheckComplete] = useState(false)
   
@@ -62,8 +66,21 @@ function Page() {
     purchaseHash,
     reset: resetPurchase,
     walletStatus,
-    setComicId // This will be used to pass comicId to the hook
+    setComicId
   } = useComicPurchase()
+
+  // Initialize claiming hook
+  const {
+    claimFreeComic,
+    isClaiming,
+    claimError,
+    claimSuccess,
+    claimProgress,
+    transactionHash: claimHash,
+    resetClaimState,
+  } = useClaimFreeComic()
+  
+
  
   // Fetch comic data on mount
   useEffect(() => {
@@ -145,6 +162,12 @@ function Page() {
     }
   }, [currentComic])
 
+    const { hasClaimed, refetch: refetchClaimStatus } = useCheckComicClaim(
+    transformedComic?.tokenId,
+    walletStatus.address
+  )
+  //
+
   // Enhanced access verification using transaction slice
   useEffect(() => {
     const checkUserAccess = async () => {
@@ -155,11 +178,30 @@ function Page() {
       
       console.log('Checking user access for comic:', id, 'Type:', transformedComic.publishType)
       
-      // If it's a free comic, grant access immediately
+      // ALL free comics require NFT claim
       if (transformedComic.publishType === 'free') {
-        console.log('Free comic - granting access')
-        setHasNFTAccess(true)
-        setAccessCheckComplete(true)
+        try {
+          console.log('Free comic - verifying NFT claim status')
+          
+          const verificationResult = await dispatch(verifyNftPurchase({ comicId: id } as any)).unwrap()
+          
+          console.log('Claim verification result:', verificationResult)
+          
+          const hasClaimedNFT = verificationResult?.data?.purchased === true
+          
+          setHasNFTAccess(hasClaimedNFT)
+          console.log(hasClaimedNFT ? 'User has claimed NFT' : 'User must claim NFT to read')
+          
+        } catch (error) {
+          console.error('Error verifying claim:', error)
+          setHasNFTAccess(false)
+          
+          if (error?.includes?.('not found') || error?.includes?.('No transaction')) {
+            dispatch(clearTransactionError())
+          }
+        } finally {
+          setAccessCheckComplete(true)
+        }
         return
       }
       
@@ -204,185 +246,72 @@ function Page() {
       resetPurchase()
       
       // Show success message and redirect to reader
-      toast.success('Purchase successful! You now have access to this comic.')
       setTimeout(() => {
-        router.push(`/reader?id=${id}`)
-      }, 1500)
+        if (id) {
+          toast.success('Purchase successful! Redirecting to reader...', { autoClose: 2000 })
+          router.push(`/reader?id=${id}`)
+        }
+      }, 2000)
     }
   }, [purchaseSuccess, id, router, resetPurchase])
 
-  // Handle purchase errors
+  // Handle claim success
   useEffect(() => {
-    if (purchaseError) {
-      console.error('Purchase error:', purchaseError)
-      toast.error(`Purchase failed: Please try again.`)
+    if (claimSuccess && claimHash) {
+      console.log('Claim successful - updating access status')
+      setHasNFTAccess(true)
+      refetchClaimStatus()
+      
+      // Show success for 2 seconds then redirect to reader
+      setTimeout(() => {
+        setIsClaimModalOpen(false)
+        resetClaimState()
+        
+        if (id) {
+          toast.success('Comic claimed! Enjoy reading! 🎉', { autoClose: 2000 })
+          router.push(`/reader?id=${id}`)
+        }
+      }, 2000)
     }
-  }, [purchaseError])
+  }, [claimSuccess, claimHash, id, router, resetClaimState, refetchClaimStatus])
 
-  // Handle transaction errors
+  // Wallet connection state monitoring
   useEffect(() => {
-    if (transactionError) {
-      console.error('Transaction verification error:', transactionError)
-      if (!transactionError.includes('not found') && !transactionError.includes('No transaction')) {
-        toast.error(`Access verification failed: Try logging out and back in.`)
-      }
+    if (!walletStatus.isConnected && !accessCheckComplete) {
+      console.log('Wallet not connected')
+    } else if (walletStatus.isConnected && !accessCheckComplete) {
+      console.log('Wallet connected, checking access...')
     }
-  }, [transactionError])
+  }, [walletStatus.isConnected, accessCheckComplete])
 
-  // Loading state
-  if (isLoading) {
-    return (
-      <div className='flex justify-center items-center min-h-screen'>
-        <div className='text-center'>
-          <Loader2 className='w-12 h-12 text-yellow-700 animate-spin mx-auto mb-4' />
-          <p className='text-white/60 text-sm font-medium'>Loading comic details...</p>
-        </div>
-      </div>
-    )
+    // Check if user has already claimed
+ //Handle preview modal open
+  const handlePreview = () => {
+    if (!id) return
+    setIsPreviewOpen(true)
+    dispatch(getComicPreview({id: id} as any))
   }
 
-  // Error states
-  if (!id) {
-    return (
-      <div className='flex justify-center items-center min-h-screen'>
-        <div className='text-center'>
-          <div className='text-6xl mb-4'>❌</div>
-          <h3 className='text-white text-xl font-bold mb-2'>Invalid Comic ID</h3>
-          <p className='text-white/60 text-sm mb-6'>No comic ID provided in the URL.</p>
-          <button
-            onClick={() => router.push('/marketplace')}
-            className='bg-yellow-600 hover:bg-yellow-700 text-black font-medium px-6 py-3 rounded-full transition-all'
-          >
-            Back to Marketplace
-          </button>
-        </div>
-      </div>
-    )
-  }
-
-  if (!transformedComic) {
-    return (
-      <div className='flex justify-center items-center min-h-screen'>
-        <div className='text-center'>
-          <div className='text-6xl mb-4'>📚</div>
-          <h3 className='text-white text-xl font-bold mb-2'>Comic Not Found</h3>
-          <p className='text-white/60 text-sm mb-6'>
-            The comic you're looking for doesn't exist or has been removed.
-          </p>
-          <button
-            onClick={() => router.push('/marketplace')}
-            className='bg-yellow-600 hover:bg-yellow-700 text-black font-medium px-6 py-3 rounded-full transition-all'
-          >
-            Back to Marketplace
-          </button>
-        </div>
-      </div>
-    )
-  }
-
-  // Handle actions
-  const handleBack = () => {
-    router.back()
-  }
-
-  const handleReadIssue = async () => {
-    console.log('Read Issue clicked - Access status:', {
-      publishType: transformedComic.publishType,
-      hasNFTAccess,
-      accessCheckComplete,
-      isVerifying: isVerifyingTransaction
-    })
-    
-    if (transformedComic.publishType === 'free') {
-      router.push(`/reader?id=${id}`)
+  // Handle claim comic
+  const handleClaimComic = async () => {
+    if (!walletStatus.isConnected) {
+      toast.error('Please connect your wallet to claim this comic')
       return
     }
-    
-    if (transformedComic.publishType === 'nft') {
-      if (hasNFTAccess === true) {
-        console.log('User has access - navigating to reader')
-        router.push(`/reader?id=${id}`)
-      } else {
-        console.log('User needs to purchase - showing purchase modal')
-        setIsPurchaseModalOpen(true)
-      }
-    }
-  }
 
-  const handlePreviewIssue = async () => {
-    console.log('Opening preview for comic:', id);
-    await dispatch(getComicPreview({id} as any));
-    setIsPreviewOpen(true)
-  }
-
-  const handleClosePreview = () => {
-    setIsPreviewOpen(false)
-    dispatch(clearPreviewComic())
-  }
-
-  const handleEnlargeCover = () => {
-    if (transformedComic.coverImage) {
-      window.open(transformedComic.coverImage, '_blank')
-    }
-  }
-
-  // This function will be called by the purchase modal
-  // It returns the result that the hook will handle via updateBackendData
-  const handlePurchaseNFT = async () => {
-    console.log('Purchase NFT clicked');
-    console.log('Wallet Status:', walletStatus);
-    console.log('Token ID:', transformedComic.tokenId);
-    console.log('Creator Wallet:', transformedComic.creatorWalletAddress);
-    console.log('Price:', transformedComic.price);
-
-    if (!walletStatus.isConnected) {
-      toast.error('Please connect your wallet first')
-      throw new Error('Wallet not connected')
-    }
-
-    // Validation checks
-    if (!transformedComic.tokenId) {
-      console.error('Missing tokenId - NFT not minted yet');
-      toast.error('This NFT has not been minted yet. Please wait for the creator to complete minting.')
-      throw new Error('NFT not minted')
-    }
-
-    if (!transformedComic.creatorWalletAddress) {
-      console.error('Missing creator wallet address');
-      toast.error('Creator wallet address is not available.')
-      throw new Error('Creator wallet missing')
-    }
-
-    if (!transformedComic.price || transformedComic.price <= 0) {
-      console.error('Invalid price');
-      toast.error('Invalid NFT price.')
-      throw new Error('Invalid price')
+    if (!transformedComic?.tokenId || !id) {
+      toast.error('Invalid comic data')
+      return
     }
 
     try {
-      console.log('All checks passed, proceeding with purchase...');
-      
-      // Convert HBAR to wei for smart contract
-      const priceInWei = parseEther(transformedComic.price.toString());
-      console.log('Price conversion:', {
-        hbarPrice: transformedComic.price,
-        weiPrice: priceInWei.toString()
-      });
-      
-      // The hook will handle the blockchain transaction and backend update
-      const result = await purchaseComic({
+      await claimFreeComic({
         tokenId: transformedComic.tokenId,
-        seller: transformedComic.creatorWalletAddress,
-        amount: BigInt(1),
-        pricePerToken: priceInWei,
+        comicId: id,
       })
-      
-      console.log('Purchase initiated:', result);
-      return result;
-      
     } catch (error) {
-      console.error('Purchase failed:', error)
-      throw error;
+      console.error('Error claiming comic:', error)
+      toast.error('Failed to claim comic. Please try again.')
     }
   }
 
@@ -391,7 +320,133 @@ function Page() {
     resetPurchase()
   }
 
-  // Calculate limited edition string
+  const handleClosePreview = () => {
+    setIsPreviewOpen(false)
+    dispatch(clearPreviewComic())
+  }
+
+    const handleEnlargeCover = () => {
+    if (transformedComic.coverImage) {
+      window.open(transformedComic.coverImage, '_blank')
+    }
+  }
+
+  const handlePurchase = async () => {
+    if (!transformedComic || !id) {
+      toast.error('Comic data not available')
+      return
+    }
+
+    if (!walletStatus.isConnected) {
+      toast.error('Please connect your wallet first')
+      return
+    }
+
+    if (!transformedComic.tokenId) {
+      toast.error('NFT token ID not available')
+      return
+    }
+
+    if (!transformedComic.price || transformedComic.price <= 0) {
+      toast.error('Invalid comic price')
+      return
+    }
+
+    try {
+      console.log('Initiating purchase:', {
+        tokenId: transformedComic.tokenId,
+        price: transformedComic.price,
+        creator: transformedComic.creatorWalletAddress
+      })
+
+      const priceInWei = parseEther(transformedComic.price.toString())
+        const result = await purchaseComic({
+          tokenId: transformedComic.tokenId,
+          seller: transformedComic.creatorWalletAddress,
+          amount: BigInt(1),
+          pricePerToken: priceInWei,
+        })
+
+        console.log('Purchase initiated:', result);
+       return result;
+
+      
+    } catch (error: any) {
+      console.error('Purchase error:', error)
+      toast.error(error.message || 'Failed to purchase comic')
+    }
+  }
+
+  const handleBack = () => {
+    router.back()
+   }
+
+  // Updated read issue handler
+  const handleReadIssue = () => {
+    if (!walletStatus.isConnected) {
+      toast.error('Please connect your wallet to read this comic')
+      return
+    }
+
+    if (!transformedComic) {
+      toast.error('Comic data not available')
+      return
+    }
+
+    // ALL free comics must claim NFT first
+    if (transformedComic.publishType === 'free') {
+      if (hasNFTAccess || hasClaimed) {
+        // User has claimed, allow reading
+        router.push(`/reader?id=${id}`)
+      } else {
+        // User hasn't claimed yet, show claim modal
+        setIsClaimModalOpen(true)
+      }
+      return
+    }
+
+    // Paid/NFT comics - must purchase
+    if (transformedComic.publishType === 'nft') {
+      if (hasNFTAccess) {
+        router.push(`/reader?id=${id}`)
+      } else {
+        setIsPurchaseModalOpen(true)
+      }
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-black-500 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 text-yellow-500 animate-spin mx-auto mb-4" />
+          <p className="text-white/60 text-sm font-medium">Loading comic...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!transformedComic || !currentComic) {
+    return (
+      <div className="min-h-screen bg-black-500 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">❌</div>
+          <h3 className="text-white text-xl font-bold mb-2">Comic Not Found</h3>
+          <p className="text-white/60 text-sm mb-6">
+            The comic you're looking for doesn't exist or has been removed.
+          </p>
+          <button
+            onClick={() => router.push('/marketplace')}
+            className="bg-yellow-600 hover:bg-yellow-700 text-black font-medium px-6 py-3 rounded-full transition-all"
+          >
+            Back to Marketplace
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  //   // Calculate limited edition string
   const limitedEditionString = transformedComic.nftDetails 
     ? `${transformedComic.nftDetails.currentSupply || 0}/${transformedComic.nftDetails.maxSupply || 100}`
     : '0/100';
@@ -406,25 +461,26 @@ function Page() {
 
   // Determine if purchase is in progress (includes all stages)
   const isPurchaseInProgress = isPurchasing || isWritePending || isConfirming
-
   return (
     <>
       <ComicDetail
-        {...transformedComic}
-        onBack={handleBack}
+    
+         {...transformedComic}
+        onBack={handleBack}        
         onReadIssue={handleReadIssue}
-        onPreviewIssue={handlePreviewIssue}
+        onPreviewIssue={handlePreview}
         onEnlargeCover={handleEnlargeCover}
-        isVerifyingAccess={isVerifying}
+        isVerifyingAccess={isVerifying || isVerifyingTransaction || !accessCheckComplete}
         hasNFTAccess={hasNFTAccess}
       />
-      
-      <ComicPreviewModal
-        isOpen={isPreviewOpen}
-        onClose={handleClosePreview}
-        previewComic={previewComic}
-        isLoading={isPreviewing}
-      />
+
+
+       <ComicPreviewModal
+       isOpen={isPreviewOpen}
+      onClose={handleClosePreview}
+      previewComic={previewComic}
+      isLoading={isPreviewing}
+    />
 
       {isNFTReady && (
         <PurchaseNFTModal
@@ -438,7 +494,7 @@ function Page() {
           tokenId={transformedComic.tokenId}
           sellerAddress={transformedComic.creatorWalletAddress}
           limitedEdition={limitedEditionString}
-          onPurchase={handlePurchaseNFT}
+          onPurchase={handlePurchase}
           onPurchaseSuccess={() => setIsPurchaseModalOpen(false)}
           isPurchasing={isPurchaseInProgress}
           purchaseError={purchaseError}
@@ -446,6 +502,19 @@ function Page() {
           comicId={id}
         />
       )}
+
+      {/* Claim Modal */}
+      <ClaimModal
+        isOpen={isClaimModalOpen}
+        onClose={() => setIsClaimModalOpen(false)}
+        onClaim={handleClaimComic}
+        comicTitle={transformedComic.title}
+        isClaiming={isClaiming}
+        claimSuccess={claimSuccess}
+        claimError={claimError}
+        claimProgress={claimProgress}
+        transactionHash={claimHash}
+      />
     </>
   )
 }
