@@ -397,7 +397,7 @@ export default function OnboardingPage({ onclose, comicData }: OnboardingPagePro
 							/>
 							<div className='flex-1'>
 								<h4 className='text-white font-semibold'>
-									Max Supply: Number of comics to mint.
+									Publish this comic episode on Comic Marketplace
 									{publishType === "paid" && (
 										<span className='ml-2 text-xs text-primary-400 font-normal'>
 											(Required for paid comics)
@@ -410,7 +410,7 @@ export default function OnboardingPage({ onclose, comicData }: OnboardingPagePro
 										{/* Number of copies - shown for both free and paid */}
 										<div>
 											<label className='block text-white/80 text-xs mb-2'>
-												Number of Max supply
+												Max Supply: Number of comics to mint.
 											</label>
 											<input
 												type='number'
