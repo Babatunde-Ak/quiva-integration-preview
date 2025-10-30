@@ -467,7 +467,7 @@ const handlePublish = async () => {
 									<span>
 										{monetizationData.publishType === 'free' 
 											? 'Free to Read' 
-											: `Pay-Per-View ($${monetizationData.price?.toFixed(2)} HBAR)`
+											: `Pay-To-Read ($${monetizationData.price?.toFixed(2)} HBAR)`
 										}
 									</span>
 								</div>

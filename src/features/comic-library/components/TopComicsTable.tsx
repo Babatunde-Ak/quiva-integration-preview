@@ -62,7 +62,7 @@ export function TopComicsTable({ comics }: TopComicsTableProps) {
             <TableRow className="border-white/10 hover:bg-black-600 px-4 py-4">
               <TableHead className="text-white text-sm pl-4">Comic</TableHead>
               <TableHead className="text-white text-sm ">Floor Price</TableHead>
-              <TableHead className="text-white text-sm ">Copies</TableHead>
+              <TableHead className="text-white text-sm ">Supply</TableHead>
               <TableHead className="text-white text-sm ">Sales</TableHead>
               <TableHead className="text-white text-sm ">24h Volume</TableHead>
             </TableRow>
@@ -108,7 +108,7 @@ export function TopComicsTable({ comics }: TopComicsTableProps) {
                 </TableCell>
                 
                 <TableCell className="text-white">
-                  {comic.copies.toLocaleString()} Copies
+                  {comic.copies.toLocaleString()} Supply
                 </TableCell>
                 
                 <TableCell className="text-white">
