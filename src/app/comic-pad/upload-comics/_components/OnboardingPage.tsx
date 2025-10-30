@@ -397,7 +397,7 @@ export default function OnboardingPage({ onclose, comicData }: OnboardingPagePro
 							/>
 							<div className='flex-1'>
 								<h4 className='text-white font-semibold'>
-									Mint this comic episode as a limited NFT Edition.
+									Max Supply: Number of comics to mint.
 									{publishType === "paid" && (
 										<span className='ml-2 text-xs text-primary-400 font-normal'>
 											(Required for paid comics)

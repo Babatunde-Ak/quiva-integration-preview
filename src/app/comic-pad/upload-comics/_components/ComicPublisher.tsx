@@ -493,13 +493,13 @@ const handlePublish = async () => {
 								)} */}
 								{monetizationData.mintAsNFT && (
 	<>
-		<div className='flex items-center gap-3'>
+		{/* <div className='flex items-center gap-3'>
 			<span className='text-white/60'>NFT Edition:</span>
 			<span className='flex items-center gap-1'>
 				<CheckCircle size={14} className='text-green-400' />
 				Limited Edition
 			</span>
-		</div>
+		</div> */}
 		<div className='flex items-center gap-3'>
 			<span className='text-white/60'>Max Supply:</span>
 			<span>{monetizationData.nftCopies} editions</span>
