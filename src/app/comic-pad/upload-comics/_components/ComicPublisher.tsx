@@ -186,7 +186,7 @@ const validateComicData = (): boolean => {
 	// Validate NFT data - FIXED: Only require price for paid comics
 	if (monetizationData.mintAsNFT) {
 		if (!monetizationData.nftCopies || monetizationData.nftCopies <= 0) {
-			errors.push("Valid number of NFT copies is required");
+			errors.push("Valid number of max supply is required");
 		}
 		// Only require price for paid comics
 		if (monetizationData.publishType === "paid") {
@@ -501,7 +501,7 @@ const handlePublish = async () => {
 			</span>
 		</div>
 		<div className='flex items-center gap-3'>
-			<span className='text-white/60'>NFT Copies:</span>
+			<span className='text-white/60'>Max Supply:</span>
 			<span>{monetizationData.nftCopies} editions</span>
 		</div>
 		{monetizationData.publishType === "paid" && monetizationData.nftPrice && (
@@ -692,10 +692,10 @@ const handlePublish = async () => {
 								<>
 									<div className='animate-spin rounded-full h-5 w-5 border-b-2 border-black'></div>
 									{isUploading ? 'Uploading to IPFS...' : 
-									 isMinting || isWritePending ? 'Minting NFT...' : 
-									 isListing ? 'Listing on marketplace...' :
-									 isConfirming ? 'Confirming...' : 
-									 'Publishing...'}
+									isMinting || isWritePending ? 'Minting NFT...' : 
+									isListing ? 'Listing on marketplace...' :
+									isConfirming ? 'Confirming...' : 
+									'Publishing...'}
 								</>
 							) : (
 								<>
@@ -717,252 +717,13 @@ const handlePublish = async () => {
 			)}
 
 			{/* SUCCESS MODAL */}
-			{showSuccessModal && isComplete && tokenId && mintHash && (
-				<div className='fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[60]'>
-					<div className='bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl p-8 max-w-md w-full mx-4 border border-orange-400/30 shadow-2xl relative'>
-						{/* Close Button */}
-						<button
-							onClick={handleCloseSuccessModal}
-							className='absolute top-4 right-4 text-white/50 hover:text-white transition-colors'
-						>
-							<svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-								<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
-							</svg>
-						</button>
-
-						<div className='text-center'>
-							{/* Success Icon with Animation */}
-							<div className='mb-6'>
-								<div className='w-20 h-20 mx-auto bg-orange-400/20 rounded-full flex items-center justify-center border-4 border-orange-400 animate-bounce'>
-									<CheckCircle className='w-12 h-12 text-orange-400' />
-								</div>
-							</div>
-
-							{/* Success Title */}
-							<h2 className='text-3xl font-bold mb-2 text-white'>
-								Comic Successfully Minted! 🎉
-							</h2>
-							
-							{/* Success Description */}
-							<p className='text-white/70 mb-6 text-sm'>
-								Your comic has been published and minted as an NFT on the blockchain.
-							</p>
-							
-							{/* NFT Details Card */}
-							<div className='bg-gradient-to-r from-orange-500/10 to-blue-500/10 rounded-xl p-5 mb-6 text-left border border-orange-500/30'>
-								<p className='text-sm font-semibold text-orange-400 mb-4 tracking-wider uppercase'>
-									NFT Details
-								</p>
-								
-								<div className='space-y-3'>
-									{/* Token ID Display */}
-									<div className='bg-black/30 rounded-lg p-3'>
-										<div className='flex justify-between items-center'>
-											<span className='text-xs text-white/60'>Token ID:</span>
-											<span className='text-lg font-mono font-bold text-orange-400'>
-												#{tokenId.toString()}
-											</span>
-										</div>
-									</div>
-
-									{/* Transaction Hash Display */}
-									<div className='bg-black/30 rounded-lg p-3'>
-										<div>
-											<span className='text-xs text-white/60 block mb-2'>Transaction Hash:</span>
-											<span className='text-xs font-mono text-white/90 break-all block'>
-												{mintHash}
-											</span>
-										</div>
-									</div>
-									
-									{/* Comic Title */}
-									{comicData?.title && (
-										<div className='bg-black/30 rounded-lg p-3'>
-											<div className='flex justify-between items-center'>
-												<span className='text-xs text-white/60'>Comic:</span>
-												<span className='text-sm font-medium text-white/90'>
-													{comicData.title}
-												</span>
-											</div>
-										</div>
-									)}
-
-									{/* NFT Supply */}
-									{monetizationData?.nftCopies && (
-										<div className='bg-black/30 rounded-lg p-3'>
-											<div className='flex justify-between items-center'>
-												<span className='text-xs text-white/60'>Supply:</span>
-												<span className='text-sm font-medium text-white/90'>
-													{monetizationData.nftCopies} copies
-												</span>
-											</div>
-										</div>
-									)}
-								</div>
-
-								{/* HashScan Explorer Link */}
-								<a
-									href={`https://hashscan.io/testnet/transaction/${mintHash}`}
-									target='_blank'
-									rel='noopener noreferrer'
-									className='flex items-center justify-center gap-2 text-xs text-orange-400 hover:text-orange-300 mt-4 pt-4 border-t border-orange-500/20 transition-colors'
-								>
-									<span>View Transaction on HashScan</span>
-									<svg className='w-3 h-3' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-										<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14' />
-									</svg>
-								</a>
-							</div>
-							
-							{/* Action Buttons */}
-							<div className='space-y-3'>
-								{/* View Comic Button */}
-								<button
-									onClick={() => {
-										window.location.href = `/comic-pad/my-comics`;
-									}}
-									className='w-full py-3 px-6 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-full font-semibold transition-all shadow-lg hover:shadow-orange-500/50'
-								>
-									View Comic
-								</button>
-								
-								{/* Create Another Comic Button */}
-								<button
-									onClick={handleCloseSuccessModal}
-									className='w-full py-2 px-6 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white rounded-full transition-colors border border-white/10'
-								>
-									Create Another Comic
-								</button>
-							</div>
-						</div>
-					</div>
-				</div>
-			)}
-
-			{/* SUCCESS MODAL */}
-			{showSuccessModal && isComplete && tokenId && mintHash && (
-				<div className='fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[60]'>
-					<div className='bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl p-8 max-w-md w-full mx-4 border border-orange-400/30 shadow-2xl relative'>
-						{/* Close Button */}
-						<button
-							onClick={handleCloseSuccessModal}
-							className='absolute top-4 right-4 text-white/50 hover:text-white transition-colors'
-						>
-							<svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-								<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
-							</svg>
-						</button>
-
-						<div className='text-center'>
-							{/* Success Icon with Animation */}
-							<div className='mb-6'>
-								<div className='w-20 h-20 mx-auto bg-orange-400/20 rounded-full flex items-center justify-center border-4 border-orange-400 animate-bounce'>
-									<CheckCircle className='w-12 h-12 text-orange-400' />
-								</div>
-							</div>
-
-							{/* Success Title */}
-							<h2 className='text-3xl font-bold mb-2 text-white'>
-								Comic Successfully Minted! 🎉
-							</h2>
-							
-							{/* Success Description */}
-							<p className='text-white/70 mb-6 text-sm'>
-								Your comic has been published and minted as an NFT on the blockchain.
-							</p>
-							
-							{/* NFT Details Card */}
-							<div className='bg-gradient-to-r from-orange-500/10 to-blue-500/10 rounded-xl p-5 mb-6 text-left border border-orange-500/30'>
-								<p className='text-sm font-semibold text-orange-400 mb-4 tracking-wider uppercase'>
-									NFT Details
-								</p>
-								
-								<div className='space-y-3'>
-									{/* Token ID Display */}
-									<div className='bg-black/30 rounded-lg p-3'>
-										<div className='flex justify-between items-center'>
-											<span className='text-xs text-white/60'>Token ID:</span>
-											<span className='text-lg font-mono font-bold text-orange-400'>
-												#{tokenId.toString()}
-											</span>
-										</div>
-									</div>
-
-									{/* Transaction Hash Display */}
-									<div className='bg-black/30 rounded-lg p-3'>
-										<div>
-											<span className='text-xs text-white/60 block mb-2'>Transaction Hash:</span>
-											<span className='text-xs font-mono text-white/90 break-all block'>
-												{mintHash}
-											</span>
-										</div>
-									</div>
-									
-									{/* Comic Title */}
-									{comicData?.title && (
-										<div className='bg-black/30 rounded-lg p-3'>
-											<div className='flex justify-between items-center'>
-												<span className='text-xs text-white/60'>Comic:</span>
-												<span className='text-sm font-medium text-white/90'>
-													{comicData.title}
-												</span>
-											</div>
-										</div>
-									)}
-
-									{/* NFT Supply */}
-									{monetizationData?.nftCopies && (
-										<div className='bg-black/30 rounded-lg p-3'>
-											<div className='flex justify-between items-center'>
-												<span className='text-xs text-white/60'>Supply:</span>
-												<span className='text-sm font-medium text-white/90'>
-													{monetizationData.nftCopies} copies
-												</span>
-											</div>
-										</div>
-									)}
-								</div>
-
-								{/* HashScan Explorer Link */}
-								<a
-									href={`https://hashscan.io/testnet/transaction/${mintHash}`}
-									target='_blank'
-									rel='noopener noreferrer'
-									className='flex items-center justify-center gap-2 text-xs text-orange-400 hover:text-orange-300 mt-4 pt-4 border-t border-orange-500/20 transition-colors'
-								>
-									<span>View Transaction on HashScan</span>
-									<svg className='w-3 h-3' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-										<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14' />
-									</svg>
-								</a>
-							</div>
-							
-							{/* Action Buttons */}
-							<div className='space-y-3'>
-								{/* View Comic Button */}
-								<button
-									onClick={() => {
-										window.location.href = `/comic-pad/my-comics`;
-									}}
-									className='w-full py-3 px-6 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-full font-semibold transition-all shadow-lg hover:shadow-orange-500/50'
-								>
-									View Comic
-								</button>
-								
-								{/* Create Another Comic Button */}
-								<button
-									onClick={handleCloseSuccessModal}
-									className='w-full py-2 px-6 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white rounded-full transition-colors border border-white/10'
-								>
-									Create Another Comic
-								</button>
-							</div>
-						</div>
-					</div>
-				</div>
-			)}
-
-			{showNotification && <ComicNotification onclose={() => setShowNotification(true)} comicData={comicData} />}
+			{showSuccessModal && isComplete && tokenId && mintHash && showNotification && <ComicNotification 
+			onclose={() => setShowNotification(true)} 
+			comicData={comicData}
+			monetizationData={monetizationData} 
+			mintHash={mintHash}
+			tokenId={tokenId} 
+			/>}
 		</>
 	);
 }

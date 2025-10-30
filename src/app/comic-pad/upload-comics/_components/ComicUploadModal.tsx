@@ -62,7 +62,7 @@ export function ComicUploadModal({
 				{/* Progress bar */}
 				<div className='h-3 rounded-full bg-white/10 overflow-hidden'>
 					<div
-						className='h-3 bg-orange-400 transition-all duration-300'
+						className='h-3 bg-primary-400 transition-all duration-300'
 						style={{ width: `${progress}%` }}
 					/>
 				</div>

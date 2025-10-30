@@ -60,7 +60,7 @@ export function transformApiComicsToTopComics(apiComics: ApiComic[]): TopComic[]
  * Generate mock floor price (since not available in API)
  */
 function generateMockFloorPrice(): string {
-    const prices = ['0.05 ETH', '0.1 ETH', '0.15 ETH', '0.2 ETH', '0.25 ETH', '0.3 ETH', '0.4 ETH', '0.5 ETH']
+    const prices = ['0.05 HBAR', '0.1 HBAR', '0.15 HBAR', '0.2 HBAR', '0.25 HBAR', '0.3 HBAR', '0.4 HBAR', '0.5 HBAR']
     return prices[Math.floor(Math.random() * prices.length)]
 }
 
@@ -75,6 +75,6 @@ function generateMockPriceChange(): number {
  * Generate mock volume (since not available in API)
  */
 function generateMockVolume(): string {
-    const volumes = ['1.2 ETH', '2.4 ETH', '3.6 ETH', '4.8 ETH', '5.1 ETH', '6.3 ETH', '7.5 ETH', '8.7 ETH']
+    const volumes = ['1.2 HBAR', '2.4 HBAR', '3.6 HBAR', '4.8 HBAR', '5.1 HBAR', '6.3 HBAR', '7.5 HBAR', '8.7 HBAR']
     return volumes[Math.floor(Math.random() * volumes.length)]
 }

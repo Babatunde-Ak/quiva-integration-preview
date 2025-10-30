@@ -49,6 +49,7 @@ const GeneralModal: React.FC<GeneralModalProps> = ({
 			radius={radius}
 			size={size}
 			shadow={shadow}
+			isDismissable={false} // Prevent closing on outside click or ESC key
 		>
 			<ModalContent
 				className={`${modalContentClass} ${

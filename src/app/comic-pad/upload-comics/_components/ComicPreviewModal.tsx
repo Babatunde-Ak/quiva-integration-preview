@@ -158,7 +158,7 @@ export function ComicPreviewModal({
 											onClick={() => setCurrentPage(idx)}
 											className={`w-20 h-20 rounded border-2 overflow-hidden transition ${
 												currentPage === idx 
-													? 'border-orange-500 ring-2 ring-orange-500/50' 
+													? 'border-primary-500 ring-2 ring-primary-500/50' 
 													: 'border-white/20 hover:border-white/40'
 											}`}
 										>
@@ -170,7 +170,7 @@ export function ComicPreviewModal({
 										</button>
 										
 										{/* Page number badge */}
-										<div className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
+										<div className="absolute -top-2 -right-2 bg-primary-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
 											{idx + 1}
 										</div>
 										

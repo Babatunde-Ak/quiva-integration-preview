@@ -209,17 +209,7 @@ export const FeaturesComics = [
     {
       title: "Hinata Story Releaved",
       author: "Masashi Kishimoto",
-      floorPrice: "0.013 ETH",
-      items: "9,989",
-      mintPrice: "10.23 USDT",
-      countdown: "64 :10 :03 :01",
-      tags: ["Romance", "Drama", "Slice of Life"],
-      image: "https://images.unsplash.com/photo-1606112219348-204d7d8b94ee?auto=format&fit=crop&w=800&q=80"
-    },
-    {
-      title: "Demon Slayer Chronicles",
-      author: "Koyoharu Gotouge",
-      floorPrice: "0.025 ETH",
+      floorPrice: "0.013 HBAR",
       items: "7,500",
       mintPrice: "15.50 USDT",
       countdown: "48 :05 :22 :15",
@@ -229,7 +219,7 @@ export const FeaturesComics = [
     {
       title: "My Hero Academia",
       author: "Kohei Horikoshi",
-      floorPrice: "0.018 ETH",
+      floorPrice: "0.018 HBAR",
       items: "12,000",
       mintPrice: "8.75 USDT",
       countdown: "72 :18 :45 :30",

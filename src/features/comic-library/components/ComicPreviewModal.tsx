@@ -181,7 +181,7 @@ const ComicPreviewModal = ({
                     <div className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-600/20 rounded-lg">
                       <Coins className="w-4 h-4 text-yellow-400" />
                       <span className="text-yellow-400 text-sm font-medium">
-                        {previewComic.nftId.price} ETH
+                        {previewComic.nftId.price} HBAR
                       </span>
                     </div>
                   )}

@@ -28,6 +28,7 @@ const UploadModal = ({ onClose }: UploadModalProps) => {
 	const [extractedFiles, setExtractedFiles] = useState<ExtractedFile[]>([]);
 	const [error, setError] = useState<string | null>(null);
 	const [progress, setProgress] = useState(0);
+	const [isDragging, setIsDragging] = useState(false);
 
 	const validateImageFile = (file: File): boolean => {
 		// Check file type
@@ -132,44 +133,77 @@ const UploadModal = ({ onClose }: UploadModalProps) => {
 		}
 	};
 
+	const processFile = async (selected: File) => {
+		setError(null);
+		setProgress(0);
+		
+		if (selected.type.startsWith("image/")) {
+			// Validate single image
+			if (!validateImageFile(selected)) {
+				setError("Invalid image file. Please upload a valid image format (JPEG, PNG, GIF, WebP, SVG) under 50MB.");
+				return;
+			}
+			
+			setFile(selected);
+			const previewUrl = URL.createObjectURL(selected);
+			setPreview(previewUrl);
+			setExtractedFiles([{
+				name: selected.name,
+				blob: selected,
+				preview: previewUrl,
+			}]);
+		} else if (selected.name.toLowerCase().endsWith(".zip")) {
+			setFile(selected);
+			setPreview(null);
+			try {
+				const files = await extractZipFile(selected);
+				setExtractedFiles(files);
+				
+				if (files.length === 0) {
+					setError("No valid image files found in ZIP archive. Please ensure your ZIP contains image files (JPEG, PNG, GIF, WebP, SVG).");
+				}
+			} catch (err) {
+				setError(err instanceof Error ? err.message : "Failed to extract ZIP file. Please ensure it's a valid archive.");
+				setFile(null);
+			}
+		} else {
+			setError("Invalid file type. Please upload an image or ZIP file.");
+		}
+	};
+
 	const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
 		if (e.target.files && e.target.files[0]) {
-			const selected = e.target.files[0];
-			setError(null);
-			setProgress(0);
-			
-			if (selected.type.startsWith("image/")) {
-				// Validate single image
-				if (!validateImageFile(selected)) {
-					setError("Invalid image file. Please upload a valid image format (JPEG, PNG, GIF, WebP, SVG) under 50MB.");
-					return;
-				}
-				
-				setFile(selected);
-				const previewUrl = URL.createObjectURL(selected);
-				setPreview(previewUrl);
-				setExtractedFiles([{
-					name: selected.name,
-					blob: selected,
-					preview: previewUrl,
-				}]);
-			} else if (selected.name.toLowerCase().endsWith(".zip")) {
-				setFile(selected);
-				setPreview(null);
-				try {
-					const files = await extractZipFile(selected);
-					setExtractedFiles(files);
-					
-					if (files.length === 0) {
-						setError("No valid image files found in ZIP archive. Please ensure your ZIP contains image files (JPEG, PNG, GIF, WebP, SVG).");
-					}
-				} catch (err) {
-					setError(err instanceof Error ? err.message : "Failed to extract ZIP file. Please ensure it's a valid archive.");
-					setFile(null);
-				}
-			} else {
-				setError("Invalid file type. Please upload an image or ZIP file.");
-			}
+			await processFile(e.target.files[0]);
+		}
+	};
+
+	const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+		e.preventDefault();
+		e.stopPropagation();
+		setIsDragging(true);
+	};
+
+	const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+		e.preventDefault();
+		e.stopPropagation();
+		setIsDragging(false);
+	};
+
+	const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+		e.preventDefault();
+		e.stopPropagation();
+	};
+
+	const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+		e.preventDefault();
+		e.stopPropagation();
+		setIsDragging(false);
+
+		if (isExtracting) return;
+
+		const droppedFiles = e.dataTransfer.files;
+		if (droppedFiles && droppedFiles.length > 0) {
+			await processFile(droppedFiles[0]);
 		}
 	};
 
@@ -218,7 +252,17 @@ const UploadModal = ({ onClose }: UploadModalProps) => {
 						</p>
 					</div>
 
-					<div className='border-2 border-dashed border-primary-100/40 rounded-xl p-6 flex w-full flex-col items-center justify-center text-center space-y-3 min-h-[200px]'>
+					<div 
+						className={`border-2 border-dashed rounded-xl p-6 flex w-full flex-col items-center justify-center text-center space-y-3 min-h-[200px] transition-colors ${
+							isDragging 
+								? 'border-secondary-200 bg-secondary-200/10' 
+								: 'border-primary-100/40'
+						}`}
+						onDragEnter={handleDragEnter}
+						onDragOver={handleDragOver}
+						onDragLeave={handleDragLeave}
+						onDrop={handleDrop}
+					>
 						{!preview && extractedFiles.length === 0 ? (
 							<>
 								<Picture
@@ -228,7 +272,7 @@ const UploadModal = ({ onClose }: UploadModalProps) => {
 								/>
 
 								<p className='text-white/80 font-medium tracking-wider'>
-									Drag your file(s) to start uploading
+									{isDragging ? 'Drop your file here' : 'Drag your file(s) to start uploading'}
 								</p>
 
 								<div className='flex items-center my-2 w-48'>

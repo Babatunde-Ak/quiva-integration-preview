@@ -136,7 +136,7 @@ export function ComicCreationForm({ extractedFiles }: ComicCreationFormProps) {
 							placeholder='Comic Title *'
 							value={formData.title}
 							onChange={(e) => handleInputChange("title", e.target.value)}
-							className='w-full rounded-full border border-white/80 bg-transparent px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-orange-500'
+							className='w-full rounded-full border border-white/80 bg-transparent px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-primary-500'
 							required
 						/>
 
@@ -144,7 +144,7 @@ export function ComicCreationForm({ extractedFiles }: ComicCreationFormProps) {
 							placeholder='Description *'
 							value={formData.description}
 							onChange={(e) => handleInputChange("description", e.target.value)}
-							className='w-full min-h-[100px] resize-none rounded-md border border-white/80 bg-transparent px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-orange-500'
+							className='w-full min-h-[100px] resize-none rounded-md border border-white/80 bg-transparent px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-primary-500'
 							required
 						/>
 					</div>
@@ -162,7 +162,7 @@ export function ComicCreationForm({ extractedFiles }: ComicCreationFormProps) {
 									onClick={() => toggleGenre(genre)}
 									className={`flex items-center gap-1 rounded-full px-4 py-2 text-sm transition border ${
 										selectedGenres.includes(genre)
-											? "bg-orange-500 text-black hover:bg-orange-400"
+											? "bg-primary-500 text-black hover:bg-primary-400"
 											: "bg-gray-400 text-white/50 hover:bg-gray-600 border-light-200"
 									}`}
 								>
@@ -193,7 +193,7 @@ export function ComicCreationForm({ extractedFiles }: ComicCreationFormProps) {
 										value={value}
 										checked={ageRating === value}
 										onChange={() => setAgeRating(value)}
-										className='accent-orange-500 w-4 h-4'
+										className='accent-primary-500 w-4 h-4'
 									/>
 									<span className='text-sm tracking-wider text-white'>{label}</span>
 								</label>
@@ -213,7 +213,7 @@ export function ComicCreationForm({ extractedFiles }: ComicCreationFormProps) {
 								value={tagInput}
 								onChange={(e) => setTagInput(e.target.value)}
 								onKeyDown={handleAddTag}
-								className='w-full rounded-full border border-white/80 bg-transparent px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-orange-500'
+								className='w-full rounded-full border border-white/80 bg-transparent px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-primary-500'
 							/>
 							{tags.length > 0 && (
 								<div className='flex flex-wrap gap-2'>
@@ -246,7 +246,7 @@ export function ComicCreationForm({ extractedFiles }: ComicCreationFormProps) {
 						</div>
 
 						{!coverPreview ? (
-							<label className='block border-2 border-dashed border-light-200 bg-gray-400 p-10 rounded-lg text-center cursor-pointer hover:border-orange-500 transition'>
+							<label className='block border-2 border-dashed border-light-200 bg-gray-400 p-10 rounded-lg text-center cursor-pointer hover:border-primary-500 transition'>
 								<input
 									type='file'
 									accept='image/*'
@@ -278,7 +278,7 @@ export function ComicCreationForm({ extractedFiles }: ComicCreationFormProps) {
 					{/* Page Count Info */}
 					<div className='bg-white/5 rounded-lg p-3 border border-white/10'>
 						<p className='text-white/70 text-sm'>
-							<span className='font-semibold text-orange-400'>{extractedFiles.length}</span> page{extractedFiles.length !== 1 ? 's' : ''} will be uploaded as Chapter 1
+							<span className='font-semibold text-primary-400'>{extractedFiles.length}</span> page{extractedFiles.length !== 1 ? 's' : ''} will be uploaded as Chapter 1
 						</p>
 					</div>
 
