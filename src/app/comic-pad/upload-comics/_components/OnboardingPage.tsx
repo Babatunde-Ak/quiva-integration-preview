@@ -161,7 +161,7 @@
 // 										{publishType === "paid" && (
 // 											<input
 // 												type='number'
-// 												placeholder='Mint price (USDT per NFT)'
+// 												placeholder='Mint price (HBAR per NFT)'
 // 												value={nftPrice}
 // 												onChange={(e) => setNftPrice(e.target.value)}
 // 												min='0.01'
@@ -427,7 +427,7 @@ export default function OnboardingPage({ onclose, comicData }: OnboardingPagePro
 										{publishType === "paid" && (
 											<div>
 												<label className='block text-white/80 text-xs mb-2'>
-													Mint Price (USDT per NFT)
+													Mint Price (HBAR per NFT)
 												</label>
 												<input
 													type='number'

@@ -83,13 +83,13 @@ const PublishingStep4 = ({ onPublish, onBack, formData }: PublishingStep4Props) 
             </p>
             {formData.accessType === "PayPerRead" && (
               <p>
-                <strong>Reading Access:</strong> Pay-Per-Read ({formData.price} USDT)
+                <strong>Reading Access:</strong> Pay-Per-Read ({formData.price} HBAR)
               </p>
             )}
             {formData.nftEnabled && (
               <p>
                 <strong>NFT Edition:</strong> Yes · Size: {formData.nftEditionSize} · Mint Price:{" "}
-                {formData.nftPrice} USDT
+                {formData.nftPrice} HBAR
               </p>
             )}
           </div>

@@ -6,7 +6,7 @@ export const trendingComics = [
   {
     id: '1',
     title: 'Rise of the Slayer',
-    subtitle: '3 USDT',
+    subtitle: '3 HBAR',
     image: "https://images.unsplash.com/photo-1606112219348-204d7d8b94ee?auto=format&fit=crop&w=800&q=80",
     premium: true
   },
@@ -20,14 +20,14 @@ export const trendingComics = [
   {
     id: '3',
     title: 'Kakashi',
-    subtitle: '5 USDT',
+    subtitle: '5 HBAR',
     image: "https://i.ebayimg.com/images/g/b6oAAOSwez5l-jYm/s-l1200.jpg",
     premium: true
   },
   {
     id: '4',
     title: 'Rise of the Slayer',
-    subtitle: '3 USDT',
+    subtitle: '3 HBAR',
     image: "https://images.unsplash.com/photo-1606112219348-204d7d8b94ee?auto=format&fit=crop&w=800&q=80",
     premium: true
   },
@@ -41,7 +41,7 @@ export const trendingComics = [
   {
     id: '6',
     title: 'Kakashi',
-    subtitle: '5 USDT',
+    subtitle: '5 HBAR',
     image: "https://i.ebayimg.com/images/g/b6oAAOSwez5l-jYm/s-l1200.jpg",
     premium: true
   }
@@ -52,32 +52,32 @@ export const featuredComics = [
   {
     id: '1',
     title: 'Rise of the Slayer by Young Geek',
-    price: 'Floor Price: 0.07 USDT',
-    subtitle: '24h Vol: 15,694 USDT',
+    price: 'Floor Price: 0.07 HBAR',
+    subtitle: '24h Vol: 15,694 HBAR',
     image: 'https://i.ebayimg.com/images/g/b6oAAOSwez5l-jYm/s-l1200.jpg',
     premium: true
   },
   {
     id: '2',
     title: 'Rise of the Slayer by Young Geek',
-    price: 'Floor Price: 0.07 USDT', 
-    subtitle: '24h Vol: 15,694 USDT',
+    price: 'Floor Price: 0.07 HBAR', 
+    subtitle: '24h Vol: 15,694 HBAR',
     image: 'https://i.ebayimg.com/images/g/b6oAAOSwez5l-jYm/s-l1200.jpg',
     premium: true
   },
   {
     id: '3',
     title: 'Rise of the Slayer by Young Geek',
-    price: 'Floor Price: 0.07 USDT',
-    subtitle: '24h Vol: 15,694 USDT', 
+    price: 'Floor Price: 0.07 HBAR',
+    subtitle: '24h Vol: 15,694 HBAR', 
     image: 'https://i.ebayimg.com/images/g/b6oAAOSwez5l-jYm/s-l1200.jpg',
     premium: true
   },
   {
     id: '4',
     title: 'Rise of the Slayer by Young Geek',
-    price: 'Floor Price: 0.07 USDT',
-    subtitle: '24h Vol: 15,694 USDT',
+    price: 'Floor Price: 0.07 HBAR',
+    subtitle: '24h Vol: 15,694 HBAR',
     image: 'https://i.ebayimg.com/images/g/b6oAAOSwez5l-jYm/s-l1200.jpg',
     premium: true
   }
@@ -89,7 +89,7 @@ export const upcomingComics = [
     title: 'By Young Geek',
     description: 'Rise of the Slayer - Issue #2',
     price: 'Mint Date: 20/10/25',
-    subtitle: 'Mint Price: 10 USDT',
+    subtitle: 'Mint Price: 10 HBAR',
     image: 'https://i.ebayimg.com/images/g/b6oAAOSwez5l-jYm/s-l1200.jpg',
     buttonText: 'Notify Me',
     buttonVariant: 'outline' as const
@@ -107,7 +107,7 @@ export const upcomingComics = [
     title: 'By Young Geek',
     description: 'Rise of the Slayer - Issue #3',
     price: 'Mint Date: 20/10/25',
-    subtitle: 'Mint Price: 10 USDT', 
+    subtitle: 'Mint Price: 10 HBAR', 
     image: 'https://i.ebayimg.com/images/g/b6oAAOSwez5l-jYm/s-l1200.jpg',
     buttonText: 'Notify Me',
     buttonVariant: 'outline' as const
@@ -118,7 +118,7 @@ export const mintComics = [
   {
     id: '1',
     title: 'Rise of the Slayer',
-    subtitle: '5 USDT',
+    subtitle: '5 HBAR',
     image: 'https://i.ebayimg.com/images/g/b6oAAOSwez5l-jYm/s-l1200.jpg',
     premium: true
   },
@@ -132,7 +132,7 @@ export const mintComics = [
   {
     id: '3',
     title: 'Kakashi',
-    subtitle: '5 USDT',
+    subtitle: '5 HBAR',
     image: 'https://i.ebayimg.com/images/g/b6oAAOSwez5l-jYm/s-l1200.jpg'
   }
 ]
@@ -142,55 +142,55 @@ export const topComics = [
     rank: 1,
     title: 'NaruHina',
     author: 'NaruHina',
-    floorPrice: '8 USDT',
+    floorPrice: '8 HBAR',
     priceChange: 5.65,
     copies: 500,
     sales: 30,
-    volume: '300k USDT',
+    volume: '300k HBAR',
     image: "https://cdn.marvel.com/content/1x/asm2025001_dimeo.jpg"
   },
   {
     rank: 2,
     title: 'NaruHina', 
     author: 'NaruHina',
-    floorPrice: '8 USDT',
+    floorPrice: '8 HBAR',
     priceChange: -4.65,
     copies: 500,
     sales: 30,
-    volume: '300k USDT',
+    volume: '300k HBAR',
     image: "https://cdn.marvel.com/content/1x/asm2025001_dimeo.jpg"
   },
   {
     rank: 3,
     title: 'NaruHina',
     author: 'NaruHina', 
-    floorPrice: '8 USDT',
+    floorPrice: '8 HBAR',
     priceChange: 5.65,
     copies: 500,
     sales: 30,
-    volume: '300k USDT',
+    volume: '300k HBAR',
     image: "https://cdn.marvel.com/content/1x/asm2025001_dimeo.jpg"
   },
   {
     rank: 4,
     title: 'NaruHina',
     author: 'NaruHina',
-    floorPrice: '8 USDT', 
+    floorPrice: '8 HBAR', 
     priceChange: -4.65,
     copies: 500,
     sales: 30,
-    volume: '300k USDT',
+    volume: '300k HBAR',
     image: "https://cdn.marvel.com/content/1x/asm2025001_dimeo.jpg"
   },
   {
     rank: 5,
     title: 'NaruHina',
     author: 'NaruHina',
-    floorPrice: '8 USDT',
+    floorPrice: '8 HBAR',
     priceChange: 5.65,
     copies: 500,
     sales: 30, 
-    volume: '300k USDT',
+    volume: '300k HBAR',
     image: "https://cdn.marvel.com/content/1x/asm2025001_dimeo.jpg"
   }
 ]
@@ -211,7 +211,7 @@ export const FeaturesComics = [
       author: "Masashi Kishimoto",
       floorPrice: "0.013 HBAR",
       items: "7,500",
-      mintPrice: "15.50 USDT",
+      mintPrice: "15.50 HBAR",
       countdown: "48 :05 :22 :15",
       tags: ["Action", "Supernatural", "Adventure"],
       image: "https://cdn.marvel.com/content/1x/asm2025001_dimeo.jpg"
@@ -221,7 +221,7 @@ export const FeaturesComics = [
       author: "Kohei Horikoshi",
       floorPrice: "0.018 HBAR",
       items: "12,000",
-      mintPrice: "8.75 USDT",
+      mintPrice: "8.75 HBAR",
       countdown: "72 :18 :45 :30",
       tags: ["Superhero", "School", "Action"],
       image: "https://i.ebayimg.com/images/g/b6oAAOSwez5l-jYm/s-l1200.jpg"

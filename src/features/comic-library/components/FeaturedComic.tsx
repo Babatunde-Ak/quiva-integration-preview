@@ -43,7 +43,7 @@
 //               </div>
 //               <div className="bg-black/30 backdrop-blur-sm rounded-lg p-3 border border-white/10">
 //                 <p className="text-white/70 text-xs uppercase tracking-wide mb-1">Mint Price</p>
-//                 <p className="text-white font-bold text-sm">15.50 USDT</p>
+//                 <p className="text-white font-bold text-sm">15.50 HBAR</p>
 //               </div>
 //               <div className="bg-black/30 backdrop-blur-sm rounded-lg p-3 border border-white/10">
 //                 <p className="text-white/70 text-xs uppercase tracking-wide mb-1">Countdown</p>
