@@ -91,22 +91,6 @@ export function ComicPadHeader({onMobileMenuToggle, isMobileMenuOpen}) {
         return () => document.removeEventListener('mousedown', handleClickOutside)
     }, [])
 
-    const userMenuItems = [
-        {
-            label: "Marketplace",
-            icon: <FaStore className="w-4 h-4"/>,
-            action: () => router.push("/marketplace")
-        }, {
-            label: "Settings",
-            icon: <FaCog className="w-4 h-4"/>,
-            action: () => router.push("/comic-pad/settings")
-        }, {
-            label: "Log Out",
-            icon: <FaSignOutAlt className="w-4 h-4"/>,
-            action: () => console.log("Logging out..."),
-            className: "text-red-500"
-        }
-    ]
 
     return (
         <header
@@ -206,38 +190,6 @@ export function ComicPadHeader({onMobileMenuToggle, isMobileMenuOpen}) {
                         {/* Avatar with Status */}
                         <RainbowConnect/>
 
-                        {/* User Menu Dropdown */}
-                        <div className="relative" ref={userMenuRef}>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="text-white/90 hover:text-white hover:bg-black-300"
-                                onClick={() => setShowUserMenu(!showUserMenu)}>
-                                <ChevronDown className="w-4 h-4"/>
-                            </Button>
-
-                            {showUserMenu && (
-                                <div
-                                    className="absolute right-0 top-full mt-2 w-48 bg-black-200 border border-white/70 rounded-lg shadow-xl z-50">
-                                    {userMenuItems.map((item, index) => (
-                                        <button
-                                            key={index}
-                                            onClick={() => {
-                                            item.action() 
-											setShowUserMenu(false)
-                                        }}
-                                            className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-black-300 transition-colors ${index === 0
-                                            ? 'rounded-t-lg'
-                                            : ''} ${index === userMenuItems.length - 1
-                                                ? 'rounded-b-lg'
-                                                : 'border-b border-white/10'} ${item.className || 'text-white'}`}>
-                                            {item.icon}
-                                            <span className="text-sm">{item.label}</span>
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
                     </div>
                 </div>
 
@@ -323,38 +275,6 @@ export function ComicPadHeader({onMobileMenuToggle, isMobileMenuOpen}) {
                         {/* Avatar */}
                         <RainbowConnect/>
 
-                        {/* User Menu */}
-                        <div className="relative" ref={userMenuRef}>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="text-white/90 hover:text-white hover:bg-black-300"
-                                onClick={() => setShowUserMenu(!showUserMenu)}>
-                                <ChevronDown className="w-4 h-4"/>
-                            </Button>
-
-                            {showUserMenu && (
-                                <div
-                                    className="absolute right-0 top-full mt-2 w-48 bg-black-200 border border-white/70 rounded-lg shadow-xl z-50">
-                                    {userMenuItems.map((item, index) => (
-                                        <button
-                                            key={index}
-                                            onClick={() => {
-                                            item.action()
-											setShowUserMenu(false)
-                                        }}
-                                            className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-black-300 transition-colors ${index === 0
-                                            ? 'rounded-t-lg'
-                                            : ''} ${index === userMenuItems.length - 1
-                                                ? 'rounded-b-lg'
-                                                : 'border-b border-white/10'} ${item.className || 'text-white'}`}>
-                                            {item.icon}
-                                            <span className="text-sm">{item.label}</span>
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
                     </div>
                 </div>
             </div>

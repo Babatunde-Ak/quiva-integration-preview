@@ -10,6 +10,8 @@ import { setWalletAddress } from "@/redux/slices/walletSlice";
 // Import your Avatar components (adjust path as needed)
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { MainButton } from ".";
+import { useRouter } from "next/navigation";
+import { FaCog, FaSignOutAlt, FaStore } from "react-icons/fa";
 
 type RainbowConnectProps = {
   disabled?: boolean;
@@ -18,6 +20,7 @@ type RainbowConnectProps = {
 export const RainbowConnect: React.FC<RainbowConnectProps> = ({
   disabled = false,
 }) => {
+  const router = useRouter();
   const { loginWithWallet } = useWalletAuth();
   const { isConnected, address } = useAccount();
   const { disconnect } = useDisconnect();
@@ -29,6 +32,18 @@ export const RainbowConnect: React.FC<RainbowConnectProps> = ({
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const userMenuItems = [
+      {
+          label: "Marketplace",
+          icon: <FaStore className="w-4 h-4"/>,
+          action: () => router.push("/marketplace")
+      }, {
+          label: "Settings",
+          icon: <FaCog className="w-4 h-4"/>,
+          action: () => router.push("/comic-pad/settings")
+      }
+  ]
 
   // Auto-login when wallet connects
   const autoLogin = useCallback(async () => {
@@ -327,6 +342,23 @@ export const RainbowConnect: React.FC<RainbowConnectProps> = ({
                           />
                         </button>
                       </div>
+
+                      {userMenuItems.map((item, index) => (
+                            <button
+                                key={index}
+                                onClick={() => {
+                                item.action()
+                                setIsDropdownOpen(false);
+                            }}
+                                className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-black-300 transition-colors ${index === 0
+                                ? 'rounded-t-lg'
+                                : ''} ${index === userMenuItems.length - 1
+                                    ? 'rounded-b-lg'
+                                    : 'border-b border-white/10'} text-white`}>
+                                {item.icon}
+                                <span className="text-sm">{item.label}</span>
+                            </button>
+                        ))}
 
                       {/* Actions */}
                       <div className="p-2">
