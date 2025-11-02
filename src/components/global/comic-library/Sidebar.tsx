@@ -64,7 +64,7 @@ export function Sidebar({ isMobileMenuOpen, onMobileMenuClose }) {
         {/* Become a Creator Button */}
         <MainButton
           onClick={handleBecomeCreator}
-          className='text-xs'
+          className='text-xs !px-5'
         >
           Become a Creator
         </MainButton>
@@ -79,7 +79,7 @@ export function Sidebar({ isMobileMenuOpen, onMobileMenuClose }) {
       )}
 
       {/* Mobile Sidebar */}
-      <aside className={`lg:hidden fixed top-0 left-0 h-full w-[280px] bg-black-200 border-r border-dashed border-white/30 px-4 py-6 flex flex-col z-50 transform transition-transform duration-300 ease-in-out ${
+      <aside className={`lg:hidden fixed top-0 left-0 h-full w-[250px] bg-black-200 border-r border-dashed border-white/30 px-4 py-6 flex flex-col z-50 transform transition-transform duration-300 ease-in-out ${
         isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
         {/* Logo and Close Button */}

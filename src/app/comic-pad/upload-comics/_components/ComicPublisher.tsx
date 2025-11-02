@@ -534,7 +534,7 @@ const handlePublish = async () => {
 							</div>
 
 							<p className='mt-3 text-sm text-white/80 tracking-wide leading-relaxed'>
-								By clicking <b className='text-orange-400'>&quot;PUBLISH COMIC!&quot;</b>, your comic will
+								By clicking <b className='text-primary-400'>&quot;PUBLISH COMIC!&quot;</b>, your comic will
 								become live on Quiva and readers can start enjoying it immediately.
 								{monetizationData.mintAsNFT && ' Your NFT collection will also be created and available for minting.'}
 							</p>
@@ -547,7 +547,7 @@ const handlePublish = async () => {
 							<div className='flex items-start gap-2'>
 								<AlertCircle size={18} className='text-yellow-400 flex-shrink-0 mt-0.5' />
 								<div>
-									<p className='text-orange-400 font-semibold text-sm mb-1'>Validation Errors:</p>
+									<p className='text-primary-400 font-semibold text-sm mb-1'>Validation Errors:</p>
 									<ul className='list-disc list-inside text-yellow-300 text-sm space-y-1'>
 										{validationErrors.map((err, idx) => (
 											<li key={idx}>{err}</li>
@@ -578,7 +578,7 @@ const handlePublish = async () => {
 								{/* Upload Progress */}
 								{isUploading && (
 									<div className='flex items-center gap-3'>
-										<Upload size={18} className='text-orange-400' />
+										<Upload size={18} className='text-primary-400' />
 										<div className='flex-1'>
 											<div className='flex justify-between items-center mb-1'>
 												<span className='text-blue-300 text-sm font-medium'>Uploading to IPFS...</span>
@@ -586,7 +586,7 @@ const handlePublish = async () => {
 											</div>
 											<div className='w-full bg-white/10 rounded-full h-2'>
 												<div 
-													className='bg-orange-400 h-2 rounded-full transition-all duration-300'
+													className='bg-primary-400 h-2 rounded-full transition-all duration-300'
 													style={{ width: `${uploadProgress}%` }}
 												/>
 											</div>
@@ -597,32 +597,32 @@ const handlePublish = async () => {
 								{/* Minting Progress */}
 								{(isMinting || isWritePending || isConfirming) && !isListing && (
 									<div className='flex items-center gap-3'>
-										<Zap size={18} className='text-orange-400' />
+										<Zap size={18} className='text-primary-400' />
 										<div className='flex-1'>
 											<div className='flex justify-between items-center mb-1'>
-												<span className='text-orange-400 text-sm font-medium'>
+												<span className='text-primary-400 text-sm font-medium'>
 													{isWritePending ? 'Preparing blockchain transaction...' : 
 													 isConfirming ? 'Confirming on blockchain...' : 
 													 'Minting NFT...'}
 												</span>
-												{isMinting && <span className='text-orange-400 text-xs'>{mintingProgress}%</span>}
+												{isMinting && <span className='text-primary-400 text-xs'>{mintingProgress}%</span>}
 											</div>
 											{isMinting && (
 												<div className='w-full bg-white/10 rounded-full h-2'>
 													<div 
-														className='bg-orange-400 h-2 rounded-full transition-all duration-300'
+														className='bg-primary-400 h-2 rounded-full transition-all duration-300'
 														style={{ width: `${mintingProgress}%` }}
 													/>
 												</div>
 											)}
 											{isWritePending && (
 												<div className='w-full bg-white/10 rounded-full h-2'>
-													<div className='bg-orange-400 h-2 rounded-full animate-pulse w-1/3' />
+													<div className='bg-primary-400 h-2 rounded-full animate-pulse w-1/3' />
 												</div>
 											)}
 											{isConfirming && (
 												<div className='w-full bg-white/10 rounded-full h-2'>
-													<div className='bg-orange-400 h-2 rounded-full animate-pulse w-2/3' />
+													<div className='bg-primary-400 h-2 rounded-full animate-pulse w-2/3' />
 												</div>
 											)}
 										</div>
@@ -652,14 +652,14 @@ const handlePublish = async () => {
 
 								{/* Success Messages */}
 								{tokenId && (
-									<div className='flex items-center gap-2 text-orange-400 text-sm'>
+									<div className='flex items-center gap-2 text-primary-400 text-sm'>
 										<CheckCircle size={16} />
 										<span>NFT minted successfully! Token ID: {tokenId.toString()}</span>
 									</div>
 								)}
 
 								{mintHash && (
-									<div className='flex items-center gap-2 text-orange-400 text-sm'>
+									<div className='flex items-center gap-2 text-primary-400 text-sm'>
 										<CheckCircle size={16} />
 										<span>Transaction: {mintHash.slice(0, 10)}...{mintHash.slice(-8)}</span>
 									</div>

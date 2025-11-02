@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect, useRef } from "react";
 import { QuivaLogo } from "@/components/utils/function";
-import { RainbowConnect } from "@/components/button/RainbowConnect";
-import HashConnectButton from "@/components/button/HashConnectButton";
+// import { RainbowConnect } from "@/components/button/RainbowConnect";
+// import HashConnectButton from "@/components/button/HashConnectButton";
 import ComicConnect from "./ComicConnect";
 
 export function Header({ onMobileMenuToggle, isMobileMenuOpen }) {
@@ -129,14 +129,6 @@ export function Header({ onMobileMenuToggle, isMobileMenuOpen }) {
 
           {/* User Actions */}
           <div className="flex items-center space-x-2 lg:space-x-3">
-            {/* Mobile Search Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="md:hidden text-white hover:text-white hover:bg-black-300"
-            >
-              <Search className="w-5 h-5" />
-            </Button>
 
             {/* Notification Bell */}
             <div className="relative" ref={notificationRef}>

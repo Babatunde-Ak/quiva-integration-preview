@@ -54,8 +54,11 @@ export default function MainPage() {
   }, [comics])
 
   return (
-    <>
-      <HeroComicSlider comics={heroComics} />
+    <div className="w-full">
+      {/* Hero section */}
+      <div className="mb-8">
+        <HeroComicSlider comics={heroComics} />
+      </div>
 
       {/* Trending Comics - Use API data or fallback */}
       <ComicSection 
@@ -80,7 +83,9 @@ export default function MainPage() {
       />
 
       {/* Featured Comic Banner */}
-      <FeaturedComic comics={FeaturesComics} />
+      <div className="my-8">
+        <FeaturedComic comics={FeaturesComics} />
+      </div>
 
       {/* Our Creators */}
       <CreatorsSection creators={creators} />
@@ -101,6 +106,6 @@ export default function MainPage() {
           Explore More Comics
         </MainButton>
       </div>
-    </>
+    </div>
   )
 }

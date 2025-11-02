@@ -36,7 +36,7 @@ export default function ComicPadLayout({children}) {
             </div>
 
             {/* Desktop Layout */}
-            <div className="hidden lg:grid lg:grid-cols-[15%_1fr] min-h-screen w-full">
+            <div className="hidden lg:grid lg:grid-cols-[200px_1fr] xl:grid-cols-[250px_1fr] min-h-screen w-full">
                 <div>
                     <ComicPadSideNav isMobileMenuOpen={false} onMobileMenuClose={() => {}}/>
                 </div>

@@ -38,23 +38,26 @@ export default function MainPage({children}) {
             </div>
 
             {/* Desktop Layout - FIXED: Improved grid structure */}
-            <div className="hidden lg:grid lg:grid-cols-[200px_1fr] xl:grid-cols-[280px_1fr] min-h-screen w-full">
+            <div className="hidden lg:grid lg:grid-cols-[200px_1fr] xl:grid-cols-[250px_1fr] min-h-screen w-full">
                 {/* Sidebar Column */}
                 <div className="relative">
                     <Sidebar isMobileMenuOpen={false} onMobileMenuClose={() => {}} />
                 </div>
 
                 {/* Main Content Column */}
-                <div className="flex flex-col min-h-screen">
+                <div className="flex flex-col min-h-screen w-full overflow-y-auto overflow-x-hidden">
                     {/* Header - FIXED: Made sticky instead of relying on sidebar positioning */}
                     <div className="sticky top-0 z-30">
                         <Header onMobileMenuToggle={() => {}} isMobileMenuOpen={false} />
                     </div>
 
-                    {/* Main Content - FIXED: Better overflow handling */}
-                    <main className="flex-1 p-6 bg-black-500 w-full overflow-x-hidden">
-                        <div className="w-full max-w-full">
-                            {children}
+                    {/* Main Content - FIXED: Allow horizontal overflow for sections */}
+                    <main className="flex-1 bg-black-500 w-full">
+                        <div className="w-full">
+                            {/* Content wrapper with padding for most content */}
+                            <div className="px-6 py-6">
+                                {children}
+                            </div>
                         </div>
                     </main>
                 </div>
