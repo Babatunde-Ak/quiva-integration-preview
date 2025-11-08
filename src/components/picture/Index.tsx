@@ -15,6 +15,8 @@ interface PictureProps {
 	priority?: boolean;
 	validate?: boolean;
 	layout?: "fill" | "fixed" | "intrinsic" | "responsive";
+	onError?: () => void;
+	onLoad?: () => void;
 }
 
 const Picture = ({
@@ -28,6 +30,8 @@ const Picture = ({
 	priority,
 	validate,
 	className,
+	onError,
+	onLoad
 }: PictureProps) => {
 	const [isValid, setIsValid] = useState<boolean>(true);
 
@@ -55,6 +59,8 @@ const Picture = ({
 					priority={false}
 					layout={layout}
 					className={className || ""}
+					onError={onError}
+					onLoad={onLoad}
 				/>
 			) : typeof src !== "string" ? (
 				<Image
@@ -68,6 +74,8 @@ const Picture = ({
 					priority={false}
 					layout={layout}
 					className={className || ""}
+					onError={onError}
+					onLoad={onLoad}
 				/>
 			) : (
 				validate && (

@@ -78,76 +78,76 @@ export function ComicNotification({ onclose, comicData, monetizationData, tokenI
 
 			{/* Status text */}
 			<p className='text-white text-2xl font-medium text-center mt-2 mb-4 tracking-wider'>
-				Your comic <span className='text-orange-400'>&quot;{comicData.title || "Untitled"}&quot;</span>{" "}
+				Your comic <span className='text-primary-400'>&quot;{comicData.title || "Untitled"}&quot;</span>{" "}
 				is LIVE!
 			</p>
 
 
 			{/* NFT Details Card */}
-							<div className='bg-gradient-to-r from-orange-500/10 to-blue-500/10 rounded-xl p-5 mb-6 text-left border border-orange-500/30'>
-								<p className='text-sm font-semibold text-orange-400 mb-4 tracking-wider uppercase'>
-									NFT Details
-								</p>
-								
-								<div className='space-y-3'>
-									{/* Token ID Display */}
-									<div className='bg-black/30 rounded-lg p-3'>
-										<div className='flex justify-between items-center'>
-											<span className='text-xs text-white/60'>Token ID:</span>
-											<span className='text-lg font-mono font-bold text-orange-400'>
-												#{tokenId.toString()}
-											</span>
-										</div>
-									</div>
+			<div className=''>
+				<p className='text-sm font-semibold text-primary-400 mb-4 tracking-wider uppercase'>
+					NFT Details
+				</p>
+				
+				<div className='space-y-3'>
+					{/* Token ID Display */}
+					<div className='bg-black/30 rounded-lg p-3'>
+						<div className='flex justify-between items-center'>
+							<span className='text-xs text-white/60'>Token ID:</span>
+							<span className='text-lg font-mono font-bold text-primary-400'>
+								#{tokenId.toString()}
+							</span>
+						</div>
+					</div>
 
-									{/* Transaction Hash Display */}
-									<div className='bg-black/30 rounded-lg p-3'>
-										<div>
-											<span className='text-xs text-white/60 block mb-2'>Transaction Hash:</span>
-											<span className='text-xs font-mono text-white/90 break-all block'>
-												{mintHash}
-											</span>
-										</div>
-									</div>
-									
-									{/* Comic Title */}
-									{comicData?.title && (
-										<div className='bg-black/30 rounded-lg p-3'>
-											<div className='flex justify-between items-center'>
-												<span className='text-xs text-white/60'>Comic:</span>
-												<span className='text-sm font-medium text-white/90'>
-													{comicData.title}
-												</span>
-											</div>
-										</div>
-									)}
-
-									{/* NFT Supply */}
-									{monetizationData?.nftCopies && (
-										<div className='bg-black/30 rounded-lg p-3'>
-											<div className='flex justify-between items-center'>
-												<span className='text-xs text-white/60'>Supply:</span>
-												<span className='text-sm font-medium text-white/90'>
-													{monetizationData.nftCopies} copies
-												</span>
-											</div>
-										</div>
-									)}
-								</div>
-
-								{/* HashScan Explorer Link */}
-								<a
-									href={`https://hashscan.io/testnet/transaction/${mintHash}`}
-									target='_blank'
-									rel='noopener noreferrer'
-									className='flex items-center justify-center gap-2 text-xs text-primary-400 hover:text-secondary-300 mt-4 pt-4 border-t border-orange-500/20 transition-colors'
-								>
-									<span>View Transaction on HashScan</span>
-									<svg className='w-3 h-3' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-										<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14' />
-									</svg>
-								</a>
+					{/* Transaction Hash Display */}
+					<div className='bg-black/30 rounded-lg p-3'>
+						<div>
+							<span className='text-xs text-white/60 block mb-2'>Transaction Hash:</span>
+							<span className='text-xs font-mono text-white/90 break-all block'>
+								{mintHash}
+							</span>
+						</div>
+					</div>
+					
+					{/* Comic Title */}
+					{comicData?.title && (
+						<div className='bg-black/30 rounded-lg p-3'>
+							<div className='flex justify-between items-center'>
+								<span className='text-xs text-white/60'>Comic:</span>
+								<span className='text-sm font-medium text-white/90'>
+									{comicData.title}
+								</span>
 							</div>
+						</div>
+					)}
+
+					{/* NFT Supply */}
+					{monetizationData?.nftCopies && (
+						<div className='bg-black/30 rounded-lg p-3'>
+							<div className='flex justify-between items-center'>
+								<span className='text-xs text-white/60'>Supply:</span>
+								<span className='text-sm font-medium text-white/90'>
+									{monetizationData.nftCopies} copies
+								</span>
+							</div>
+						</div>
+					)}
+				</div>
+
+				{/* HashScan Explorer Link */}
+				<a
+					href={`https://hashscan.io/testnet/transaction/${mintHash}`}
+					target='_blank'
+					rel='noopener noreferrer'
+					className='flex items-center justify-center gap-2 text-xs text-primary-400 hover:text-secondary-300 mt-4 pt-4 border-t border-primary-500/20 transition-colors'
+				>
+					<span>View Transaction on HashScan</span>
+					<svg className='w-3 h-3' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+						<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14' />
+					</svg>
+				</a>
+			</div>
 
 			{/* Action buttons` */}
 			<div className='space-y-3'>

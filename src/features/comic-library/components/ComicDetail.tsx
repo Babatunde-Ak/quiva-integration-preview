@@ -217,14 +217,14 @@ const ComicDetail = ({
               <Button 
                 onClick={onPreviewIssue}
                 variant="outline"
-                className="text-white border-white bg-transparent rounded-full w-full hover:bg-white/10"
+                className="!text-white border-white bg-transparent rounded-full w-full hover:bg-white/10"
               >
                 Preview Issue
               </Button>
               <Button 
                 onClick={onEnlargeCover}
                 variant="outline"
-                className="text-white border-white bg-transparent rounded-full w-full hover:bg-white/10"
+                className="!text-white border-white bg-transparent rounded-full w-full hover:bg-white/10"
               >
                 Enlarge Cover
               </Button>

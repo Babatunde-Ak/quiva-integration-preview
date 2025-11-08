@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { X, Pause, Folder, AlertCircle } from "lucide-react";
+import { X, Folder, AlertCircle, FileText, Eye } from "lucide-react";
 import JSZip from "jszip";
 import { ComicPreviewModal } from "./ComicPreviewModal";
 import Picture from "@/components/picture/Index";
@@ -14,11 +14,16 @@ interface ExtractedFile {
 	name: string;
 	blob: Blob;
 	preview: string;
+	type: 'image' | 'pdf-file' | 'zip-images';
+	originalFileName?: string;
+	fileSize?: number;
+	pageCount?: number; // For PDFs, we can estimate or get from metadata
 }
 
 const VALID_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml', 'image/gif', 'image/webp'];
 const VALID_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.svg', '.gif', '.webp'];
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+const MAX_PDF_SIZE = 100 * 1024 * 1024; // 100MB for PDFs
 
 const UploadModal = ({ onClose }: UploadModalProps) => {
 	const [file, setFile] = useState<File | null>(null);
@@ -29,6 +34,7 @@ const UploadModal = ({ onClose }: UploadModalProps) => {
 	const [error, setError] = useState<string | null>(null);
 	const [progress, setProgress] = useState(0);
 	const [isDragging, setIsDragging] = useState(false);
+	const [processingStatus, setProcessingStatus] = useState<string>("");
 
 	const validateImageFile = (file: File): boolean => {
 		// Check file type
@@ -48,9 +54,79 @@ const UploadModal = ({ onClose }: UploadModalProps) => {
 		return true;
 	};
 
+	const validatePdfFile = (file: File): boolean => {
+		if (file.size > MAX_PDF_SIZE) {
+			setError(`PDF file "${file.name}" exceeds maximum size of 100MB`);
+			return false;
+		}
+		if (file.size < 1024) {
+			setError("Comic file appears to be corrupted or empty");
+			return false;
+		}
+		return true;
+	};
+
+	// Estimate PDF page count from file size (rough approximation)
+	const estimatePdfPageCount = (fileSize: number): number => {
+		// Average PDF page is roughly 100KB-500KB
+		// This is just an estimate for UI display
+		const avgPageSize = 200 * 1024; // 200KB average
+		return Math.max(1, Math.round(fileSize / avgPageSize));
+	};
+
+	// Handle PDF file as a single file (no conversion)
+	const processPdfFile = async (pdfFile: File): Promise<ExtractedFile[]> => {
+		setProcessingStatus("Processing comic file...");
+		setProgress(50);
+
+		// Create a preview placeholder for PDF
+		const canvas = document.createElement('canvas');
+		canvas.width = 400;
+		canvas.height = 300;
+		const ctx = canvas.getContext('2d')!;
+		
+		// Create comic preview placeholder
+		ctx.fillStyle = '#f8f9fa';
+		ctx.fillRect(0, 0, canvas.width, canvas.height);
+		
+		// Add comic icon and info
+		ctx.fillStyle = '#28a745';
+		ctx.font = 'bold 24px Arial';
+		ctx.textAlign = 'center';
+		ctx.fillText('📚 COMIC BOOK', canvas.width / 2, canvas.height / 2 - 40);
+		
+		ctx.fillStyle = '#6c757d';
+		ctx.font = '16px Arial';
+		ctx.fillText(pdfFile.name, canvas.width / 2, canvas.height / 2);
+		ctx.fillText(`${(pdfFile.size / (1024 * 1024)).toFixed(1)} MB`, canvas.width / 2, canvas.height / 2 + 25);
+		
+		const estimatedPages = estimatePdfPageCount(pdfFile.size);
+		ctx.fillText(`~${estimatedPages} pages`, canvas.width / 2, canvas.height / 2 + 50);
+
+		const previewBlob = await new Promise<Blob>(resolve => {
+			canvas.toBlob(blob => resolve(blob!), 'image/jpeg', 0.8);
+		});
+
+		const previewUrl = URL.createObjectURL(previewBlob);
+
+		setProgress(100);
+		setProcessingStatus("Comic ready for upload!");
+
+		return [{
+			name: pdfFile.name,
+			blob: pdfFile, // Keep original PDF file
+			preview: previewUrl,
+			type: 'pdf-file',
+			originalFileName: pdfFile.name,
+			fileSize: pdfFile.size,
+			pageCount: estimatedPages
+		}];
+	};
+
 	const extractZipFile = async (zipFile: File): Promise<ExtractedFile[]> => {
 		try {
 			setIsExtracting(true);
+			setProcessingStatus("Extracting ZIP file...");
 			setProgress(10);
 
 			const zip = new JSZip();
@@ -103,6 +179,8 @@ const UploadModal = ({ onClose }: UploadModalProps) => {
 							name: filename.split('/').pop() || filename,
 							blob,
 							preview: previewUrl,
+							type: 'image',
+							fileSize: blob.size
 						});
 					} catch (err) {
 						console.error(`Error processing ${filename}:`, err);
@@ -112,12 +190,14 @@ const UploadModal = ({ onClose }: UploadModalProps) => {
 
 				processedCount++;
 				setProgress(30 + (processedCount / totalFiles) * 60);
+				setProcessingStatus(`Processing file ${processedCount} of ${totalFiles}...`);
 			}
 
 			// Sort files by name to maintain order
 			imageFiles.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
 
 			setProgress(100);
+			setProcessingStatus("Extraction completed!");
 			setIsExtracting(false);
 
 			// Show warning if some files were invalid
@@ -136,6 +216,7 @@ const UploadModal = ({ onClose }: UploadModalProps) => {
 	const processFile = async (selected: File) => {
 		setError(null);
 		setProgress(0);
+		setProcessingStatus("");
 		
 		if (selected.type.startsWith("image/")) {
 			// Validate single image
@@ -151,7 +232,28 @@ const UploadModal = ({ onClose }: UploadModalProps) => {
 				name: selected.name,
 				blob: selected,
 				preview: previewUrl,
+				type: 'image',
+				fileSize: selected.size
 			}]);
+		} else if (selected.type === "application/pdf" || selected.name.toLowerCase().endsWith(".pdf")) {
+			// Validate PDF
+			if (!validatePdfFile(selected)) {
+				return;
+			}
+			
+			setFile(selected);
+			setPreview(null);
+			setIsExtracting(true);
+			
+			try {
+				const pdfFile = await processPdfFile(selected);
+				setExtractedFiles(pdfFile);
+				setIsExtracting(false);
+			} catch (err) {
+				setError(err instanceof Error ? err.message : "Failed to process PDF file.");
+				setFile(null);
+				setIsExtracting(false);
+			}
 		} else if (selected.name.toLowerCase().endsWith(".zip")) {
 			setFile(selected);
 			setPreview(null);
@@ -167,7 +269,7 @@ const UploadModal = ({ onClose }: UploadModalProps) => {
 				setFile(null);
 			}
 		} else {
-			setError("Invalid file type. Please upload an image or ZIP file.");
+			setError("Invalid file type. Please upload an image, PDF, or ZIP file.");
 		}
 	};
 
@@ -216,7 +318,9 @@ const UploadModal = ({ onClose }: UploadModalProps) => {
 	const handleReset = () => {
 		// Cleanup preview URLs
 		extractedFiles.forEach(file => {
-			URL.revokeObjectURL(file.preview);
+			if (file.preview.startsWith('blob:')) {
+				URL.revokeObjectURL(file.preview);
+			}
 		});
 		if (preview) {
 			URL.revokeObjectURL(preview);
@@ -227,19 +331,54 @@ const UploadModal = ({ onClose }: UploadModalProps) => {
 		setPreview(null);
 		setProgress(0);
 		setError(null);
+		setProcessingStatus("");
 	};
 
 	// Cleanup preview URLs on unmount
 	useEffect(() => {
 		return () => {
 			extractedFiles.forEach(file => {
-				URL.revokeObjectURL(file.preview);
+				if (file.preview.startsWith('blob:')) {
+					URL.revokeObjectURL(file.preview);
+				}
 			});
 			if (preview) {
 				URL.revokeObjectURL(preview);
 			}
 		};
 	}, []);
+
+	const getContentTypeInfo = () => {
+		if (extractedFiles.length === 0) return null;
+		
+		const firstFile = extractedFiles[0];
+		
+		switch (firstFile.type) {
+			case 'pdf-file':
+				return {
+					icon: <Eye className="text-green-500" size={16} />,
+					label: 'Comic File',
+					description: `${firstFile.pageCount} estimated pages`,
+					count: '1 file'
+				};
+			case 'image':
+				return {
+					icon: <Eye className="text-green-500" size={16} />,
+					label: 'Image File',
+					description: 'Ready for upload',
+					count: '1 image'
+				};
+			default:
+				return {
+					icon: <Folder className="text-blue-500" size={16} />,
+					label: 'Image Files',
+					description: 'From ZIP archive',
+					count: `${extractedFiles.length} images`
+				};
+		}
+	};
+
+	const contentInfo = getContentTypeInfo();
 
 	return (
 		<div className='p-6'>
@@ -248,7 +387,7 @@ const UploadModal = ({ onClose }: UploadModalProps) => {
 					<div className='text-white space-y-1 mb-6'>
 						<h2 className='text-lg font-semibold'>Comic Upload</h2>
 						<p className='tracking-wider text-white/70 text-xs'>
-							Upload your comic pages as individual images or a ZIP file
+							Upload your comic as images, a complete PDF file, or a ZIP archive
 						</p>
 					</div>
 
@@ -285,7 +424,7 @@ const UploadModal = ({ onClose }: UploadModalProps) => {
 									Browse files
 									<input
 										type='file'
-										accept='.jpg,.jpeg,.png,.svg,.gif,.webp,.zip'
+										accept='.jpg,.jpeg,.png,.svg,.gif,.webp,.pdf,.zip'
 										className='hidden'
 										onChange={handleFileChange}
 										disabled={isExtracting}
@@ -299,32 +438,50 @@ const UploadModal = ({ onClose }: UploadModalProps) => {
 								className='rounded-lg max-h-48 mx-auto object-contain'
 							/>
 						) : extractedFiles.length > 0 ? (
-							<div className='w-full space-y-2'>
-								<p className='text-white font-medium'>
-									{extractedFiles.length} page{extractedFiles.length !== 1 ? 's' : ''} extracted
-								</p>
-								<div className='grid grid-cols-4 gap-2'>
-									{extractedFiles.slice(0, 8).map((file, idx) => (
-										<div key={idx} className='aspect-square rounded overflow-hidden'>
-											<Picture
-												src={file.preview}
-												alt={file.name}
-												className='w-full h-full object-cover'
-											/>
+							<div className='w-full space-y-3'>
+								
+								{extractedFiles[0].type === 'pdf-file' ? (
+									// PDF Preview
+									<div className="flex flex-col items-center space-y-2">
+										<Picture
+											src={extractedFiles[0].preview}
+											alt="PDF Preview"
+											className="rounded-lg max-h-32 object-contain"
+										/>
+										<p className="text-white/80 text-sm">
+											{extractedFiles[0].name}
+										</p>
+										<p className="text-white/60 text-xs">
+											{(extractedFiles[0].fileSize! / (1024 * 1024)).toFixed(1)} MB • 
+											~{extractedFiles[0].pageCount} pages
+										</p>
+									</div>
+								) : (
+									<>
+										<div className='grid grid-cols-4 gap-2'>
+											{extractedFiles.slice(0, 8).map((file, idx) => (
+												<div key={idx} className='aspect-square rounded overflow-hidden'>
+													<Picture
+														src={file.preview}
+														alt={file.name}
+														className='w-full h-full object-cover'
+													/>
+												</div>
+											))}
 										</div>
-									))}
-								</div>
-								{extractedFiles.length > 8 && (
-									<p className='text-white/60 text-sm'>
-										+{extractedFiles.length - 8} more page{extractedFiles.length - 8 !== 1 ? 's' : ''}
-									</p>
+										{extractedFiles.length > 8 && (
+											<p className='text-white/60 text-sm'>
+												+{extractedFiles.length - 8} more image{extractedFiles.length - 8 !== 1 ? 's' : ''}
+											</p>
+										)}
+									</>
 								)}
 							</div>
 						) : null}
 					</div>
 
 					<h4 className='text-white/50 text-xs my-1 tracking-wider'>
-						Support: .jpg, .jpeg, .png, .svg, .gif, .webp, and .zip files (max 50MB per file)
+						Support: .jpg, .jpeg, .png, .svg, .gif, .webp (max 50MB), .pdf (max 100MB), and .zip files
 					</h4>
 
 					{error && (
@@ -339,7 +496,7 @@ const UploadModal = ({ onClose }: UploadModalProps) => {
 							<div className='flex items-center justify-between mb-3'>
 								<div>
 									<p className='text-white text-sm font-semibold'>
-										Extracting ZIP file...
+										{processingStatus || "Processing file..."}
 									</p>
 									<p className='text-white/80 text-sm'>
 										{Math.round(progress)}%
@@ -368,11 +525,20 @@ const UploadModal = ({ onClose }: UploadModalProps) => {
 							<div className='flex items-center gap-3'>
 								<div className='relative'>
 									<div className='bg-yellow-400 rounded p-2'>
-										<Folder size={28} className='text-black' />
+										{file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf') ? (
+											<FileText size={28} className='text-black' />
+										) : (
+											<Folder size={28} className='text-black' />
+										)}
 									</div>
 									{file.name.toLowerCase().endsWith('.zip') && (
 										<span className='absolute -bottom-1 -right-1 bg-blue-500 text-[10px] text-white px-1 py-[1px] rounded'>
 											ZIP
+										</span>
+									)}
+									{(file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) && (
+										<span className='absolute -bottom-1 -right-1 bg-red-500 text-[10px] text-white px-1 py-[1px] rounded'>
+											PDF
 										</span>
 									)}
 								</div>
@@ -380,7 +546,7 @@ const UploadModal = ({ onClose }: UploadModalProps) => {
 								<div>
 									<p className='text-white font-medium'>{file.name}</p>
 									<p className='text-white/60 text-sm'>
-										{(file.size / (1024 * 1024)).toFixed(2)} MB • {extractedFiles.length} page{extractedFiles.length !== 1 ? 's' : ''}
+										{(file.size / (1024 * 1024)).toFixed(2)} MB • {contentInfo?.count}
 									</p>
 								</div>
 							</div>
@@ -400,7 +566,12 @@ const UploadModal = ({ onClose }: UploadModalProps) => {
 							onClick={handleNext}
 							className='w-full bg-secondary-200/80 hover:bg-secondary-200 text-black font-semibold py-3 rounded-full transition disabled:cursor-not-allowed disabled:opacity-50'
 						>
-							{extractedFiles.length > 0 ? `Continue with ${extractedFiles.length} page${extractedFiles.length !== 1 ? 's' : ''}` : 'Next'}
+							{extractedFiles.length > 0 ? 
+								extractedFiles[0].type === 'pdf-file' ? 
+									'Continue with PDF' : 
+									`Continue with ${extractedFiles.length} file${extractedFiles.length !== 1 ? 's' : ''}` 
+								: 'Next'
+							}
 						</button>
 						<button
 							onClick={onClose}

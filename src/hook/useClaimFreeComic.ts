@@ -5,6 +5,7 @@ import { useAppDispatch } from '@/redux/hook';
 import type { Address, Chain } from 'viem';
 import axios from 'axios';
 import axiosInstance from '@/redux/axios-instance';
+import { createTransaction } from '@/redux/slices/transactionSlice';
 
 interface ClaimFreeComicParams {
   tokenId: bigint | string;
@@ -88,9 +89,9 @@ export const useClaimFreeComic = () => {
           const transactionData = {
             comicId: currentComicId,
             tokenId: currentTokenId,
-            buyerAddress: address,
+            walletAddress: address,
             transactionHash: receipt.transactionHash,
-            amount: 0, // Free claim
+            price: 0, // Free claim
             currency: 'FREE',
             type: 'claim',
             status: 'completed',
@@ -98,15 +99,8 @@ export const useClaimFreeComic = () => {
 
           console.log('Transaction data:', transactionData);
 
-          const response = await axiosInstance.post(
-            `/transactions`,
-            transactionData,
-            {
-              headers: {
-                'Content-Type': 'application/json',
-              },
-            }
-          );
+          const response = await dispatch(createTransaction({payload:transactionData} as any)).unwrap();
+          console.log('✅ Transaction record created successfully:', response);
 
           console.log('✅ Backend transaction record created:', response.data);
           setClaimProgress(100);

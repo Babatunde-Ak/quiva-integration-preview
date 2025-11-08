@@ -14,6 +14,10 @@ interface ExtractedFile {
 	name: string;
 	blob: Blob;
 	preview: string;
+	type?: 'image' | 'pdf-file' | 'zip-images';
+	originalFileName?: string;
+	fileSize?: number;
+	pageCount?: number;
 }
 
 interface ComicData {
@@ -24,6 +28,12 @@ interface ComicData {
 	ageRating: string;
 	coverImage: File | null;
 	pages: ExtractedFile[];
+	sourceType?: string;
+	pdfMetadata?: {
+		originalFileName?: string;
+		fileSize?: number;
+		estimatedPageCount?: number;
+	};
 }
 
 interface MonetizationData {
@@ -52,7 +62,11 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 	const {user} = useAppSelector((state) => state.wallet);
 	const { isConnected } = useAccount();
 	
-	// Use the new comic minting hook
+	// Check if we have a PDF file
+	const hasPdfFile = comicData.sourceType === 'pdf-file';
+	const pdfFile = hasPdfFile ? comicData.pages.find(file => file.type === 'pdf-file') : null;
+	
+	// Use the comic minting hooks
 	const {
 		publishComic,
 		isUploading,
@@ -73,19 +87,12 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 	const {
 		isUploading: freeIsUploading,
 		isMinting: freeIsMinting,
-	publishFreeComic,
-    updateComicWithMintData,
-    reset,
-    checkCreatorApproval,
-	// tokenId,
-    mintHash: hash,
-    // comicId,
-    // mintError,
-    
-    // Approval states
-    approvalStatus,
-
-
+		publishFreeComic,
+		updateComicWithMintData,
+		reset,
+		checkCreatorApproval,
+		mintHash: hash,
+		approvalStatus,
 	} = useFreeComicMinting();
 
 	useEffect(() => {
@@ -98,303 +105,212 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 		}
 	}, [isComplete, tokenId, mintHash]);
 
-	// const validateComicData = (): boolean => {
-	// 	const errors: string[] = [];
-
-	// 	// Validate title
-	// 	if (!comicData.title || comicData.title.trim().length === 0) {
-	// 		errors.push("Comic title is required");
-	// 	}
-
-	// 	// Validate description
-	// 	if (!comicData.description || comicData.description.trim().length === 0) {
-	// 		errors.push("Comic description is required");
-	// 	}
-
-	// 	// Validate genres
-	// 	if (!comicData.genre || comicData.genre.length === 0) {
-	// 		errors.push("At least one genre must be selected");
-	// 	}
-
-	// 	// Validate pages
-	// 	if (!comicData.pages || comicData.pages.length === 0) {
-	// 		errors.push("At least one comic page is required");
-	// 	}
-
-	// 	// Validate age rating
-	// 	if (!comicData.ageRating) {
-	// 		errors.push("Age rating is required");
-	// 	}
-
-	// 	// Validate monetization
-	// 	if (monetizationData.publishType === "paid") {
-	// 		if (!monetizationData.price || monetizationData.price <= 0) {
-	// 			errors.push("Valid price is required for paid comics");
-	// 		}
-	// 	}
-
-	// 	// Validate NFT data
-	// 	if (monetizationData.mintAsNFT) {
-	// 		if (!monetizationData.nftCopies || monetizationData.nftCopies <= 0) {
-	// 			errors.push("Valid number of NFT copies is required");
-	// 		}
-	// 		if (!monetizationData.nftPrice || monetizationData.nftPrice <= 0) {
-	// 			errors.push("Valid NFT mint price is required");
-	// 		}
-	// 	}
-
-	// 	setValidationErrors(errors);
-	// 	return errors.length === 0;
-	// };
-
-	
-
-const validateComicData = (): boolean => {
-	const errors: string[] = [];
-	// Validate title
-	if (!comicData.title || comicData.title.trim().length === 0) {
-		errors.push("Comic title is required");
-	}
-
-	// Validate description
-	if (!comicData.description || comicData.description.trim().length === 0) {
-		errors.push("Comic description is required");
-	}
-
-	// Validate genres
-	if (!comicData.genre || comicData.genre.length === 0) {
-		errors.push("At least one genre must be selected");
-	}
-
-	// Validate pages
-	if (!comicData.pages || comicData.pages.length === 0) {
-		errors.push("At least one comic page is required");
-	}
-
-	// Validate age rating
-	if (!comicData.ageRating) {
-		errors.push("Age rating is required");
-	}
-
-	// Validate monetization
-	if (monetizationData.publishType === "paid") {
-		if (!monetizationData.price || monetizationData.price <= 0) {
-			errors.push("Valid price is required for paid comics");
+	const validateComicData = (): boolean => {
+		const errors: string[] = [];
+		
+		// Validate title
+		if (!comicData.title || comicData.title.trim().length === 0) {
+			errors.push("Comic title is required");
 		}
-	}
 
-	// Validate NFT data - FIXED: Only require price for paid comics
-	if (monetizationData.mintAsNFT) {
-		if (!monetizationData.nftCopies || monetizationData.nftCopies <= 0) {
-			errors.push("Valid number of max supply is required");
+		// Validate description
+		if (!comicData.description || comicData.description.trim().length === 0) {
+			errors.push("Comic description is required");
 		}
-		// Only require price for paid comics
+
+		// Validate genres
+		if (!comicData.genre || comicData.genre.length === 0) {
+			errors.push("At least one genre must be selected");
+		}
+
+		// Validate pages/content
+		if (!comicData.pages || comicData.pages.length === 0) {
+			errors.push("At least one comic page or PDF file is required");
+		}
+
+		// Validate age rating
+		if (!comicData.ageRating) {
+			errors.push("Age rating is required");
+		}
+
+		// Validate monetization
 		if (monetizationData.publishType === "paid") {
-			if (!monetizationData.nftPrice || monetizationData.nftPrice <= 0) {
-				errors.push("Valid NFT mint price is required");
+			if (!monetizationData.price || monetizationData.price <= 0) {
+				errors.push("Valid price is required for paid comics");
 			}
 		}
-	}
 
-	setValidationErrors(errors);
-	return errors.length === 0;
-};
-
-// FIXED FUNCTION 2: handlePublish (replaces lines ~150-233)
-const handlePublish = async () => {
-	// Clear previous errors
-	setError(null);
-	setValidationErrors([]);
-	setPublishingStep('');
-
-	// Validate data first
-	if (!validateComicData()) {
-		setError("Please fix the validation errors before publishing");
-		return;
-	}
-
-	if (!user) {
-		setError("Please connect your wallet to publish your comic");
-		return;
-	}
-
-	// Additional validation for paid comics and NFTs
-	if ((monetizationData.publishType === "paid" || monetizationData.mintAsNFT) && !isConnected) {
-		setError("Please connect your wallet to publish paid comics or mint NFTs");
-		return;
-	}
-
-	try {
-		setIsPublishing(true);
-		setShowSuccessModal(false);
-
-		// Use the new comic minting hook for enhanced publishing
-		if(monetizationData.publishType === "paid"){
-			const result = await publishComic({
-				comicData,
-				monetizationData,
-				user,
-			});
-                         
-			console.log('🎉 Paid Comic published successfully:', result);
-
-		} else {
-			// FIXED: For free comics, use nftCopies if provided
-			const maxSupply = monetizationData.mintAsNFT && monetizationData.nftCopies 
-				? monetizationData.nftCopies 
-				: 1000;
-			
-			const freeComic = await publishFreeComic({
-				comicData,
-				freeComicData: {
-					maxSupply: maxSupply,
-					royaltyPercentage: 0 // No royalties for free comics
-				},
-				user,
-			});
-			console.log('🎉 Free Comic published successfully:', freeComic);
+		// Validate NFT data - Only require price for paid comics
+		if (monetizationData.mintAsNFT) {
+			if (!monetizationData.nftCopies || monetizationData.nftCopies <= 0) {
+				errors.push("Valid number of max supply is required");
+			}
+			// Only require price for paid comics
+			if (monetizationData.publishType === "paid") {
+				if (!monetizationData.nftPrice || monetizationData.nftPrice <= 0) {
+					errors.push("Valid NFT mint price is required");
+				}
+			}
 		}
 
-		// Show success notification
-		setShowNotification(true);
-
-	} catch (err: any) {
-		console.error('Error publishing comic:', err);
-		
-		// Extract meaningful error message
-		let errorMessage = 'Failed to publish comic. Please try again.';
-		
-		if (err?.response?.data?.message) {
-			errorMessage = err.response.data.message;
-		} else if (err?.response?.data?.error) {
-			errorMessage = err.response.data.error;
-		} else if (err?.message) {
-			errorMessage = err.message;
-		} else if (typeof err === 'string') {
-			errorMessage = err;
+		// PDF-specific validation
+		if (hasPdfFile && pdfFile) {
+			if (!pdfFile.blob || pdfFile.blob.size === 0) {
+				errors.push("PDF file appears to be corrupted or empty");
+			}
+			if (pdfFile.blob.size > 100 * 1024 * 1024) { // 100MB limit
+				errors.push("PDF file is too large (max 100MB)");
+			}
 		}
 
-		// Handle specific error types
-		if (errorMessage.toLowerCase().includes('network')) {
-			errorMessage = 'Network error. Please check your connection and try again.';
-		} else if (errorMessage.toLowerCase().includes('timeout')) {
-			errorMessage = 'Request timed out. Your file might be too large. Please try again.';
-		} else if (errorMessage.toLowerCase().includes('unauthorized')) {
-			errorMessage = 'Authentication error. Please log in again.';
-		} else if (errorMessage.toLowerCase().includes('validation')) {
-			errorMessage = 'Validation error. Please check your comic details.';
-		} else if (errorMessage.toLowerCase().includes('wallet')) {
-			errorMessage = 'Wallet connection error. Please check your wallet and try again.';
-		} else if (errorMessage.toLowerCase().includes('gas')) {
-			errorMessage = 'Insufficient gas fees. Please add funds to your wallet and try again.';
-		} else if (errorMessage.toLowerCase().includes('rejected')) {
-			errorMessage = 'Transaction was rejected. Please approve the transaction in your wallet.';
-		}
+		setValidationErrors(errors);
+		return errors.length === 0;
+	};
 
-		setError(errorMessage);
-	} finally {
-		setIsPublishing(false);
+	const handlePublish = async () => {
+		// Clear previous errors
+		setError(null);
+		setValidationErrors([]);
 		setPublishingStep('');
-	}
-};
 
-	// const handlePublish = async () => {
-	// 	// Clear previous errors
-	// 	setError(null);
-	// 	setValidationErrors([]);
-	// 	setPublishingStep('');
+		// Validate data first
+		if (!validateComicData()) {
+			setError("Please fix the validation errors before publishing");
+			return;
+		}
 
-	// 	// Validate data first
-	// 	if (!validateComicData()) {
-	// 		setError("Please fix the validation errors before publishing");
-	// 		return;
-	// 	}
+		if (!user) {
+			setError("Please connect your wallet to publish your comic");
+			return;
+		}
 
-	// 	if (!user) {
-	// 		setError("Please connect your wallet to publish your comic");
-	// 		return;
-	// 	}
+		// Additional validation for paid comics and NFTs
+		if ((monetizationData.publishType === "paid" || monetizationData.mintAsNFT) && !isConnected) {
+			setError("Please connect your wallet to publish paid comics or mint NFTs");
+			return;
+		}
 
-	// 	// Additional validation for paid comics and NFTs
-	// 	if ((monetizationData.publishType === "paid" || monetizationData.mintAsNFT) && !isConnected) {
-	// 		setError("Please connect your wallet to publish paid comics or mint NFTs");
-	// 		return;
-	// 	}
+		try {
+			setIsPublishing(true);
+			setShowSuccessModal(false);
 
-	// 	try {
-	// 		setIsPublishing(true);
-	// 		setShowSuccessModal(false);
+			// Enhanced comic data with PDF metadata
+			const enhancedComicData = {
+				...comicData,
+				// Add processing instructions for server
+				processingInstructions: hasPdfFile ? {
+					type: 'pdf',
+					extractPages: true,
+					targetDPI: 300,
+					outputFormat: 'jpeg',
+					quality: 0.95
+				} : {
+					type: 'images',
+					preserveOrder: true
+				}
+			};
 
-	// 		// Use the new comic minting hook for enhanced publishing
-	// 		if(monetizationData.publishType === "paid"){
-	// 		const result = await publishComic({
-	// 			comicData,
-	// 			monetizationData,
-	// 			user,
-	// 		});
-                         
-	// 		console.log('🎉 Paid Comic published successfully:', result);
+			if (monetizationData.publishType === "paid") {
+				const result = await publishComic({
+					comicData: enhancedComicData,
+					monetizationData,
+					user,
+				});
+				console.log('🎉 Paid Comic published successfully:', result);
+			} else {
+				// For free comics, use nftCopies if provided
+				const maxSupply = monetizationData.mintAsNFT && monetizationData.nftCopies 
+					? monetizationData.nftCopies 
+					: 1000;
+				
+				const freeComic = await publishFreeComic({
+					comicData: enhancedComicData,
+					freeComicData: {	
+						maxSupply: maxSupply,
+						royaltyPercentage: 0
+					},
+					user,
+				});
+				console.log('🎉 Free Comic published successfully:', freeComic);
+			}
 
-	// 	} else {
-	// 		const freeComic = await publishFreeComic({
-	// 			comicData,
-	// 			freeComicData: {
-	// 				maxSupply: 1000, // Set a default max supply for free comics
-	// 				royaltyPercentage: 0 // No royalties for free comics
-	// 			},
-	// 			user,
-	// 		});
-	// 		console.log('🎉 Free Comic published successfully:', freeComic);
-	// 	}
+			// Show success notification
+			setShowNotification(true);
 
-	// 		// Show success notification
-	// 		setShowNotification(true);
-
-	// 	} catch (err: any) {
-	// 		console.error('Error publishing comic:', err);
+		} catch (err: any) {
+			console.error('Error publishing comic:', err);
 			
-	// 		// Extract meaningful error message
-	// 		let errorMessage = 'Failed to publish comic. Please try again.';
+			// Extract meaningful error message
+			let errorMessage = 'Failed to publish comic. Please try again.';
 			
-	// 		if (err?.response?.data?.message) {
-	// 			errorMessage = err.response.data.message;
-	// 		} else if (err?.response?.data?.error) {
-	// 			errorMessage = err.response.data.error;
-	// 		} else if (err?.message) {
-	// 			errorMessage = err.message;
-	// 		} else if (typeof err === 'string') {
-	// 			errorMessage = err;
-	// 		}
+			if (err?.response?.data?.message) {
+				errorMessage = err.response.data.message;
+			} else if (err?.response?.data?.error) {
+				errorMessage = err.response.data.error;
+			} else if (err?.message) {
+				errorMessage = err.message;
+			} else if (typeof err === 'string') {
+				errorMessage = err;
+			}
 
-	// 		// Handle specific error types
-	// 		if (errorMessage.toLowerCase().includes('network')) {
-	// 			errorMessage = 'Network error. Please check your connection and try again.';
-	// 		} else if (errorMessage.toLowerCase().includes('timeout')) {
-	// 			errorMessage = 'Request timed out. Your file might be too large. Please try again.';
-	// 		} else if (errorMessage.toLowerCase().includes('unauthorized')) {
-	// 			errorMessage = 'Authentication error. Please log in again.';
-	// 		} else if (errorMessage.toLowerCase().includes('validation')) {
-	// 			errorMessage = 'Validation error. Please check your comic details.';
-	// 		} else if (errorMessage.toLowerCase().includes('wallet')) {
-	// 			errorMessage = 'Wallet connection error. Please check your wallet and try again.';
-	// 		} else if (errorMessage.toLowerCase().includes('gas')) {
-	// 			errorMessage = 'Insufficient gas fees. Please add funds to your wallet and try again.';
-	// 		} else if (errorMessage.toLowerCase().includes('rejected')) {
-	// 			errorMessage = 'Transaction was rejected. Please approve the transaction in your wallet.';
-	// 		}
+			// Handle specific error types
+			if (errorMessage.toLowerCase().includes('network')) {
+				errorMessage = 'Network error. Please check your connection and try again.';
+			} else if (errorMessage.toLowerCase().includes('timeout')) {
+				errorMessage = 'Request timed out. Your file might be too large. Please try again.';
+			} else if (errorMessage.toLowerCase().includes('unauthorized')) {
+				errorMessage = 'Authentication error. Please log in again.';
+			} else if (errorMessage.toLowerCase().includes('validation')) {
+				errorMessage = 'Validation error. Please check your comic details.';
+			} else if (errorMessage.toLowerCase().includes('wallet')) {
+				errorMessage = 'Wallet connection error. Please check your wallet and try again.';
+			} else if (errorMessage.toLowerCase().includes('gas')) {
+				errorMessage = 'Insufficient gas fees. Please add funds to your wallet and try again.';
+			} else if (errorMessage.toLowerCase().includes('rejected')) {
+				errorMessage = 'Transaction was rejected. Please approve the transaction in your wallet.';
+			} else if (errorMessage.toLowerCase().includes('pdf')) {
+				errorMessage = 'PDF processing error. Please check your PDF file and try again.';
+			}
 
-	// 		setError(errorMessage);
-	// 	} finally {
-	// 		setIsPublishing(false);
-	// 		setPublishingStep('');
-	// 	}
-	// };
+			setError(errorMessage);
+		} finally {
+			setIsPublishing(false);
+			setPublishingStep('');
+		}
+	};
 
 	const handleCloseSuccessModal = () => {
 		setShowSuccessModal(false);
 		setIsPublishing(false);
 		onclose();
 	};
+
+	const getContentDisplayInfo = () => {
+		if (hasPdfFile && pdfFile) {
+			return {
+				preview: pdfFile.preview,
+				title: comicData.title,
+				contentType: 'Comic Book',
+				pageInfo: `~${comicData.pdfMetadata?.estimatedPageCount || 'Unknown'} pages`,
+				fileName: comicData.pdfMetadata?.originalFileName,
+				fileSize: comicData.pdfMetadata?.fileSize ? 
+					`${(comicData.pdfMetadata.fileSize / (1024 * 1024)).toFixed(1)} MB` : 'Unknown'
+			};
+		} else {
+			return {
+				preview: comicData.coverImage 
+					? URL.createObjectURL(comicData.coverImage) 
+					: comicData.pages[0]?.preview || '',
+				title: comicData.title,
+				contentType: comicData.pages.length === 1 ? 'Single Image' : 'Image Collection',
+				pageInfo: `${comicData.pages.length} page${comicData.pages.length !== 1 ? 's' : ''}`,
+				fileName: undefined,
+				fileSize: undefined
+			};
+		}
+	};
+
+	const contentInfo = getContentDisplayInfo();
 
 	return (
 		<>
@@ -408,7 +324,6 @@ const handlePublish = async () => {
 						<h2 className='text-3xl tracking-wider font-bold text-white/80'>
 							Almost there!
 						</h2>
-
 						<p className='text-white/50 text-sm leading-relaxed'>
 							Review your choices one last time. This is it!
 						</p>
@@ -418,10 +333,7 @@ const handlePublish = async () => {
 						{/* Comic Preview */}
 						<div className='bg-gray-900 rounded-t-lg overflow-hidden border border-gray-700 mb-4'>
 							<Picture
-								src={comicData.coverImage 
-									? URL.createObjectURL(comicData.coverImage) 
-									: comicData.pages[0]?.preview || ''
-								}
+								src={contentInfo.preview}
 								alt='Comic preview'
 								className='w-full h-48 object-cover'
 							/>
@@ -430,7 +342,7 @@ const handlePublish = async () => {
 						{/* Comic Details */}
 						<div className='mb-6 px-4'>
 							<h3 className='text-lg font-semibold mb-3 text-white/90 tracking-wider'>
-								{comicData.title}
+								{contentInfo.title}
 							</h3>
 
 							<div className='space-y-2 text-sm text-white/80 tracking-wide'>
@@ -463,6 +375,27 @@ const handlePublish = async () => {
 								</div>
 
 								<div className='flex items-center gap-3'>
+									<span className='text-white/60'>Content Type:</span>
+									<span className='flex items-center gap-1'>
+										{contentInfo.contentType}
+									</span>
+								</div>
+
+								{hasPdfFile && contentInfo.fileName && (
+									<div className='flex items-center gap-3'>
+										<span className='text-white/60'>Source File:</span>
+										<span>{contentInfo.fileName}</span>
+									</div>
+								)}
+
+								{contentInfo.fileSize && (
+									<div className='flex items-center gap-3'>
+										<span className='text-white/60'>File Size:</span>
+										<span>{contentInfo.fileSize}</span>
+									</div>
+								)}
+
+								<div className='flex items-center gap-3'>
 									<span className='text-white/60'>Reader Access:</span>
 									<span>
 										{monetizationData.publishType === 'free' 
@@ -472,56 +405,30 @@ const handlePublish = async () => {
 									</span>
 								</div>
 
-								{/* {monetizationData.mintAsNFT && (
+								{monetizationData.mintAsNFT && (
 									<>
 										<div className='flex items-center gap-3'>
-											<span className='text-white/60'>NFT Edition:</span>
-											<span className='flex items-center gap-1'>
-												<CheckCircle size={14} className='text-green-400' />
-												Limited Edition
-											</span>
-										</div>
-										<div className='flex items-center gap-3'>
-											<span className='text-white/60'>NFT Copies:</span>
+											<span className='text-white/60'>Max Supply:</span>
 											<span>{monetizationData.nftCopies} editions</span>
 										</div>
-										<div className='flex items-center gap-3'>
-											<span className='text-white/60'>Mint Price:</span>
-											<span>${monetizationData.nftPrice?.toFixed(2)} HBAR per NFT</span>
-										</div>
+										{monetizationData.publishType === "paid" && monetizationData.nftPrice && (
+											<div className='flex items-center gap-3'>
+												<span className='text-white/60'>Mint Price:</span>
+												<span>${monetizationData.nftPrice.toFixed(2)} HBAR per NFT</span>
+											</div>
+										)}
+										{monetizationData.publishType === "free" && (
+											<div className='flex items-center gap-3'>
+												<span className='text-white/60'>NFT Type:</span>
+												<span className='text-green-400'>Free Claimable (Gas fees only)</span>
+											</div>
+										)}
 									</>
-								)} */}
-								{monetizationData.mintAsNFT && (
-	<>
-		{/* <div className='flex items-center gap-3'>
-			<span className='text-white/60'>NFT Edition:</span>
-			<span className='flex items-center gap-1'>
-				<CheckCircle size={14} className='text-green-400' />
-				Limited Edition
-			</span>
-		</div> */}
-		<div className='flex items-center gap-3'>
-			<span className='text-white/60'>Max Supply:</span>
-			<span>{monetizationData.nftCopies} editions</span>
-		</div>
-		{monetizationData.publishType === "paid" && monetizationData.nftPrice && (
-			<div className='flex items-center gap-3'>
-				<span className='text-white/60'>Mint Price:</span>
-				<span>${monetizationData.nftPrice.toFixed(2)} HBAR per NFT</span>
-			</div>
-		)}
-		{monetizationData.publishType === "free" && (
-			<div className='flex items-center gap-3'>
-				<span className='text-white/60'>NFT Type:</span>
-				<span className='text-green-400'>Free Claimable (Gas fees only)</span>
-			</div>
-		)}
-	</>
-)}
+								)}
 
 								<div className='flex items-center gap-3'>
 									<span className='text-white/60'>Pages:</span>
-									<span>{comicData.pages.length} pages (Chapter 1)</span>
+									<span>{contentInfo.pageInfo} (Chapter 1)</span>
 								</div>
 
 								<div className='flex items-center gap-3'>
@@ -581,7 +488,9 @@ const handlePublish = async () => {
 										<Upload size={18} className='text-primary-400' />
 										<div className='flex-1'>
 											<div className='flex justify-between items-center mb-1'>
-												<span className='text-blue-300 text-sm font-medium'>Uploading to IPFS...</span>
+												<span className='text-blue-300 text-sm font-medium'>
+													{hasPdfFile ? 'Uploading PDF to IPFS...' : 'Uploading to IPFS...'}
+												</span>
 												<span className='text-blue-300 text-xs'>{uploadProgress}%</span>
 											</div>
 											<div className='w-full bg-white/10 rounded-full h-2'>
@@ -718,554 +627,12 @@ const handlePublish = async () => {
 
 			{/* SUCCESS MODAL */}
 			{showSuccessModal && isComplete && tokenId && mintHash && showNotification && <ComicNotification 
-			onclose={() => setShowNotification(true)} 
-			comicData={comicData}
-			monetizationData={monetizationData} 
-			mintHash={mintHash}
-			tokenId={tokenId} 
+				onclose={() => setShowNotification(true)} 
+				comicData={comicData}
+				monetizationData={monetizationData} 
+				mintHash={mintHash}
+				tokenId={tokenId} 
 			/>}
 		</>
 	);
 }
-
-
-
-// src/app/comic-pad/upload-comics/_components/ComicPublisher.tsx
-// UPDATED VERSION - Now handles both paid and free comics
-
-// "use client";
-
-// import { useEffect, useState } from "react";
-// import { AlertCircle, CheckCircle, Upload, Zap, Database } from "lucide-react";
-// import { ComicNotification } from "./ComicNotification";
-// import Picture from "@/components/picture/Index";
-// import { useAppDispatch, useAppSelector } from "@/redux/hook";
-// import { useComicMinting } from "@/hook/useComicMinting";
-// import { useFreeComicMinting } from "@/hook/useFreeComicMinting"; // NEW IMPORT
-// import { useAccount } from "wagmi";
-// import { useRouter } from "next/navigation";
-
-// interface ExtractedFile {
-// 	name: string;
-// 	blob: Blob;
-// 	preview: string;
-// }
-
-// interface ComicData {
-// 	title: string;
-// 	description: string;
-// 	genre: string[];
-// 	tags: string[];
-// 	ageRating: string;
-// 	coverImage: File | null;
-// 	pages: ExtractedFile[];
-// }
-
-// interface MonetizationData {
-// 	publishType: "free" | "paid";
-// 	price?: number;
-// 	mintAsNFT: boolean;
-// 	nftCopies?: number;
-// 	nftPrice?: number;
-// 	// NEW: Free comic specific fields
-// 	isFreeNFT?: boolean;
-// 	maxFreeSupply?: number;
-// }
-
-// interface ComicPublisherProps {
-// 	onclose: () => void;
-// 	comicData: ComicData;
-// 	monetizationData: MonetizationData;
-// }
-
-// export default function ComicPublisher({ 
-// 	onclose, 
-// 	comicData, 
-// 	monetizationData 
-// }: ComicPublisherProps) {
-// 	const router = useRouter();
-// 	const [showNotification, setShowNotification] = useState(false);
-// 	const [error, setError] = useState<string | null>(null);
-// 	const [showSuccessModal, setShowSuccessModal] = useState(false);
-	
-// 	const dispatch = useAppDispatch();
-// 	const { user } = useAppSelector((state) => state.wallet);
-// 	const { isConnected } = useAccount();
-	
-// 	// NEW: Determine which flow to use
-// 	const isFreeComicWithNFT = monetizationData.publishType === "free" && monetizationData.isFreeNFT;
-// 	const isPaidComic = monetizationData.publishType === "paid";
-
-// 	// Use paid comic minting hook (existing)
-// 	const paidHook = useComicMinting();
-	
-// 	// NEW: Use free comic minting hook
-// 	const freeHook = useFreeComicMinting();
-	
-// 	// NEW: Select the appropriate hook based on comic type
-// 	const activeHook = isFreeComicWithNFT ? freeHook : paidHook;
-	
-// 	const {
-// 		isUploading,
-// 		isMinting,
-// 		uploadProgress,
-// 		mintingProgress,
-// 		isWritePending,
-// 		isConfirming,
-// 		isMintSuccess,
-// 		isComplete,
-// 		mintError,
-// 		tokenId,
-// 		mintHash,
-// 		comicId,
-// 		reset,
-// 	} = activeHook;
-
-// 	// Get additional properties based on hook type
-// 	const isListing = !isFreeComicWithNFT && 'isListing' in activeHook ? activeHook.isListing : false;
-// 	const approvalStatus = isFreeComicWithNFT && 'approvalStatus' in activeHook ? activeHook.approvalStatus : null;
-
-// 	// Handle completion
-// 	useEffect(() => {
-// 		if (isComplete && tokenId && mintHash) {
-// 			console.log('✅ Comic Publishing Complete!', {
-// 				type: isFreeComicWithNFT ? 'Free Claimable' : 'Paid',
-// 				tokenId: tokenId.toString(),
-// 				transactionHash: mintHash,
-// 				comicId
-// 			});
-// 			setShowSuccessModal(true);
-// 		}
-// 	}, [isComplete, tokenId, mintHash, comicId, isFreeComicWithNFT]);
-
-// 	// Handle errors
-// 	useEffect(() => {
-// 		if (mintError) {
-// 			setError(mintError.message || 'An error occurred during publishing');
-// 		}
-// 	}, [mintError]);
-
-// 	// Handle publish
-// 	const handlePublish = async () => {
-// 		try {
-// 			setError(null);
-			
-// 			if (!isConnected) {
-// 				setError('Please connect your wallet to publish');
-// 				return;
-// 			}
-
-// 			if (!user) {
-// 				setError('User information not available');
-// 				return;
-// 			}
-
-// 			console.log('🚀 Publishing comic with data:', {
-// 				type: isFreeComicWithNFT ? 'Free Claimable NFT' : 'Paid Comic',
-// 				comicData,
-// 				monetizationData,
-// 				user
-// 			});
-
-// 			// NEW: Route to appropriate publish function
-// 			if (isFreeComicWithNFT) {
-// 				// Publish as free claimable NFT
-// 				await freeHook.publishFreeComic({
-// 					comicData,
-// 					freeComicData: {
-// 						maxSupply: monetizationData.maxFreeSupply || 100,
-// 						royaltyPercentage: 10,
-// 					},
-// 					user,
-// 				});
-// 			} else {
-// 				// Publish as paid comic (existing flow)
-// 				await paidHook.publishComic({
-// 					comicData,
-// 					monetizationData,
-// 					user,
-// 				});
-// 			}
-
-// 		} catch (error: any) {
-// 			console.error('❌ Publish error:', error);
-// 			setError(error.message || 'Failed to publish comic');
-// 		}
-// 	};
-
-// 	// Get current progress message
-// 	const getProgressMessage = () => {
-// 		if (approvalStatus?.isApproving) {
-// 			return 'Requesting creator approval...';
-// 		}
-// 		if (isUploading) {
-// 			return `Uploading to IPFS... ${uploadProgress}%`;
-// 		}
-// 		if (isMinting || isWritePending) {
-// 			return 'Preparing blockchain transaction...';
-// 		}
-// 		if (isConfirming) {
-// 			return 'Confirming on blockchain...';
-// 		}
-// 		if (isListing) {
-// 			return 'Listing on marketplace...';
-// 		}
-// 		if (isMintSuccess && !isComplete) {
-// 			return 'Finalizing...';
-// 		}
-// 		return '';
-// 	};
-
-// 	const isPublishing = isUploading || isMinting || isWritePending || isConfirming || isListing || approvalStatus?.isApproving;
-
-// 	// NEW: Get theme colors based on comic type
-// 	const themeColors = isFreeComicWithNFT 
-// 		? { primary: 'from-green-600 to-blue-600', accent: 'green' }
-// 		: { primary: 'from-orange-600 to-orange-600', accent: 'orange' };
-
-// 	return (
-// 		<>
-// 			<div className='fixed inset-0 bg-black/90 backdrop-blur-md z-[100] flex items-center justify-center p-4'>
-// 				<div className='bg-gradient-to-br from-gray-900 via-black to-gray-900 rounded-2xl shadow-2xl w-full max-w-3xl border border-white/10'>
-// 					{/* Header - NEW: Dynamic based on comic type */}
-// 					<div className={`bg-gradient-to-r ${themeColors.primary} p-6 rounded-t-2xl`}>
-// 						<h2 className='text-3xl font-bold text-white tracking-wider text-center'>
-// 							{isFreeComicWithNFT ? '🎁 Publish Free Claimable Comic' : '🚀 Publish Comic'}
-// 						</h2>
-// 						<p className='text-white/80 text-center mt-2 text-sm'>
-// 							{isFreeComicWithNFT 
-// 								? 'Your comic will be minted as a free NFT that readers can claim'
-// 								: monetizationData.publishType === 'free'
-// 								? 'Your comic will be available to all readers for free'
-// 								: 'Your comic will be minted and listed on the marketplace'}
-// 						</p>
-// 					</div>
-
-// 					<div className='p-8'>
-// 						{/* Comic Preview */}
-// 						<div className='bg-white/5 rounded-xl p-6 mb-6 border border-white/10'>
-// 							<div className='flex gap-6'>
-// 								{comicData.coverImage && (
-// 									<div className='flex-shrink-0'>
-// 										<Picture
-// 											src={URL.createObjectURL(comicData.coverImage)}
-// 											alt={comicData.title}
-// 											className={`w-32 h-48 object-cover rounded-lg border-2 ${
-// 												isFreeComicWithNFT ? 'border-green-500/50' : 'border-orange-500/50'
-// 											}`}
-// 										/>
-// 									</div>
-// 								)}
-								
-// 								<div className='flex-1 space-y-3'>
-// 									<h3 className='text-2xl font-bold text-white'>
-// 										{comicData.title}
-// 									</h3>
-
-// 									<div className='grid grid-cols-2 gap-3 text-sm'>
-// 										<div className='flex items-center gap-3'>
-// 											<span className='text-white/60'>Genre:</span>
-// 											<span className='text-white'>{comicData.genre.join(', ')}</span>
-// 										</div>
-
-// 										<div className='flex items-center gap-3'>
-// 											<span className='text-white/60'>Rating:</span>
-// 											<span className='text-white'>
-// 												{comicData.ageRating === 'everyone' 
-// 													? 'All Ages' 
-// 													: comicData.ageRating === 'teen' 
-// 													? 'Teen (13+)' 
-// 													: 'Mature (18+)'}
-// 											</span>
-// 										</div>
-
-// 										<div className='flex items-center gap-3'>
-// 											<span className='text-white/60'>Access:</span>
-// 											<span className={`flex items-center gap-1 ${
-// 												isFreeComicWithNFT ? 'text-green-400' : 
-// 												monetizationData.publishType === 'free' ? 'text-green-400' : 
-// 												'text-orange-400'
-// 											} font-medium`}>
-// 												<CheckCircle size={14} />
-// 												{isFreeComicWithNFT ? 'Free to Claim' :
-// 												 monetizationData.publishType === 'free' ? 'Free to Read' :
-// 												 `Pay-Per-View ($${monetizationData.price?.toFixed(2)} HBAR)`}
-// 											</span>
-// 										</div>
-
-// 										{/* NEW: Show appropriate details based on type */}
-// 										{isFreeComicWithNFT ? (
-// 											<>
-// 												<div className='flex items-center gap-3'>
-// 													<span className='text-white/60'>NFT Type:</span>
-// 													<span className='flex items-center gap-1 text-green-400'>
-// 														<CheckCircle size={14} />
-// 														Claimable NFT
-// 													</span>
-// 												</div>
-// 												<div className='flex items-center gap-3'>
-// 													<span className='text-white/60'>Max Claims:</span>
-// 													<span className='text-white'>{monetizationData.maxFreeSupply} readers</span>
-// 												</div>
-// 											</>
-// 										) : monetizationData.mintAsNFT && (
-// 											<>
-// 												<div className='flex items-center gap-3'>
-// 													<span className='text-white/60'>NFT Edition:</span>
-// 													<span className='flex items-center gap-1'>
-// 														<CheckCircle size={14} className='text-green-400' />
-// 														Limited Edition
-// 													</span>
-// 												</div>
-// 												<div className='flex items-center gap-3'>
-// 													<span className='text-white/60'>NFT Copies:</span>
-// 													<span>{monetizationData.nftCopies} editions</span>
-// 												</div>
-// 												<div className='flex items-center gap-3'>
-// 													<span className='text-white/60'>Mint Price:</span>
-// 													<span>${monetizationData.nftPrice?.toFixed(2)} HBAR per NFT</span>
-// 												</div>
-// 											</>
-// 										)}
-
-// 										<div className='flex items-center gap-3'>
-// 											<span className='text-white/60'>Pages:</span>
-// 											<span className='text-white'>{comicData.pages.length} pages</span>
-// 										</div>
-// 									</div>
-// 								</div>
-// 							</div>
-
-// 							<p className='mt-4 text-sm text-white/80 tracking-wide leading-relaxed border-t border-white/10 pt-4'>
-// 								By clicking <b className={`text-${themeColors.accent}-400`}>&quot;PUBLISH COMIC!&quot;</b>, 
-// 								{isFreeComicWithNFT 
-// 									? ' your comic will be minted as an NFT on the blockchain. Readers will be able to claim one copy each for free (gas fees only) until the maximum supply is reached.'
-// 									: monetizationData.publishType === 'free'
-// 									? ' your comic will become live on Quiva and readers can start enjoying it immediately for free.'
-// 									: ' your comic will become live on Quiva and readers can start enjoying it immediately.'
-// 								}
-// 								{monetizationData.mintAsNFT && !isFreeComicWithNFT && ' Your NFT collection will also be created and available for minting.'}
-// 							</p>
-// 						</div>
-
-// 						{/* Progress Section */}
-// 						{isPublishing && (
-// 							<div className={`bg-${themeColors.accent}-500/10 border border-${themeColors.accent}-500/30 rounded-xl p-6 mb-6`}>
-// 								<div className='flex items-center gap-4 mb-4'>
-// 									<div className='relative w-12 h-12'>
-// 										<div className={`absolute inset-0 rounded-full border-4 border-${themeColors.accent}-500/20`}></div>
-// 										<div className={`absolute inset-0 rounded-full border-4 border-${themeColors.accent}-500 border-t-transparent animate-spin`}></div>
-// 									</div>
-// 									<div className='flex-1'>
-// 										<h4 className='text-white font-semibold mb-1'>
-// 											{getProgressMessage()}
-// 										</h4>
-// 										<div className='w-full bg-white/10 rounded-full h-2'>
-// 											<div 
-// 												className={`bg-gradient-to-r ${themeColors.primary} h-2 rounded-full transition-all duration-300`}
-// 												style={{ 
-// 													width: `${isUploading ? uploadProgress : mintingProgress}%` 
-// 												}}
-// 											></div>
-// 										</div>
-// 									</div>
-// 								</div>
-
-// 								<div className='space-y-2 text-sm text-white/70'>
-// 									<div className='flex items-center gap-2'>
-// 										{uploadProgress === 100 ? (
-// 											<CheckCircle size={16} className={`text-${themeColors.accent}-400`} />
-// 										) : (
-// 											<div className='w-4 h-4 border-2 border-white/30 rounded-full' />
-// 										)}
-// 										<span>Upload to IPFS</span>
-// 									</div>
-// 									{(approvalStatus || isFreeComicWithNFT) && (
-// 										<div className='flex items-center gap-2'>
-// 											{approvalStatus?.isApproved || mintingProgress > 20 ? (
-// 												<CheckCircle size={16} className={`text-${themeColors.accent}-400`} />
-// 											) : (
-// 												<div className='w-4 h-4 border-2 border-white/30 rounded-full' />
-// 											)}
-// 											<span>Creator Verification</span>
-// 										</div>
-// 									)}
-// 									<div className='flex items-center gap-2'>
-// 										{isMintSuccess ? (
-// 											<CheckCircle size={16} className={`text-${themeColors.accent}-400`} />
-// 										) : (
-// 											<div className='w-4 h-4 border-2 border-white/30 rounded-full' />
-// 										)}
-// 										<span>Mint {isFreeComicWithNFT ? 'Free' : ''} NFT</span>
-// 									</div>
-// 									{!isFreeComicWithNFT && monetizationData.mintAsNFT && (
-// 										<div className='flex items-center gap-2'>
-// 											{isComplete ? (
-// 												<CheckCircle size={16} className={`text-${themeColors.accent}-400`} />
-// 											) : (
-// 												<div className='w-4 h-4 border-2 border-white/30 rounded-full' />
-// 											)}
-// 											<span>List on Marketplace</span>
-// 										</div>
-// 									)}
-// 									<div className='flex items-center gap-2'>
-// 										{isComplete ? (
-// 											<CheckCircle size={16} className={`text-${themeColors.accent}-400`} />
-// 										) : (
-// 											<div className='w-4 h-4 border-2 border-white/30 rounded-full' />
-// 										)}
-// 										<span>Finalize Publication</span>
-// 									</div>
-// 								</div>
-// 							</div>
-// 						)}
-
-// 						{/* Error Display */}
-// 						{error && (
-// 							<div className='bg-red-500/10 border border-red-500/30 rounded-xl p-4 mb-6'>
-// 								<div className='flex items-start gap-3'>
-// 									<AlertCircle className='text-red-400 flex-shrink-0 mt-1' size={20} />
-// 									<div className='flex-1'>
-// 										<h4 className='text-red-400 font-semibold mb-1'>Error</h4>
-// 										<p className='text-red-300 text-sm'>{error}</p>
-// 									</div>
-// 								</div>
-// 							</div>
-// 						)}
-
-// 						{/* Action Buttons */}
-// 						<div className='flex gap-4'>
-// 							<button
-// 								onClick={() => {
-// 									reset();
-// 									onclose();
-// 								}}
-// 								disabled={isPublishing}
-// 								className='flex-1 py-3 px-6 bg-white/5 hover:bg-white/10 text-white rounded-full transition-colors border border-white/10 disabled:opacity-50 disabled:cursor-not-allowed'
-// 							>
-// 								Cancel
-// 							</button>
-// 							<button
-// 								onClick={handlePublish}
-// 								disabled={isPublishing || !isConnected}
-// 								className={`flex-1 py-3 px-6 bg-gradient-to-r ${themeColors.primary} hover:from-${themeColors.accent}-700 hover:to-${themeColors.accent === 'green' ? 'blue' : 'orange'}-700 text-white rounded-full font-semibold transition-all shadow-lg hover:shadow-${themeColors.accent}-500/50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2`}
-// 							>
-// 								{isPublishing ? (
-// 									<>
-// 										<div className='w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin' />
-// 										<span>Publishing...</span>
-// 									</>
-// 								) : (
-// 									<>
-// 										<Upload size={20} />
-// 										<span>PUBLISH COMIC!</span>
-// 									</>
-// 								)}
-// 							</button>
-// 						</div>
-// 					</div>
-// 				</div>
-// 			</div>
-
-// 			{/* Success Modal */}
-// 			{showSuccessModal && (
-// 				<div className='fixed inset-0 bg-black/95 backdrop-blur-md z-[110] flex items-center justify-center p-4'>
-// 					<div className='bg-gradient-to-br from-gray-900 via-black to-gray-900 rounded-2xl shadow-2xl w-full max-w-2xl border border-white/10 overflow-hidden'>
-// 						<div className={`bg-gradient-to-r ${themeColors.primary} p-8 text-center`}>
-// 							<div className='w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-4'>
-// 								<CheckCircle size={48} className={`text-${themeColors.accent}-600`} />
-// 							</div>
-// 							<h2 className='text-3xl font-bold text-white mb-2'>
-// 								🎉 Comic Published Successfully!
-// 							</h2>
-// 							<p className='text-white/80 text-lg'>
-// 								{isFreeComicWithNFT 
-// 									? 'Your comic is now live and ready for readers to claim'
-// 									: 'Your comic is now live on the marketplace'}
-// 							</p>
-// 						</div>
-
-// 						<div className='p-8'>
-// 							<div className='bg-white/5 rounded-xl p-6 mb-6 border border-white/10'>
-// 								<h3 className='text-white font-semibold mb-4 text-center'>
-// 									Transaction Details
-// 								</h3>
-// 								<div className='space-y-3 text-sm'>
-// 									<div className='flex justify-between items-center'>
-// 										<span className='text-white/60'>Token ID:</span>
-// 										<span className={`text-${themeColors.accent}-400 font-mono`}>
-// 											#{tokenId?.toString()}
-// 										</span>
-// 									</div>
-// 									{isFreeComicWithNFT && (
-// 										<div className='flex justify-between items-center'>
-// 											<span className='text-white/60'>Max Claims:</span>
-// 											<span className='text-white'>{monetizationData.maxFreeSupply} readers</span>
-// 										</div>
-// 									)}
-// 									{!isFreeComicWithNFT && monetizationData.mintAsNFT && (
-// 										<>
-// 											<div className='flex justify-between items-center'>
-// 												<span className='text-white/60'>NFT Copies:</span>
-// 												<span className='text-white'>{monetizationData.nftCopies} editions</span>
-// 											</div>
-// 											<div className='flex justify-between items-center'>
-// 												<span className='text-white/60'>Price:</span>
-// 												<span className='text-white'>${monetizationData.nftPrice?.toFixed(2)} HBAR</span>
-// 											</div>
-// 										</>
-// 									)}
-// 									<div className='flex justify-between items-center'>
-// 										<span className='text-white/60'>Transaction:</span>
-// 										<a
-// 											href={`https://hashscan.io/testnet/transaction/${mintHash}`}
-// 											target='_blank'
-// 											rel='noopener noreferrer'
-// 											className='text-blue-400 hover:text-blue-300 underline'
-// 										>
-// 											View on HashScan
-// 										</a>
-// 									</div>
-// 								</div>
-// 							</div>
-
-// 							<div className={`bg-${themeColors.accent}-500/10 border border-${themeColors.accent}-500/30 rounded-xl p-4 mb-6`}>
-// 								<p className={`text-${themeColors.accent}-300 text-sm text-center`}>
-// 									{isFreeComicWithNFT 
-// 										? `Readers can now claim your comic for free! Each reader can claim one copy until the maximum supply of ${monetizationData.maxFreeSupply} is reached.`
-// 										: monetizationData.publishType === 'free'
-// 										? 'Your comic is now available for everyone to read for free!'
-// 										: 'Your comic is now available on the marketplace for purchase!'}
-// 								</p>
-// 							</div>
-
-// 							<div className='flex gap-4'>
-// 								<button
-// 									onClick={() => comicId && router.push(`/marketplace/detail?id=${comicId}`)}
-// 									className={`flex-1 py-3 px-6 bg-gradient-to-r ${themeColors.primary} hover:from-${themeColors.accent}-700 hover:to-${themeColors.accent === 'green' ? 'blue' : 'orange'}-700 text-white rounded-full font-semibold transition-all shadow-lg hover:shadow-${themeColors.accent}-500/50`}
-// 								>
-// 									View Comic
-// 								</button>
-								
-// 								<button
-// 									onClick={() => {
-// 										setShowSuccessModal(false);
-// 										reset();
-// 										onclose();
-// 									}}
-// 									className='flex-1 py-3 px-6 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white rounded-full transition-colors border border-white/10'
-// 								>
-// 									Create Another Comic
-// 								</button>
-// 							</div>
-// 						</div>
-// 					</div>
-// 				</div>
-// 			)}
-
-// 			{showNotification && (
-// 				<ComicNotification onclose={() => setShowNotification(false)} comicData={comicData} />
-// 			)}
-// 		</>
-// 	);
-// }

@@ -7,6 +7,10 @@ interface ExtractedFile {
 	name: string;
 	blob: Blob;
 	preview: string;
+	type?: 'image' | 'pdf-file' | 'zip-images';
+	originalFileName?: string;
+	fileSize?: number;
+	pageCount?: number;
 }
 
 interface ComicCreationFormProps {
@@ -40,6 +44,10 @@ export function ComicCreationForm({ extractedFiles }: ComicCreationFormProps) {
 	const [coverPreview, setCoverPreview] = useState<string | null>(null);
 	const [ageRating, setAgeRating] = useState<string>("all-ages");
 	const [showOnboarding, setShowOnboarding] = useState(false);
+
+	// Check if we have a PDF file
+	const hasPdfFile = extractedFiles.some(file => file.type === 'pdf-file');
+	const pdfFile = extractedFiles.find(file => file.type === 'pdf-file');
 
 	const toggleGenre = (genre: string) => {
 		if (selectedGenres.includes(genre)) {
@@ -110,6 +118,13 @@ export function ComicCreationForm({ extractedFiles }: ComicCreationFormProps) {
 		ageRating: ageRating,
 		coverImage: coverImage,
 		pages: extractedFiles,
+		// Add PDF-specific metadata
+		sourceType: hasPdfFile ? 'pdf-file' : 'images',
+		pdfMetadata: pdfFile ? {
+			originalFileName: pdfFile.originalFileName,
+			fileSize: pdfFile.fileSize,
+			estimatedPageCount: pdfFile.pageCount
+		} : undefined
 	});
 
 	return (
@@ -141,7 +156,7 @@ export function ComicCreationForm({ extractedFiles }: ComicCreationFormProps) {
 						/>
 
 						<textarea
-							placeholder='Description *'
+							placeholder={hasPdfFile ? 'Description * (Describe your comic story - the file will be processed automatically)' : 'Description *'}
 							value={formData.description}
 							onChange={(e) => handleInputChange("description", e.target.value)}
 							className='w-full min-h-[100px] resize-none rounded-md border border-white/80 bg-transparent px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-primary-500'
@@ -241,7 +256,12 @@ export function ComicCreationForm({ extractedFiles }: ComicCreationFormProps) {
 						<div className='flex items-center justify-between'>
 							<h3 className='text-sm font-medium'>Cover Art (optional)</h3>
 							<span className='text-xs text-gray-400'>
-								{coverImage ? 'Custom cover' : 'First page will be used'}
+								{coverImage 
+									? 'Custom cover' 
+									: hasPdfFile 
+										? 'First page will be used' 
+										: 'First page will be used'
+								}
 							</span>
 						</div>
 
@@ -277,9 +297,17 @@ export function ComicCreationForm({ extractedFiles }: ComicCreationFormProps) {
 
 					{/* Page Count Info */}
 					<div className='bg-white/5 rounded-lg p-3 border border-white/10'>
-						<p className='text-white/70 text-sm'>
-							<span className='font-semibold text-primary-400'>{extractedFiles.length}</span> page{extractedFiles.length !== 1 ? 's' : ''} will be uploaded as Chapter 1
-						</p>
+						{hasPdfFile ? (
+							<div className='space-y-1'>
+								<p className='text-white/70 text-sm'>
+									<span className='font-semibold text-primary-400'>Comic Book</span> will be uploaded as Chapter 1
+								</p>
+							</div>
+						) : (
+							<p className='text-white/70 text-sm'>
+								<span className='font-semibold text-primary-400'>{extractedFiles.length}</span> page{extractedFiles.length !== 1 ? 's' : ''} will be uploaded as Chapter 1
+							</p>
+						)}
 					</div>
 
 					{/* Action Buttons */}
