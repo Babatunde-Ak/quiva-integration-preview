@@ -198,7 +198,7 @@ export const useComicPurchase = () => {
         walletAddress,
         txHash,
         price,
-        currency
+        currency 
       };
 
       const result = await dispatch(createTransaction({payload:transactionData} as any)).unwrap();

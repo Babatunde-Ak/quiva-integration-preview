@@ -57,7 +57,7 @@ const ComicReaderViewer = () => {
                     chapter
                         .pages
                         .forEach((page) => {
-                            pages.push({imageUrl: page.imageUrl, pageNumber: page.pageNumber, chapterNumber: chapter.chapterNumber, chapterTitle: chapter.title});
+                            pages.push({imageUrl: page.imageUrl, pageNumber: page.pageNumber, chapterNumber: chapter.chapterNumber, chapterTitle: chapter.title, contentType: page.contentType});
                         });
                 }
             });
@@ -275,38 +275,70 @@ const ComicReaderViewer = () => {
             {/* Vertical Scroll Container */}
             <div
                 ref={scrollContainerRef}
-                className="flex-1 overflow-y-auto overflow-x-hidden snap-y snap-mandatory scroll-smooth"
+                className="flex-1 overflow-y-auto overflow-x-hidden snap-y snap-mandatory scroll-smooth no-scrollbar"
                 style={{
                 scrollbarWidth: 'none',
                 msOverflowStyle: 'none'
             }}>
-                <style jsx>
+                {/* <style jsx>
                     {
                         ` div::-webkit-scrollbar {
                             display: none;
                         }
                         `
-                    }</style>
+                    }</style> */}
 
-                {comicPages.map((page, index) => (
-                    <div
-                        key={`${page.chapterNumber}-${page.pageNumber}`}
-                        className="w-full h-screen flex items-center justify-center snap-start snap-always bg-black">
-                        <img
-                            src={page.imageUrl}
-                            alt={`Chapter ${page.chapterNumber} - Page ${page.pageNumber}`}
-                            className="max-w-full max-h-full object-contain transition-transform duration-300"
-                            style={{
-                            transform: `scale(${zoom})`,
-                            maxWidth: zoom > 1
-                                ? `${ 100 * zoom}%`
-                                : '100%'
-                        }}
-                            loading={index > currentPage + 2
-                            ? 'lazy'
-                            : 'eager'}/>
-                    </div>
-                ))}
+                {comicPages.map((page, index) => {
+                    console.log('Rendering page:', page);
+                    // Viewer that always fills the viewport. Apply zoom via transform centered on the content.
+                    if (page.contentType === 'image') {
+                        console.log('Rendering image page:', page);
+                        return (
+                            <div
+                                key={`${page.chapterNumber}-${page.pageNumber}`}
+                                className="w-full h-screen flex items-center justify-center snap-start snap-always bg-black">
+                                {/* Centered container - width adapts to max-w-7xl */}
+                                <div className="w-full max-w-7xl mx-auto px-4 h-full flex items-center justify-center">
+                                    <img
+                                        src={page.imageUrl}
+                                        alt={`Chapter ${page.chapterNumber} - Page ${page.pageNumber}`}
+                                        className="w-full h-full object-cover transition-transform duration-300"
+                                        // style={{
+                                        //     transform: `scale(${zoom})`,
+                                        //     transformOrigin: 'center center'
+                                        // }}
+                                        loading={index > currentPage + 2 ? 'lazy' : 'eager'}
+                                    />
+                                </div>
+                            </div>
+                        );
+                    }
+
+                    return (
+                        <div
+                            key={`${page.chapterNumber}-${page.pageNumber}`}
+                            className="w-full h-screen flex items-center justify-center snap-start snap-always bg-black">
+                            {/* Centered container */}
+                            <div className="w-full max-w-7xl mx-auto px-4 h-full flex items-center justify-center">
+                                <div 
+                                    className="w-full h-full overflow-hidden rounded-lg"
+                                    style={{ transform: `scale(${zoom})`, transformOrigin: 'center center' }}>
+                                    <iframe
+                                        src={`${page.imageUrl}#zoom=fit&toolbar=0&navpanes=0&scrollbar=0&statusbar=0&view=FitH&pagemode=none`}
+                                        title={`Chapter ${page.chapterNumber} - Page ${page.pageNumber}`}
+                                        className="w-full h-full border-0 no-scrollbar"
+                                        loading={index > currentPage + 2 ? 'lazy' : 'eager'}
+                                        allow="fullscreen"
+                                        style={{ 
+                                            scrollbarWidth: 'none',
+                                            msOverflowStyle: 'none'
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })}
             </div>
 
             {/* Navigation Arrows */}
@@ -366,10 +398,21 @@ const ComicReaderViewer = () => {
                                     className={`flex-shrink-0 relative transition-all ${currentPage === index + 1
                                     ? 'ring-2 ring-yellow-500 scale-110'
                                     : 'opacity-50 hover:opacity-100'}`}>
-                                    <img
-                                        src={page.imageUrl}
-                                        alt={`Page ${index + 1}`}
-                                        className="w-12 h-16 object-cover rounded"/>
+                                    {page.contentType === 'image' ? (
+                                        <img
+                                            src={page.imageUrl}
+                                            alt={`Page ${index + 1}`}
+                                            className="w-12 h-16 object-cover rounded"/>
+                                    ) : page.thumbnailUrl ? (
+                                        <img
+                                            src={page.thumbnailUrl}
+                                            alt={`Page ${index + 1} preview`}
+                                            className="w-12 h-16 object-cover rounded"/>
+                                    ) : (
+                                        <div className="w-12 h-16 bg-gray-800 rounded flex items-center justify-center text-xs text-white">
+                                            <span aria-hidden>🌐</span>
+                                        </div>
+                                    )}
                                     <div className="absolute inset-0 flex items-center justify-center">
                                         <span className="text-white text-xs font-bold drop-shadow-lg">
                                             {index + 1}
