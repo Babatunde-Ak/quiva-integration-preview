@@ -567,3 +567,10 @@
   /* Ensure proper containment */
   contain: layout;
 }
+
+.read_all-slider{
+	background-image: url("../../public/bg-slider.png");
+	background-size: cover;
+	background-position: center;
+	background-repeat: no-repeat;
+}

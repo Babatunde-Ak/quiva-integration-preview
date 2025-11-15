@@ -279,3 +279,36 @@ export const heroComics: HeroComicData[] = [
       buttonText: 'Explore'
     }
   ]
+
+const sampleComics = [
+  {
+    id: '1',
+    title: 'Harry Potter',
+    image: 'https://images.unsplash.com/photo-1606112219348-204d7d8b94ee?auto=format&fit=crop&w=800&q=80',
+    description: 'The magical world of wizardry and adventure awaits in this beloved series.'
+  },
+  {
+    id: '2',
+    title: 'Spider-Man',
+    image: 'https://images.unsplash.com/photo-1606112219348-204d7d8b94ee?auto=format&fit=crop&w=800&q=80',
+    description: 'Your friendly neighborhood Spider-Man swings into action.'
+  },
+  {
+    id: '3',
+    title: 'Batman',
+    image: 'https://images.unsplash.com/photo-1606112219348-204d7d8b94ee?auto=format&fit=crop&w=800&q=80',
+    description: 'The Dark Knight protects Gotham City from evil.'
+  },
+  {
+    id: '4',
+    title: 'Wonder Woman',
+    image: 'https://images.unsplash.com/photo-1606112219348-204d7d8b94ee?auto=format&fit=crop&w=800&q=80',
+    description: 'An Amazon princess fights for truth and justice.'
+  },
+  {
+    id: '5',
+    title: 'Superman',
+    image: 'https://images.unsplash.com/photo-1606112219348-204d7d8b94ee?auto=format&fit=crop&w=800&q=80',
+    description: 'The Man of Steel defends Earth from threats.'
+  }
+];

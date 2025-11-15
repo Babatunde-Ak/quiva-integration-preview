@@ -88,7 +88,7 @@ export function CreatorsSection({ creators }: CreatorsSectionProps) {
 
               {/* Creator Details */}
               <div className="flex-1 min-w-0">
-                <h3 className="text-white font-bold text-base mb-1 truncate group-hover:text-orange-100 transition-colors">
+                <h3 className="text-white font-bold text-base mb-1 truncate group-hover:text-secondary-100 transition-colors">
                   {creator.name}
                 </h3>
                 <p className="text-gray-400 text-sm leading-tight">
