@@ -24,6 +24,7 @@ import { transformApiComicsToComics } from '@/features/comic-library/utils/trans
 import { transformApiComicsToTopComics } from '@/features/comic-library/utils/transformtopcomicsdata';
 import ComicsCarousel from '@/features/comic-library/components/ComicsCarousel';
 import { GridSection } from '@/features/comic-library/components/sections/GridSection';
+import { popularFilters } from '@/features/comic-library/data/content';
 
 export default function MainPage() {
   const { comics, isLoading } = useAppSelector((state) => state.comic)
@@ -120,6 +121,15 @@ export default function MainPage() {
         subtitle='Highest move in the past hours'
         comics={freeComics.length > 0 ? freeComics : upcomingComics} 
         isLoading={isLoading}
+      />
+
+      <ComicSection 
+        title="Popular Editions" 
+        subtitle='Check out the best editions'
+        comics={freeComics.length > 0 ? freeComics : upcomingComics} 
+        isLoading={isLoading}
+        inverted={true}
+        filters={popularFilters}
       />
 
       {/* Our Creators */}

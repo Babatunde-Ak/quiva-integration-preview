@@ -89,7 +89,7 @@ export function ComicCard({
               {premium ? (
                 <span className="flex items-center gap-1">
                   Premium
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="#E57226">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="#E9872B">
                     <path d="M7 14l3-3 7 7-3 3-7-7z"/>
                     <path d="M5.5 7.5l3-3L17 13l-3 3L5.5 7.5z"/>
                   </svg>

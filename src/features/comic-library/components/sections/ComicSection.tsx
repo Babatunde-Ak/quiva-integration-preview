@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ComicCard } from '@/components/cards/ComicCard'
 import { motion } from 'framer-motion'
+import { InertedGridComicCard } from '@/components/cards/InvertedGridComicCard'
 
 
 const FILTERS = [
@@ -46,6 +47,7 @@ interface ComicSectionProps {
     id: string
     label: string
   }[]
+  inverted?: boolean
 }
 
 
@@ -58,7 +60,8 @@ export function ComicSection({
   isLoading = false,
   filters = FILTERS,
   onFilterChange,
-  defaultFilter = 'trending'
+  defaultFilter = 'trending',
+  inverted = false
 }: ComicSectionProps) {
 
   const [activeFilter, setActiveFilter] = useState<string>(defaultFilter)
@@ -189,7 +192,27 @@ export function ComicSection({
                 </div>
               </div>
             ))
-          ) : (
+          ) : inverted ? (
+            // Actual Comics
+            comics.map((comic, index) => (
+              <div key={comic.id} className="flex-shrink-0">
+                <InertedGridComicCard 
+                  id={comic.id}
+                  title={comic.title}
+                  price={comic.price}
+                  subtitle={comic.subtitle}
+                  description={comic.description}
+                  image={comic.image}
+                  premium={comic.premium}
+                  buttonText={comic.buttonText}
+                  buttonVariant={comic.buttonVariant}
+                  size={cardSize}
+                  number={index + 1}
+                />
+              </div>
+            ))
+          ) : 
+          (
             // Actual Comics
             comics.map((comic, index) => (
               <div key={comic.id} className="flex-shrink-0">
