@@ -6,6 +6,8 @@ import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { Heart, Eye } from 'lucide-react'
 import { useState } from 'react'
+import Picture from '../picture/Index'
+import { hbar } from '../../../public/dev_images'
 
 interface ComicCardProps {
   id?: string
@@ -53,7 +55,7 @@ export function ComicCard({
 
   return (
     <motion.div 
-      className="w-[380px] bg-black-200 rounded-xl overflow-hidden cursor-pointer p-4 border-[2px] border-black-50 shadow-[4px_4px_0_0_black] hover:shadow-[6px_6px_0_0_black] transition-all duration-200"
+      className="w-[360px] bg-black-200 rounded-xl overflow-hidden cursor-pointer p-4 border-[2px] border-black-50 shadow-[4px_4px_0_0_black] hover:shadow-[6px_6px_0_0_black] transition-all duration-200"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
@@ -120,7 +122,7 @@ export function ComicCard({
         <div className='flex justify-between items-center'>
 
           {/* Creator Section */}
-          <div className="flex items-center gap-2 mb-4 flex-1 min-w-0 mr-4">
+          <div className="flex items-center gap-2 flex-1 min-w-0 mr-4">
             {/* Creator Avatar */}
             <div className="w-8 h-8 bg-black-100/50 rounded flex items-center justify-center overflow-hidden flex-shrink-0">
               {creatorAvatar ? (
@@ -158,7 +160,7 @@ export function ComicCard({
 
             <div className='flex flex-col items-center'>
               <span className="text-white text-xs font-light">Mint Price</span>
-              <span>{views} H</span>
+              <span>{views} <Picture src={hbar} alt="Hedera Logo" className="w-3 h-3"/></span>
             </div>
           </div>
         </div>

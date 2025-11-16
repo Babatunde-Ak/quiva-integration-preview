@@ -44,7 +44,7 @@ export function CreatorsSection({ creators }: CreatorsSectionProps) {
         </div>  
 
         <button className='border-2 border-secondary-200 rounded-2xl px-8 py-3 flex items-center hover:bg-black-50 transition-colors'>
-          <Rocket className='text-secondary-200' />
+          <Rocket size={16} className='text-secondary-200' />
           <span className="ml-2 text-xs font-medium text-white">View Rankings</span>
         </button>
       </div>

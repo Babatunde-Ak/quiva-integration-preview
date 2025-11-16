@@ -2,6 +2,8 @@
 
 import { motion } from 'framer-motion'
 import { Check } from 'lucide-react'
+import { hbar } from '../../../public/dev_images'
+import Picture from '../picture/Index'
 
 interface CreatorProfileCardProps {
   rank?: number
@@ -63,8 +65,8 @@ export function CreatorCard({
         
         {/* Verification Badge */}
         {isVerified && (
-          <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center border-2 border-gray-900">
-            <Check size={12} className="text-white" />
+          <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-white rounded-full flex items-center justify-center border-2 border-gray-900">
+            <Picture src={hbar} alt="Hedera Logo" className="w-6 h-6" />
           </div>
         )}
       </div>

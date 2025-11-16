@@ -1,10 +1,7 @@
 'use client'
 
 import React, {useRef, useState} from 'react'
-import {ChevronLeft, ChevronRight} from 'lucide-react'
-import {Button} from '@/components/ui/button'
 import {Skeleton} from '@/components/ui/skeleton'
-import {ComicCard} from '@/components/cards/ComicCard'
 import {motion} from 'framer-motion'
 import CollectionCard from '@/components/cards/TopSellingCard'
 

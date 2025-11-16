@@ -25,6 +25,7 @@ import { transformApiComicsToTopComics } from '@/features/comic-library/utils/tr
 import ComicsCarousel from '@/features/comic-library/components/ComicsCarousel';
 import { GridSection } from '@/features/comic-library/components/sections/GridSection';
 import { popularFilters } from '@/features/comic-library/data/content';
+import { SortComicSection } from '@/features/comic-library/components/sections/SortComicSection';
 
 export default function MainPage() {
   const { comics, isLoading } = useAppSelector((state) => state.comic)
@@ -136,18 +137,26 @@ export default function MainPage() {
       <CreatorsSection creators={creators} />
 
       {/* Mint These Comics - Use NFT comics */}
-      <ComicSection 
+      {/* <ComicSection 
         title="Mint These Comics"
         comics={nftComics.length > 0 ? nftComics : mintComics} 
         isLoading={isLoading}
-      />
+      /> */}
 
       {/* Explore More Button */}
-      <div className="flex justify-center mt-12">
+      {/* <div className="flex justify-center mt-12">
         <MainButton>
           Explore More Comics
         </MainButton>
-      </div>
+      </div> */}
+
+      <SortComicSection 
+          title="Today's Pick"
+          comics={freeComics.length > 0 ? freeComics : upcomingComics}
+          onFilterChange={(filter) => console.log('Filter:', filter)}
+          onSortChange={(sort) => console.log('Sort:', sort)}
+      />
+      
     </div>
   )
 }
