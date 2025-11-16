@@ -88,7 +88,7 @@ export function GridSection({
     return (
         <section className="my-8 mt-12 w-full max-w-full">
             {/* Section Header */}
-            <div className="flex items-center justify-between mb-4 w-full">
+            <div className="flex flex-wrap gap-2 items-center justify-between mb-4 w-full">
 
                 <div className="flex flex-col space-y-4">
                     {/* Header Section */}

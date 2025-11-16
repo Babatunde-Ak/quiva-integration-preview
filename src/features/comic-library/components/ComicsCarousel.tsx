@@ -139,7 +139,7 @@ const ComicsCarousel: React.FC<ComicsCarouselProps> = ({
     <>
      {/* Header */}
       <div className="relative z-10 my-8 mt-12">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap gap-2 items-center justify-between">
           <h2 className="text-2xl md:text-3xl font-medium text-white">
             Get all you can read
           </h2>
