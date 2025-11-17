@@ -70,7 +70,7 @@ export default function MainPage() {
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full container mx-auto px-4">
       {/* Hero section */}
       <div className="mb-8">
         <HeroComicSlider comics={heroComics} />
@@ -156,7 +156,7 @@ export default function MainPage() {
           onFilterChange={(filter) => console.log('Filter:', filter)}
           onSortChange={(sort) => console.log('Sort:', sort)}
       />
-      
+
     </div>
   )
 }
