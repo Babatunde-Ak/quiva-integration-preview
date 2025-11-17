@@ -173,6 +173,7 @@
 
 import React from 'react';
 import { X, Gift, Loader2, CheckCircle, XCircle } from 'lucide-react';
+import { MainButton } from '@/components/button';
 
 interface ClaimModalProps {
   isOpen: boolean;
@@ -200,10 +201,10 @@ const ClaimModal: React.FC<ClaimModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-gradient-to-br from-gray-900 via-black to-gray-900 rounded-2xl shadow-2xl w-full max-w-md border border-orange-500/30 overflow-hidden">
+    <div className="fixed inset-0 bg-black-200/90 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-black-500 rounded-2xl shadow-2xl w-full max-w-md border border-primary-500/30 overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-green-600 to-blue-600 p-6 text-center relative">
+        <div className="bg-primary-500 p-6 text-center relative">
           {!isClaiming && !claimSuccess && (
             <button
               onClick={onClose}
@@ -247,12 +248,12 @@ const ClaimModal: React.FC<ClaimModalProps> = ({
                 >
                   Cancel
                 </button>
-                <button
-                  onClick={onClaim}
-                  className="flex-1 py-3 px-6 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white rounded-full font-semibold transition-all shadow-lg"
-                >
+
+                <MainButton 
+                  onClick={onClaim}>
                   Claim Now
-                </button>
+                </MainButton>
+                
               </div>
             </div>
           )}
@@ -272,7 +273,7 @@ const ClaimModal: React.FC<ClaimModalProps> = ({
                   </p>
                   <div className="w-full bg-white/10 rounded-full h-2">
                     <div
-                      className="bg-gradient-to-r from-green-500 to-blue-500 h-2 rounded-full transition-all duration-300"
+                      className="bg-primary-500 h-2 rounded-full transition-all duration-300"
                       style={{ width: `${claimProgress}%` }}
                     />
                   </div>
@@ -291,7 +292,7 @@ const ClaimModal: React.FC<ClaimModalProps> = ({
           {/* Claim Success */}
           {claimSuccess && (
             <div className="text-center space-y-4">
-              <CheckCircle className="w-16 h-16 text-green-400 mx-auto" />
+              <CheckCircle className="w-16 h-16 text-secondary-200 mx-auto" />
               <div>
                 <p className="text-white font-semibold mb-1">Congratulations!</p>
                 <p className="text-white/60 text-sm">
