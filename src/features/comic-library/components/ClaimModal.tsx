@@ -234,8 +234,8 @@ const ClaimModal: React.FC<ClaimModalProps> = ({
                 <p className="text-white font-semibold">{comicTitle}</p>
               </div>
 
-              <div className="bg-gradient-to-r from-green-500/10 to-blue-500/10 border border-green-500/30 rounded-xl p-4">
-                <p className="text-green-300 text-sm text-center leading-relaxed">
+              <div className="bg-secondary-200/10 border border-primary-500/30 rounded-xl p-4">
+                <p className="text-white text-sm text-center leading-relaxed">
                   🎁 This comic is completely free! Claim your NFT to get permanent
                   reading access. You'll only pay gas fees.
                 </p>

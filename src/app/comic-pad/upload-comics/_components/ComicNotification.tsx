@@ -85,9 +85,9 @@ export function ComicNotification({ onclose, comicData, monetizationData, tokenI
 
 			{/* NFT Details Card */}
 			<div className=''>
-				<p className='text-sm font-semibold text-primary-400 mb-4 tracking-wider uppercase'>
+				{/* <p className='text-sm font-semibold text-primary-400 mb-4 tracking-wider uppercase'>
 					NFT Details
-				</p>
+				</p> */}
 				
 				<div className='space-y-3'>
 					{/* Token ID Display */}
@@ -140,7 +140,7 @@ export function ComicNotification({ onclose, comicData, monetizationData, tokenI
 					href={`https://hashscan.io/testnet/transaction/${mintHash}`}
 					target='_blank'
 					rel='noopener noreferrer'
-					className='flex items-center justify-center gap-2 text-xs text-primary-400 hover:text-secondary-300 mt-4 pt-4 border-t border-primary-500/20 transition-colors'
+					className='mb-6 flex items-center justify-center gap-2 text-xs text-primary-400 hover:text-secondary-300 mt-4 pt-4 border-t border-primary-500/20 transition-colors'
 				>
 					<span>View Transaction on HashScan</span>
 					<svg className='w-3 h-3' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
