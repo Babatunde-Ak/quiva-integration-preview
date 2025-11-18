@@ -10,6 +10,7 @@ import { SEO_CONFIG } from "@/components/utils/seoContants";
 import ReduxProviders from "@/redux/Provider";
 import RainbowProvider from "@/providers/RainbowProvider";
 import { ToastContainer } from "react-toastify";
+import { HashPackProvider } from "@/providers/HashPackProvider";
 
 const { description, keywords, title, url } = SEO_CONFIG.default;
 export const metadata: Metadata = {
@@ -38,12 +39,14 @@ export default function RootLayout({
     <html lang="en" className="">
       <body className={`mx-auto relative bg-black-100`}>
         <RainbowProvider>
+          <HashPackProvider>
           <ReduxProviders>
             <HeroUIProvider>
               <ToastContainer />
               {children}
             </HeroUIProvider>
           </ReduxProviders>
+          </HashPackProvider>
         </RainbowProvider>
       </body>
     </html>
