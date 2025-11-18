@@ -1,154 +1,41 @@
-// // export const QUIVA_COMICS_ADDRESS = '0xF5CBD0241D176C6cF35564d2F5b701F74a0756E8' as `0x${string}`;
-
-// // // Contract ABI - only include the functions we need
-// // export const QUIVA_COMICS_ABI = [
-// //   "function mintComic(string comicId, string metadataURI, uint256 price, uint256 maxSupply, uint256 royaltyPercentage) returns (uint256)",
-// //   "function purchaseComic(uint256 tokenId, uint256 amount) payable",
-// //   "function getComic(uint256 tokenId) view returns (tuple(uint256 tokenId, address creator, string metadataURI, uint256 price, uint256 maxSupply, uint256 currentSupply, uint256 royaltyPercentage, bool isActive))",
-// //   "function approveCreator(address creator)",
-// //   "function withdrawEarnings()",
-// //   "function comicIdToTokenId(string) view returns (uint256)",
-// //   "event ComicMinted(uint256 indexed tokenId, address indexed creator, string comicId, uint256 price, uint256 maxSupply)",
-// //   "event ComicPurchased(uint256 indexed tokenId, address indexed buyer, address indexed creator, uint256 price)"
-// // ] as const;
-
-// export const QUIVA_COMICS_ADDRESS = '0xF5CBD0241D176C6cF35564d2F5b701F74a0756E8' as `0x${string}`;
-
-// // Contract ABI in JSON format (required by wagmi v2)
-// export const QUIVA_COMICS_ABI = [
-//   {
-//     type: 'function',
-//     name: 'mintComic',
-//     stateMutability: 'nonpayable',
-//     inputs: [
-//       { name: 'comicId', type: 'string' },
-//       { name: 'metadataURI', type: 'string' },
-//       { name: 'price', type: 'uint256' },
-//       { name: 'maxSupply', type: 'uint256' },
-//       { name: 'royaltyPercentage', type: 'uint256' }
-//     ],
-//     outputs: [
-//       { name: '', type: 'uint256' }
-//     ]
-//   },
-//   {
-//     type: 'function',
-//     name: 'purchaseComic',
-//     stateMutability: 'payable',
-//     inputs: [
-//       { name: 'tokenId', type: 'uint256' },
-//       { name: 'amount', type: 'uint256' }
-//     ],
-//     outputs: []
-//   },
-//   {
-//     type: 'function',
-//     name: 'getComic',
-//     stateMutability: 'view',
-//     inputs: [
-//       { name: 'tokenId', type: 'uint256' }
-//     ],
-//     outputs: [
-//       {
-//         name: '',
-//         type: 'tuple',
-//         components: [
-//           { name: 'tokenId', type: 'uint256' },
-//           { name: 'creator', type: 'address' },
-//           { name: 'metadataURI', type: 'string' },
-//           { name: 'price', type: 'uint256' },
-//           { name: 'maxSupply', type: 'uint256' },
-//           { name: 'currentSupply', type: 'uint256' },
-//           { name: 'royaltyPercentage', type: 'uint256' },
-//           { name: 'isActive', type: 'bool' }
-//         ]
-//       }
-//     ]
-//   },
-//   {
-//     type: 'function',
-//     name: 'approveCreator',
-//     stateMutability: 'nonpayable',
-//     inputs: [
-//       { name: 'creator', type: 'address' }
-//     ],
-//     outputs: []
-//   },
-//   {
-//     type: 'function',
-//     name: 'withdrawEarnings',
-//     stateMutability: 'nonpayable',
-//     inputs: [],
-//     outputs: []
-//   },
-//   {
-//     type: 'function',
-//     name: 'comicIdToTokenId',
-//     stateMutability: 'view',
-//     inputs: [
-//       { name: '', type: 'string' }
-//     ],
-//     outputs: [
-//       { name: '', type: 'uint256' }
-//     ]
-//   },
-//   {
-//     type: 'event',
-//     name: 'ComicMinted',
-//     inputs: [
-//       { name: 'tokenId', type: 'uint256', indexed: true },
-//       { name: 'creator', type: 'address', indexed: true },
-//       { name: 'comicId', type: 'string', indexed: false },
-//       { name: 'price', type: 'uint256', indexed: false },
-//       { name: 'maxSupply', type: 'uint256', indexed: false }
-//     ]
-//   },
-//   {
-//     type: 'event',
-//     name: 'ComicPurchased',
-//     inputs: [
-//       { name: 'tokenId', type: 'uint256', indexed: true },
-//       { name: 'buyer', type: 'address', indexed: true },
-//       { name: 'creator', type: 'address', indexed: true },
-//       { name: 'price', type: 'uint256', indexed: false }
-//     ]
-//   }
-// ] as const;
-
-// export const QUIVA_COMICS_ADDRESS = '0xF5CBD0241D176C6cF35564d2F5b701F74a0756E8' as `0x${string}`;
-
-// // Contract ABI - only include the functions we need
-// export const QUIVA_COMICS_ABI = [
-//   "function mintComic(string comicId, string metadataURI, uint256 price, uint256 maxSupply, uint256 royaltyPercentage) returns (uint256)",
-//   "function purchaseComic(uint256 tokenId, uint256 amount) payable",
-//   "function getComic(uint256 tokenId) view returns (tuple(uint256 tokenId, address creator, string metadataURI, uint256 price, uint256 maxSupply, uint256 currentSupply, uint256 royaltyPercentage, bool isActive))",
-//   "function approveCreator(address creator)",
-//   "function withdrawEarnings()",
-//   "function comicIdToTokenId(string) view returns (uint256)",
-//   "event ComicMinted(uint256 indexed tokenId, address indexed creator, string comicId, uint256 price, uint256 maxSupply)",
-//   "event ComicPurchased(uint256 indexed tokenId, address indexed buyer, address indexed creator, uint256 price)"
-// ] as const;
-
-export const QUIVA_COMICS_ADDRESS = '0x35eE78eB3918Ac7181b2Fd16dA068a3241C06B54' as `0x${string}`;
+export const QUIVA_COMICS_ADDRESS = '0x4bf17393c1dfe1913e9087d1328d8b1294df3944' as `0x${string}`;
 export const QUIVA_FREE_COMICS_ADDRESS = '0x2affb6824a72185f6654f69b69acd8cfb014400a' as `0x${string}`;
-
+export const QUIVA_MARKETPLACE = '0x01c8d73d5f771e7a10d0f83f4ba0855fa96f7674';
 // Contract ABI in JSON format (required by wagmi v2)
-export const QUIVA_COMICS_ABI =  [
+
+// export const QUIVA_COMICS_ABI = as const;
+ export const QUIVA_COMICS_ABI = [
 	{
 		"inputs": [
 			{
-				"internalType": "address",
-				"name": "_treasuryAddress",
-				"type": "address"
-			},
-			{
-				"internalType": "address",
-				"name": "initialOwner",
-				"type": "address"
+				"internalType": "string",
+				"name": "baseURI_",
+				"type": "string"
 			}
 		],
 		"stateMutability": "nonpayable",
 		"type": "constructor"
+	},
+	{
+		"inputs": [],
+		"name": "AccessControlBadConfirmation",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "neededRole",
+				"type": "bytes32"
+			}
+		],
+		"name": "AccessControlUnauthorizedAccount",
+		"type": "error"
 	},
 	{
 		"inputs": [
@@ -254,12 +141,7 @@ export const QUIVA_COMICS_ABI =  [
 	},
 	{
 		"inputs": [],
-		"name": "EnforcedPause",
-		"type": "error"
-	},
-	{
-		"inputs": [],
-		"name": "ExpectedPause",
+		"name": "InvalidMaxsupply",
 		"type": "error"
 	},
 	{
@@ -282,6 +164,51 @@ export const QUIVA_COMICS_ABI =  [
 			}
 		],
 		"name": "OwnableUnauthorizedAccount",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "QuivaComic__ArrayLengthMismatch",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "QuivaComic__CreatorAlreadyExists",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "QuivaComic__CreatorNotFound",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "QuivaComic__EmptyArray",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "QuivaComic__InvalidAmount",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "QuivaComic__InvalidTokenURI",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "QuivaComic__OnlyCreatorCanMint",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "QuivaComic__TokenDoesNotExist",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "ReentrancyGuardReentrantCall",
 		"type": "error"
 	},
 	{
@@ -313,92 +240,18 @@ export const QUIVA_COMICS_ABI =  [
 		"anonymous": false,
 		"inputs": [
 			{
-				"indexed": true,
-				"internalType": "uint256",
-				"name": "tokenId",
-				"type": "uint256"
-			},
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "seller",
-				"type": "address"
-			},
-			{
 				"indexed": false,
-				"internalType": "uint256",
-				"name": "pricePerToken",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "amount",
-				"type": "uint256"
+				"internalType": "string",
+				"name": "newBaseURI",
+				"type": "string"
 			}
 		],
-		"name": "ComicListed",
+		"name": "BaseURIUpdated",
 		"type": "event"
 	},
 	{
 		"anonymous": false,
 		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "uint256",
-				"name": "tokenId",
-				"type": "uint256"
-			},
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "seller",
-				"type": "address"
-			}
-		],
-		"name": "ComicListingCancelled",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "uint256",
-				"name": "tokenId",
-				"type": "uint256"
-			},
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "seller",
-				"type": "address"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "newPrice",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "newAmount",
-				"type": "uint256"
-			}
-		],
-		"name": "ComicListingUpdated",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "uint256",
-				"name": "tokenId",
-				"type": "uint256"
-			},
 			{
 				"indexed": true,
 				"internalType": "address",
@@ -406,19 +259,13 @@ export const QUIVA_COMICS_ABI =  [
 				"type": "address"
 			},
 			{
-				"indexed": false,
-				"internalType": "string",
-				"name": "comicId",
-				"type": "string"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "maxSupply",
-				"type": "uint256"
+				"indexed": true,
+				"internalType": "address",
+				"name": "addedBy",
+				"type": "address"
 			}
 		],
-		"name": "ComicMinted",
+		"name": "CreatorAdded",
 		"type": "event"
 	},
 	{
@@ -426,42 +273,43 @@ export const QUIVA_COMICS_ABI =  [
 		"inputs": [
 			{
 				"indexed": true,
+				"internalType": "address",
+				"name": "creator",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "removedBy",
+				"type": "address"
+			}
+		],
+		"name": "CreatorRemoved",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "creator",
+				"type": "address"
+			},
+			{
+				"indexed": true,
 				"internalType": "uint256",
 				"name": "tokenId",
 				"type": "uint256"
 			},
 			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "buyer",
-				"type": "address"
-			},
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "seller",
-				"type": "address"
-			},
-			{
 				"indexed": false,
-				"internalType": "uint256",
-				"name": "pricePerToken",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "amount",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "totalPrice",
-				"type": "uint256"
+				"internalType": "string",
+				"name": "tokenURI",
+				"type": "string"
 			}
 		],
-		"name": "ComicPurchased",
+		"name": "NFTMinted",
 		"type": "event"
 	},
 	{
@@ -487,57 +335,75 @@ export const QUIVA_COMICS_ABI =  [
 		"anonymous": false,
 		"inputs": [
 			{
-				"indexed": false,
+				"indexed": true,
+				"internalType": "bytes32",
+				"name": "role",
+				"type": "bytes32"
+			},
+			{
+				"indexed": true,
+				"internalType": "bytes32",
+				"name": "previousAdminRole",
+				"type": "bytes32"
+			},
+			{
+				"indexed": true,
+				"internalType": "bytes32",
+				"name": "newAdminRole",
+				"type": "bytes32"
+			}
+		],
+		"name": "RoleAdminChanged",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "bytes32",
+				"name": "role",
+				"type": "bytes32"
+			},
+			{
+				"indexed": true,
 				"internalType": "address",
 				"name": "account",
 				"type": "address"
-			}
-		],
-		"name": "Paused",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "oldFee",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "newFee",
-				"type": "uint256"
-			}
-		],
-		"name": "PlatformFeeUpdated",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "uint256",
-				"name": "tokenId",
-				"type": "uint256"
 			},
 			{
 				"indexed": true,
 				"internalType": "address",
-				"name": "creator",
+				"name": "sender",
+				"type": "address"
+			}
+		],
+		"name": "RoleGranted",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "bytes32",
+				"name": "role",
+				"type": "bytes32"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "account",
 				"type": "address"
 			},
 			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "amount",
-				"type": "uint256"
+				"indexed": true,
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
 			}
 		],
-		"name": "RoyaltyPaid",
+		"name": "RoleRevoked",
 		"type": "event"
 	},
 	{
@@ -618,25 +484,6 @@ export const QUIVA_COMICS_ABI =  [
 		"anonymous": false,
 		"inputs": [
 			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "oldTreasury",
-				"type": "address"
-			},
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "newTreasury",
-				"type": "address"
-			}
-		],
-		"name": "TreasuryUpdated",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
 				"indexed": false,
 				"internalType": "string",
 				"name": "value",
@@ -653,45 +500,13 @@ export const QUIVA_COMICS_ABI =  [
 		"type": "event"
 	},
 	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": false,
-				"internalType": "address",
-				"name": "account",
-				"type": "address"
-			}
-		],
-		"name": "Unpaused",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "recipient",
-				"type": "address"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "amount",
-				"type": "uint256"
-			}
-		],
-		"name": "Withdrawal",
-		"type": "event"
-	},
-	{
 		"inputs": [],
-		"name": "MAX_PLATFORM_FEE",
+		"name": "CREATOR_ROLE",
 		"outputs": [
 			{
-				"internalType": "uint256",
+				"internalType": "bytes32",
 				"name": "",
-				"type": "uint256"
+				"type": "bytes32"
 			}
 		],
 		"stateMutability": "view",
@@ -699,12 +514,12 @@ export const QUIVA_COMICS_ABI =  [
 	},
 	{
 		"inputs": [],
-		"name": "MAX_ROYALTY",
+		"name": "DEFAULT_ADMIN_ROLE",
 		"outputs": [
 			{
-				"internalType": "uint256",
+				"internalType": "bytes32",
 				"name": "",
-				"type": "uint256"
+				"type": "bytes32"
 			}
 		],
 		"stateMutability": "view",
@@ -718,7 +533,7 @@ export const QUIVA_COMICS_ABI =  [
 				"type": "address"
 			}
 		],
-		"name": "approveCreator",
+		"name": "addCreator",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -726,20 +541,14 @@ export const QUIVA_COMICS_ABI =  [
 	{
 		"inputs": [
 			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
+				"internalType": "address[]",
+				"name": "creators",
+				"type": "address[]"
 			}
 		],
-		"name": "approvedCreators",
-		"outputs": [
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"stateMutability": "view",
+		"name": "addCreators",
+		"outputs": [],
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
@@ -793,96 +602,16 @@ export const QUIVA_COMICS_ABI =  [
 	{
 		"inputs": [
 			{
-				"internalType": "uint256[]",
-				"name": "tokenIds",
-				"type": "uint256[]"
-			},
-			{
-				"internalType": "address[]",
-				"name": "sellers",
-				"type": "address[]"
-			},
-			{
-				"internalType": "uint256[]",
-				"name": "amounts",
-				"type": "uint256[]"
-			}
-		],
-		"name": "batchPurchase",
-		"outputs": [],
-		"stateMutability": "payable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
 				"internalType": "uint256",
-				"name": "tokenId",
+				"name": "id",
 				"type": "uint256"
 			}
 		],
-		"name": "cancelListing",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "",
-				"type": "string"
-			}
-		],
-		"name": "comicIdToTokenId",
+		"name": "exists",
 		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"name": "comics",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "tokenId",
-				"type": "uint256"
-			},
-			{
-				"internalType": "address",
-				"name": "creator",
-				"type": "address"
-			},
-			{
-				"internalType": "string",
-				"name": "metadataURI",
-				"type": "string"
-			},
-			{
-				"internalType": "uint256",
-				"name": "maxSupply",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "royaltyPercentage",
-				"type": "uint256"
-			},
 			{
 				"internalType": "bool",
-				"name": "exists",
+				"name": "",
 				"type": "bool"
 			}
 		],
@@ -891,57 +620,12 @@ export const QUIVA_COMICS_ABI =  [
 	},
 	{
 		"inputs": [],
-		"name": "emergencyWithdraw",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "tokenId",
-				"type": "uint256"
-			}
-		],
-		"name": "getComic",
+		"name": "getAllCreators",
 		"outputs": [
 			{
-				"components": [
-					{
-						"internalType": "uint256",
-						"name": "tokenId",
-						"type": "uint256"
-					},
-					{
-						"internalType": "address",
-						"name": "creator",
-						"type": "address"
-					},
-					{
-						"internalType": "string",
-						"name": "metadataURI",
-						"type": "string"
-					},
-					{
-						"internalType": "uint256",
-						"name": "maxSupply",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "royaltyPercentage",
-						"type": "uint256"
-					},
-					{
-						"internalType": "bool",
-						"name": "exists",
-						"type": "bool"
-					}
-				],
-				"internalType": "struct QuivaComics.Comic",
+				"internalType": "address[]",
 				"name": "",
-				"type": "tuple"
+				"type": "address[]"
 			}
 		],
 		"stateMutability": "view",
@@ -949,7 +633,20 @@ export const QUIVA_COMICS_ABI =  [
 	},
 	{
 		"inputs": [],
-		"name": "getCurrentTokenId",
+		"name": "getBaseURI",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getCreatorCount",
 		"outputs": [
 			{
 				"internalType": "uint256",
@@ -966,41 +663,14 @@ export const QUIVA_COMICS_ABI =  [
 				"internalType": "uint256",
 				"name": "tokenId",
 				"type": "uint256"
-			},
-			{
-				"internalType": "address",
-				"name": "seller",
-				"type": "address"
 			}
 		],
-		"name": "getListing",
+		"name": "getCreatorOf",
 		"outputs": [
 			{
-				"components": [
-					{
-						"internalType": "address",
-						"name": "seller",
-						"type": "address"
-					},
-					{
-						"internalType": "uint256",
-						"name": "pricePerToken",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "amount",
-						"type": "uint256"
-					},
-					{
-						"internalType": "bool",
-						"name": "isActive",
-						"type": "bool"
-					}
-				],
-				"internalType": "struct QuivaComics.Listing",
+				"internalType": "address",
 				"name": "",
-				"type": "tuple"
+				"type": "address"
 			}
 		],
 		"stateMutability": "view",
@@ -1009,17 +679,71 @@ export const QUIVA_COMICS_ABI =  [
 	{
 		"inputs": [
 			{
-				"internalType": "address",
-				"name": "account",
-				"type": "address"
+				"internalType": "bytes32",
+				"name": "role",
+				"type": "bytes32"
 			}
 		],
-		"name": "getPendingWithdrawal",
+		"name": "getRoleAdmin",
+		"outputs": [
+			{
+				"internalType": "bytes32",
+				"name": "",
+				"type": "bytes32"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getTokenCounter",
 		"outputs": [
 			{
 				"internalType": "uint256",
 				"name": "",
 				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "getTokenMetadata",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "address",
+						"name": "creator",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "mintTimestamp",
+						"type": "uint256"
+					},
+					{
+						"internalType": "string",
+						"name": "uri",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "maxSupply",
+						"type": "uint256"
+					}
+				],
+				"internalType": "struct QuivaComic.TokenMetadata",
+				"name": "",
+				"type": "tuple"
 			}
 		],
 		"stateMutability": "view",
@@ -1033,7 +757,120 @@ export const QUIVA_COMICS_ABI =  [
 				"type": "address"
 			}
 		],
-		"name": "isApprovedCreator",
+		"name": "getTokensByCreator",
+		"outputs": [
+			{
+				"internalType": "uint256[]",
+				"name": "",
+				"type": "uint256[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "creator",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "offset",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "limit",
+				"type": "uint256"
+			}
+		],
+		"name": "getTokensByCreatorPaginated",
+		"outputs": [
+			{
+				"internalType": "uint256[]",
+				"name": "tokens",
+				"type": "uint256[]"
+			},
+			{
+				"internalType": "uint256",
+				"name": "total",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			}
+		],
+		"name": "getTokensByOwner",
+		"outputs": [
+			{
+				"internalType": "uint256[]",
+				"name": "tokenIds",
+				"type": "uint256[]"
+			},
+			{
+				"internalType": "uint256[]",
+				"name": "balances",
+				"type": "uint256[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getTotalTokenTypes",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "role",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "grantRole",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "role",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "hasRole",
 		"outputs": [
 			{
 				"internalType": "bool",
@@ -1071,59 +908,16 @@ export const QUIVA_COMICS_ABI =  [
 	{
 		"inputs": [
 			{
-				"internalType": "uint256",
-				"name": "tokenId",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "amount",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "pricePerToken",
-				"type": "uint256"
-			}
-		],
-		"name": "listComic",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			},
-			{
 				"internalType": "address",
-				"name": "",
+				"name": "account",
 				"type": "address"
 			}
 		],
-		"name": "listings",
+		"name": "isCreator",
 		"outputs": [
 			{
-				"internalType": "address",
-				"name": "seller",
-				"type": "address"
-			},
-			{
-				"internalType": "uint256",
-				"name": "pricePerToken",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "amount",
-				"type": "uint256"
-			},
-			{
 				"internalType": "bool",
-				"name": "isActive",
+				"name": "",
 				"type": "bool"
 			}
 		],
@@ -1134,22 +928,12 @@ export const QUIVA_COMICS_ABI =  [
 		"inputs": [
 			{
 				"internalType": "string",
-				"name": "comicId",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "metadataURI",
+				"name": "tokenURI_",
 				"type": "string"
 			},
 			{
 				"internalType": "uint256",
 				"name": "maxSupply",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "royaltyPercentage",
 				"type": "uint256"
 			}
 		],
@@ -1162,6 +946,42 @@ export const QUIVA_COMICS_ABI =  [
 			}
 		],
 		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "mintMore",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "name",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
 		"type": "function"
 	},
 	{
@@ -1178,78 +998,16 @@ export const QUIVA_COMICS_ABI =  [
 		"type": "function"
 	},
 	{
-		"inputs": [],
-		"name": "pause",
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "creator",
+				"type": "address"
+			}
+		],
+		"name": "removeCreator",
 		"outputs": [],
 		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "paused",
-		"outputs": [
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"name": "pendingWithdrawals",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "platformFee",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "tokenId",
-				"type": "uint256"
-			},
-			{
-				"internalType": "address",
-				"name": "seller",
-				"type": "address"
-			},
-			{
-				"internalType": "uint256",
-				"name": "amount",
-				"type": "uint256"
-			}
-		],
-		"name": "purchaseComic",
-		"outputs": [],
-		"stateMutability": "payable",
 		"type": "function"
 	},
 	{
@@ -1262,12 +1020,35 @@ export const QUIVA_COMICS_ABI =  [
 	{
 		"inputs": [
 			{
+				"internalType": "bytes32",
+				"name": "role",
+				"type": "bytes32"
+			},
+			{
 				"internalType": "address",
-				"name": "creator",
+				"name": "callerConfirmation",
 				"type": "address"
 			}
 		],
-		"name": "revokeCreator",
+		"name": "renounceRole",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "role",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "revokeRole",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -1359,6 +1140,19 @@ export const QUIVA_COMICS_ABI =  [
 	{
 		"inputs": [
 			{
+				"internalType": "string",
+				"name": "newBaseURI",
+				"type": "string"
+			}
+		],
+		"name": "setBaseURI",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
 				"internalType": "bytes4",
 				"name": "interfaceId",
 				"type": "bytes4"
@@ -1376,10 +1170,36 @@ export const QUIVA_COMICS_ABI =  [
 		"type": "function"
 	},
 	{
+		"inputs": [],
+		"name": "symbol",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "totalSupply",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
 		"inputs": [
 			{
 				"internalType": "uint256",
-				"name": "tokenId",
+				"name": "id",
 				"type": "uint256"
 			}
 		],
@@ -1408,75 +1228,6 @@ export const QUIVA_COMICS_ABI =  [
 		"type": "function"
 	},
 	{
-		"inputs": [],
-		"name": "treasuryAddress",
-		"outputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "unpause",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "tokenId",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "newAmount",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "newPrice",
-				"type": "uint256"
-			}
-		],
-		"name": "updateListing",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "newFee",
-				"type": "uint256"
-			}
-		],
-		"name": "updatePlatformFee",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "newTreasury",
-				"type": "address"
-			}
-		],
-		"name": "updateTreasury",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
 		"inputs": [
 			{
 				"internalType": "uint256",
@@ -1494,15 +1245,8 @@ export const QUIVA_COMICS_ABI =  [
 		],
 		"stateMutability": "view",
 		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "withdraw",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
 	}
-] as const;
+]  as const;
 
 export const QUIVA_FREE_COMICS_ABI =  [
 	{
@@ -2587,5 +2331,796 @@ export const QUIVA_FREE_COMICS_ABI =  [
 		"type": "function"
 	}
 ] as const;
-			
+
+export const  QUIVA_MARKETPLACE_ABI = [
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "treasury",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "marketplaceFeeBps",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "nftAddress",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "NFTMarketplace__AlreadyListed",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "NFTMarketplace__InsufficientBalance",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "NFTMarketplace__InvalidAmount",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "NFTMarketplace__InvalidFee",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "NFTMarketplace__InvalidNFTAddress",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "NFTMarketplace__NoProceeds",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "NFTMarketplace__NotApprovedForMarketplace",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "NFTMarketplace__NotERC1155",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "nftAddress",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "NFTMarketplace__NotListed",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "NFTMarketplace__NotOwner",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "NFTMarketplace__PriceMustBeAboveZero",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "nftAddress",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "price",
+				"type": "uint256"
+			}
+		],
+		"name": "NFTMarketplace__PriceNotMet",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "NFTMarketplace__TransferFailed",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			}
+		],
+		"name": "OwnableInvalidOwner",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "OwnableUnauthorizedAccount",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "ReentrancyGuardReentrantCall",
+		"type": "error"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "EthReceived",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "buyer",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "nftAddress",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "totalPrice",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "seller",
+				"type": "address"
+			}
+		],
+		"name": "ItemBought",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "seller",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "nftAddress",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "ItemCanceled",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "seller",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "nftAddress",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "pricePerItem",
+				"type": "uint256"
+			}
+		],
+		"name": "ItemListed",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "seller",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "nftAddress",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "oldPrice",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "newPrice",
+				"type": "uint256"
+			}
+		],
+		"name": "ListingUpdated",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "previousOwner",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "OwnershipTransferred",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "seller",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "ProceedsWithdrawn",
+		"type": "event"
+	},
+	{
+		"stateMutability": "payable",
+		"type": "fallback"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "nftAddress",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "buyItem",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "nftAddress",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "calculateTotalPrice",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "totalPrice",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "fee",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "proceeds",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "nftAddress",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "cancelListing",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getCurrentListings",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "nftAddress",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "getListing",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "uint256",
+						"name": "pricePerItem",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					},
+					{
+						"internalType": "address",
+						"name": "seller",
+						"type": "address"
+					}
+				],
+				"internalType": "struct NFTMarketplace.Listing",
+				"name": "",
+				"type": "tuple"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getMarketplaceFee",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "seller",
+				"type": "address"
+			}
+		],
+		"name": "getProceeds",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getTotalSales",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getTotalVolume",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getTreasury",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "nftAddress",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "isNFTListed",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "nftAddress",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "pricePerItem",
+				"type": "uint256"
+			}
+		],
+		"name": "listItem",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256[]",
+				"name": "",
+				"type": "uint256[]"
+			},
+			{
+				"internalType": "uint256[]",
+				"name": "",
+				"type": "uint256[]"
+			},
+			{
+				"internalType": "bytes",
+				"name": "",
+				"type": "bytes"
+			}
+		],
+		"name": "onERC1155BatchReceived",
+		"outputs": [
+			{
+				"internalType": "bytes4",
+				"name": "",
+				"type": "bytes4"
+			}
+		],
+		"stateMutability": "pure",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bytes",
+				"name": "",
+				"type": "bytes"
+			}
+		],
+		"name": "onERC1155Received",
+		"outputs": [
+			{
+				"internalType": "bytes4",
+				"name": "",
+				"type": "bytes4"
+			}
+		],
+		"stateMutability": "pure",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "owner",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "renounceOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes4",
+				"name": "interfaceId",
+				"type": "bytes4"
+			}
+		],
+		"name": "supportsInterface",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "pure",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "transferOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "nftAddress",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "newPricePerItem",
+				"type": "uint256"
+			}
+		],
+		"name": "updateListing",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "newFeeBps",
+				"type": "uint256"
+			}
+		],
+		"name": "updateMarketplaceFee",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "withdrawProceeds",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"stateMutability": "payable",
+		"type": "receive"
+	}
+] as const;
 			

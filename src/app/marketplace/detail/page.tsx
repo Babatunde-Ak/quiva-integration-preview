@@ -26,6 +26,7 @@ import { useComicPurchase } from '../../../hook/usePurchaseComic'
 import { useClaimFreeComic, useCheckComicClaim } from '@/hook/useClaimFreeComic'
 import { parseEther } from 'viem'
 import { toast } from 'react-toastify'
+import { QUIVA_COMICS_ADDRESS } from '@/contracts/QuivaComics'
 
 function Page() {
   const searchParams = useSearchParams()
@@ -55,19 +56,23 @@ function Page() {
   const id = searchParams.get('id')
   
   // Initialize purchase hook
+  const purchaseHookResult = useComicPurchase()
+  
+  // Destructure with fallback values in case hook returns undefined/void
   const {
-    purchaseComic,
-    isPurchasing,
-    isWritePending,
-    isConfirming,
-    isPurchaseComplete,
-    purchaseSuccess,
-    purchaseError,
-    purchaseHash,
-    reset: resetPurchase,
-    walletStatus,
-    setComicId
-  } = useComicPurchase()
+    purchaseComic = async () => {},
+    getListing = async (_tokenId: bigint, _seller: string) => Promise.resolve(null),
+    isPurchasing = false,
+    // isWritePending = false,
+    isConfirming = false,
+    isPurchaseComplete = false,
+    purchaseSuccess = false,
+    purchaseError = null,
+    purchaseHash = null,
+    reset: resetPurchase = () => {},
+    walletStatus = { isConnected: false, address: null },
+    setComicId = () => {}
+  } = purchaseHookResult ?? {}
 
   // Initialize claiming hook
   const {
@@ -331,51 +336,90 @@ function Page() {
     }
   }
 
-  const handlePurchase = async () => {
-    if (!transformedComic || !id) {
-      toast.error('Comic data not available')
-      return
-    }
+  // const handlePurchase = async () => {
+  //   if (!transformedComic || !id) {
+  //     toast.error('Comic data not available')
+  //     return
+  //   }
 
-    if (!walletStatus.isConnected) {
-      toast.error('Please connect your wallet first')
-      return
-    }
+  //   if (!walletStatus.isConnected) {
+  //     toast.error('Please connect your wallet first')
+  //     return
+  //   }
 
-    if (!transformedComic.tokenId) {
-      toast.error('NFT token ID not available')
-      return
-    }
+  //   if (!transformedComic.tokenId) {
+  //     toast.error('NFT token ID not available')
+  //     return
+  //   }
 
-    if (!transformedComic.price || transformedComic.price <= 0) {
-      toast.error('Invalid comic price')
-      return
-    }
+  //   if (!transformedComic.price || transformedComic.price <= 0) {
+  //     toast.error('Invalid comic price')
+  //     return
+  //   }
 
-    try {
-      console.log('Initiating purchase:', {
-        tokenId: transformedComic.tokenId,
-        price: transformedComic.price,
-        creator: transformedComic.creatorWalletAddress
-      })
+  //   try {
+  //     console.log('Initiating purchase:', {
+  //       tokenId: transformedComic.tokenId,
+  //       price: transformedComic.price,
+  //       creator: transformedComic.creatorWalletAddress
+  //     })
 
-      const priceInWei = parseEther(transformedComic.price.toString())
-        const result = await purchaseComic({
-          tokenId: transformedComic.tokenId,
-          seller: transformedComic.creatorWalletAddress,
-          amount: BigInt(1),
-          pricePerToken: priceInWei,
-        })
+  //     const priceInWei = parseEther(transformedComic.price.toString())
+  //     // const priceInWei = BigInt(transformedComic.price.toString())
+  //       const result = await purchaseComic({
+  //         tokenId: transformedComic.tokenId,
+  //         seller: transformedComic.creatorWalletAddress,
+  //         amount: BigInt(1),
+  //         pricePerToken: priceInWei,
+  //       })
 
-        console.log('Purchase initiated:', result);
-       return result;
+  //       console.log('Purchase initiated:', result);
+  //      return result;
 
       
-    } catch (error: any) {
-      console.error('Purchase error:', error)
-      toast.error(error.message || 'Failed to purchase comic')
-    }
+  //   } catch (error: any) {
+  //     console.error('Purchase error:', error)
+  //     toast.error(error.message || 'Failed to purchase comic')
+  //   }
+  // }
+  
+
+  const handlePurchase = async () => {
+  if (!transformedComic || !id) {
+    toast.error('Comic data not available');
+    return;
   }
+
+  if (!walletStatus.isConnected) {
+    toast.error('Please connect your wallet first');
+    return;
+  }
+
+  if (!transformedComic.tokenId) {
+    toast.error('NFT token ID not available');
+    return;
+  }
+
+  try {
+    // console.log('Fetching on-chain listing...');
+
+    // ⭐ Pass the correct price from contract only
+    console.log("TokenId:", transformedComic.tokenId);
+    const result = await purchaseComic({
+      nftAddress: QUIVA_COMICS_ADDRESS,
+      tokenId: BigInt(transformedComic.tokenId),
+      amount: BigInt(1),
+      // pricePerToken: BigInt(listing.pricePerToken),
+    });
+
+    console.log('Purchase initiated:', result);
+    return result;
+
+  } catch (error: any) {
+    console.error('Purchase error:', error);
+    toast.error(error.message || 'Failed to purchase comic');
+  }
+};
 
   const handleBack = () => {
     router.back()
@@ -460,7 +504,7 @@ function Page() {
   const isVerifying = isVerifyingTransaction || !accessCheckComplete
 
   // Determine if purchase is in progress (includes all stages)
-  const isPurchaseInProgress = isPurchasing || isWritePending || isConfirming
+  const isPurchaseInProgress = isPurchasing || isConfirming
   return (
     <>
       <ComicDetail

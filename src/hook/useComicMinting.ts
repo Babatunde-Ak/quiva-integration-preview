@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useChainId, usePublicClient } from 'wagmi';
-import axios from 'axios';
-import { QUIVA_COMICS_ABI, QUIVA_COMICS_ADDRESS } from '../contracts/QuivaComics';
+import { QUIVA_COMICS_ABI, QUIVA_MARKETPLACE_ABI, QUIVA_COMICS_ADDRESS, QUIVA_MARKETPLACE } from '../contracts/QuivaComics';
 import { mainnet } from 'wagmi/chains';
 import type { Chain } from 'wagmi/chains';
-import { parseEther, decodeEventLog, Address } from 'viem';
+import { parseEther, decodeEventLog, Address, parseUnits } from 'viem';
 import axiosInstance from '../redux/axios-instance';
+import { addDecimalsToPrice } from '@/lib/formatedPrice';
 
 interface ComicData {
   title: string;
@@ -96,6 +96,21 @@ export const useComicMinting = () => {
     hash,
   });
 
+  const {
+    data: approveHash,
+    writeContract: ApproveContract,
+    error: approveWriteError,
+    isPending: isApproveWritePending
+  } = useWriteContract();
+
+  const { 
+    isLoading: isConfirmingApprove, 
+    isSuccess: isApproveSuccess, 
+    data: receiptApprove
+  } = useWaitForTransactionReceipt({
+    hash: approveHash
+  });
+
   // Monitor transaction status
   useEffect(() => {
     if (hash) {
@@ -120,7 +135,7 @@ export const useComicMinting = () => {
                 data: log.data,
                 topics: log.topics,
               });
-              return (decoded as any).eventName === 'ComicMinted';
+              return (decoded as any).eventName === 'NFTMinted';
             } catch {
               return false;
             }
@@ -133,7 +148,7 @@ export const useComicMinting = () => {
               topics: mintedLog.topics,
             });
 
-            if ((decoded as any).eventName === 'ComicMinted') {
+            if ((decoded as any).eventName === 'NFTMinted') {
               const decodedEvent = decoded as { eventName: string; args: { tokenId: bigint } };
               const extractedTokenId = decodedEvent.args.tokenId;
               const extractedCreator = (decodedEvent.args as any).creator;
@@ -179,7 +194,7 @@ export const useComicMinting = () => {
             console.log('📋 Step 2: Listing NFT on marketplace...');
             setIsListing(true);
             
-            const pricePerToken = BigInt(savedMonetizationData.nftPrice || 0);
+              const pricePerToken = BigInt(savedMonetizationData.nftPrice || 0);
             const amountToList = BigInt(savedMonetizationData.nftCopies || 100);
             const currentChain = chainId === 296 ? hederaTestnet : mainnet;
             
@@ -188,16 +203,29 @@ export const useComicMinting = () => {
               amount: amountToList.toString(),
               pricePerToken: pricePerToken.toString(),
             });
+
+            await ApproveContract({
+              address: QUIVA_COMICS_ADDRESS,
+              abi: QUIVA_COMICS_ABI,
+              functionName: 'setApprovalForAll',  
+              args: [
+                QUIVA_MARKETPLACE,
+                true
+              ],
+              account: address,
+              chain: currentChain
+            })
             
             // Call listComic function
             await writeContract({
-              address: QUIVA_COMICS_ADDRESS,
-              abi: QUIVA_COMICS_ABI,
-              functionName: 'listComic',
+              address: QUIVA_MARKETPLACE,
+              abi:  QUIVA_MARKETPLACE_ABI,
+              functionName: 'listItem',
               args: [
+                QUIVA_COMICS_ADDRESS,
                 tokenId,
                 amountToList,
-                pricePerToken,
+                BigInt(addDecimalsToPrice(pricePerToken.toString())),
               ],
               account: address,
               chain: currentChain,
@@ -236,7 +264,7 @@ export const useComicMinting = () => {
     };
 
     listAfterMint();
-  }, [isMintSuccess, hash, comicId, tokenId, isComplete, savedMonetizationData, chainId, address, writeContract]);
+  }, [isMintSuccess, hash, comicId, tokenId, isComplete, savedMonetizationData, chainId, address, writeContract, ApproveContract, ]);
 
   //   const extractedPriceCreator = async () => {
   //     if (isMintSuccess && receipt && !tokenId) {
@@ -506,7 +534,7 @@ export const useComicMinting = () => {
         const currentChain = chainId === 296 ? hederaTestnet : mainnet;
 
         // Construct IPFS gateway URL for metadata
-        const metadataURI = `https://gray-tough-elk-417.mypinata.cloud/ipfs/${metadataCid}`;
+        const metadataURI = `https://jade-major-lobster-143.mypinata.cloud/ipfs/${metadataCid}`;
 
         // Prepare minting parameters
         const maxSupply = BigInt(monetizationData.nftCopies || 100);
@@ -531,10 +559,10 @@ export const useComicMinting = () => {
             abi: QUIVA_COMICS_ABI,
             functionName: 'mintComic',
             args: [
-              dbComicId,
+              // dbComicId,
               metadataURI,
-              maxSupply,
-              royaltyBasisPoints,
+              maxSupply
+              // royaltyBasisPoints,
             ],
             account: address,
             chain: currentChain,
