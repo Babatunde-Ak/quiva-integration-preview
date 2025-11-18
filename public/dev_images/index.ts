@@ -52,6 +52,7 @@ import earnings from "./earnings.png";
 import profileImage from "./profile-image.png";
 import creatorIcon from "./creator-icon.png";
 import coinIcon from "./coin-icon.png";
+import bgSlider from "./bg-slider.png";
 
 export {
 	canna,
@@ -108,4 +109,5 @@ export {
 	earnings,
 	creatorIcon,
 	coinIcon,
+	bgSlider,
 };
