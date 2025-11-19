@@ -130,7 +130,7 @@ export const useComicPurchase = () => {
 
       // const tokenIdBigInt = BigInt(tokenId);
 
-      // ⭐ CRITICAL FIX — fetch the TRUE on-chain listing
+    
       const listing: any = await getListing(nftAddress, tokenId);
       console.log('Fetched on-chain listing:', listing);
       

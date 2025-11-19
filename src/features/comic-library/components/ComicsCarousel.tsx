@@ -179,8 +179,8 @@ const ComicsCarousel: React.FC<ComicsCarouselProps> = ({
             {/* Cards Container - Card Deck Style */}
             <div className="relative w-full h-full flex items-center justify-center">
               {getVisibleCards().map(({ comic, originalIndex, position, isCenter }) => (
-                <Link href={`/marketplace/detail?id=${comic.id}`}
-                  key={`${comic.id}-${originalIndex}`}
+                <Link href={`/marketplace/detail?id=${comic?.id}`}
+                  key={`${comic?.id}-${originalIndex}`}
                   className={`absolute cursor-pointer transform-gpu transition-all duration-700 ease-out ${
                     isCenter ? 'hover:scale-105' : 'hover:scale-95'
                   }`}
@@ -189,8 +189,8 @@ const ComicsCarousel: React.FC<ComicsCarouselProps> = ({
                 >
                   <div className="group relative border border-white rounded-2xl overflow-hidden shadow-2xl w-64 h-72">
                     <img
-                      src={comic.image}
-                      alt={comic.title}
+                      src={comic?.image}
+                      alt={comic?.title}
                       className="w-full h-full object-cover transition-all duration-700"
                     />
                     
@@ -206,11 +206,11 @@ const ComicsCarousel: React.FC<ComicsCarouselProps> = ({
                     {/* Comic title overlay */}
                     <div className="absolute bottom-0 left-0 right-0 p-4 z-10">
                       <h3 className="font-bold text-white text-lg leading-tight transition-all duration-700">
-                        {comic.title}
+                        {comic?.title}
                       </h3>
-                      {comic.description && isCenter && (
+                      {comic?.description && isCenter && (
                         <p className="text-white/80 text-sm mt-1 line-clamp-2 transition-all duration-700">
-                          {comic.description}
+                          {comic?.description}
                         </p>
                       )}
                     </div>
