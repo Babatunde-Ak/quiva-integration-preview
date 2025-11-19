@@ -25,7 +25,7 @@ const hederaTestnet = {
 const config = getDefaultConfig({
   appName: "My RainbowKit App",
   projectId: "f3d83563bb23a44e9e7a1fa7133c740a",
-  chains: [ hederaTestnet, mainnet  ],
+  chains: [ hederaTestnet  ],
   ssr: false, // If your dApp uses server side rendering (SSR)
 });
 const queryClient = new QueryClient();

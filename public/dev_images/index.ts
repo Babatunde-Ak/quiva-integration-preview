@@ -53,6 +53,8 @@ import profileImage from "./profile-image.png";
 import creatorIcon from "./creator-icon.png";
 import coinIcon from "./coin-icon.png";
 import bgSlider from "./bg-slider.png";
+import hbar from "./hbar.svg";
+import hbarIcon from "./hbar-icon.svg";
 
 export {
 	canna,
@@ -110,4 +112,6 @@ export {
 	creatorIcon,
 	coinIcon,
 	bgSlider,
+	hbar,
+	hbarIcon
 };
