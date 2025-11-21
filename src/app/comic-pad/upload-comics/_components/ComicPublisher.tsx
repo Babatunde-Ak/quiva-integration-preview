@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { AlertCircle, CheckCircle, Upload, Zap, Database } from "lucide-react";
 import { ComicNotification } from "./ComicNotification";
 import Picture from "@/components/picture/Index";
-import { createFullComic } from "@/redux/slices/comicSlice";
 import { useAppDispatch, useAppSelector } from "@/redux/hook";
 import { useComicMinting } from "@/hook/useComicMinting";
 import { useFreeComicMinting } from "@/hook/useFreeComicMinting";
@@ -68,32 +67,53 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 	
 	// Use the comic minting hooks
 	const {
-		publishComic,
-		isUploading,
-		isMinting,
-		isListing,
-		uploadProgress,
-		mintingProgress,
-		isWritePending,
-		isConfirming,
-		isMintSuccess,
-		isComplete,
-		mintError,
-		tokenId,
-		mintHash,
-		comicId,
+	publishComic,
+	isUploading: paidIsUploading,
+	isMinting: paidIsMinting,
+	isListing,
+	uploadProgress: paidUploadProgress,
+	mintingProgress: paidMintingProgress,
+	isWritePending: paidIsWritePending,
+	isConfirming: paidIsConfirming,
+	isMintSuccess,
+	isComplete: paidIsComplete,
+	mintError: paidMintError,
+	tokenId: paidTokenId,
+	mintHash: paidMintHash,
+	comicId,
 	} = useComicMinting();
 
 	const {
-		isUploading: freeIsUploading,
-		isMinting: freeIsMinting,
-		publishFreeComic,
-		updateComicWithMintData,
-		reset,
-		checkCreatorApproval,
-		mintHash: hash,
-		approvalStatus,
+	isUploading: freeIsUploading,
+	isMinting: freeIsMinting,
+	uploadProgress: freeUploadProgress,
+	mintingProgress: freeMintingProgress,
+	publishFreeComic,
+	updateComicWithMintData,
+	reset,
+	checkCreatorApproval,
+	isWritePending: freeIsWritePending,
+	isConfirming: freeIsConfirming,
+	mintHash: freeMintHash,
+	approvalStatus,
+	isComplete: freeIsComplete,
+	mintError: freeError,
+	tokenId: freeTokenId,
 	} = useFreeComicMinting();
+
+	const isCurrentlyPaid = monetizationData.publishType === "paid";
+
+	// Use the appropriate states based on publish type
+	const isUploading = isCurrentlyPaid ? paidIsUploading : freeIsUploading;
+	const isMinting = isCurrentlyPaid ? paidIsMinting : freeIsMinting;
+	const uploadProgress = isCurrentlyPaid ? paidUploadProgress : freeUploadProgress;
+	const mintingProgress = isCurrentlyPaid ? paidMintingProgress : freeMintingProgress;
+	const isWritePending = isCurrentlyPaid ? paidIsWritePending : freeIsWritePending;
+	const isConfirming = isCurrentlyPaid ? paidIsConfirming : freeIsConfirming;
+	const isComplete = isCurrentlyPaid ? paidIsComplete : freeIsComplete;
+	const mintError = isCurrentlyPaid ? paidMintError : freeError;
+	const tokenId = isCurrentlyPaid ? paidTokenId : freeTokenId;
+	const mintHash = isCurrentlyPaid ? paidMintHash : freeMintHash;
 
 	useEffect(() => {
 		if (isComplete && tokenId && mintHash) {
@@ -103,6 +123,7 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 			setShowSuccessModal(true);
 			setIsPublishing(false);
 		}
+
 	}, [isComplete, tokenId, mintHash]);
 
 	const validateComicData = (): boolean => {
@@ -479,7 +500,7 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 					)}
 
 					{/* Publishing Progress */}
-					{(isUploading || isMinting || isListing || isWritePending || isConfirming) && (
+					{(isUploading || isMinting  || isListing || isWritePending || isConfirming) && (
 						<div className='mx-6 mb-4 bg-blue-500/20 border border-blue-500/50 rounded-lg p-4'>
 							<div className='space-y-3'>
 								{/* Upload Progress */}
@@ -504,19 +525,19 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 								)}
 
 								{/* Minting Progress */}
-								{(isMinting || isWritePending || isConfirming) && !isListing && (
+								{(isMinting  || isWritePending || isConfirming) && !isListing && (
 									<div className='flex items-center gap-3'>
 										<Zap size={18} className='text-primary-400' />
 										<div className='flex-1'>
 											<div className='flex justify-between items-center mb-1'>
 												<span className='text-primary-400 text-sm font-medium'>
 													{isWritePending ? 'Preparing blockchain transaction...' : 
-													 isConfirming ? 'Confirming on blockchain...' : 
-													 'Minting NFT...'}
+													isConfirming ? 'Confirming on blockchain...' : 
+													'Minting NFT...'}
 												</span>
-												{isMinting && <span className='text-primary-400 text-xs'>{mintingProgress}%</span>}
+												{(isMinting ) && <span className='text-primary-400 text-xs'>{mintingProgress}%</span>}
 											</div>
-											{isMinting && (
+											{(isMinting ) && (
 												<div className='w-full bg-white/10 rounded-full h-2'>
 													<div 
 														className='bg-primary-400 h-2 rounded-full transition-all duration-300'
@@ -559,15 +580,36 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 									</div>
 								)}
 
+								{/* Free Listing Progress */}
+								{freeIsConfirming && (
+									<div className='flex items-center gap-3'>
+										<Database size={18} className='text-green-400' />
+										<div className='flex-1'>
+											<div className='flex justify-between items-center mb-1'>
+												<span className='text-green-400 text-sm font-medium'>
+													Listing NFT on marketplace...
+												</span>
+												<span className='text-green-400 text-xs'>{freeMintingProgress}%</span>
+											</div>
+											<div className='w-full bg-white/10 rounded-full h-2'>
+												<div 
+													className='bg-green-400 h-2 rounded-full transition-all duration-300'
+													style={{ width: `${freeMintingProgress}%` }}
+												/>
+											</div>
+										</div>
+									</div>
+								)}
+
 								{/* Success Messages */}
-								{tokenId && (
+								{(tokenId) && (
 									<div className='flex items-center gap-2 text-primary-400 text-sm'>
 										<CheckCircle size={16} />
 										<span>NFT minted successfully! Token ID: {tokenId.toString()}</span>
 									</div>
 								)}
 
-								{mintHash && (
+								{(mintHash) && (
 									<div className='flex items-center gap-2 text-primary-400 text-sm'>
 										<CheckCircle size={16} />
 										<span>Transaction: {mintHash.slice(0, 10)}...{mintHash.slice(-8)}</span>
@@ -594,14 +636,14 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 					<div className='px-6 pb-6 space-y-3 mt-4'>
 						<button
 							onClick={handlePublish}
-							disabled={isPublishing || isUploading || isMinting || isListing || isWritePending || isConfirming}
+							disabled={isPublishing || isUploading || isMinting  || isListing || isWritePending || isConfirming}
 							className='w-full bg-secondary-200/80 hover:bg-secondary-200 text-black font-semibold py-3 rounded-full transition disabled:cursor-not-allowed disabled:opacity-50 flex items-center justify-center gap-2'
 						>
-							{isPublishing || isUploading || isMinting || isListing || isWritePending || isConfirming ? (
+							{isPublishing || isUploading || isMinting  || isListing || isWritePending || isConfirming ? (
 								<>
 									<div className='animate-spin rounded-full h-5 w-5 border-b-2 border-black'></div>
 									{isUploading ? 'Uploading to IPFS...' : 
-									isMinting || isWritePending ? 'Minting NFT...' : 
+									isMinting || isWritePending  ? 'Minting NFT...' : 
 									isListing ? 'Listing on marketplace...' :
 									isConfirming ? 'Confirming...' : 
 									'Publishing...'}
@@ -616,23 +658,26 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 
 						<button
 							onClick={onclose}
-							disabled={isPublishing || isUploading || isMinting || isListing || isWritePending || isConfirming}
+							disabled={isPublishing || isUploading || isMinting  || isListing || isWritePending || isConfirming}
 							className='w-full border border-white/20 text-white/70 hover:text-white hover:bg-white/5 py-3 rounded-full transition disabled:cursor-not-allowed disabled:opacity-50'
 						>
-							{isPublishing || isUploading || isMinting || isListing ? 'Please wait...' : 'Go Back'}
+							{isPublishing || isUploading || isMinting  || isListing ? 'Please wait...' : 'Go Back'}
 						</button>
 					</div>
 				</div>
 			)}
 
 			{/* SUCCESS MODAL */}
-			{showSuccessModal && isComplete && tokenId && mintHash && showNotification && <ComicNotification 
-				onclose={() => setShowNotification(true)} 
-				comicData={comicData}
-				monetizationData={monetizationData} 
-				mintHash={mintHash}
-				tokenId={tokenId} 
-			/>}
+			{showSuccessModal && isComplete && tokenId && mintHash && showNotification && (
+				<ComicNotification 
+					onclose={() => setShowNotification(true)} 
+					comicData={comicData}
+					monetizationData={monetizationData} 
+					mintHash={mintHash}
+					tokenId={tokenId} 
+				/>
+			)}
+
 		</>
 	);
 }

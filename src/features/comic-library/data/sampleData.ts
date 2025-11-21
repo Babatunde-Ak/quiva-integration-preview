@@ -196,12 +196,12 @@ export const topComics = [
 ]
 
 export const creators = [
-  { id: '1', name: 'Auntmae', stories: 5, readers: '1.2k', avatar: '' },
-  { id: '2', name: 'John Smith', stories: 12, readers: '1.5k', avatar: '' },
-  { id: '3', name: 'Jane Doe', stories: 8, readers: '1.2k', avatar: '' },
-  { id: '4', name: 'Mike Johnson', stories: 15, readers: '2.1k', avatar: '' },
-  { id: '5', name: 'Sarah Wilson', stories: 9, readers: '980', avatar: '' },
-  { id: '6', name: 'David Brown', stories: 7, readers: '1.8k', avatar: '' },
+  { id: '1', name: 'Auntmae', stories: 5, readers: '1.2k', avatar: 'https://cdn.marvel.com/content/1x/asm2025001_dimeo.jpg' },
+  { id: '2', name: 'John Smith', stories: 12, readers: '1.5k', avatar: 'https://cdn.marvel.com/content/1x/asm2025001_dimeo.jpg' },
+  { id: '3', name: 'Jane Doe', stories: 8, readers: '1.2k', avatar: 'https://cdn.marvel.com/content/1x/asm2025001_dimeo.jpg' },
+  { id: '4', name: 'Mike Johnson', stories: 15, readers: '2.1k', avatar: 'https://cdn.marvel.com/content/1x/asm2025001_dimeo.jpg' },
+  { id: '5', name: 'Sarah Wilson', stories: 9, readers: '980', avatar: 'https://cdn.marvel.com/content/1x/asm2025001_dimeo.jpg' },
+  { id: '6', name: 'David Brown', stories: 7, readers: '1.8k', avatar: 'https://cdn.marvel.com/content/1x/asm2025001_dimeo.jpg' },
 ]
 
 
@@ -280,7 +280,7 @@ export const heroComics: HeroComicData[] = [
     }
   ]
 
-const sampleComics = [
+export const sampleComics = [
   {
     id: '1',
     title: 'Harry Potter',
@@ -312,3 +312,41 @@ const sampleComics = [
     description: 'The Man of Steel defends Earth from threats.'
   }
 ];
+
+export const sampleCreators = [
+    {
+      rank: 1,
+      avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b5e5?w=100&h=100&fit=crop&crop=face",
+      name: "keepitreal",
+      isVerified: true,
+      totalComics: 300
+    },
+    {
+      rank: 2,
+      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face",
+      name: "ArtMaster",
+      isVerified: true,
+      totalComics: 250
+    },
+    {
+      rank: 3,
+      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face",
+      name: "ComicCreator",
+      isVerified: false,
+      totalComics: 180
+    },
+    {
+      rank: 4,
+      avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face",
+      name: "PixelArtist",
+      isVerified: true,
+      totalComics: 150
+    },
+    {
+      rank: 5,
+      avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face",
+      name: "DigitalDreamer",
+      isVerified: false,
+      totalComics: 120
+    }
+  ]

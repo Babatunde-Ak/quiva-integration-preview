@@ -463,7 +463,7 @@ function Page() {
     return (
       <div className="min-h-screen bg-black-500 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 text-yellow-500 animate-spin mx-auto mb-4" />
+          <Loader2 className="w-12 h-12 text-primary-500 animate-spin mx-auto mb-4" />
           <p className="text-white/60 text-sm font-medium">Loading comic...</p>
         </div>
       </div>
@@ -481,7 +481,7 @@ function Page() {
           </p>
           <button
             onClick={() => router.push('/marketplace')}
-            className="bg-yellow-600 hover:bg-yellow-700 text-black font-medium px-6 py-3 rounded-full transition-all"
+            className="bg-secondary-200 hover:bg-primary-500 text-black font-medium px-6 py-3 rounded-full transition-all"
           >
             Back to Marketplace
           </button>
@@ -509,7 +509,7 @@ function Page() {
     <>
       <ComicDetail
     
-         {...transformedComic}
+        {...transformedComic}
         onBack={handleBack}        
         onReadIssue={handleReadIssue}
         onPreviewIssue={handlePreview}
@@ -519,8 +519,8 @@ function Page() {
       />
 
 
-       <ComicPreviewModal
-       isOpen={isPreviewOpen}
+      <ComicPreviewModal
+      isOpen={isPreviewOpen}
       onClose={handleClosePreview}
       previewComic={previewComic}
       isLoading={isPreviewing}

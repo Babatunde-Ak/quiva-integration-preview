@@ -1,5 +1,6 @@
 'use client'
 
+import { Footer } from '@/components/global/comic-library/Footer'
 import {Header} from '@/components/global/comic-library/Header'
 import {Sidebar} from '@/components/global/comic-library/Sidebar'
 import {useState} from 'react'
@@ -35,6 +36,8 @@ export default function MainPage({children}) {
                 >
                     {children}
                 </main>
+
+                <Footer/>
             </div>
 
             {/* Desktop Layout - FIXED: Improved grid structure */}
@@ -60,6 +63,8 @@ export default function MainPage({children}) {
                             </div>
                         </div>
                     </main>
+
+                    <Footer/>
                 </div>
             </div>
         </div>
