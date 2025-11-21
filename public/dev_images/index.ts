@@ -55,6 +55,8 @@ import coinIcon from "./coin-icon.png";
 import bgSlider from "./bg-slider.png";
 import hbar from "./hbar.svg";
 import hbarIcon from "./hbar-icon.svg";
+import hashpack from "./hashpack.svg";
+import rainbow from "./rainbow.png";
 
 export {
 	canna,
@@ -113,5 +115,7 @@ export {
 	coinIcon,
 	bgSlider,
 	hbar,
-	hbarIcon
+	hbarIcon,
+	hashpack,
+	rainbow,
 };
