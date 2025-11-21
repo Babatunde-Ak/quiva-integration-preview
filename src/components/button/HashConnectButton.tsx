@@ -25,8 +25,7 @@ export default function HashConnectButton({ disabled = false }: HashConnectProps
     isConnected, 
     connect, 
     disconnect, 
-    isLoading: isConnecting, 
-    extensionReady 
+    isLoading: isConnecting
   } = useWallet(HashpackConnector);
   
   const dispatch = useAppDispatch();
@@ -72,11 +71,6 @@ export default function HashConnectButton({ disabled = false }: HashConnectProps
 
   const handleConnect = useCallback(async () => {
     try {
-      if (!extensionReady) {
-        toast.error("Please install the HashPack extension to connect your wallet.");
-        window.open('https://www.hashpack.app/', '_blank');
-        return;
-      }
       
       const result = await connect();
       if (result) {
@@ -87,7 +81,7 @@ export default function HashConnectButton({ disabled = false }: HashConnectProps
       console.error("Error connecting to HashPack:", error);
       toast.error("Failed to connect wallet. Please try again.");
     }
-  }, [connect, extensionReady, evmAddress]);
+  }, [connect, evmAddress]);
 
   const handleLogout = useCallback(async () => {
     try {
@@ -153,10 +147,10 @@ export default function HashConnectButton({ disabled = false }: HashConnectProps
     return (
       <MainButton
         onClick={disabled ? undefined : handleConnect}
-        disabled={disabled || isConnecting || !extensionReady}
+        disabled={disabled || isConnecting}
         className={`w-full px-4 py-2 rounded-xl font-medium border transition-colors flex items-center justify-center gap-2
           ${
-            disabled || isConnecting || !extensionReady
+            disabled || isConnecting
               ? "bg-gray-400 text-gray-200 cursor-not-allowed border-gray-400"
               : "bg-transparent text-white border-white/30 hover:border-white hover:bg-white/10"
           }`}
@@ -167,8 +161,6 @@ export default function HashConnectButton({ disabled = false }: HashConnectProps
             <Loader2 size={16} className="animate-spin" />
             Connecting...
           </>
-        ) : !extensionReady ? (
-          "Install HashPack"
         ) : (
           "HashPack"
         )}

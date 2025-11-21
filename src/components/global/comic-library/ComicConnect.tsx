@@ -31,6 +31,7 @@ function ComicConnect() {
 
   // Monitor wallet connections
   useEffect(() => {
+    console.log(connectedWallet);
     if (isRainbowConnected && rainbowAddress) {
       setConnectedWallet(WalletType.RAINBOW);
     } else if (isHashpackConnected && hashpackEvmAddress) {
@@ -76,7 +77,7 @@ function ComicConnect() {
 
   return (
     <>
-      {!isAuthenticated ? (
+      {!isAuthenticated || connectedWallet === WalletType.NONE ? (
         <>
           <MainButton 
             className='text-xxs sm:text-sm !px-2 sm:px-4'
@@ -142,14 +143,12 @@ function ComicConnect() {
       ) : (
         <div className="flex items-center gap-2">
           {/* Show connected wallet info */}
-          {connectedWallet !== WalletType.NONE && (
-            <div className="hidden lg:flex items-center gap-2 px-3 py-1 bg-primary-500/10 border border-primary-500/30 rounded-lg">
-              <div className="w-2 h-2 bg-primary-500 rounded-full"></div>
-              <span className="text-primary-400 text-xs font-medium">
-                {connectedWallet === WalletType.RAINBOW ? 'Hedera' : 'Hedera'}
-              </span>
-            </div>
-          )}
+          <div className="hidden lg:flex items-center gap-2 px-3 py-1 bg-primary-500/10 border border-primary-500/30 rounded-lg">
+            <div className="w-2 h-2 bg-primary-500 rounded-full"></div>
+            <span className="text-primary-400 text-xs font-medium">
+              {connectedWallet === WalletType.RAINBOW ? 'Hedera' : 'Hedera'}
+            </span>
+          </div>
           {renderConnectedWallet()}
         </div>
       )}
