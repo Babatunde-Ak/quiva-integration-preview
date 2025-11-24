@@ -21,6 +21,11 @@ export function Sidebar({ isMobileMenuOpen, onMobileMenuClose }) {
       label: 'My Library', 
       path: '/marketplace/library',
       isActive: pathname === '/marketplace/library'
+    },
+    {
+      label: 'Collections', 
+      path: '/marketplace/collections',
+      isActive: pathname === '/marketplace/collections'
     }
   ]
 
