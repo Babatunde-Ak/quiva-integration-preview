@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/table";
 import { ChevronDown, ChevronUp, Heart } from "lucide-react";
 import { useState, useMemo } from "react";
-import { hbar } from "../../../../public/dev_images"; // Ensure this path is correct
+import { hbar } from "../../../../public/dev_images";
 
 export interface Comic {
   rank: number;
@@ -35,10 +35,7 @@ export function ComicsTable({ comics }: ComicsTableProps) {
   const [allComics] = useState<Comic[]>(() => {
     return Array.from({ length: 50 }).map((_, index) => {
       const template = comics[index % comics.length];
-      return {
-        ...template,
-        rank: index + 1,
-      };
+      return { ...template, rank: index + 1 };
     });
   });
 
@@ -46,18 +43,21 @@ export function ComicsTable({ comics }: ComicsTableProps) {
   const [likedComics, setLikedComics] = useState<Set<number>>(new Set());
   const [selectedPeriod, setSelectedPeriod] = useState("10m");
   const [activeCategory, setActiveCategory] = useState("Top");
+  const [selectedGenre, setSelectedGenre] = useState("Action");
 
   const ITEMS_PER_PAGE = 10;
   const totalPages = Math.ceil(allComics.length / ITEMS_PER_PAGE);
 
-  // Pagination Helper
+  const timePeriods = ["10m", "1h", "6h", "1d", "7d", "30d"];
+  const categories = ["Top", "Trending", "Genres"];
+  const genreFilters = ["Action", "Sci-fi", "Horror", "Romance", "Comedy", "Fantasy", "Slice of Life"];
+
   const currentTableData = useMemo(() => {
     const first = (currentPage - 1) * ITEMS_PER_PAGE;
     const last = first + ITEMS_PER_PAGE;
     return allComics.slice(first, last);
   }, [currentPage, allComics]);
 
-  // Toggle Like
   const toggleLike = (rank: number) => {
     setLikedComics((prev) => {
       const newSet = new Set(prev);
@@ -70,26 +70,21 @@ export function ComicsTable({ comics }: ComicsTableProps) {
     });
   };
 
-  // Pagination Handler
   const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
+    if (page >= 1 && page <= totalPages) setCurrentPage(page);
   };
 
-  const timePeriods = ["10m", "1h", "6h", "1d", "7d", "30d"];
-  const categories = ["Top", "Trending", "Genres"];
-
-  // Helper to clean price strings (remove " HBAR" to show icon instead)
   const formatPrice = (priceStr: string) => priceStr.replace(" HBAR", "");
+
+  const getPageTitle = () => {
+    return activeCategory === "Genres" ? "Genres" : activeCategory;
+  };
 
   return (
     <section className="my-8 mt-12">
-      {/* Header Section */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-white text-2xl font-bold">Top</h2>
+        <h2 className="text-white text-2xl font-bold">{getPageTitle()}</h2>
 
-        {/* Time Period Selector */}
         <div className="flex space-x-1 rounded-lg p-1">
           {timePeriods.map((period) => (
             <button
@@ -107,51 +102,82 @@ export function ComicsTable({ comics }: ComicsTableProps) {
         </div>
       </div>
 
-      {/* Category Tabs */}
-      <div className="flex space-x-2 mb-6">
-        {categories.map((cat) => (
-          <button
-            key={cat}
-            onClick={() => setActiveCategory(cat)}
-            className={`px-4 py-1.5 text-sm rounded-full border transition-all ${
-              activeCategory === cat
-                ? "bg-transparent border-white/40 text-white"
-                : "bg-transparent border-transparent text-white/40 hover:text-white"
-            }`}
-          >
-            {cat}
-          </button>
-        ))}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+        <div className="flex space-x-2">
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setActiveCategory(cat)}
+              className={`px-4 py-1.5 text-sm rounded-full border transition-all ${
+                activeCategory === cat
+                  ? "bg-transparent border-white/40 text-white"
+                  : "bg-transparent border-transparent text-white/40 hover:text-white"
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+
+        {activeCategory === "Genres" && (
+          <div className="flex flex-wrap gap-2 justify-end">
+            {genreFilters.map((genre) => (
+              <button
+                key={genre}
+                onClick={() => setSelectedGenre(genre)}
+                className={`px-3 py-1.5 text-sm font-medium transition-colors rounded ${
+                  selectedGenre === genre
+                    ? "bg-orange-500 text-black" // Orange Active State
+                    : "text-white/60 hover:text-white bg-transparent"
+                }`}
+              >
+                {genre}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Table Section */}
       <div className="bg-black-500 rounded-lg overflow-hidden border border-b-2 border-white/10">
         <Table>
           <TableHeader>
             <TableRow className="border-white/10 hover:bg-transparent px-4 py-4">
-              <TableHead className="w-12"></TableHead>
-              <TableHead className="text-white text-sm pl-4">Comic</TableHead>
-              <TableHead className="text-white text-sm">Floor Price</TableHead>
-              <TableHead className="text-white text-sm">Total Supply</TableHead>
-              <TableHead className="text-white text-sm">Sales</TableHead>
-              <TableHead className="text-white text-sm">10m Change</TableHead>
-              <TableHead className="text-white text-sm">24h Volume</TableHead>
+              <TableHead className="w-12"></TableHead> {/* Heart Col */}
+              
+              {/* Conditional Headers */}
+              {activeCategory === "Genres" ? (
+                <>
+                  <TableHead className="text-white text-sm pl-4">Genre</TableHead>
+                  <TableHead className="text-white text-sm">Comic</TableHead>
+                  <TableHead className="text-white text-sm"># of comics</TableHead>
+                  <TableHead className="text-white text-sm">Total Supply</TableHead>
+                  <TableHead className="text-white text-sm">Total Sales</TableHead>
+                  <TableHead className="text-white text-sm">7d Change</TableHead>
+                  <TableHead className="text-white text-sm">24h Volume</TableHead>
+                </>
+              ) : (
+                <>
+                  <TableHead className="text-white text-sm pl-4">Comic</TableHead>
+                  <TableHead className="text-white text-sm">Floor Price</TableHead>
+                  <TableHead className="text-white text-sm">Total Supply</TableHead>
+                  <TableHead className="text-white text-sm">Sales</TableHead>
+                  <TableHead className="text-white text-sm">10m Change</TableHead>
+                  <TableHead className="text-white text-sm">24h Volume</TableHead>
+                </>
+              )}
             </TableRow>
           </TableHeader>
           <TableBody>
             {currentTableData.map((comic) => {
               const isLiked = likedComics.has(comic.rank);
+              
               return (
                 <TableRow
                   key={comic.rank}
                   className="border-white/10 hover:bg-white/5 px-4 py-4 font-light text-base group transition-colors"
                 >
-                  {/* Like Button */}
                   <TableCell className="pl-4">
-                    <button
-                      onClick={() => toggleLike(comic.rank)}
-                      className="focus:outline-none"
-                    >
+                    <button onClick={() => toggleLike(comic.rank)} className="focus:outline-none">
                       <Heart
                         className={`w-5 h-5 transition-colors ${
                           isLiked
@@ -162,94 +188,86 @@ export function ComicsTable({ comics }: ComicsTableProps) {
                     </button>
                   </TableCell>
 
-                  {/* Comic Info */}
-                  <TableCell className="flex items-center space-x-3 ml-3">
-                    <div className="w-10 h-10 bg-orange-500 rounded-lg overflow-hidden flex items-center justify-center relative">
-                      <Avatar className="w-full h-full transition-colors rounded-none">
-                        <AvatarImage
-                          src={comic.image}
-                          alt={comic.title}
-                          className="object-cover"
-                        />
-                        <AvatarFallback className="bg-black-500 text-white font-bold">
-                          {comic.title.slice(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                    </div>
-                    <div>
-                      <p className="text-white font-medium">{comic.title}</p>
-                      <p className="text-white/40 text-xs">{comic.author}</p>
-                    </div>
-                  </TableCell>
+                  {activeCategory === "Genres" ? (
+                    <>
+                      <TableCell className="text-white font-medium pl-4">
+                        {selectedGenre}
+                      </TableCell>
 
-                  {/* Floor Price */}
-                  <TableCell>
-                    <div className="flex items-center space-x-3">
-                      {/* Price and Icon */}
-                      <span className="text-white font-light flex items-center gap-1">
-                        {formatPrice(comic.floorPrice)}
-                        <span>
-                          <Picture
-                            src={hbar}
-                            alt="hbar"
-                            loading="eager"
-                            className="w-6 h-6"
-                          />
+                      <TableCell>
+                        <div className="flex items-center -space-x-4">
+                            {/* Rendering 3 overlapping images for effect */}
+                            {[1, 2, 3].map((i) => (
+                                <div key={i} className="w-10 h-10 rounded-full border-2 border-[#1a1a1a] overflow-hidden bg-gray-800 z-0 hover:z-10 transition-all">
+                                     <Avatar className="w-full h-full">
+                                        <AvatarImage src={comic.image} className="object-cover opacity-80" />
+                                        <AvatarFallback>C{i}</AvatarFallback>
+                                     </Avatar>
+                                </div>
+                            ))}
+                        </div>
+                      </TableCell>
+
+                      <TableCell className="text-white font-bold">{comic.copies}</TableCell>
+                      <TableCell className="text-white/80">{comic.copies}</TableCell>
+                      <TableCell className="text-white/80">{comic.sales}</TableCell>
+                      
+                      <TableCell>
+                        <span className={`text-sm flex items-center ${comic.priceChange > 0 ? "text-green-400" : "text-red-400"}`}>
+                           {comic.priceChange > 0 ? "+" : ""}{comic.priceChange}%
                         </span>
-                      </span>
+                      </TableCell>
 
-                      {/* Percentage Change Indicator */}
-                      <span
-                        className={`text-xs flex items-center ${
-                          comic.priceChange > 0
-                            ? "text-green-400"
-                            : "text-red-400"
-                        }`}
-                      >
-                        {comic.priceChange > 0 ? (
-                          <ChevronUp className="w-3 h-3" />
-                        ) : (
-                          <ChevronDown className="w-3 h-3" />
-                        )}
-                        {Math.abs(comic.priceChange)}%
-                      </span>
-                    </div>
-                  </TableCell>
+                      <TableCell className="text-white font-light flex items-center gap-1">
+                        {formatPrice(comic.volume)}
+                        <span><Picture src={hbar} alt="hbar" loading="eager" className="w-5 h-5" /></span>
+                      </TableCell>
+                    </>
+                  ) : (
+                    <>
+                      <TableCell className="flex items-center space-x-3 ml-3">
+                        <div className="w-10 h-10 bg-orange-500 rounded-lg overflow-hidden flex items-center justify-center relative">
+                          <Avatar className="w-full h-full transition-colors rounded-none">
+                            <AvatarImage src={comic.image} alt={comic.title} className="object-cover" />
+                            <AvatarFallback className="bg-black-500 text-white font-bold">
+                              {comic.title.slice(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                        </div>
+                        <div>
+                          <p className="text-white font-medium">{comic.title}</p>
+                          <p className="text-white/40 text-xs">{comic.author}</p>
+                        </div>
+                      </TableCell>
 
-                  {/* Supply / Copies */}
-                  <TableCell className="text-white/80">
-                    {comic.copies.toLocaleString()}
-                  </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-3">
+                          <span className="text-white font-light flex items-center gap-1">
+                            {formatPrice(comic.floorPrice)}
+                            <span><Picture src={hbar} alt="hbar" loading="eager" className="w-6 h-6" /></span>
+                          </span>
+                          <span className={`text-xs flex items-center ${comic.priceChange > 0 ? "text-green-400" : "text-red-400"}`}>
+                            {comic.priceChange > 0 ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                            {Math.abs(comic.priceChange)}%
+                          </span>
+                        </div>
+                      </TableCell>
 
-                  {/* Sales */}
-                  <TableCell className="text-white/80">{comic.sales}</TableCell>
+                      <TableCell className="text-white/80">{comic.copies.toLocaleString()}</TableCell>
+                      <TableCell className="text-white/80">{comic.sales}</TableCell>
 
-                  {/* 10m Change (Separate Column) */}
-                  <TableCell>
-                    <span
-                      className={`text-sm flex items-center ${
-                        comic.priceChange > 0
-                          ? "text-green-400"
-                          : "text-red-400"
-                      }`}
-                    >
-                      {comic.priceChange > 0 ? "+" : ""}
-                      {comic.priceChange}%
-                    </span>
-                  </TableCell>
+                      <TableCell>
+                        <span className={`text-sm flex items-center ${comic.priceChange > 0 ? "text-green-400" : "text-red-400"}`}>
+                          {comic.priceChange > 0 ? "+" : ""}{comic.priceChange}%
+                        </span>
+                      </TableCell>
 
-                  {/* Volume */}
-                  <TableCell className="text-white font-light flex items-center gap-1">
-                    {formatPrice(comic.volume)}
-                    <span>
-                      <Picture
-                        src={hbar}
-                        alt="hbar"
-                        loading="eager"
-                        className="w-6 h-6"
-                      />
-                    </span>
-                  </TableCell>
+                      <TableCell className="text-white font-light flex items-center gap-1">
+                        {formatPrice(comic.volume)}
+                        <span><Picture src={hbar} alt="hbar" loading="eager" className="w-6 h-6" /></span>
+                      </TableCell>
+                    </>
+                  )}
                 </TableRow>
               );
             })}
@@ -257,7 +275,6 @@ export function ComicsTable({ comics }: ComicsTableProps) {
         </Table>
       </div>
 
-      {/* Pagination Footer */}
       <div className="flex items-center justify-between mt-8 px-2">
         <button
           onClick={() => handlePageChange(currentPage - 1)}
