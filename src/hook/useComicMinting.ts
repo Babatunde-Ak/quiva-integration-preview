@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useChainId, usePublicClient } from 'wagmi';
-import axios from 'axios';
-import { QUIVA_COMICS_ABI, QUIVA_COMICS_ADDRESS } from '../contracts/QuivaComics';
+import { QUIVA_COMICS_ABI, QUIVA_MARKETPLACE_ABI, QUIVA_COMICS_ADDRESS, QUIVA_MARKETPLACE } from '../contracts/QuivaComics';
 import { mainnet } from 'wagmi/chains';
 import type { Chain } from 'wagmi/chains';
-import { parseEther, decodeEventLog, Address } from 'viem';
+import { parseEther, decodeEventLog, Address, parseUnits } from 'viem';
 import axiosInstance from '../redux/axios-instance';
+import { addDecimalsToPrice } from '@/lib/formatedPrice';
 
 interface ComicData {
   title: string;
@@ -44,6 +44,8 @@ interface ApprovalStatus {
   error: string | null;
 }
 
+type ListingStep = 'idle' | 'approving' | 'listing' | 'complete' | 'error';
+
 const hederaTestnet = {
   id: 296,
   name: 'HederaTestnet',
@@ -61,6 +63,7 @@ export const useComicMinting = () => {
   const chainId = useChainId();
   const publicClient = usePublicClient();
   
+  // Main state
   const [isUploading, setIsUploading] = useState(false);
   const [isMinting, setIsMinting] = useState(false);
   const [isListing, setIsListing] = useState(false);
@@ -73,6 +76,10 @@ export const useComicMinting = () => {
   const [comicId, setComicId] = useState<string | null>(null);
   const [isComplete, setIsComplete] = useState(false);
   const [savedMonetizationData, setSavedMonetizationData] = useState<MonetizationData | null>(null);
+  
+  // Approval and listing state
+  const [listingStep, setListingStep] = useState<ListingStep>('idle');
+  const [isApprovingMarketplace, setIsApprovingMarketplace] = useState(false);
   const [approvalStatus, setApprovalStatus] = useState<ApprovalStatus>({
     isChecking: false,
     isApproving: false,
@@ -80,47 +87,94 @@ export const useComicMinting = () => {
     error: null,
   });
 
-  // Wagmi hooks for contract interaction
+  // Wagmi hooks for NFT minting
   const { 
-    data: hash, 
-    writeContract, 
-    error: writeError,
-    isPending: isWritePending 
+    data: mintHash, 
+    writeContract: mintContract, 
+    error: mintWriteError,
+    isPending: isMintWritePending 
   } = useWriteContract();
 
   const { 
-    isLoading: isConfirming, 
+    isLoading: isMintConfirming, 
     isSuccess: isMintSuccess, 
-    data: receipt
+    data: mintReceipt
   } = useWaitForTransactionReceipt({
-    hash,
+    hash: mintHash,
   });
 
-  // Monitor transaction status
+  // Wagmi hooks for marketplace approval
+  const {
+    data: approveHash,
+    writeContract: approveContract,
+    error: approveWriteError,
+    isPending: isApproveWritePending
+  } = useWriteContract();
+
+  const { 
+    isLoading: isApproveConfirming, 
+    isSuccess: isApproveSuccess, 
+    data: approveReceipt
+  } = useWaitForTransactionReceipt({
+    hash: approveHash
+  });
+
+  // Wagmi hooks for marketplace listing
+  const {
+    data: listHash,
+    writeContract: listContract,
+    error: listWriteError,
+    isPending: isListWritePending
+  } = useWriteContract();
+
+  const { 
+    isLoading: isListConfirming, 
+    isSuccess: isListSuccess, 
+    data: listReceipt
+  } = useWaitForTransactionReceipt({
+    hash: listHash
+  });
+
+  // Monitor mint transaction status
   useEffect(() => {
-    if (hash) {
-      console.log('🔗 Transaction hash received:', hash);
-      console.log('⏳ Waiting for blockchain confirmation...');
+    if (mintHash) {
+      console.log('🔗 Mint transaction hash received:', mintHash);
+      console.log('⏳ Waiting for mint confirmation...');
       setMintingProgress(70);
     }
-  }, [hash]);
+  }, [mintHash]);
 
-  // Extract token ID from transaction receipt
+  // Monitor approve transaction status
+  useEffect(() => {
+    if (approveHash) {
+      console.log('🔗 Approve transaction hash received:', approveHash);
+      setMintingProgress(75);
+    }
+  }, [approveHash]);
+
+  // Monitor list transaction status
+  useEffect(() => {
+    if (listHash) {
+      console.log('🔗 List transaction hash received:', listHash);
+      setMintingProgress(85);
+    }
+  }, [listHash]);
+
+  // Extract token ID from mint transaction receipt
   useEffect(() => {
     const extractTokenId = async () => {
-      if (isMintSuccess && receipt && !tokenId) {
-        console.log('📄 Transaction receipt received:', receipt);
+      if (isMintSuccess && mintReceipt && !tokenId) {
+        console.log('📄 Mint transaction receipt received:', mintReceipt);
 
         try {
-          // Method 1: Parse logs for ComicMinted event
-          const mintedLog = receipt.logs.find((log) => {
+          const mintedLog = mintReceipt.logs.find((log) => {
             try {
               const decoded = decodeEventLog({
                 abi: QUIVA_COMICS_ABI,
                 data: log.data,
                 topics: log.topics,
               });
-              return (decoded as any).eventName === 'ComicMinted';
+              return (decoded as any).eventName === 'NFTMinted';
             } catch {
               return false;
             }
@@ -133,101 +187,194 @@ export const useComicMinting = () => {
               topics: mintedLog.topics,
             });
 
-            if ((decoded as any).eventName === 'ComicMinted') {
+            if ((decoded as any).eventName === 'NFTMinted') {
               const decodedEvent = decoded as { eventName: string; args: { tokenId: bigint } };
               const extractedTokenId = decodedEvent.args.tokenId;
               const extractedCreator = (decodedEvent.args as any).creator;
               console.log('✅ Token ID extracted from event:', extractedTokenId.toString());
               console.log('✅ Creator address extracted from event:', extractedCreator);
               setTokenId(extractedTokenId);
-         
               return;
             }
-          }
-
-          // Method 2: If event parsing fails, try getting from return value
-          if (publicClient && hash) {
-            const transaction = await publicClient.getTransaction({ hash });
-            console.log('📄 Transaction data:', transaction);
           }
 
           console.warn('⚠️ Could not extract token ID from receipt');
         } catch (error) {
           console.error('❌ Error extracting token ID:', error);
+          setMintError(new Error('Failed to extract token ID from transaction'));
         }
       }
     };
 
     extractTokenId();
-  }, [isMintSuccess, receipt, tokenId, publicClient, hash]);
+  }, [isMintSuccess, mintReceipt, tokenId]);
 
-
-  
-
-  // Auto-list NFT after successful minting and update backend
+  // Handle approval completion
   useEffect(() => {
-    const listAfterMint = async () => {
-      if (isMintSuccess && hash && comicId && tokenId && !isComplete && savedMonetizationData && address) {
+    if (isApproveSuccess && approveReceipt) {
+      console.log('✅ Marketplace approval confirmed');
+      setListingStep('listing');
+      setIsApprovingMarketplace(false);
+      // The listing will be triggered by the main effect
+    }
+  }, [isApproveSuccess, approveReceipt]);
+
+  // Handle listing completion
+  useEffect(() => {
+    if (isListSuccess && listReceipt) {
+      console.log('✅ NFT listing confirmed');
+      setListingStep('complete');
+      setIsListing(false);
+      setMintingProgress(90);
+    }
+  }, [isListSuccess, listReceipt]);
+
+  // Main effect to handle post-mint operations
+  useEffect(() => {
+    const handlePostMintOperations = async () => {
+      if (
+        isMintSuccess && 
+        mintHash && 
+        comicId && 
+        tokenId && 
+        !isComplete && 
+        savedMonetizationData && 
+        address &&
+        listingStep === 'idle'
+      ) {
         console.log('✅ NFT minted successfully!');
-        console.log('🔗 Transaction hash:', hash);
+        console.log('🔗 Transaction hash:', mintHash);
         console.log('🎫 Token ID:', tokenId.toString());
-        setMintingProgress(70);
         
-        // STEP 2: Automatically list the NFT for sale
-        if (savedMonetizationData.mintAsNFT) {
-          try {
-            console.log('📋 Step 2: Listing NFT on marketplace...');
+        try {
+          // Check if we need to list on marketplace
+          if (savedMonetizationData.mintAsNFT && savedMonetizationData.nftPrice) {
+            console.log('📋 Starting marketplace listing process...');
             setIsListing(true);
+            setListingStep('approving');
+            setIsApprovingMarketplace(true);
             
+            const currentChain = chainId === 296 ? hederaTestnet : mainnet;
             const pricePerToken = BigInt(savedMonetizationData.nftPrice || 0);
             const amountToList = BigInt(savedMonetizationData.nftCopies || 100);
-            const currentChain = chainId === 296 ? hederaTestnet : mainnet;
             
             console.log('📋 Listing parameters:', {
               tokenId: tokenId.toString(),
               amount: amountToList.toString(),
               pricePerToken: pricePerToken.toString(),
             });
-            
-            // Call listComic function
-            await writeContract({
+
+            // Step 1: Approve marketplace to spend NFTs
+            console.log('📋 Step 1: Approving marketplace...');
+            await approveContract({
               address: QUIVA_COMICS_ADDRESS,
               abi: QUIVA_COMICS_ABI,
-              functionName: 'listComic',
-              args: [
-                tokenId,
-                amountToList,
-                pricePerToken,
-              ],
+              functionName: 'setApprovalForAll',  
+              args: [QUIVA_MARKETPLACE, true],
               account: address,
-              chain: currentChain,
+              chain: currentChain
             });
+
+            // Note: The actual listing will happen in the approval success effect
             
-            console.log('✅ Listing transaction sent, waiting for confirmation...');
-            setMintingProgress(85);
-            
-            // Wait for listing to confirm
-            await new Promise(resolve => setTimeout(resolve, 5000));
-            
-            console.log('✅ Comic listed on marketplace!');
-            setMintingProgress(90);
-            setIsListing(false);
-            
-          } catch (listingError) {
-            console.error('⚠️ Listing failed, but mint was successful:', listingError);
-            setIsListing(false);
-            // Don't throw - minting succeeded, user can list manually later
+          } else {
+            // No marketplace listing needed, go straight to backend update
+            setListingStep('complete');
           }
+          
+        } catch (error) {
+          console.error('⚠️ Error in post-mint operations:', error);
+          setListingStep('error');
+          setIsListing(false);
+          setIsApprovingMarketplace(false);
+          // Don't throw - minting succeeded, user can list manually later
         }
-        
-        // STEP 3: Update backend with mint data
-        console.log('💾 Step 3: Updating backend with mint data...');
+      }
+    };
+
+    handlePostMintOperations();
+  }, [
+    isMintSuccess, 
+    mintHash, 
+    comicId, 
+    tokenId, 
+    isComplete, 
+    savedMonetizationData, 
+    address, 
+    listingStep,
+    chainId,
+    approveContract
+  ]);
+
+  // Handle marketplace listing after approval
+  useEffect(() => {
+    const performListing = async () => {
+      if (
+        listingStep === 'listing' && 
+        tokenId && 
+        savedMonetizationData && 
+        address &&
+        isApproveSuccess
+      ) {
         try {
+          console.log('📋 Step 2: Listing NFT on marketplace...');
+          
+          const currentChain = chainId === 296 ? hederaTestnet : mainnet;
+          const pricePerToken = BigInt(savedMonetizationData.nftPrice || 0);
+          const amountToList = BigInt(savedMonetizationData.nftCopies || 100);
+
+          await listContract({
+            address: QUIVA_MARKETPLACE,
+            abi: QUIVA_MARKETPLACE_ABI,
+            functionName: 'listItem',
+            args: [
+              QUIVA_COMICS_ADDRESS,
+              tokenId,
+              amountToList,
+              BigInt(addDecimalsToPrice(pricePerToken.toString())),
+            ],
+            account: address,
+            chain: currentChain,
+          });
+
+          console.log('✅ Listing transaction sent');
+          
+        } catch (listingError) {
+          console.error('❌ Listing failed:', listingError);
+          setListingStep('error');
+          setIsListing(false);
+          setMintError(listingError as Error);
+        }
+      }
+    };
+
+    performListing();
+  }, [
+    listingStep, 
+    tokenId, 
+    savedMonetizationData, 
+    address, 
+    isApproveSuccess,
+    chainId,
+    listContract
+  ]);
+
+  // Final backend update after everything is complete
+  useEffect(() => {
+    const finalizeProcess = async () => {
+      if (
+        (listingStep === 'complete' || (listingStep === 'idle' && isMintSuccess)) &&
+        comicId && 
+        tokenId && 
+        !isComplete
+      ) {
+        try {
+          console.log('💾 Updating backend with mint data...');
           await updateComicWithMintData(comicId, tokenId);
           setMintingProgress(100);
           setIsMinting(false);
           setIsComplete(true);
-          console.log('🎉 All done! Comic is minted and listed!');
+          console.log('🎉 All operations completed successfully!');
         } catch (error) {
           console.error('❌ Error updating backend:', error);
           setMintError(error as Error);
@@ -235,81 +382,58 @@ export const useComicMinting = () => {
       }
     };
 
-    listAfterMint();
-  }, [isMintSuccess, hash, comicId, tokenId, isComplete, savedMonetizationData, chainId, address, writeContract]);
+    finalizeProcess();
+  }, [listingStep, comicId, tokenId, isComplete, isMintSuccess]);
 
-  //   const extractedPriceCreator = async () => {
-  //     if (isMintSuccess && receipt && !tokenId) {
-  //       console.log('📄 Transaction receipt received:', receipt);
-
-  //       try {
-  //         // Method 1: Parse logs for ComicMinted event
-  //         const mintedLog = receipt.logs.find((log) => {
-  //           try {
-  //             const decoded = decodeEventLog({
-  //               abi: QUIVA_COMICS_ABI,
-  //               data: log.data,
-  //               topics: log.topics,
-  //             });
-  //             return (decoded as any).eventName ==='ComicListed';
-  //           } catch {
-  //             return false;
-  //           }
-  //         });
-
-  //         if (mintedLog) {
-  //           const decoded = decodeEventLog({
-  //             abi: QUIVA_COMICS_ABI,
-  //             data: mintedLog.data,
-  //             topics: mintedLog.topics,
-  //           });
-
-  //           if ((decoded as any).eventName === 'ComicListed') {
-  //             const decodedEvent = decoded as { eventName: string; args: { tokenId: bigint, pricePerToken: number,  seller: Address} };
-  //             const extractedPrice = decodedEvent.args.pricePerToken;
-  //             const extractedCreator = decodedEvent.args.seller;
-  //             console.log('✅ Token ID extracted from event:', extractedPrice.toString());
-  //             console.log('✅ Creator address extracted from event:', extractedCreator);
-  //             setPricePerToken(Number(extractedPrice));
-  //             setSellerAddress(extractedCreator);
-         
-  //             return;
-  //           }
-  //         }
-
-  //         // Method 2: If event parsing fails, try getting from return value
-  //         // if (publicClient && hash) {
-  //         //   const transaction = await publicClient.getTransaction({ hash });
-  //         //   console.log('📄 Transaction data:', transaction);
-  //         // }
-
-  //         // console.warn('⚠️ Could not extract token ID from receipt');
-  //       } catch (error) {
-  //         console.error('❌ Error extracting token ID:', error);
-  //       }
-  //     }
-  //   };
-
-  //   extractedPriceCreator();
-  // }, [isMintSuccess, receipt, tokenId, publicClient, hash]);
   // Monitor write errors
   useEffect(() => {
-    if (writeError) {
-      console.error('❌ Write contract error:', writeError);
-      setMintError(writeError as Error);
+    if (mintWriteError) {
+      console.error('❌ Mint contract error:', mintWriteError);
+      setMintError(mintWriteError as Error);
       setIsMinting(false);
-      setIsListing(false);
       setMintingProgress(0);
+      setListingStep('error');
     }
-  }, [writeError]);
+  }, [mintWriteError]);
+
+  useEffect(() => {
+    if (approveWriteError) {
+      console.error('❌ Approve contract error:', approveWriteError);
+      setMintError(approveWriteError as Error);
+      setIsListing(false);
+      setIsApprovingMarketplace(false);
+      setListingStep('error');
+    }
+  }, [approveWriteError]);
+
+  useEffect(() => {
+    if (listWriteError) {
+      console.error('❌ List contract error:', listWriteError);
+      setMintError(listWriteError as Error);
+      setIsListing(false);
+      setListingStep('error');
+    }
+  }, [listWriteError]);
 
   // Monitor confirmation status
   useEffect(() => {
-    if (isConfirming) {
-      console.log('⏳ Transaction confirming...');
+    if (isMintConfirming) {
+      console.log('⏳ Mint transaction confirming...');
       setMintingProgress(80);
     }
-  }, [isConfirming]);
+  }, [isMintConfirming]);
+
+  useEffect(() => {
+    if (isApproveConfirming) {
+      console.log('⏳ Approve transaction confirming...');
+    }
+  }, [isApproveConfirming]);
+
+  useEffect(() => {
+    if (isListConfirming) {
+      console.log('⏳ List transaction confirming...');
+    }
+  }, [isListConfirming]);
 
   /**
    * Check if the connected wallet is an approved creator
@@ -319,15 +443,11 @@ export const useComicMinting = () => {
     
     try {
       const token = localStorage.getItem('token');
-      const response = await axiosInstance.get(`creators/check-approval/${address}`, 
-        // `http://localhost:5000/api/creators/check-approval/${address}`,
-
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await axiosInstance.get(`creators/check-approval/${address}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       
       return response.data.isApproved;
     } catch (error) {
@@ -345,8 +465,6 @@ export const useComicMinting = () => {
     try {
       console.log('🔍 Requesting creator approval...');
       const token = localStorage.getItem('token');
-      // const response = await axios.post(
-        // 'http://localhost:5000/api/creators/approve-creator',
       const response = await axiosInstance.post(
         '/creators/approve-creator',
         { creatorAddress: address },
@@ -374,10 +492,12 @@ export const useComicMinting = () => {
     user,
   }: PublishComicParams) => {
     try {
+      // Reset states
       setIsComplete(false);
       setTokenId(null);
       setComicId(null);
       setMintError(null);
+      setListingStep('idle');
       
       // Save monetization data for later use in listing
       setSavedMonetizationData(monetizationData);
@@ -434,13 +554,10 @@ export const useComicMinting = () => {
       }
 
       formData.append('comicData', JSON.stringify(comicPayload));
-
       setUploadProgress(30);
 
       // Step 2: Upload to backend (which handles IPFS upload and metadata generation)
       const token = localStorage.getItem('token');
-      // const response = await axios.post(
-      //   'http://localhost:5000/api/comics/full',
       const response = await axiosInstance.post(
         '/comics/full',
         formData,
@@ -470,14 +587,6 @@ export const useComicMinting = () => {
       console.log('✅ Comic created:', createdComic);
       console.log('📦 Metadata CID:', metadataCid);
 
-      console.log('🔍 NFT Minting Check:', {
-        mintAsNFT: monetizationData.mintAsNFT,
-        metadataCid: metadataCid,
-        isConnected: isConnected,
-        address: address,
-        chainId: chainId,
-      });
-
       // Step 3: If NFT minting is enabled, interact with smart contract
       if (monetizationData.mintAsNFT && metadataCid && isConnected && address) {
         setIsMinting(true);
@@ -506,11 +615,10 @@ export const useComicMinting = () => {
         const currentChain = chainId === 296 ? hederaTestnet : mainnet;
 
         // Construct IPFS gateway URL for metadata
-        const metadataURI = `https://gray-tough-elk-417.mypinata.cloud/ipfs/${metadataCid}`;
+        const metadataURI = `https://jade-major-lobster-143.mypinata.cloud/ipfs/${metadataCid}`;
 
         // Prepare minting parameters
         const maxSupply = BigInt(monetizationData.nftCopies || 100);
-        const royaltyBasisPoints = BigInt(10 * 100); // 10% royalty
 
         setMintingProgress(30);
 
@@ -518,24 +626,17 @@ export const useComicMinting = () => {
           comicId: dbComicId,
           metadataURI,
           maxSupply: maxSupply.toString(),
-          royaltyPercentage: royaltyBasisPoints.toString(),
           contractAddress: QUIVA_COMICS_ADDRESS,
           currentChain: currentChain,
         });
 
         try {
-          // STEP 1: Mint the NFT (all copies to creator)
-          console.log('🎨 Step 1: Minting NFT...');
-          await writeContract({
+          console.log('🎨 Minting NFT...');
+          await mintContract({
             address: QUIVA_COMICS_ADDRESS,
             abi: QUIVA_COMICS_ABI,
             functionName: 'mintComic',
-            args: [
-              dbComicId,
-              metadataURI,
-              maxSupply,
-              royaltyBasisPoints,
-            ],
+            args: [metadataURI, maxSupply],
             account: address,
             chain: currentChain,
           });
@@ -555,7 +656,6 @@ export const useComicMinting = () => {
                   !address ? 'No wallet address' : 'Unknown'
         });
         // If not minting NFT, mark as complete immediately
-
         setIsComplete(true);
       }
 
@@ -563,7 +663,7 @@ export const useComicMinting = () => {
         success: true,
         comic: createdComic,
         metadataCid,
-        requiresMinting: monetizationData.mintAsNFT && !hash,
+        requiresMinting: monetizationData.mintAsNFT && !mintHash,
       };
     } catch (error: any) {
       console.error('❌ Error publishing comic:', error);
@@ -571,7 +671,7 @@ export const useComicMinting = () => {
       throw error;
     } finally {
       setIsUploading(false);
-      if (!writeError) {
+      if (!mintWriteError) {
         setIsMinting(false);
       }
     }
@@ -580,51 +680,16 @@ export const useComicMinting = () => {
   /**
    * Update backend with minting results
    */
-  // const updateComicWithMintData = async (
-  //   comicId: string,
-  //   tokenId: bigint,
-  //   transactionHash: string
-  // ) => {
-  //   try {
-  //     const token = localStorage.getItem('token');
-  //     await axios.patch(
-  //       `http://localhost:5000/api/comics/${comicId}`,
-  //       {
-  //         nftDetails: {
-  //           mintStatus: 'minted',
-  //           tokenId: tokenId.toString(),
-  //           contractAddress: QUIVA_COMICS_ADDRESS,
-  //           transactionHash,
-  //         },
-  //       },
-  //       {
-  //         headers: {
-  //           Authorization: `Bearer ${token}`,
-  //         },
-  //       }
-  //     );
-
-  //     console.log('✅ Comic updated with mint data');
-  //   } catch (error) {   
-  //     console.error('❌ Error updating comic with mint data:', error);
-  //   }
-  // };
-
-  //Reset function
-  // 
   const updateComicWithMintData = async (
     comicId: string,
     tokenId: bigint,
-    // transactionHash: string
   ) => {
     try {
       const token = localStorage.getItem('token');
-      // await axios.put(
-      //   `http://localhost:5000/api/comics/token/${comicId}`,
       await axiosInstance.put(
         `/comics/token/${comicId}`,
         {
-            tokenId: tokenId.toString(),
+          tokenId: tokenId.toString(),
         },
         {
           headers: {
@@ -636,9 +701,13 @@ export const useComicMinting = () => {
       console.log('✅ Comic updated with tokenId data');
     } catch (error) {
       console.error('❌ Error updating comic with tokenId data:', error);
+      throw error;
     }
   };
   
+  /**
+   * Reset all states
+   */
   const reset = () => {
     setIsUploading(false);
     setIsMinting(false);
@@ -650,33 +719,71 @@ export const useComicMinting = () => {
     setComicId(null);
     setIsComplete(false);
     setSavedMonetizationData(null);
+    setListingStep('idle');
+    setIsApprovingMarketplace(false);
+    setApprovalStatus({
+      isChecking: false,
+      isApproving: false,
+      isApproved: false,
+      error: null,
+    });
   };
 
   return {
+    // Main functions
     publishComic,
     updateComicWithMintData,
     reset,
+    
+    // Upload states
     isUploading,
-    isMinting,
-    isListing,
     uploadProgress,
+    
+    // Minting states
+    isMinting,
     mintingProgress,
-    isWritePending,
-    isConfirming,
-    isComplete,
+    isMintWritePending,
+    isMintConfirming,
     isMintSuccess,
-    mintError: writeError || mintError,
+    
+    // Listing states
+    isListing,
+    listingStep,
+    isApprovingMarketplace,
+    isApproveWritePending,
+    isApproveConfirming,
+    isApproveSuccess,
+    isListWritePending,
+    isListConfirming,
+    isListSuccess,
+    
+    // Completion states
+    isComplete,
+    
+    // Results
     tokenId,
     sellerAddress,
     pricePerToken,
-    mintHash: hash,
+    mintHash,
+    approveHash,
+    listHash,
     comicId,
-    setTokenId,
+    
+    // Errors
+    mintError: mintWriteError || approveWriteError || listWriteError || mintError,
+    
+    // Legacy compatibility
+    isWritePending: isMintWritePending,
+    isConfirming: isMintConfirming,
+    
+    // Wallet status
     walletStatus: {
       isConnected,
       address,
       chainId,
-    }
+    },
+    
+    // Setters (for advanced usage)
+    setTokenId,
   };
 };
-

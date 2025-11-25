@@ -113,14 +113,14 @@ export default function MainPage() {
       <ComicSection 
         title="Trending & Popular Collections" 
         subtitle='Highest sales in the past hours'
-        comics={freeComics.length > 0 ? freeComics : upcomingComics} 
+        comics={transformedComics.length > 0 ? transformedComics : upcomingComics} 
         isLoading={isLoading}
       />
 
       <GridSection
         title="Top selling Comics" 
         subtitle='Highest move in the past hours'
-        comics={freeComics.length > 0 ? freeComics : upcomingComics} 
+        comics={transformedComics.length > 0 ? transformedComics : upcomingComics} 
         isLoading={isLoading}
       />
 
