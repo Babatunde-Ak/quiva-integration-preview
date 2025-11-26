@@ -1,11 +1,19 @@
 import { useState, useEffect } from 'react';
-import { useAccount, useWriteContract, useWaitForTransactionReceipt, useChainId, usePublicClient } from 'wagmi';
+import { 
+  useAccount, 
+  useWriteContract, 
+  useWaitForTransactionReceipt, 
+  useChainId, 
+  usePublicClient,
+  useUnifiedWallet
+} from './useUnifiedWallet';
 import { QUIVA_COMICS_ABI, QUIVA_MARKETPLACE_ABI, QUIVA_COMICS_ADDRESS, QUIVA_MARKETPLACE } from '../contracts/QuivaComics';
 import { mainnet } from 'wagmi/chains';
 import type { Chain } from 'wagmi/chains';
 import { parseEther, decodeEventLog, Address, parseUnits } from 'viem';
 import axiosInstance from '../redux/axios-instance';
 import { addDecimalsToPrice } from '@/lib/formatedPrice';
+import { ContractId } from "@hashgraph/sdk";
 
 interface ComicData {
   title: string;
@@ -58,10 +66,26 @@ const hederaTestnet = {
   },
 } as const satisfies Chain;
 
+// Helper function to normalize contract addresses
+const normalizeContractAddress = (address: any) => {
+  if (typeof address === 'string') {
+    if (address.startsWith('0x')) {
+      return address;
+    } else if (address.includes('.')) {
+      return `0x${ContractId.fromString(address).toSolidityAddress()}`;
+    }
+  }
+  if (address?.toSolidityAddress) {
+    return `0x${address.toSolidityAddress()}`;
+  }
+  return address;
+};
+
 export const useComicMinting = () => {
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
   const publicClient = usePublicClient();
+  const { activeWalletType } = useUnifiedWallet();
   
   // Main state
   const [isUploading, setIsUploading] = useState(false);
@@ -87,7 +111,7 @@ export const useComicMinting = () => {
     error: null,
   });
 
-  // Wagmi hooks for NFT minting
+  // Unified wallet hooks for NFT minting
   const { 
     data: mintHash, 
     writeContract: mintContract, 
@@ -103,7 +127,7 @@ export const useComicMinting = () => {
     hash: mintHash,
   });
 
-  // Wagmi hooks for marketplace approval
+  // Unified wallet hooks for marketplace approval
   const {
     data: approveHash,
     writeContract: approveContract,
@@ -119,7 +143,7 @@ export const useComicMinting = () => {
     hash: approveHash
   });
 
-  // Wagmi hooks for marketplace listing
+  // Unified wallet hooks for marketplace listing
   const {
     data: listHash,
     writeContract: listContract,
@@ -215,7 +239,6 @@ export const useComicMinting = () => {
       console.log('✅ Marketplace approval confirmed');
       setListingStep('listing');
       setIsApprovingMarketplace(false);
-      // The listing will be triggered by the main effect
     }
   }, [isApproveSuccess, approveReceipt]);
 
@@ -262,20 +285,29 @@ export const useComicMinting = () => {
               tokenId: tokenId.toString(),
               amount: amountToList.toString(),
               pricePerToken: pricePerToken.toString(),
+              walletType: activeWalletType,
             });
 
             // Step 1: Approve marketplace to spend NFTs
             console.log('📋 Step 1: Approving marketplace...');
-            await approveContract({
-              address: QUIVA_COMICS_ADDRESS,
+            
+            // Prepare unified contract call for approval
+            const approvalArgs: any = {
+              address: normalizeContractAddress(QUIVA_COMICS_ADDRESS),
               abi: QUIVA_COMICS_ABI,
               functionName: 'setApprovalForAll',  
-              args: [QUIVA_MARKETPLACE, true],
+              args: [normalizeContractAddress(QUIVA_MARKETPLACE), true],
               account: address,
               chain: currentChain
-            });
+            };
 
-            // Note: The actual listing will happen in the approval success effect
+            // Add wallet-specific parameters
+            if (activeWalletType === 'hashpack') {
+              approvalArgs.contractId = ContractId.fromString("0.0.123458"); // Replace with actual comics contract ID
+              approvalArgs.metaArgs = { gas: 200_000 };
+            }
+
+            await approveContract(approvalArgs);
             
           } else {
             // No marketplace listing needed, go straight to backend update
@@ -303,7 +335,8 @@ export const useComicMinting = () => {
     address, 
     listingStep,
     chainId,
-    approveContract
+    approveContract,
+    activeWalletType
   ]);
 
   // Handle marketplace listing after approval
@@ -323,19 +356,28 @@ export const useComicMinting = () => {
           const pricePerToken = BigInt(savedMonetizationData.nftPrice || 0);
           const amountToList = BigInt(savedMonetizationData.nftCopies || 100);
 
-          await listContract({
-            address: QUIVA_MARKETPLACE,
+          // Prepare unified contract call for listing
+          const listingArgs: any = {
+            address: normalizeContractAddress(QUIVA_MARKETPLACE),
             abi: QUIVA_MARKETPLACE_ABI,
             functionName: 'listItem',
             args: [
-              QUIVA_COMICS_ADDRESS,
+              normalizeContractAddress(QUIVA_COMICS_ADDRESS),
               tokenId,
               amountToList,
               BigInt(addDecimalsToPrice(pricePerToken.toString())),
             ],
             account: address,
             chain: currentChain,
-          });
+          };
+
+          // Add wallet-specific parameters
+          if (activeWalletType === 'hashpack') {
+            listingArgs.contractId = ContractId.fromString("0.0.123456"); // Replace with actual marketplace contract ID
+            listingArgs.metaArgs = { gas: 300_000 };
+          }
+
+          await listContract(listingArgs);
 
           console.log('✅ Listing transaction sent');
           
@@ -356,7 +398,8 @@ export const useComicMinting = () => {
     address, 
     isApproveSuccess,
     chainId,
-    listContract
+    listContract,
+    activeWalletType
   ]);
 
   // Final backend update after everything is complete
@@ -626,20 +669,31 @@ export const useComicMinting = () => {
           comicId: dbComicId,
           metadataURI,
           maxSupply: maxSupply.toString(),
-          contractAddress: QUIVA_COMICS_ADDRESS,
+          contractAddress: normalizeContractAddress(QUIVA_COMICS_ADDRESS),
           currentChain: currentChain,
+          walletType: activeWalletType,
         });
 
         try {
           console.log('🎨 Minting NFT...');
-          await mintContract({
-            address: QUIVA_COMICS_ADDRESS,
+          
+          // Prepare unified contract call arguments
+          const mintArgs: any = {
+            address: normalizeContractAddress(QUIVA_COMICS_ADDRESS),
             abi: QUIVA_COMICS_ABI,
             functionName: 'mintComic',
             args: [metadataURI, maxSupply],
             account: address,
             chain: currentChain,
-          });
+          };
+
+          // Add wallet-specific parameters
+          if (activeWalletType === 'hashpack') {
+            mintArgs.contractId = ContractId.fromString("0.0.123458"); // Replace with actual comics contract ID
+            mintArgs.metaArgs = { gas: 300_000 };
+          }
+
+          await mintContract(mintArgs);
 
           console.log('✅ Mint transaction sent, waiting for confirmation...');
           setMintingProgress(60);
@@ -781,7 +835,11 @@ export const useComicMinting = () => {
       isConnected,
       address,
       chainId,
+      walletType: activeWalletType,
     },
+    
+    // Additional unified wallet info
+    activeWalletType,
     
     // Setters (for advanced usage)
     setTokenId,

@@ -1,11 +1,19 @@
 import { useState, useEffect } from 'react';
-import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract, useChainId } from 'wagmi';
+import { 
+  useAccount, 
+  useWriteContract, 
+  useWaitForTransactionReceipt, 
+  useReadContract, 
+  useChainId,
+  useUnifiedWallet
+} from './useUnifiedWallet';
 import { QUIVA_FREE_COMICS_ABI, QUIVA_FREE_COMICS_ADDRESS } from '../contracts/QuivaComics';
 import { useAppDispatch } from '@/redux/hook';
 import type { Address, Chain } from 'viem';
 import axios from 'axios';
 import axiosInstance from '@/redux/axios-instance';
 import { createTransaction } from '@/redux/slices/transactionSlice';
+import { ContractId } from "@hashgraph/sdk";
 
 interface ClaimFreeComicParams {
   tokenId: bigint | string;
@@ -30,9 +38,25 @@ const hederaTestnet = {
   },
 } as const satisfies Chain;
 
+// Helper function to normalize contract addresses
+const normalizeContractAddress = (address: any): string => {
+  if (typeof address === 'string') {
+    if (address.startsWith('0x')) {
+      return address as `0x${string}`;
+    } else if (address.includes('.')) {
+      return `0x${ContractId.fromString(address).toSolidityAddress()}`;
+    }
+  }
+  if (address?.toSolidityAddress) {
+    return `0x${address.toSolidityAddress()}`;
+  }
+  return address;
+};
+
 export const useClaimFreeComic = () => {
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
+  const { activeWalletType } = useUnifiedWallet();
   const dispatch = useAppDispatch();
 
   const [isClaiming, setIsClaiming] = useState(false);
@@ -42,7 +66,7 @@ export const useClaimFreeComic = () => {
   const [currentTokenId, setCurrentTokenId] = useState<string | null>(null);
   const [claimProgress, setClaimProgress] = useState(0);
 
-  // Wagmi hooks for contract interaction
+  // Unified wallet hooks for contract interaction
   const {
     data: hash,
     writeContract,
@@ -143,6 +167,8 @@ export const useClaimFreeComic = () => {
       console.log('🎁 Starting free comic claim process...');
       console.log('Token ID:', tokenId);
       console.log('Comic ID:', comicId);
+      console.log('Wallet Type:', activeWalletType);
+
       const currentChain = chainId === 296 ? hederaTestnet : null;
 
       // Validation
@@ -162,15 +188,25 @@ export const useClaimFreeComic = () => {
 
       console.log('📝 Calling claimFreeComic contract function...');
 
-      // Call the smart contract
-      await writeContract({
-        address: QUIVA_FREE_COMICS_ADDRESS,
+      // Prepare unified contract call arguments
+      const contractArgs: any = {
+        address: normalizeContractAddress(QUIVA_FREE_COMICS_ADDRESS),
         abi: QUIVA_FREE_COMICS_ABI,
         functionName: 'claimFreeComic',
         args: [BigInt(tokenId)],
         account: address,
         chain: currentChain,
-      });
+        authorizationList: [], // Required for HashPack
+      };
+
+      // Add wallet-specific parameters
+      if (activeWalletType === 'hashpack') {
+        contractArgs.contractId = ContractId.fromString("0.0.123457"); // Replace with actual free comics contract ID
+        contractArgs.metaArgs = { gas: 200_000 };
+      }
+
+      // Call the smart contract
+      await writeContract(contractArgs);
 
       setClaimProgress(40);
 
@@ -212,9 +248,16 @@ export const useClaimFreeComic = () => {
     transactionHash: hash,
     receipt,
 
-    // Connection states
-    isConnected,
-    address,
+    // Wallet info
+    walletStatus: {
+      isConnected,
+      address,
+      chainId,
+      walletType: activeWalletType,
+    },
+    
+    // Additional unified wallet info
+    activeWalletType,
   };
 };
 
@@ -222,19 +265,20 @@ export const useClaimFreeComic = () => {
  * Hook to check if a user has claimed a specific free comic
  * Uses both blockchain and backend verification
  */
-export const useCheckComicClaim = (tokenId?: string | bigint, userAddress?: Address) => {
+export const useCheckComicClaim = (tokenId?: string | bigint, userAddress?: any) => {
   const [backendHasClaimed, setBackendHasClaimed] = useState<boolean>(false);
   const [isCheckingBackend, setIsCheckingBackend] = useState(false);
 
-  // Check blockchain
+  // Check blockchain using unified read contract
   const { data: blockchainHasClaimed, isLoading: isLoadingBlockchain, refetch: refetchBlockchain } = useReadContract({
-    address: QUIVA_FREE_COMICS_ADDRESS,
+    address: normalizeContractAddress(QUIVA_FREE_COMICS_ADDRESS),
     abi: QUIVA_FREE_COMICS_ABI,
     functionName: 'hasUserClaimed',
     args: tokenId && userAddress ? [BigInt(tokenId), userAddress] : undefined,
     query: {
       enabled: !!tokenId && !!userAddress,
     },
+    authorizationList: [], // Required for HashPack
   });
 
   // Check backend using verify_nft endpoint
@@ -244,8 +288,6 @@ export const useCheckComicClaim = (tokenId?: string | bigint, userAddress?: Addr
 
       setIsCheckingBackend(true);
       try {
-        // const response = await axios.post(
-        //   `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/transaction/verify_nft`,
         const response = await axiosInstance.post(
           `/transactions/user/verify_nft/`,
           {
@@ -272,8 +314,6 @@ export const useCheckComicClaim = (tokenId?: string | bigint, userAddress?: Addr
     if (tokenId && userAddress) {
       setIsCheckingBackend(true);
       try {
-        // const response = await axios.post(
-        //   `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/transaction/verify_nft`,
         const response = await axiosInstance.post(
           `/transactions/user/verify_nft/`,
           {
@@ -303,17 +343,18 @@ export const useCheckComicClaim = (tokenId?: string | bigint, userAddress?: Addr
 /**
  * Hook to check if a comic is claimable by a user
  */
-export const useIsComicClaimable = (tokenId?: string | bigint, userAddress?: Address) => {
+export const useIsComicClaimable = (tokenId?: string | bigint, userAddress?: any) => {
   const { hasClaimed, isLoading: hasClaimedLoading } = useCheckComicClaim(tokenId, userAddress);
 
   const { data: comicData, isLoading: comicLoading, refetch } = useReadContract({
-    address: QUIVA_FREE_COMICS_ADDRESS,
+    address: normalizeContractAddress(QUIVA_FREE_COMICS_ADDRESS),
     abi: QUIVA_FREE_COMICS_ABI,
     functionName: 'getComic',
     args: tokenId ? [BigInt(tokenId)] : undefined,
     query: {
       enabled: !!tokenId,
     },
+    authorizationList: [], // Required for HashPack
   });
 
   const comic = comicData as any;
@@ -335,13 +376,14 @@ export const useIsComicClaimable = (tokenId?: string | bigint, userAddress?: Add
  */
 export const useComicDetails = (tokenId?: string | bigint) => {
   const { data: comicData, isLoading, refetch } = useReadContract({
-    address: QUIVA_FREE_COMICS_ADDRESS,
+    address: normalizeContractAddress(QUIVA_FREE_COMICS_ADDRESS),
     abi: QUIVA_FREE_COMICS_ABI,
     functionName: 'getComic',
     args: tokenId ? [BigInt(tokenId)] : undefined,
     query: {
       enabled: !!tokenId,
     },
+    authorizationList: [], // Required for HashPack
   });
 
   // Parse the comic struct
