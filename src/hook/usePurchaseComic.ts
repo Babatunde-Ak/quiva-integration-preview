@@ -56,7 +56,7 @@ export const useComicPurchase = () => {
   const [purchaseSuccess, setPurchaseSuccess] = useState(false);
   const [comicId, setComicId] = useState<string | null>(null);
   const [currentPurchasePrice, setCurrentPurchasePrice] = useState<number>(0);
-  const [purchaseHash, setPurchaseHash] = useState<`0x${string}` | undefined>();
+  const [purchaseHash, setPurchaseHash] = useState<any>();
 
   const { 
     writeContractAsync,
