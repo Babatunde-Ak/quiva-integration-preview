@@ -1,10 +1,7 @@
 'use client'
 
 import React, {useRef, useState} from 'react'
-import {ChevronLeft, ChevronRight} from 'lucide-react'
-import {Button} from '@/components/ui/button'
 import {Skeleton} from '@/components/ui/skeleton'
-import {ComicCard} from '@/components/cards/ComicCard'
 import {motion} from 'framer-motion'
 import CollectionCard from '@/components/cards/TopSellingCard'
 
@@ -91,7 +88,7 @@ export function GridSection({
     return (
         <section className="my-8 mt-12 w-full max-w-full">
             {/* Section Header */}
-            <div className="flex items-center justify-between mb-4 w-full">
+            <div className="flex flex-wrap gap-2 items-center justify-between mb-4 w-full">
 
                 <div className="flex flex-col space-y-4">
                     {/* Header Section */}

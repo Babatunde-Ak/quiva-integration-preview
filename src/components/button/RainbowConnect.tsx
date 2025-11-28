@@ -12,6 +12,8 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { MainButton } from ".";
 import { useRouter } from "next/navigation";
 import { FaCog, FaSignOutAlt, FaStore } from "react-icons/fa";
+import { rainbow } from "../../../public/dev_images";
+import Picture from "../picture/Index";
 
 type RainbowConnectProps = {
   disabled?: boolean;
@@ -178,13 +180,14 @@ export const RainbowConnect: React.FC<RainbowConnectProps> = ({
                           : "bg-transparent text-white border-white/30 hover:border-white hover:bg-white/10"
                       }`}
                   >
+                    <Picture src={rainbow} alt='rainbow icon' width={16} height={16}/>
                     {isLoggingIn ? (
                       <>
                         <Loader2 size={16} className="animate-spin" />
                         Connecting...
                       </>
                     ) : (
-                      "Connect with Rainbowkit "
+                      "Rainbowkit "
                     )}
                   </MainButton>
                 );

@@ -24,6 +24,8 @@ import { transformApiComicsToComics } from '@/features/comic-library/utils/trans
 import { transformApiComicsToTopComics } from '@/features/comic-library/utils/transformtopcomicsdata';
 import ComicsCarousel from '@/features/comic-library/components/ComicsCarousel';
 import { GridSection } from '@/features/comic-library/components/sections/GridSection';
+import { popularFilters } from '@/features/comic-library/data/content';
+import { SortComicSection } from '@/features/comic-library/components/sections/SortComicSection';
 
 export default function MainPage() {
   const { comics, isLoading } = useAppSelector((state) => state.comic)
@@ -68,7 +70,7 @@ export default function MainPage() {
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full container mx-auto px-4">
       {/* Hero section */}
       <div className="mb-8">
         <HeroComicSlider comics={heroComics} />
@@ -111,33 +113,50 @@ export default function MainPage() {
       <ComicSection 
         title="Trending & Popular Collections" 
         subtitle='Highest sales in the past hours'
-        comics={freeComics.length > 0 ? freeComics : upcomingComics} 
+        comics={transformedComics.length > 0 ? transformedComics : upcomingComics} 
         isLoading={isLoading}
       />
 
       <GridSection
         title="Top selling Comics" 
         subtitle='Highest move in the past hours'
+        comics={transformedComics.length > 0 ? transformedComics : upcomingComics} 
+        isLoading={isLoading}
+      />
+
+      <ComicSection 
+        title="Popular Editions" 
+        subtitle='Check out the best editions'
         comics={freeComics.length > 0 ? freeComics : upcomingComics} 
         isLoading={isLoading}
+        inverted={true}
+        filters={popularFilters}
       />
 
       {/* Our Creators */}
       <CreatorsSection creators={creators} />
 
       {/* Mint These Comics - Use NFT comics */}
-      <ComicSection 
+      {/* <ComicSection 
         title="Mint These Comics"
         comics={nftComics.length > 0 ? nftComics : mintComics} 
         isLoading={isLoading}
-      />
+      /> */}
 
       {/* Explore More Button */}
-      <div className="flex justify-center mt-12">
+      {/* <div className="flex justify-center mt-12">
         <MainButton>
           Explore More Comics
         </MainButton>
-      </div>
+      </div> */}
+
+      <SortComicSection 
+          title="Today's Pick"
+          comics={freeComics.length > 0 ? freeComics : upcomingComics}
+          onFilterChange={(filter) => console.log('Filter:', filter)}
+          onSortChange={(sort) => console.log('Sort:', sort)}
+      />
+
     </div>
   )
 }

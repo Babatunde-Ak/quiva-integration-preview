@@ -1,5 +1,6 @@
 'use client'
 
+import Picture from "@/components/picture/Index"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   Table,
@@ -11,6 +12,7 @@ import {
 } from "@/components/ui/table"
 import { ChevronDown, ChevronUp } from "lucide-react"
 import { useState } from "react"
+import { hbar } from "../../../../public/dev_images"
 
 export interface TopComic {
   rank: number
@@ -71,7 +73,7 @@ export function TopComicsTable({ comics }: TopComicsTableProps) {
             {comics.map((comic) => (
               <TableRow 
                 key={comic.rank} 
-                className="border-white/10 hover:bg-black-600/50 px-4 py-4"
+                className="border-white/10 hover:bg-black-600/50 px-4 py-4 font-light text-base"
               >
                 <TableCell className="flex items-center space-x-3 ml-3">
                   <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
@@ -81,7 +83,7 @@ export function TopComicsTable({ comics }: TopComicsTableProps) {
                         alt={comic.title}
                         className="object-cover"
                       />
-                      <AvatarFallback className="bg-black-500 text-white font-bold text-sm">
+                      <AvatarFallback className="bg-black-500 text-white font-bold">
                         {comic.title
                           .split(' ')
                           .map((n) => n[0])
@@ -91,13 +93,15 @@ export function TopComicsTable({ comics }: TopComicsTableProps) {
                     </Avatar>
                   </div>
                   <div>
-                    <p className="text-white font-medium text-sm">{comic.title}</p>
+                    <p className="text-white font-light">{comic.title}</p>
                   </div>
                 </TableCell>
                 
                 <TableCell>
                   <div className="flex items-center space-x-2">
-                    <span className="text-white font-medium">{comic.floorPrice}</span>
+                    <span className="text-white font-light flex items-center gap-1">{comic.floorPrice} 
+                      <span><Picture src={hbar} alt="hbar" loading="eager" className="w-6 h-6" /></span>
+                    </span>
                     <span className={`text-xs flex ${
                       comic.priceChange > 0 ? 'text-green-400' : 'text-red-400'
                     }`}>
@@ -115,8 +119,10 @@ export function TopComicsTable({ comics }: TopComicsTableProps) {
                   {comic.sales} Sales
                 </TableCell>
                 
-                <TableCell className="text-white font-medium">
+                <TableCell className="text-white font-light flex items-center gap-1">
                   {comic.volume}
+                  <span><Picture src={hbar} alt="hbar" loading="eager" className="w-6 h-6" /></span>
+
                 </TableCell>
               </TableRow>
             ))}
