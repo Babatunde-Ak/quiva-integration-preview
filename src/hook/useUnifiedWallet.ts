@@ -118,9 +118,9 @@ export const useUnifiedWallet = (config: UseUnifiedWalletConfig = {}) => {
 
   // HashPack hooks
   const hashpackWallet = useWallet();
-  const hashpackEvmAddress = useEvmAddress();
-  const hashpackChain = useHashpackChain();
-  const hashpackAccountInfo = useAccountInfo();
+  const {data: hashpackEvmAddress} = useEvmAddress();
+  const {data: hashpackChain} = useHashpackChain();
+  const {data: hashpackAccountInfo} = useAccountInfo();
 
   // Determine which wallet system to use
   const activeWalletType = useMemo(() => {
@@ -491,6 +491,8 @@ export const useUnifiedAuthSignature = (config: UseUnifiedWalletConfig = {}) => 
 // Drop-in replacement for useAccount
 export const useAccount = (config: UseUnifiedWalletConfig = {}) => {
   const { account, activeWalletType } = useUnifiedWallet(config);
+  console.log(`Using ${activeWalletType} wallet for useAccount`);
+  console.log(account);
   return {
     ...account,
     // Add any additional properties you might need for compatibility

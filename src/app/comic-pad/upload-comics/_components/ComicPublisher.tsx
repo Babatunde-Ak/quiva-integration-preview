@@ -8,7 +8,7 @@ import Picture from "@/components/picture/Index";
 import { useAppDispatch, useAppSelector } from "@/redux/hook";
 import { useComicMinting } from "@/hook/useComicMinting";
 import { useFreeComicMinting } from "@/hook/useFreeComicMinting";
-import { useAccount } from "wagmi";
+import { useAccount } from "@/hook/useUnifiedWallet";
 import { kiloScribeService, InscriptionProgress, InscriptionResult } from "@/lib/kiloscribe-service";
 
 interface ExtractedFile {
