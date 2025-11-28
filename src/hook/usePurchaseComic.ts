@@ -97,7 +97,7 @@ export const useComicPurchase = () => {
   };
 
   useEffect(() => {
-    if (isPurchaseComplete && receipt && comicId && address) {
+    if (isPurchaseComplete && purchaseHash && receipt && comicId && address) {
       updateBackendData(
         comicId,
         address,
@@ -106,7 +106,7 @@ export const useComicPurchase = () => {
         'HBAR'
       );
     }
-  }, [isPurchaseComplete, receipt, comicId, address, currentPurchasePrice]);
+  }, [isPurchaseComplete, receipt, comicId, address, purchaseHash, currentPurchasePrice]);
 
   /**
    * FIXED PURCHASE FUNCTION

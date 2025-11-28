@@ -266,7 +266,7 @@ export const useComicMinting = () => {
     listAfterMint();
   }, [isMintSuccess, hash, comicId, tokenId, isComplete, savedMonetizationData, chainId, address, writeContract, ApproveContract, ]);
 
-  //   const extractedPriceCreator = async () => {
+ 
   //     if (isMintSuccess && receipt && !tokenId) {
   //       console.log('📄 Transaction receipt received:', receipt);
 
