@@ -1,10 +1,19 @@
 import { useState, useEffect } from 'react';
-import { useAccount, useWriteContract, useWaitForTransactionReceipt, useChainId, usePublicClient, useReadContract } from 'wagmi';
+import { 
+  useAccount, 
+  useWriteContract, 
+  useWaitForTransactionReceipt, 
+  useChainId, 
+  usePublicClient, 
+  useReadContract,
+  useUnifiedWallet
+} from './useUnifiedWallet';
 import { QUIVA_FREE_COMICS_ADDRESS, QUIVA_FREE_COMICS_ABI } from '../contracts/QuivaComics';
 import { mainnet } from 'wagmi/chains';
 import type { Chain } from 'wagmi/chains';
 import { decodeEventLog } from 'viem';
 import axiosInstance from '../redux/axios-instance';
+import { ContractId } from "@hashgraph/sdk";
 
 interface ComicData {
   title: string;
@@ -52,10 +61,26 @@ const hederaTestnet = {
   },
 } as const satisfies Chain;
 
+// Helper function to normalize contract addresses
+const normalizeContractAddress = (address: any) => {
+  if (typeof address === 'string') {
+    if (address.startsWith('0x')) {
+      return address;
+    } else if (address.includes('.')) {
+      return `0x${ContractId.fromString(address).toSolidityAddress()}`;
+    }
+  }
+  if (address?.toSolidityAddress) {
+    return `0x${address.toSolidityAddress()}`;
+  }
+  return address;
+};
+
 export const useFreeComicMinting = () => {
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
   const publicClient = usePublicClient();
+  const { activeWalletType } = useUnifiedWallet();
   
   // State management
   const [isUploading, setIsUploading] = useState(false);
@@ -74,7 +99,7 @@ export const useFreeComicMinting = () => {
     error: null,
   });
 
-  // Wagmi hooks for contract interaction
+  // Unified wallet hooks for contract interaction
   const { 
     data: hash, 
     writeContract, 
@@ -90,15 +115,16 @@ export const useFreeComicMinting = () => {
     hash,
   });
 
-  // Read contract to check creator approval
+  // Read contract to check creator approval - unified for both wallet types
   const { data: isCreatorApproved } = useReadContract({
-    address: QUIVA_FREE_COMICS_ADDRESS,
+    address: normalizeContractAddress(QUIVA_FREE_COMICS_ADDRESS),
     abi: QUIVA_FREE_COMICS_ABI,
     functionName: 'isApprovedCreator',
     args: address ? [address] : undefined,
     query: {
       enabled: !!address,
     },
+    authorizationList: [], // Required for HashPack
   });
 
   // Monitor transaction status
@@ -458,16 +484,17 @@ export const useFreeComicMinting = () => {
         maxSupply: maxSupply.toString(),
         royaltyPercentage: royaltyPercentage.toString(),
         isFree: true,
-        contractAddress: QUIVA_FREE_COMICS_ADDRESS,
+        contractAddress: normalizeContractAddress(QUIVA_FREE_COMICS_ADDRESS),
         currentChain: currentChain.name,
+        walletType: activeWalletType,
       });
 
       try {
-        console.log('🎨 Calling mintComic on smart contract...');
+        console.log('🎨 Calling mintFreeComic on smart contract...');
         
-        // Call the smart contract's mintComic function with isFree parameter
-        await writeContract({
-          address: QUIVA_FREE_COMICS_ADDRESS,
+        // Prepare unified contract call arguments
+        const contractArgs: any = {
+          address: normalizeContractAddress(QUIVA_FREE_COMICS_ADDRESS),
           abi: QUIVA_FREE_COMICS_ABI,
           functionName: 'mintFreeComic',
           args: [
@@ -477,7 +504,16 @@ export const useFreeComicMinting = () => {
           ],
           account: address,
           chain: currentChain,
-        });
+        };
+
+        // Add wallet-specific parameters
+        if (activeWalletType === 'hashpack') {
+          contractArgs.contractId = ContractId.fromString("0.0.123457"); // Replace with actual free comics contract ID
+          contractArgs.metaArgs = { gas: 300_000 };
+        }
+
+        // Call the smart contract's mintFreeComic function
+        await writeContract(contractArgs);
 
         console.log('✅ Mint transaction sent, waiting for confirmation...');
         setMintingProgress(60);
@@ -591,7 +627,11 @@ export const useFreeComicMinting = () => {
       isConnected,
       address,
       chainId,
+      walletType: activeWalletType,
     },
+    
+    // Additional unified wallet info
+    activeWalletType,
     
     // Setters (for advanced usage)
     setTokenId,
