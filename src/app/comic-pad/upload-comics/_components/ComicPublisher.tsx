@@ -1,13 +1,15 @@
+// components/ComicPublisher.tsx (Enhanced with KiloScribe)
 "use client";
 
 import { useEffect, useState } from "react";
-import { AlertCircle, CheckCircle, Upload, Zap, Database } from "lucide-react";
+import { AlertCircle, CheckCircle, Upload, Zap, Database, Hash } from "lucide-react";
 import { ComicNotification } from "./ComicNotification";
 import Picture from "@/components/picture/Index";
 import { useAppDispatch, useAppSelector } from "@/redux/hook";
 import { useComicMinting } from "@/hook/useComicMinting";
 import { useFreeComicMinting } from "@/hook/useFreeComicMinting";
 import { useAccount } from "wagmi";
+import { kiloScribeService, InscriptionProgress, InscriptionResult } from "@/lib/kiloscribe-service";
 
 interface ExtractedFile {
 	name: string;
@@ -41,12 +43,22 @@ interface MonetizationData {
 	mintAsNFT: boolean;
 	nftCopies?: number;
 	nftPrice?: number;
+	enableHashinal?: boolean; // New option for Hashinal inscription
 }
 
 interface ComicPublisherProps {
 	onclose: () => void;
 	comicData: ComicData;
 	monetizationData: MonetizationData;
+}
+
+interface HashinalInscriptionState {
+	isInscribing: boolean;
+	progress: InscriptionProgress | null;
+	result: InscriptionResult | null;
+	error: string | null;
+	isSupported: boolean;
+	supportReason?: string;
 }
 
 export default function ComicPublisher({ onclose, comicData, monetizationData }: ComicPublisherProps) {
@@ -56,6 +68,16 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 	const [validationErrors, setValidationErrors] = useState<string[]>([]);
 	const [publishingStep, setPublishingStep] = useState<string>('');
 	const [showSuccessModal, setShowSuccessModal] = useState(false);
+	
+	// KiloScribe Hashinal inscription state
+	const [hashinalState, setHashinalState] = useState<HashinalInscriptionState>({
+		isInscribing: false,
+		progress: null,
+		result: null,
+		error: null,
+		isSupported: true,
+		supportReason: undefined
+	});
 	
 	const dispatch = useAppDispatch();
 	const {user} = useAppSelector((state) => state.wallet);
@@ -115,58 +137,153 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 	const tokenId = isCurrentlyPaid ? paidTokenId : freeTokenId;
 	const mintHash = isCurrentlyPaid ? paidMintHash : freeMintHash;
 
+	// Check Hashinal inscription support on component mount
 	useEffect(() => {
-		if (isComplete && tokenId && mintHash) {
-			console.log('✅ Transaction Complete! Opening success modal...');
-			console.log('🎫 Token ID:', tokenId.toString());
-			console.log('🔗 Transaction Hash:', mintHash);
+		const checkHashinalSupport = async () => {
+			if (monetizationData.enableHashinal) {
+				try {
+					const supportCheck = await kiloScribeService.isInscriptionSupported(comicData, comicData.pages);
+					setHashinalState(prev => ({
+						...prev,
+						isSupported: supportCheck.supported,
+						supportReason: supportCheck.reason
+					}));
+				} catch (error) {
+					console.error('Error checking Hashinal support:', error);
+					setHashinalState(prev => ({
+						...prev,
+						isSupported: false,
+						supportReason: 'Error checking inscription compatibility'
+					}));
+				}
+			}
+		};
+
+		checkHashinalSupport();
+	}, [comicData, monetizationData.enableHashinal]);
+
+	// Monitor completion and handle Hashinal inscription
+	useEffect(() => {
+		const handleCompletion = async () => {
+			if (isComplete && tokenId && mintHash && !hashinalState.isInscribing) {
+				console.log('✅ NFT Transaction Complete!');
+				console.log('🎫 Token ID:', tokenId.toString());
+				console.log('🔗 Transaction Hash:', mintHash);
+				
+				// Check if we should also inscribe as Hashinal
+				if (monetizationData.enableHashinal && hashinalState.isSupported && user?.walletAddress) {
+					await handleHashinalInscription();
+				} else {
+					// Complete without Hashinal inscription
+					setShowSuccessModal(true);
+					setIsPublishing(false);
+				}
+			}
+		};
+
+		handleCompletion();
+	}, [isComplete, tokenId, mintHash, hashinalState.isInscribing, monetizationData.enableHashinal, hashinalState.isSupported]);
+
+	/**
+	 * Handle Hashinal inscription after successful NFT minting
+	 */
+	const handleHashinalInscription = async () => {
+		if (!user?.walletAddress) {
+			console.error('No wallet address available for Hashinal inscription');
 			setShowSuccessModal(true);
 			setIsPublishing(false);
+			return;
 		}
 
-	}, [isComplete, tokenId, mintHash]);
+		try {
+			setHashinalState(prev => ({
+				...prev,
+				isInscribing: true,
+				progress: null,
+				result: null,
+				error: null
+			}));
+
+			console.log('🔷 Starting Hashinal inscription for comic...');
+			
+			const inscriptionResult = await kiloScribeService.inscribeComic(
+				comicData,
+				comicData.pages,
+				user.walletAddress,
+				(progress: InscriptionProgress) => {
+					setHashinalState(prev => ({
+						...prev,
+						progress
+					}));
+				}
+			);
+
+			setHashinalState(prev => ({
+				...prev,
+				isInscribing: false,
+				result: inscriptionResult
+			}));
+
+			if (inscriptionResult.status === 'completed') {
+				console.log('🎉 Hashinal inscription completed successfully!');
+				console.log('🔷 Inscription ID:', inscriptionResult.inscriptionId);
+				console.log('🌐 Hashinals URL:', inscriptionResult.hashinalsUrl);
+			} else {
+				console.error('❌ Hashinal inscription failed:', inscriptionResult.error);
+				setHashinalState(prev => ({
+					...prev,
+					error: inscriptionResult.error || 'Inscription failed'
+				}));
+			}
+
+		} catch (error) {
+			console.error('❌ Error during Hashinal inscription:', error);
+			setHashinalState(prev => ({
+				...prev,
+				isInscribing: false,
+				error: error instanceof Error ? error.message : 'Inscription failed'
+			}));
+		}
+
+		// Show success modal regardless of Hashinal inscription result
+		setShowSuccessModal(true);
+		setIsPublishing(false);
+	};
 
 	const validateComicData = (): boolean => {
 		const errors: string[] = [];
 		
-		// Validate title
+		// Existing validation logic...
 		if (!comicData.title || comicData.title.trim().length === 0) {
 			errors.push("Comic title is required");
 		}
 
-		// Validate description
 		if (!comicData.description || comicData.description.trim().length === 0) {
 			errors.push("Comic description is required");
 		}
 
-		// Validate genres
 		if (!comicData.genre || comicData.genre.length === 0) {
 			errors.push("At least one genre must be selected");
 		}
 
-		// Validate pages/content
 		if (!comicData.pages || comicData.pages.length === 0) {
 			errors.push("At least one comic page or PDF file is required");
 		}
 
-		// Validate age rating
 		if (!comicData.ageRating) {
 			errors.push("Age rating is required");
 		}
 
-		// Validate monetization
 		if (monetizationData.publishType === "paid") {
 			if (!monetizationData.price || monetizationData.price <= 0) {
 				errors.push("Valid price is required for paid comics");
 			}
 		}
 
-		// Validate NFT data - Only require price for paid comics
 		if (monetizationData.mintAsNFT) {
 			if (!monetizationData.nftCopies || monetizationData.nftCopies <= 0) {
 				errors.push("Valid number of max supply is required");
 			}
-			// Only require price for paid comics
 			if (monetizationData.publishType === "paid") {
 				if (!monetizationData.nftPrice || monetizationData.nftPrice <= 0) {
 					errors.push("Valid NFT mint price is required");
@@ -174,12 +291,16 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 			}
 		}
 
-		// PDF-specific validation
+		// Hashinal-specific validation
+		if (monetizationData.enableHashinal && !hashinalState.isSupported) {
+			errors.push(`Hashinal inscription not supported: ${hashinalState.supportReason}`);
+		}
+
 		if (hasPdfFile && pdfFile) {
 			if (!pdfFile.blob || pdfFile.blob.size === 0) {
 				errors.push("PDF file appears to be corrupted or empty");
 			}
-			if (pdfFile.blob.size > 100 * 1024 * 1024) { // 100MB limit
+			if (pdfFile.blob.size > 100 * 1024 * 1024) {
 				errors.push("PDF file is too large (max 100MB)");
 			}
 		}
@@ -189,12 +310,10 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 	};
 
 	const handlePublish = async () => {
-		// Clear previous errors
 		setError(null);
 		setValidationErrors([]);
 		setPublishingStep('');
 
-		// Validate data first
 		if (!validateComicData()) {
 			setError("Please fix the validation errors before publishing");
 			return;
@@ -205,7 +324,6 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 			return;
 		}
 
-		// Additional validation for paid comics and NFTs
 		if ((monetizationData.publishType === "paid" || monetizationData.mintAsNFT) && !isConnected) {
 			setError("Please connect your wallet to publish paid comics or mint NFTs");
 			return;
@@ -215,10 +333,8 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 			setIsPublishing(true);
 			setShowSuccessModal(false);
 
-			// Enhanced comic data with PDF metadata
 			const enhancedComicData = {
 				...comicData,
-				// Add processing instructions for server
 				processingInstructions: hasPdfFile ? {
 					type: 'pdf',
 					extractPages: true,
@@ -239,7 +355,6 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 				});
 				console.log('🎉 Paid Comic published successfully:', result);
 			} else {
-				// For free comics, use nftCopies if provided
 				const maxSupply = monetizationData.mintAsNFT && monetizationData.nftCopies 
 					? monetizationData.nftCopies 
 					: 1000;
@@ -255,13 +370,11 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 				console.log('🎉 Free Comic published successfully:', freeComic);
 			}
 
-			// Show success notification
 			setShowNotification(true);
 
 		} catch (err: any) {
 			console.error('Error publishing comic:', err);
 			
-			// Extract meaningful error message
 			let errorMessage = 'Failed to publish comic. Please try again.';
 			
 			if (err?.response?.data?.message) {
@@ -274,7 +387,6 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 				errorMessage = err;
 			}
 
-			// Handle specific error types
 			if (errorMessage.toLowerCase().includes('network')) {
 				errorMessage = 'Network error. Please check your connection and try again.';
 			} else if (errorMessage.toLowerCase().includes('timeout')) {
@@ -295,7 +407,9 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 
 			setError(errorMessage);
 		} finally {
-			setIsPublishing(false);
+			if (!monetizationData.enableHashinal) {
+				setIsPublishing(false);
+			}
 			setPublishingStep('');
 		}
 	};
@@ -447,6 +561,28 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 									</>
 								)}
 
+								{/* Hashinal Inscription Status */}
+								{monetizationData.enableHashinal && (
+									<div className='flex items-center gap-3'>
+										<span className='text-white/60'>Hashinal Inscription:</span>
+										<span className='flex items-center gap-1'>
+											{hashinalState.isSupported ? (
+												<>
+													<Hash size={14} className='text-blue-400' />
+													<span className='text-blue-400'>Enabled</span>
+												</>
+											) : (
+												<>
+													<AlertCircle size={14} className='text-yellow-400' />
+													<span className='text-yellow-400'>
+														Not Supported ({hashinalState.supportReason})
+													</span>
+												</>
+											)}
+										</span>
+									</div>
+								)}
+
 								<div className='flex items-center gap-3'>
 									<span className='text-white/60'>Pages:</span>
 									<span>{contentInfo.pageInfo} (Chapter 1)</span>
@@ -465,6 +601,9 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 								By clicking <b className='text-primary-400'>&quot;PUBLISH COMIC!&quot;</b>, your comic will
 								become live on Quiva and readers can start enjoying it immediately.
 								{monetizationData.mintAsNFT && ' Your NFT collection will also be created and available for minting.'}
+								{monetizationData.enableHashinal && hashinalState.isSupported && 
+									' Additionally, your comic will be permanently inscribed as a Hashinal on the Hedera network.'
+								}
 							</p>
 						</div>
 					</div>
@@ -580,27 +719,6 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 									</div>
 								)}
 
-								{/* Free Listing Progress */}
-								{freeIsConfirming && (
-									<div className='flex items-center gap-3'>
-										<Database size={18} className='text-green-400' />
-										<div className='flex-1'>
-											<div className='flex justify-between items-center mb-1'>
-												<span className='text-green-400 text-sm font-medium'>
-													Listing NFT on marketplace...
-												</span>
-												<span className='text-green-400 text-xs'>{freeMintingProgress}%</span>
-											</div>
-											<div className='w-full bg-white/10 rounded-full h-2'>
-												<div 
-													className='bg-green-400 h-2 rounded-full transition-all duration-300'
-													style={{ width: `${freeMintingProgress}%` }}
-												/>
-											</div>
-										</div>
-									</div>
-								)}
-
 								{/* Success Messages */}
 								{(tokenId) && (
 									<div className='flex items-center gap-2 text-primary-400 text-sm'>
@@ -615,6 +733,76 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 										<span>Transaction: {mintHash.slice(0, 10)}...{mintHash.slice(-8)}</span>
 									</div>
 								)}
+							</div>
+						</div>
+					)}
+
+					{/* Hashinal Inscription Progress */}
+					{hashinalState.isInscribing && hashinalState.progress && (
+						<div className='mx-6 mb-4 bg-purple-500/20 border border-purple-500/50 rounded-lg p-4'>
+							<div className='flex items-center gap-3'>
+								<Hash size={18} className='text-purple-400 animate-spin' />
+								<div className='flex-1'>
+									<div className='flex justify-between items-center mb-1'>
+										<span className='text-purple-400 text-sm font-medium'>
+											{hashinalState.progress.message}
+										</span>
+										<span className='text-purple-400 text-xs'>{hashinalState.progress.percentage}%</span>
+									</div>
+									<div className='w-full bg-white/10 rounded-full h-2'>
+										<div 
+											className='bg-purple-400 h-2 rounded-full transition-all duration-300'
+											style={{ width: `${hashinalState.progress.percentage}%` }}
+										/>
+									</div>
+								</div>
+							</div>
+						</div>
+					)}
+
+					{/* Hashinal Success/Error */}
+					{hashinalState.result && (
+						<div className={`mx-6 mb-4 ${
+							hashinalState.result.status === 'completed' 
+								? 'bg-purple-500/20 border-purple-500/50' 
+								: 'bg-red-500/20 border-red-500/50'
+							} border rounded-lg p-3`}>
+							<div className='flex items-start gap-2'>
+								{hashinalState.result.status === 'completed' ? (
+									<CheckCircle size={18} className='text-purple-400 flex-shrink-0 mt-0.5' />
+								) : (
+									<AlertCircle size={18} className='text-red-400 flex-shrink-0 mt-0.5' />
+								)}
+								<div>
+									<p className={`${
+										hashinalState.result.status === 'completed' 
+											? 'text-purple-400' 
+											: 'text-red-400'
+									} font-semibold text-sm mb-1`}>
+										{hashinalState.result.status === 'completed' 
+											? 'Hashinal Inscription Successful!' 
+											: 'Hashinal Inscription Failed'}
+									</p>
+									{hashinalState.result.status === 'completed' ? (
+										<div className='text-purple-300 text-sm space-y-1'>
+											<p>Inscription ID: {hashinalState.result.inscriptionId}</p>
+											{hashinalState.result.hashinalsUrl && (
+												<p>
+													<a 
+														href={hashinalState.result.hashinalsUrl} 
+														target="_blank" 
+														rel="noopener noreferrer"
+														className='underline hover:text-purple-200'
+													>
+														View on Hashinals
+													</a>
+												</p>
+											)}
+										</div>
+									) : (
+										<p className='text-red-300 text-sm'>{hashinalState.error}</p>
+									)}
+								</div>
 							</div>
 						</div>
 					)}
@@ -636,32 +824,36 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 					<div className='px-6 pb-6 space-y-3 mt-4'>
 						<button
 							onClick={handlePublish}
-							disabled={isPublishing || isUploading || isMinting  || isListing || isWritePending || isConfirming}
+							disabled={isPublishing || isUploading || isMinting  || isListing || isWritePending || isConfirming || hashinalState.isInscribing}
 							className='w-full bg-secondary-200/80 hover:bg-secondary-200 text-black font-semibold py-3 rounded-full transition disabled:cursor-not-allowed disabled:opacity-50 flex items-center justify-center gap-2'
 						>
-							{isPublishing || isUploading || isMinting  || isListing || isWritePending || isConfirming ? (
+							{isPublishing || isUploading || isMinting  || isListing || isWritePending || isConfirming || hashinalState.isInscribing ? (
 								<>
 									<div className='animate-spin rounded-full h-5 w-5 border-b-2 border-black'></div>
 									{isUploading ? 'Uploading to IPFS...' : 
 									isMinting || isWritePending  ? 'Minting NFT...' : 
 									isListing ? 'Listing on marketplace...' :
 									isConfirming ? 'Confirming...' : 
+									hashinalState.isInscribing ? 'Inscribing Hashinal...' :
 									'Publishing...'}
 								</>
 							) : (
 								<>
-									<Database size={18} />
-									{monetizationData.mintAsNFT ? 'Publish & Mint NFT' : 'Publish Comic'}
+									{monetizationData.enableHashinal ? <Hash size={18} /> : <Database size={18} />}
+									{monetizationData.mintAsNFT ? 
+										(monetizationData.enableHashinal ? 'Publish, Mint & Inscribe' : 'Publish & Mint NFT') : 
+										'Publish Comic'
+									}
 								</>
 							)}
 						</button>
 
 						<button
 							onClick={onclose}
-							disabled={isPublishing || isUploading || isMinting  || isListing || isWritePending || isConfirming}
+							disabled={isPublishing || isUploading || isMinting  || isListing || isWritePending || isConfirming || hashinalState.isInscribing}
 							className='w-full border border-white/20 text-white/70 hover:text-white hover:bg-white/5 py-3 rounded-full transition disabled:cursor-not-allowed disabled:opacity-50'
 						>
-							{isPublishing || isUploading || isMinting  || isListing ? 'Please wait...' : 'Go Back'}
+							{isPublishing || isUploading || isMinting  || isListing || hashinalState.isInscribing ? 'Please wait...' : 'Go Back'}
 						</button>
 					</div>
 				</div>
@@ -674,10 +866,10 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 					comicData={comicData}
 					monetizationData={monetizationData} 
 					mintHash={mintHash}
-					tokenId={tokenId} 
+					tokenId={tokenId}
+					hashinalResult={hashinalState.result} // Pass Hashinal results to notification
 				/>
 			)}
-
 		</>
 	);
 }
