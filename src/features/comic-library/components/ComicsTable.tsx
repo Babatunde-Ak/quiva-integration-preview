@@ -127,7 +127,7 @@ export function ComicsTable({ comics }: ComicsTableProps) {
                 onClick={() => setSelectedGenre(genre)}
                 className={`px-3 py-1.5 text-sm font-medium transition-colors rounded ${
                   selectedGenre === genre
-                    ? "bg-orange-500 text-black" // Orange Active State
+                    ? "bg-[#FAA31E] text-black"
                     : "text-white/60 hover:text-white bg-transparent"
                 }`}
               >
@@ -181,8 +181,8 @@ export function ComicsTable({ comics }: ComicsTableProps) {
                       <Heart
                         className={`w-5 h-5 transition-colors ${
                           isLiked
-                            ? "text-orange-500 fill-orange-500"
-                            : "text-white/20 hover:text-orange-500"
+                            ? "text-[#F8961C] fill-primary-500"
+                            : "text-white/20 hover:text-[#F8961C]"
                         }`}
                       />
                     </button>
@@ -226,7 +226,7 @@ export function ComicsTable({ comics }: ComicsTableProps) {
                   ) : (
                     <>
                       <TableCell className="flex items-center space-x-3 ml-3">
-                        <div className="w-10 h-10 bg-orange-500 rounded-lg overflow-hidden flex items-center justify-center relative">
+                        <div className="w-10 h-10 bg-[#FAA31E] rounded-lg overflow-hidden flex items-center justify-center relative">
                           <Avatar className="w-full h-full transition-colors rounded-none">
                             <AvatarImage src={comic.image} alt={comic.title} className="object-cover" />
                             <AvatarFallback className="bg-black-500 text-white font-bold">
@@ -282,7 +282,7 @@ export function ComicsTable({ comics }: ComicsTableProps) {
           className={`px-6 py-2 border text-sm font-medium rounded-lg transition-colors ${
             currentPage === 1
               ? "border-white/10 text-white/20 cursor-not-allowed"
-              : "border-orange-500/50 text-orange-500 hover:bg-orange-500/10"
+              : "border-primary-500/50 text-[#F8961C] hover:bg-[#FAA31E]/10"
           }`}
         >
           Previous
@@ -298,18 +298,18 @@ export function ComicsTable({ comics }: ComicsTableProps) {
                 onClick={() => handlePageChange(pageNum)}
                 className={`w-8 h-8 flex items-center justify-center text-sm rounded transition-colors ${
                   isActive
-                    ? "bg-orange-500/10 border border-orange-500/50 text-orange-500"
-                    : "text-orange-500/70 hover:text-orange-500 hover:bg-white/5"
+                    ? "bg-[#FAA31E]/10 border border-primary-500/50 text-[#F8961C]"
+                    : "text-[#F8961C]/70 hover:text-[#F8961C] hover:bg-white/5"
                 }`}
               >
                 {pageNum}
               </button>
             );
           })}
-          <span className="text-orange-500/50 text-xs px-1">..</span>
+          <span className="text-[#F8961C]/50 text-xs px-1">..</span>
           <button
             onClick={() => handlePageChange(totalPages)}
-            className="w-8 h-8 flex items-center justify-center text-orange-500/70 hover:text-orange-500 text-sm rounded hover:bg-white/5 transition-colors"
+            className="w-8 h-8 flex items-center justify-center text-[#F8961C]/70 hover:text-[#F8961C] text-sm rounded hover:bg-white/5 transition-colors"
           >
             {totalPages}
           </button>
@@ -321,7 +321,7 @@ export function ComicsTable({ comics }: ComicsTableProps) {
           className={`px-8 py-2 text-black text-sm font-bold rounded-lg transition-colors shadow-lg ${
             currentPage === totalPages
               ? "bg-gray-600 cursor-not-allowed shadow-none"
-              : "bg-orange-500 hover:bg-orange-400 shadow-orange-500/20"
+              : "bg-[#FAA31E] hover:bg-primary-400 shadow-primary-500/20"
           }`}
         >
           Next

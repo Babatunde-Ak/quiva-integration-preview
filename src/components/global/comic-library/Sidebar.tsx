@@ -26,7 +26,12 @@ export function Sidebar({ isMobileMenuOpen, onMobileMenuClose }) {
       label: 'Collections', 
       path: '/marketplace/collections',
       isActive: pathname === '/marketplace/collections'
-    }
+    },
+    {
+      label: 'Top Creators', 
+      path: '/marketplace/top-creators',
+      isActive: pathname === '/marketplace/top-creators'
+    },
   ]
 
   const handleNavigation = (path) => {
