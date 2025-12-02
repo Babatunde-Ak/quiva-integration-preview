@@ -37,7 +37,7 @@ export function useListComic({ network = "testnet", marketplaceId= "0.0.7348494"
       setError(null);
       // 🔐 Connect wallet via Kiloscribe
       const wallet = new HashinalsWalletConnectSDK();
-      const { accountId, signer } = await wallet.connectWallet(process.env.NEXT_PUBLIC_HASHGRAPH_PROJECT_ID, {
+      const { accountId } = await wallet.connectWallet(process.env.NEXT_PUBLIC_HASHGRAPH_PROJECT_ID, {
         name: "Quiva dApp",
         description: "List NFTs on Quiva Marketplace",
         url: window.location.origin,
@@ -47,7 +47,7 @@ export function useListComic({ network = "testnet", marketplaceId= "0.0.7348494"
       if (!accountId) throw new Error("Wallet not connected");
 
       const client = Client.forName(network);
-      client.setOperatorWith(accountId, signer.publicKey, (message) => signer.sign(message));
+      client.setOperator(accountId, "");
 
       // ⚙️ Encode ABI call
       // listNFT(address token, int64 serial, uint256 price, address royaltyRecipient, uint96 royaltyBps, address paymentToken, string previewURI, string fullMetadataURI)
@@ -67,15 +67,13 @@ export function useListComic({ network = "testnet", marketplaceId= "0.0.7348494"
             .addString(fullMetadataURI)
         );
 
-      const signedTx = await signer.signTransaction(contractExecTx);
-      const submitTx = await signedTx.execute(client);
-      const receipt = await submitTx.getReceipt(client);
-
-      setTxId(submitTx.transactionId.toString());
+      const txResponse = await contractExecTx.execute(client);
+      const receipt = await txResponse.getReceipt(client);
+      setTxId(txResponse.transactionId.toString());
       setStatus("done");
 
       return {
-        transactionId: submitTx.transactionId.toString(),
+        transactionId: txResponse.transactionId.toString(),
         status: receipt.status.toString(),
       };
     } catch (err: any) {
