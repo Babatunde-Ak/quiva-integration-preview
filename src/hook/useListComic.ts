@@ -5,15 +5,15 @@ import { HashinalsWalletConnectSDK } from "@hashgraphonline/hashinal-wc";
 interface UseListNFTProps {
   network?: "testnet" | "mainnet";
   marketplaceId: string; // Deployed marketplace contract ID
-  signer: any;
+  projectId: string; // Hashgraph project ID
 }
 
-export function useListNFT({ network = "testnet", marketplaceId = "0.0.7348494", signer }: UseListNFTProps) {
+export function useListComic({ network = "testnet", marketplaceId= "0.0.7348494"}: UseListNFTProps) {
   const [status, setStatus] = useState<"idle" | "listing" | "done" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
   const [txId, setTxId] = useState<string | null>(null);
 
-  const listNFT = async ({
+  const listComic = async ({
     tokenAddress,
     serial,
     price,
@@ -35,10 +35,9 @@ export function useListNFT({ network = "testnet", marketplaceId = "0.0.7348494",
     try {
       setStatus("listing");
       setError(null);
-
       // 🔐 Connect wallet via Kiloscribe
       const wallet = new HashinalsWalletConnectSDK();
-      const { accountId } = await wallet.connectWallet(process.env.VITE_PROJECT_ID, {
+      const { accountId, signer } = await wallet.connectWallet(process.env.NEXT_PUBLIC_HASHGRAPH_PROJECT_ID, {
         name: "Quiva dApp",
         description: "List NFTs on Quiva Marketplace",
         url: window.location.origin,
@@ -46,8 +45,6 @@ export function useListNFT({ network = "testnet", marketplaceId = "0.0.7348494",
       });
 
       if (!accountId) throw new Error("Wallet not connected");
-
-    
 
       const client = Client.forName(network);
       client.setOperatorWith(accountId, signer.publicKey, (message) => signer.sign(message));
@@ -89,5 +86,5 @@ export function useListNFT({ network = "testnet", marketplaceId = "0.0.7348494",
     }
   };
 
-  return { listNFT, status, error, txId };
+  return { listComic, status, error, txId };
 }

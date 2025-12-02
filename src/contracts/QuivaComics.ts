@@ -1,6 +1,6 @@
-export const QUIVA_COMICS_ADDRESS = '0x4bf17393c1dfe1913e9087d1328d8b1294df3944' as `0x${string}`;
-export const QUIVA_FREE_COMICS_ADDRESS = '0x2affb6824a72185f6654f69b69acd8cfb014400a' as `0x${string}`;
-export const QUIVA_MARKETPLACE = '0x01c8d73d5f771e7a10d0f83f4ba0855fa96f7674';
+// export const QUIVA_COMICS_ADDRESS = '0x4bf17393c1dfe1913e9087d1328d8b1294df3944' as `0x${string}`;
+// export const QUIVA_FREE_COMICS_ADDRESS = '0x2affb6824a72185f6654f69b69acd8cfb014400a' as `0x${string}`;
+// export const QUIVA_MARKETPLACE = '0x01c8d73d5f771e7a10d0f83f4ba0855fa96f7674';
 // Contract ABI in JSON format (required by wagmi v2)
 //new Marketplace contract: "0xb38Efb736F25Eb152e435f7347AB1AE50755e502"
 
