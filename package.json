@@ -3,11 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "cross-env NODE_OPTIONS=--max-old-space-size=8192 next dev",
+    "build": "cross-env NODE_OPTIONS=--max-old-space-size=8192 next build",
     "start": "next start",
-    "lint": "next lint",
-    "install": "cross-env NODE_OPTIONS=--max-old-space-size=4096 yarn"
+    "lint": "next lint"
   },
   "dependencies": {
     "@apollo/client": "^3.13.8",
@@ -41,7 +40,7 @@
     "hamburger-react": "^2.5.2",
     "jszip": "^3.10.1",
     "lucide-react": "^0.544.0",
-    "next": "^14.2.31",
+    "next": "^14.2.33",
     "pino-pretty": "^13.1.1",
     "postcss": "^8.5.6",
     "react": "^18",

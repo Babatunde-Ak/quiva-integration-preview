@@ -10,6 +10,7 @@ import { useComicMinting } from "@/hook/useComicMinting";
 import { useFreeComicMinting } from "@/hook/useFreeComicMinting";
 import { useAccount } from "@/hook/useUnifiedWallet";
 import { kiloScribeService, InscriptionProgress, InscriptionResult } from "@/lib/kiloscribe-service";
+import {useComicHashinalNFT} from "@/hook/useMintComic";
 
 interface ExtractedFile {
 	name: string;
@@ -87,6 +88,13 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 	const hasPdfFile = comicData.sourceType === 'pdf-file';
 	const pdfFile = hasPdfFile ? comicData.pages.find(file => file.type === 'pdf-file') : null;
 	
+	const { createComicNFT, status, progress, result:comicHashinalResult, error:comicHashinalNFTError } = useComicHashinalNFT({
+		accountId: user?.walletAddress || '',
+		signer: null,
+		network: 'testnet'
+	});
+
+	const {  } = ueListComic();
 	// Use the comic minting hooks
 	const {
 	publishComic,
@@ -347,28 +355,43 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 				}
 			};
 
-			if (monetizationData.publishType === "paid") {
-				const result = await publishComic({
-					comicData: enhancedComicData,
-					monetizationData,
-					user,
-				});
-				console.log('🎉 Paid Comic published successfully:', result);
-			} else {
-				const maxSupply = monetizationData.mintAsNFT && monetizationData.nftCopies 
-					? monetizationData.nftCopies 
-					: 1000;
+			// if (monetizationData.publishType === "paid") {
+			// 	const result = await publishComic({
+			// 		comicData: enhancedComicData,
+			// 		monetizationData,
+			// 		user,
+			// 	});
+			// 	console.log('🎉 Paid Comic published successfully:', result);
+			// } else {
+			// 	const maxSupply = monetizationData.mintAsNFT && monetizationData.nftCopies 
+			// 		? monetizationData.nftCopies 
+			// 		: 1000;
 				
-				const freeComic = await publishFreeComic({
-					comicData: enhancedComicData,
-					freeComicData: {	
-						maxSupply: maxSupply,
-						royaltyPercentage: 0
-					},
-					user,
-				});
-				console.log('🎉 Free Comic published successfully:', freeComic);
-			}
+			// 	const freeComic = await publishFreeComic({
+			// 		comicData: enhancedComicData,
+			// 		freeComicData: {	
+			// 			maxSupply: maxSupply,
+			// 			royaltyPercentage: 0
+			// 		},
+			// 		user,
+			// 	});
+			// 	console.log('🎉 Free Comic published successfully:', freeComic);
+			// }
+
+			const result = await createComicNFT({
+				name: comicData.title,
+				creator: user.walletAddress,
+				description: comicData.description,
+				genres: comicData.genre,
+				copiesOfComic: monetizationData.mintAsNFT && monetizationData.nftCopies,
+				ageRating: comicData.ageRating,
+				coverFile: comicData.coverImage,
+				pageFiles: comicData.pages.filter(page => page.type === 'image').map(page => new File([page.blob], page.name, { type: page.blob.type })),
+				priceHbar: monetizationData.publishType === "paid" && monetizationData.nftPrice ? monetizationData.nftPrice : 0,
+			});
+
+
+			console.log('🎉 Comic NFT created successfully:', result);
 
 			setShowNotification(true);
 
