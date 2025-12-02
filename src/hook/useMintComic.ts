@@ -108,11 +108,11 @@ const createComicNFT = async (formData: {
 
     const comicHRL = `hcs://1/${nftInscription.inscription.topic_id}`;
     const metadataHRL = `hcs://1/${nftInscription.inscription.jsonTopicId}`;
-       setProgress(80)
+      setProgress(80)
     // Step 5: Continue with NFT creation + mint as before
     // ... your existing TokenCreateTransaction + TokenMintTransaction logic
 
-     const client = Client.forName(network);
+    const client = Client.forName(network);
       const publicKey = signer.getAccountKey ? await signer.getAccountKey() : signer.publicKey;
       client.setOperatorWith(accountId, publicKey, (msg) => signer.sign(msg));
 

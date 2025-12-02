@@ -18,7 +18,7 @@ export function useListComic({ network = "testnet", marketplaceId= "0.0.7348494"
     serial,
     price,
     royaltyRecipient,
-    royaltyBps,
+    royaltyBps= 1000,
     paymentToken = "0x0000000000000000000000000000000000000000", // HBAR
     previewURI,
     fullMetadataURI
