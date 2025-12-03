@@ -6,8 +6,8 @@ import { AlertCircle, CheckCircle, Upload, Zap, Database, Hash } from "lucide-re
 import { ComicNotification } from "./ComicNotification";
 import Picture from "@/components/picture/Index";
 import { useAppDispatch, useAppSelector } from "@/redux/hook";
-import { useComicMinting } from "@/hook/useComicMinting";
-import { useFreeComicMinting } from "@/hook/useFreeComicMinting";
+// import { useComicMinting } from "../../;
+// import { useFreeComicMinting } from "@/hook/useFreeComicMinting";
 import { useAccount } from "@/hook/useUnifiedWallet";
 import { kiloScribeService, InscriptionProgress, InscriptionResult } from "@/lib/kiloscribe-service";
 import {useComicHashinalNFT} from "@/hook/useMintComic";
@@ -94,59 +94,59 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 		network: 'testnet'
 	});
 
-	const {  } = ueListComic();
-	// Use the comic minting hooks
-	const {
-	publishComic,
-	isUploading: paidIsUploading,
-	isMinting: paidIsMinting,
-	isListing,
-	uploadProgress: paidUploadProgress,
-	mintingProgress: paidMintingProgress,
-	isWritePending: paidIsWritePending,
-	isConfirming: paidIsConfirming,
-	isMintSuccess,
-	isComplete: paidIsComplete,
-	mintError: paidMintError,
-	tokenId: paidTokenId,
-	mintHash: paidMintHash,
-	comicId,
-	} = useComicMinting();
+	// const {  } = ueListComic();
+	// // Use the comic minting hooks
+	// const {
+	// publishComic,
+	// isUploading: paidIsUploading,
+	// isMinting: paidIsMinting,
+	// isListing,
+	// uploadProgress: paidUploadProgress,
+	// mintingProgress: paidMintingProgress,
+	// isWritePending: paidIsWritePending,
+	// isConfirming: paidIsConfirming,
+	// isMintSuccess,
+	// isComplete: paidIsComplete,
+	// mintError: paidMintError,
+	// tokenId: paidTokenId,
+	// mintHash: paidMintHash,
+	// comicId,
+	// } = useComicMinting();
 
-	const {
-	isUploading: freeIsUploading,
-	isMinting: freeIsMinting,
-	uploadProgress: freeUploadProgress,
-	mintingProgress: freeMintingProgress,
-	publishFreeComic,
-	updateComicWithMintData,
-	reset,
-	checkCreatorApproval,
-	isWritePending: freeIsWritePending,
-	isConfirming: freeIsConfirming,
-	mintHash: freeMintHash,
-	approvalStatus,
-	isComplete: freeIsComplete,
-	mintError: freeError,
-	tokenId: freeTokenId,
-	} = useFreeComicMinting();
+	// const {
+	// isUploading: freeIsUploading,
+	// isMinting: freeIsMinting,
+	// uploadProgress: freeUploadProgress,
+	// mintingProgress: freeMintingProgress,
+	// publishFreeComic,
+	// updateComicWithMintData,
+	// reset,
+	// checkCreatorApproval,
+	// isWritePending: freeIsWritePending,
+	// isConfirming: freeIsConfirming,
+	// mintHash: freeMintHash,
+	// approvalStatus,
+	// isComplete: freeIsComplete,
+	// mintError: freeError,
+	// tokenId: freeTokenId,
+	// } = useFreeComicMinting();
 
 	const isCurrentlyPaid = monetizationData.publishType === "paid";
 
 	// Use the appropriate states based on publish type
-	const isUploading = isCurrentlyPaid ? paidIsUploading : freeIsUploading;
-	const isMinting = isCurrentlyPaid ? paidIsMinting : freeIsMinting;
-	const uploadProgress = isCurrentlyPaid ? paidUploadProgress : freeUploadProgress;
-	const mintingProgress = isCurrentlyPaid ? paidMintingProgress : freeMintingProgress;
-	const isWritePending = isCurrentlyPaid ? paidIsWritePending : freeIsWritePending;
-	const isConfirming = isCurrentlyPaid ? paidIsConfirming : freeIsConfirming;
-	const isComplete = isCurrentlyPaid ? paidIsComplete : freeIsComplete;
-	const mintError = isCurrentlyPaid ? paidMintError : freeError;
-	const tokenId = isCurrentlyPaid ? paidTokenId : freeTokenId;
-	const mintHash = isCurrentlyPaid ? paidMintHash : freeMintHash;
+	// const isUploading = isCurrentlyPaid ? paidIsUploading : freeIsUploading;
+	// const isMinting = isCurrentlyPaid ? paidIsMinting : freeIsMinting;
+	// const uploadProgress = isCurrentlyPaid ? paidUploadProgress : freeUploadProgress;
+	// const mintingProgress = isCurrentlyPaid ? paidMintingProgress : freeMintingProgress;
+	// const isWritePending = isCurrentlyPaid ? paidIsWritePending : freeIsWritePending;
+	// const isConfirming = isCurrentlyPaid ? paidIsConfirming : freeIsConfirming;
+	// const isComplete = isCurrentlyPaid ? paidIsComplete : freeIsComplete;
+	// const mintError = isCurrentlyPaid ? paidMintError : freeError;
+	// const tokenId = isCurrentlyPaid ? paidTokenId : freeTokenId;
+	// const mintHash = isCurrentlyPaid ? paidMintHash : freeMintHash;
 
 	// Check Hashinal inscription support on component mount
-	useEffect(() => {
+	// useEffect(() => {
 		const checkHashinalSupport = async () => {
 			if (monetizationData.enableHashinal) {
 				try {
@@ -168,95 +168,95 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 		};
 
 		checkHashinalSupport();
-	}, [comicData, monetizationData.enableHashinal]);
+	// }, [comicData, monetizationData.enableHashinal]);
 
 	// Monitor completion and handle Hashinal inscription
-	useEffect(() => {
-		const handleCompletion = async () => {
-			if (isComplete && tokenId && mintHash && !hashinalState.isInscribing) {
-				console.log('✅ NFT Transaction Complete!');
-				console.log('🎫 Token ID:', tokenId.toString());
-				console.log('🔗 Transaction Hash:', mintHash);
+	// useEffect(() => {
+	// 	const handleCompletion = async () => {
+	// 		if (isComplete && tokenId && mintHash && !hashinalState.isInscribing) {
+	// 			console.log('✅ NFT Transaction Complete!');
+	// 			console.log('🎫 Token ID:', tokenId.toString());
+	// 			console.log('🔗 Transaction Hash:', mintHash);
 				
-				// Check if we should also inscribe as Hashinal
-				if (monetizationData.enableHashinal && hashinalState.isSupported && user?.walletAddress) {
-					await handleHashinalInscription();
-				} else {
-					// Complete without Hashinal inscription
-					setShowSuccessModal(true);
-					setIsPublishing(false);
-				}
-			}
-		};
+	// 			// Check if we should also inscribe as Hashinal
+	// 			if (monetizationData.enableHashinal && hashinalState.isSupported && user?.walletAddress) {
+	// 				await handleHashinalInscription();
+	// 			} else {
+	// 				// Complete without Hashinal inscription
+	// 				setShowSuccessModal(true);
+	// 				setIsPublishing(false);
+	// 			}
+	// 		}
+	// 	};
 
-		handleCompletion();
-	}, [isComplete, tokenId, mintHash, hashinalState.isInscribing, monetizationData.enableHashinal, hashinalState.isSupported]);
+	// 	handleCompletion();
+	// }, [isComplete, tokenId, mintHash, hashinalState.isInscribing, monetizationData.enableHashinal, hashinalState.isSupported]);
 
-	/**
-	 * Handle Hashinal inscription after successful NFT minting
-	 */
-	const handleHashinalInscription = async () => {
-		if (!user?.walletAddress) {
-			console.error('No wallet address available for Hashinal inscription');
-			setShowSuccessModal(true);
-			setIsPublishing(false);
-			return;
-		}
+	// /**
+	//  * Handle Hashinal inscription after successful NFT minting
+	 
+	// const handleHashinalInscription = async () => {
+	// 	if (!user?.walletAddress) {
+	// 		console.error('No wallet address available for Hashinal inscription');
+	// 		setShowSuccessModal(true);
+	// 		setIsPublishing(false);
+	// 		return;
+	// 	}
 
-		try {
-			setHashinalState(prev => ({
-				...prev,
-				isInscribing: true,
-				progress: null,
-				result: null,
-				error: null
-			}));
+	// 	try {
+	// 		setHashinalState(prev => ({
+	// 			...prev,
+	// 			isInscribing: true,
+	// 			progress: null,
+	// 			result: null,
+	// 			error: null
+	// 		}));
 
-			console.log('🔷 Starting Hashinal inscription for comic...');
+	// 		console.log('🔷 Starting Hashinal inscription for comic...');
 			
-			const inscriptionResult = await kiloScribeService.inscribeComic(
-				comicData,
-				comicData.pages,
-				user.walletAddress,
-				(progress: InscriptionProgress) => {
-					setHashinalState(prev => ({
-						...prev,
-						progress
-					}));
-				}
-			);
+	// 		const inscriptionResult = await kiloScribeService.inscribeComic(
+	// 			comicData,
+	// 			comicData.pages,
+	// 			user.walletAddress,
+	// 			(progress: InscriptionProgress) => {
+	// 				setHashinalState(prev => ({
+	// 					...prev,
+	// 					progress
+	// 				}));
+	// 			}
+	// 		);
 
-			setHashinalState(prev => ({
-				...prev,
-				isInscribing: false,
-				result: inscriptionResult
-			}));
+	// 		setHashinalState(prev => ({
+	// 			...prev,
+	// 			isInscribing: false,
+	// 			result: inscriptionResult
+	// 		}));
 
-			if (inscriptionResult.status === 'completed') {
-				console.log('🎉 Hashinal inscription completed successfully!');
-				console.log('🔷 Inscription ID:', inscriptionResult.inscriptionId);
-				console.log('🌐 Hashinals URL:', inscriptionResult.hashinalsUrl);
-			} else {
-				console.error('❌ Hashinal inscription failed:', inscriptionResult.error);
-				setHashinalState(prev => ({
-					...prev,
-					error: inscriptionResult.error || 'Inscription failed'
-				}));
-			}
+	// 		if (inscriptionResult.status === 'completed') {
+	// 			console.log('🎉 Hashinal inscription completed successfully!');
+	// 			console.log('🔷 Inscription ID:', inscriptionResult.inscriptionId);
+	// 			console.log('🌐 Hashinals URL:', inscriptionResult.hashinalsUrl);
+	// 		} else {
+	// 			console.error('❌ Hashinal inscription failed:', inscriptionResult.error);
+	// 			setHashinalState(prev => ({
+	// 				...prev,
+	// 				error: inscriptionResult.error || 'Inscription failed'
+	// 			}));
+	// 		}
 
-		} catch (error) {
-			console.error('❌ Error during Hashinal inscription:', error);
-			setHashinalState(prev => ({
-				...prev,
-				isInscribing: false,
-				error: error instanceof Error ? error.message : 'Inscription failed'
-			}));
-		}
+	// 	} catch (error) {
+	// 		console.error('❌ Error during Hashinal inscription:', error);
+	// 		setHashinalState(prev => ({
+	// 			...prev,
+	// 			isInscribing: false,
+	// 			error: error instanceof Error ? error.message : 'Inscription failed'
+	// 		}));
+	// 	}
 
-		// Show success modal regardless of Hashinal inscription result
-		setShowSuccessModal(true);
-		setIsPublishing(false);
-	};
+	// 	// Show success modal regardless of Hashinal inscription result
+	// 	setShowSuccessModal(true);
+	// 	setIsPublishing(false);
+	// };
 
 	const validateComicData = (): boolean => {
 		const errors: string[] = [];
@@ -332,10 +332,10 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 			return;
 		}
 
-		if ((monetizationData.publishType === "paid" || monetizationData.mintAsNFT) && !isConnected) {
-			setError("Please connect your wallet to publish paid comics or mint NFTs");
-			return;
-		}
+		// if ((monetizationData.publishType === "paid" || monetizationData.mintAsNFT) && !isConnected) {
+		// 	setError("Please connect your wallet to publish paid comics or mint NFTs");
+		// 	return;
+		// }
 
 		try {
 			setIsPublishing(true);

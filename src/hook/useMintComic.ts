@@ -35,6 +35,7 @@ const createComicNFT = async (formData: {
   coverFile: File;
   pageFiles: File[];
   priceHbar: number;
+  mintNow?: number;
 }) => {
   try {
     setStatus("inscribing");
@@ -121,8 +122,8 @@ const createComicNFT = async (formData: {
         .setTokenSymbol("QuivaCOMIC")
         .setTokenType(TokenType.NonFungibleUnique)
         .setDecimals(0)
-        .setInitialSupply(metadata.properties.copiesOfComic)
-        .setMaxSupply(10000)
+        .setInitialSupply(0)
+        .setMaxSupply(metadata.properties.copiesOfComic)
         .setSupplyType(TokenSupplyType.Finite)
         .freezeWith(client);
 
@@ -133,7 +134,8 @@ const createComicNFT = async (formData: {
 
       console.log("🪙 Comic NFT Collection Created:", tokenId);
       setProgress(90);
-
+     let lastSerial: number = 0;
+     for (let i = 0; i < (formData.mintNow || 1); i++) {
       const mintTx = new TokenMintTransaction()
         .setTokenId(tokenId!)
         .setMetadata([Buffer.from(metadataHRL)])
@@ -142,11 +144,13 @@ const createComicNFT = async (formData: {
       const signedMintTx = await signer.signTransaction(mintTx);
       const mintSubmit = await signedMintTx.execute(client);
       const mintReceipt = await mintSubmit.getReceipt(client);
-      const serial = mintReceipt.serials[0].toString();
+      lastSerial = mintReceipt.serials[0].toNumber();
+      console.log(`🎉 Minted Comic NFT #${lastSerial}`);
+     }
 
       const nftResult = {
         tokenId,
-        serial,
+        serial: lastSerial,
         metadataHRL,
         comicHRL,
         totalPages: formData.pageFiles.length,

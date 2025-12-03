@@ -105,7 +105,7 @@ importers:
         specifier: ^0.544.0
         version: 0.544.0(react@18.3.1)
       next:
-        specifier: ^14.2.31
+        specifier: ^14.2.33
         version: 14.2.33(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       pino-pretty:
         specifier: ^13.1.1
