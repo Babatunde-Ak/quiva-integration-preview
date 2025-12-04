@@ -1,4 +1,4 @@
-import CreatorProfile from "@/features/comic-library/components/CreatorProfile";
+import CreatorProfile from "@/features/top-creators/components/CreatorProfile";
 
 const CreatorProfilePage = () => {
   return (
