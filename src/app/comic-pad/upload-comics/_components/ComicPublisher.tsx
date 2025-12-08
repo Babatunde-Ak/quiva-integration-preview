@@ -8,10 +8,11 @@ import Picture from "@/components/picture/Index";
 import { useAppDispatch, useAppSelector } from "@/redux/hook";
 // import { useComicMinting } from "../../;
 // import { useFreeComicMinting } from "@/hook/useFreeComicMinting";
-import { useAccount } from "@/hook/useUnifiedWallet";
+// import { useAccount } from "@/hook/useUnifiedWallet";
 import { kiloScribeService, InscriptionProgress, InscriptionResult } from "@/lib/kiloscribe-service";
 import {useComicHashinalNFT} from "@/hook/useMintComic";
-
+import { useAccount } from "wagmi";
+import { useHederaWallet } from "@/providers/HashPackProvider";
 interface ExtractedFile {
 	name: string;
 	blob: Blob;
@@ -83,16 +84,24 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 	const dispatch = useAppDispatch();
 	const {user} = useAppSelector((state) => state.wallet);
 	const { isConnected } = useAccount();
+	const { accountId, signer, isConnected: isHederaConnected } = useHederaWallet();
+
 	
 	// Check if we have a PDF file
 	const hasPdfFile = comicData.sourceType === 'pdf-file';
 	const pdfFile = hasPdfFile ? comicData.pages.find(file => file.type === 'pdf-file') : null;
 	
-	const { createComicNFT, status, progress, result:comicHashinalResult, error:comicHashinalNFTError } = useComicHashinalNFT({
-		accountId: user?.walletAddress || '',
-		signer: null,
-		network: 'testnet'
-	});
+	// const { createComicNFT, status, progress, result:comicHashinalResult, error:comicHashinalNFTError } = useComicHashinalNFT({
+	// 	accountId: user?.walletAddress || '',
+	// 	signer: null,
+	// 	network: 'testnet'
+	// });
+	const { createComicNFT, status, progress, result: comicHashinalResult, error: comicHashinalNFTError } = useComicHashinalNFT({
+  accountId: accountId || user?.walletAddress || '',
+  signer: signer,
+  network: 'testnet'
+});
+
 
 	// const {  } = ueListComic();
 	// // Use the comic minting hooks
@@ -134,16 +143,21 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 	const isCurrentlyPaid = monetizationData.publishType === "paid";
 
 	// Use the appropriate states based on publish type
-	// const isUploading = isCurrentlyPaid ? paidIsUploading : freeIsUploading;
-	// const isMinting = isCurrentlyPaid ? paidIsMinting : freeIsMinting;
-	// const uploadProgress = isCurrentlyPaid ? paidUploadProgress : freeUploadProgress;
-	// const mintingProgress = isCurrentlyPaid ? paidMintingProgress : freeMintingProgress;
-	// const isWritePending = isCurrentlyPaid ? paidIsWritePending : freeIsWritePending;
-	// const isConfirming = isCurrentlyPaid ? paidIsConfirming : freeIsConfirming;
-	// const isComplete = isCurrentlyPaid ? paidIsComplete : freeIsComplete;
-	// const mintError = isCurrentlyPaid ? paidMintError : freeError;
-	// const tokenId = isCurrentlyPaid ? paidTokenId : freeTokenId;
-	// const mintHash = isCurrentlyPaid ? paidMintHash : freeMintHash;
+	// When the full minting/uploading hooks are disabled or commented out we still
+	// need these variables to exist so the component can compile and render safely.
+	// These defaults are neutral (no activity) and will be replaced by real values
+	// when the minting/upload hooks are enabled.
+	const isUploading: boolean = false;
+	const isMinting: boolean = false;
+	const uploadProgress: number = 0;
+	const mintingProgress: number = 0;
+	const isWritePending: boolean = false;
+	const isConfirming: boolean = false;
+	const isListing: boolean = false;
+	const isComplete: boolean = false;
+	const mintError: any = null;
+	const tokenId: any = null;
+	const mintHash: string | null = null;
 
 	// Check Hashinal inscription support on component mount
 	// useEffect(() => {
@@ -394,6 +408,8 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 			console.log('🎉 Comic NFT created successfully:', result);
 
 			setShowNotification(true);
+            setIsPublishing(false);
+            setShowSuccessModal(true);
 
 		} catch (err: any) {
 			console.error('Error publishing comic:', err);
@@ -761,21 +777,21 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 					)}
 
 					{/* Hashinal Inscription Progress */}
-					{hashinalState.isInscribing && hashinalState.progress && (
+					{status !== 'idle' && status !== 'done' && (
 						<div className='mx-6 mb-4 bg-purple-500/20 border border-purple-500/50 rounded-lg p-4'>
 							<div className='flex items-center gap-3'>
 								<Hash size={18} className='text-purple-400 animate-spin' />
 								<div className='flex-1'>
 									<div className='flex justify-between items-center mb-1'>
 										<span className='text-purple-400 text-sm font-medium'>
-											{hashinalState.progress.message}
+											{status === 'inscribing' && 'Inscribing comic as Hashinal...'}
 										</span>
-										<span className='text-purple-400 text-xs'>{hashinalState.progress.percentage}%</span>
+										<span className='text-purple-400 text-xs'>{progress}%</span>
 									</div>
 									<div className='w-full bg-white/10 rounded-full h-2'>
 										<div 
 											className='bg-purple-400 h-2 rounded-full transition-all duration-300'
-											style={{ width: `${hashinalState.progress.percentage}%` }}
+											style={{ width: `${progress}%` }}
 										/>
 									</div>
 								</div>
@@ -798,15 +814,15 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 								)}
 								<div>
 									<p className={`${
-										hashinalState.result.status === 'completed' 
+										status === 'done' 
 											? 'text-purple-400' 
 											: 'text-red-400'
 									} font-semibold text-sm mb-1`}>
-										{hashinalState.result.status === 'completed' 
+										{status === 'done' 
 											? 'Hashinal Inscription Successful!' 
 											: 'Hashinal Inscription Failed'}
 									</p>
-									{hashinalState.result.status === 'completed' ? (
+									{status === 'done' ? (
 										<div className='text-purple-300 text-sm space-y-1'>
 											<p>Inscription ID: {hashinalState.result.inscriptionId}</p>
 											{hashinalState.result.hashinalsUrl && (
@@ -888,9 +904,9 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 					onclose={() => setShowNotification(true)} 
 					comicData={comicData}
 					monetizationData={monetizationData} 
-					mintHash={mintHash}
+					mintHash={comicHashinalResult}
 					tokenId={tokenId}
-					hashinalResult={hashinalState.result} // Pass Hashinal results to notification
+					hashinalResult={comicHashinalResult} // Pass Hashinal results to notification
 				/>
 			)}
 		</>

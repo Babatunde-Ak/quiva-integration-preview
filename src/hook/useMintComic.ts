@@ -1,17 +1,18 @@
 import { createComicMetadata } from "../lib/hashinal-helper";
 import { useState } from "react";
-import { inscribe } from "@hashgraph-online/standards-sdk";
-import { HashinalsWalletConnectSDK } from "@hashgraphonline/hashinal-wc";
+import {inscribe, inscribeWithSigner } from "@hashgraphonline/standards-sdk";
+ import { HashinalsWalletConnectSDK } from "@hashgraphonline/hashinal-wc";
 import {
   Client,
   TokenCreateTransaction,
   TokenType,
   TokenSupplyType,
   TokenMintTransaction,
+  LedgerId,
 } from "@hashgraph/sdk";
-import { Buffer } from "buffer";
+import { Buffer } from "buffer/";
 
-
+ 
 
 interface UseComicHashinalProps {
   accountId: string;
@@ -25,6 +26,36 @@ interface UseComicHashinalProps {
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
+
+  // Resolve signer: prefer provided signer, fallback to WalletConnect SDK
+const getActiveSigner = async () => {
+  if (signer) {
+    console.log("🪙 Using provided signer from HashPack/Kabila");
+    return signer;
+  }
+
+  console.log("⚡ No signer passed — initializing Hashinals WC SDK...");
+  const sdk = HashinalsWalletConnectSDK.getInstance();
+
+  await sdk.init(
+    "ec1bf58ee8034b1747cb72a34b6652ae", // replace with your project ID
+    {
+      name: "Quiva Comics",
+      description: "Client-side inscription with Hashinals",
+      url: window.location.origin,
+      icons: ["https://quiva.com/icon.png"],
+    },
+    network === "mainnet" ? LedgerId.MAINNET : LedgerId.TESTNET
+  );
+
+  const session = await sdk.connect();
+  const accountInfo = await sdk.getAccountInfo();
+  console.log(`🔗 Connected Hedera wallet: ${accountInfo.accountId}`);
+
+  return sdk.dAppConnector; // this acts as a signer for inscribeWithSigner
+};
+
+// active signer will be resolved when needed inside createComicNFT
 const createComicNFT = async (formData: {
   name: string;
   creator: string;
@@ -41,64 +72,60 @@ const createComicNFT = async (formData: {
     setStatus("inscribing");
     setProgress(0);
 
-    // Step 1: Upload or inscribe all pages to IPFS / KiloScribe
-    const pageUris: string[] = [];
-
-    for (const page of formData.pageFiles) {
-      const buffer = await page.arrayBuffer();
-      const res = await inscribe(
-        {
-          type: "buffer",
-          buffer: Buffer.from(buffer),
-          fileName: page.name,
-          mimeType: page.type || "image/png",
-        },
-        {
-          accountId,
-          network,
-        },
-        {
-          mode: "hashinal",
-          waitForConfirmation: true,
-        }
-      );
-
-      const uri = `hcs://1/${res.inscription.topic_id}`;
-      pageUris.push(uri);
-    }
-
-    // Step 2: Get cover URI (can be one of the pages)
-    const coverUri = pageUris[0];
-      setProgress(30)
-    // Step 3: Generate HIP-412 metadata
-    const metadata = createComicMetadata({
-      name: formData.name,
-      creator: formData.creator,
-      description: formData.description,
-      genres: formData.genres,
-      copiesOfComic: formData.copiesOfComic,
-      ageRating: formData.ageRating,
-      coverUri,
-      pageUris,
-      priceHbar: formData.priceHbar,
-      totalPages: formData.pageFiles.length,
-      mimeType: "image/png",
-    });
-
+  // Step 1: Upload or inscribe all pages to IPFS / KiloScribe
+      const pageUris: string[] = [];
+      const activeSigner = await getActiveSigner();
+      console.log("🪙 Active signer ready:", activeSigner);
+  
+      for (const page of formData.pageFiles) {
+        const arrayBuffer = await page.arrayBuffer();
+       
+        const res = await inscribeWithSigner(
+          {
+            type: "buffer",
+            buffer: arrayBuffer,
+            fileName: page.name,
+            mimeType: page.type || "image/png",
+          },
+          activeSigner,
+          {
+            // mode: "file",
+            waitForConfirmation: true,
+          }
+        );
+  
+        const uri = `hcs://1/${res.inscription.topic_id}`;
+        pageUris.push(uri);
+      }
+  
+      // Step 2: Get cover URI (can be one of the pages)
+      const coverUri = pageUris[0];
+        setProgress(30)
+      // Step 3: Generate HIP-412 metadata
+      const metadata = createComicMetadata({
+        name: formData.name,
+        creator: formData.creator,
+        description: formData.description,
+        genres: formData.genres,
+        copiesOfComic: formData.copiesOfComic,
+        ageRating: formData.ageRating,
+        coverUri,
+        pageUris,
+        priceHbar: formData.priceHbar,
+        totalPages: formData.pageFiles.length,
+        mimeType: "image/png",
+      });
     // Step 4: Inscribe metadata + cover image
     const coverBuffer = await formData.coverFile.arrayBuffer();
 
-    const nftInscription = await inscribe(
+    const nftInscription = await inscribeWithSigner(
       {
         type: "buffer",
-        buffer: Buffer.from(coverBuffer),
+        buffer: coverBuffer,
         fileName: formData.coverFile.name,
         mimeType: formData.coverFile.type || "image/png",
       },
-      {
-        accountId,
-        network,
-      },
+      activeSigner,
       {
         mode: "hashinal",
         metadata,
@@ -114,8 +141,9 @@ const createComicNFT = async (formData: {
     // ... your existing TokenCreateTransaction + TokenMintTransaction logic
 
     const client = Client.forName(network);
-      const publicKey = signer.getAccountKey ? await signer.getAccountKey() : signer.publicKey;
-      client.setOperatorWith(accountId, publicKey, (msg) => signer.sign(msg));
+    // client.setOperator(accountId, activeSigner);
+      // const publicKey = activeSigner.getAccountKey ? await activeSigner.getAccountKey() : activeSigner.publicKey;
+      // client.setOperatorWith(accountId, publicKey, (msg) => activeSigner.sign(msg));
 
       const tokenCreateTx = new TokenCreateTransaction()
         .setTokenName(metadata.name || "Comic NFT")
@@ -126,8 +154,8 @@ const createComicNFT = async (formData: {
         .setMaxSupply(metadata.properties.copiesOfComic)
         .setSupplyType(TokenSupplyType.Finite)
         .freezeWith(client);
-
-      const signedCreateTx = await signer.signTransaction(tokenCreateTx);
+        
+      const signedCreateTx = await activeSigner.signTransaction(tokenCreateTx);
       const nftCreateSubmit = await signedCreateTx.execute(client);
       const nftCreateReceipt = await nftCreateSubmit.getReceipt(client);
       const tokenId = nftCreateReceipt.tokenId?.toString();
@@ -141,7 +169,7 @@ const createComicNFT = async (formData: {
         .setMetadata([Buffer.from(metadataHRL)])
         .freezeWith(client);
 
-      const signedMintTx = await signer.signTransaction(mintTx);
+      const signedMintTx = await activeSigner.signTransaction(mintTx);
       const mintSubmit = await signedMintTx.execute(client);
       const mintReceipt = await mintSubmit.getReceipt(client);
       lastSerial = mintReceipt.serials[0].toNumber();

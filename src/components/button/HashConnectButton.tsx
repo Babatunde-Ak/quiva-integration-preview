@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { useWallet, useEvmAddress } from '@buidlerlabs/hashgraph-react-wallets';
-import { HashpackConnector } from '@buidlerlabs/hashgraph-react-wallets/connectors';
+//import { HashpackConnector, useEvmAddress, useWallet } from '@reown/walletkit';
 import { ChevronDown, LogOut, Copy, ExternalLink, Loader2 } from "lucide-react";
 import { useWalletAuth } from "@/hook/useWalletAuth";
 import { useAppSelector, useAppDispatch } from "@/redux/hook";
@@ -12,6 +11,7 @@ import { FaCog, FaStore } from "react-icons/fa";
 import { toast } from "react-toastify";
 import Picture from '../picture/Index';
 import { hashpack } from '../../../public/dev_images';
+import { useHederaWallet } from '@/providers/HashPackProvider';
 
 type HashConnectProps = {
   disabled?: boolean;
@@ -20,19 +20,22 @@ type HashConnectProps = {
 export default function HashConnectButton({ disabled = false }: HashConnectProps) {
   const router = useRouter();
   const { loginWithWallet } = useWalletAuth();
-  const { data: evmAddress } = useEvmAddress();
-  const { 
-    isConnected, 
-    connect, 
-    disconnect, 
-    isLoading: isConnecting
-  } = useWallet(HashpackConnector);
-  
+  // const { data: evmAddress } = useEvmAddress();
+  // const { 
+  //   isConnected, 
+  //   connect, 
+  //   disconnect, 
+  //   isLoading: isConnecting
+   
+  // } = useWallet(HashpackConnector);
+  //const { account: evmAddress, isConnected, connectWallet, disconnect, isLoading: isConnecting } = useHederaWallet();
+   const { connectWallet, disconnectWallet, isConnected, account, evmAddress } = useHederaWallet();
   const dispatch = useAppDispatch();
   const { isAuthenticated, error } = useAppSelector((state) => state.wallet);
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -51,10 +54,12 @@ export default function HashConnectButton({ disabled = false }: HashConnectProps
 
   // Auto-login when wallet connects
   const autoLogin = useCallback(async () => {
-    if (isConnected && !isAuthenticated && evmAddress && !isLoggingIn) {
+    if (isConnected && !isAuthenticated && account && !isLoggingIn) {
       try {
+        // const convertedAddress = `0x${account}`;
+        // console.log("Auto-login with address:", convertedAddress);
         setIsLoggingIn(true);
-        await dispatch(setWalletAddress(evmAddress));
+        await dispatch(setWalletAddress(account));
         await loginWithWallet();
       } catch (err) {
         console.error("Auto-login failed:", err);
@@ -63,36 +68,77 @@ export default function HashConnectButton({ disabled = false }: HashConnectProps
         setIsLoggingIn(false);
       }
     }
-  }, [isConnected, isAuthenticated, evmAddress, isLoggingIn, dispatch, loginWithWallet]);
+  }, [isConnected, isAuthenticated, account, isLoggingIn, dispatch, loginWithWallet]);
 
   useEffect(() => {
     autoLogin();
   }, [autoLogin]);
-
   const handleConnect = useCallback(async () => {
     try {
+      setIsConnecting(true);
+      console.log("Initiating HashPack connection...");
+      console.log("Initiating HashPack connection...");
       
-      const result = await connect();
-      if (result) {
-        toast.success(`Connected successfully! Address: ${evmAddress}`);
-        console.log("Connected to HashPack:", result);
+      // Clear any stale WalletConnect data before connecting
+      if (typeof window !== 'undefined') {
+        try {
+          // Clear stale WalletConnect sessions that might be causing issues
+          const keysToRemove = Object.keys(localStorage).filter(key => 
+            key.startsWith('wc@') || 
+            key.startsWith('walletconnect') ||
+            key.includes('hashconnect')
+          );
+          keysToRemove.forEach(key => {
+            console.log(`Clearing stale session data: ${key}`);
+            localStorage.removeItem(key);
+          });
+        } catch (e) {
+          console.warn('Could not clear stale session data:', e);
+        }
       }
-    } catch (error) {
+      
+      const result = await connectWallet();
+      console.log("Connection result:", result);
+      
+      if (result) {
+        toast.success(`Connected successfully! Address: ${account}`);
+        console.log("Connected to HashPack:", result);
+      } else {
+        // Connection returned but no result - user may have cancelled
+        console.warn("Connection returned without result - user may have cancelled or extension not installed");
+      }
+    } catch (error: any) {
       console.error("Error connecting to HashPack:", error);
-      toast.error("Failed to connect wallet. Please try again.");
+      console.error("Error details:", {
+        message: error?.message,
+        code: error?.code,
+        name: error?.name,
+        stack: error?.stack
+      });
+      
+      // Provide more specific error messages
+      if (error?.message?.includes("User rejected") || error?.message?.includes("rejected")) {
+        toast.info("Connection cancelled by user");
+      } else if (error?.message?.includes("not installed") || error?.message?.includes("extension")) {
+        toast.error("HashPack extension not found. Please install it from the Chrome Web Store.");
+      } else {
+        toast.error(`Failed to connect: ${error?.message || "Please try again."}`);
+      }
+    } finally {
+      setIsConnecting(false);
     }
-  }, [connect, evmAddress]);
+  }, [connectWallet, account]);
 
   const handleLogout = useCallback(async () => {
     try {
-      await disconnect();
+      await disconnectWallet();
       dispatch(logout());
       toast.info("Wallet disconnected");
     } catch (error) {
       console.error("Error disconnecting:", error);
       toast.error("Error disconnecting wallet");
     }
-  }, [disconnect, dispatch]);
+  }, [disconnectWallet, dispatch]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -138,8 +184,8 @@ export default function HashConnectButton({ disabled = false }: HashConnectProps
   };
 
   const getExplorerUrl = () => {
-    if (!evmAddress) return "";
-    return `https://hashscan.io/testnet/address/${evmAddress}`;
+    if (!account) return "";
+    return `https://hashscan.io/testnet/address/${account}`;
   };
 
   // Not connected state
@@ -184,16 +230,16 @@ export default function HashConnectButton({ disabled = false }: HashConnectProps
       >
         <Avatar className="w-7 h-7 lg:w-8 lg:h-8 border border-secondary-200/50">
           <AvatarImage
-            src={getAvatarUrl(evmAddress || "")}
+            src={getAvatarUrl(account || "")}
             alt="User Avatar"
           />
           <AvatarFallback className="bg-secondary-200 text-white text-xs font-medium">
-            {getInitials(evmAddress)}
+            {getInitials(account)}
           </AvatarFallback>
         </Avatar>
 
         <span className="text-white text-sm font-medium hidden sm:block">
-          {evmAddress ? truncateAddress(evmAddress) : "HashPack"}
+          {account ? truncateAddress(account) : "HashPack"}
         </span>
 
         <ChevronDown
@@ -212,16 +258,16 @@ export default function HashConnectButton({ disabled = false }: HashConnectProps
             <div className="flex items-center gap-3">
               <Avatar className="w-10 h-10 border border-secondary-200/50">
                 <AvatarImage
-                  src={getAvatarUrl(evmAddress || "")}
+                  src={getAvatarUrl(account || "")}
                   alt="User Avatar"
                 />
                 <AvatarFallback className="bg-secondary-200 text-white text-sm font-medium">
-                  {getInitials(evmAddress)}
+                  {getInitials(account)}
                 </AvatarFallback>
               </Avatar>
               <div>
                 <p className="text-white font-medium text-sm">
-                  {evmAddress ? truncateAddress(evmAddress) : "HashPack User"}
+                  {account ? truncateAddress(account) : "HashPack User"}
                 </p>
                 <p className="text-white/60 text-xs">Hedera Network</p>
               </div>
@@ -317,3 +363,118 @@ export default function HashConnectButton({ disabled = false }: HashConnectProps
     </div>
   );
 }
+
+
+// // HashConnectButton.tsx - Updated to use HashinalsProvider while keeping the same component name
+// 'use client';
+
+// import React, { useState } from 'react';
+// import { useHederaWallet } from '../../providers/HashPackProvider';
+// import { Copy, ExternalLink, LogOut, Loader2, ChevronDown } from 'lucide-react';
+// import { toast } from 'react-toastify';
+
+// export default function HashConnectButton() {
+//   const { connectWallet, disconnectWallet, isConnected, account } = useHederaWallet();
+//   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+//   const [copySuccess, setCopySuccess] = useState(false);
+//   const [isConnecting, setIsConnecting] = useState(false);
+
+//   const handleConnect = async () => {
+//     try {
+//       setIsConnecting(true);
+//       await connectWallet();
+//       toast.success('Wallet connected successfully!');
+//     } catch (error: any) {
+//       console.error('Error connecting to wallet:', error);
+//       toast.error(error?.message || 'Failed to connect.');
+//     } finally {
+//       setIsConnecting(false);
+//     }
+//   };
+
+//   const handleDisconnect = async () => {
+//     try {
+//       await disconnectWallet();
+//       toast.info('Wallet disconnected');
+//       setIsDropdownOpen(false);
+//     } catch (error) {
+//       console.error('Error disconnecting wallet:', error);
+//       toast.error('Failed to disconnect.');
+//     }
+//   };
+
+//   const copyToClipboard = async (text: string) => {
+//     try {
+//       await navigator.clipboard.writeText(text);
+//       setCopySuccess(true);
+//       setTimeout(() => setCopySuccess(false), 2000);
+//     } catch (err) {
+//       console.error('Failed to copy:', err);
+//     }
+//   };
+
+//   const truncateAddress = (address: string) => {
+//     return `${address.slice(0, 8)}...${address.slice(-6)}`;
+//   };
+
+//   if (!isConnected) {
+//     return (
+//       <button
+//         onClick={handleConnect}
+//         disabled={isConnecting}
+//         className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+//       >
+//         {isConnecting ? (
+//           <>
+//             <Loader2 size={16} className="animate-spin" /> Connecting...
+//           </>
+//         ) : (
+//           'Connect Wallet'
+//         )}
+//       </button>
+//     );
+//   }
+
+//   return (
+//     <div className="relative inline-block text-left">
+//       <button
+//         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+//         className="flex items-center gap-2 px-4 py-2 bg-transparent border border-white/30 hover:border-white rounded-lg text-white"
+//       >
+//         <span>{truncateAddress(account || '')}</span>
+//         <ChevronDown size={16} className={`transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+//       </button>
+
+//       {isDropdownOpen && (
+//         <div className="absolute right-0 mt-2 w-64 bg-black border border-white/20 rounded-xl shadow-lg z-50 overflow-hidden">
+//           <div className="p-4 border-b border-white/10">
+//             <p className="text-white text-sm font-medium">Connected Account</p>
+//             <p className="text-white/70 text-xs font-mono mt-1">{account}</p>
+//             <div className="flex gap-2 mt-2">
+//               <button
+//                 onClick={() => account && copyToClipboard(account)}
+//                 className="flex items-center gap-1 text-xs text-gray-300 hover:text-white"
+//               >
+//                 <Copy size={14} /> Copy
+//                 {copySuccess && <span className="text-green-400 ml-1">Copied!</span>}
+//               </button>
+//               <button
+//                 onClick={() => window.open(`https://hashscan.io/testnet/account/${account}`, '_blank')}
+//                 className="flex items-center gap-1 text-xs text-gray-300 hover:text-white"
+//               >
+//                 <ExternalLink size={14} /> View
+//               </button>
+//             </div>
+//           </div>
+
+//           <button
+//             onClick={handleDisconnect}
+//             className="w-full flex items-center gap-2 px-4 py-3 text-red-400 hover:text-red-300 hover:bg-red-500/10 border-t border-white/10 text-sm"
+//           >
+//             <LogOut size={16} /> Disconnect
+//           </button>
+//         </div>
+//       )}
+//     </div>
+//   );
+// }
