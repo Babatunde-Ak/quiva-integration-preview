@@ -92,7 +92,7 @@ export const mockUser = {
     id: "user_001",
     name: "Yuna",
     displayName: "Yuna Dean",
-    avatar: "https://images.unsplash.com/photo-1494790108755-2616b612c95f?auto=format&fit=crop&w=800&q=80",
+    avatar: "https://cdn.marvel.com/content/1x/asm2025001_dimeo.jpg",
     joinDate: "November 2024",
     bio: "I love to read fanfiction and action series. Passionate collector of NFT comics and digital art.",
     stats: {
