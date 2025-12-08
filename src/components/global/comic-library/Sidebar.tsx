@@ -32,6 +32,11 @@ export function Sidebar({ isMobileMenuOpen, onMobileMenuClose }) {
       path: '/marketplace/top-creators',
       isActive: pathname === '/marketplace/top-creators'
     },
+    {
+      label: 'User Profile', 
+      path: '/marketplace/user-profile',
+      isActive: pathname === '/marketplace/user-profile'
+    },
   ]
 
   const handleNavigation = (path) => {
