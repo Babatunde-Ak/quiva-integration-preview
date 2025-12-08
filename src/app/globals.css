@@ -2,12 +2,18 @@
 @import url("https://fonts.googleapis.com/css2?family=Recursive:wght@100;200;300;400;500;600;700;800;900&display=swap&subset=latin-ext");
 @import url("https://fonts.googleapis.com/css2?family=Outfit:wght@100;200;300;400;500;600;700;800;900&display=swap&subset=latin-ext");
 @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@100;200;300;400;500;600;700;800;900&display=swap&subset=latin-ext");
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Marcellus&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 @layer components {
 	.section-padding {
 		@apply px-1 lg:px-8;
+	}
+
+	.children-z-30 > * {
+		z-index: 30;
 	}
 }
 @layer utilities {
@@ -139,6 +145,10 @@
 
 	.font-recursive {
 		font-family: "Recursive", sans-serif;
+	}
+
+	.font-inter {
+		font-family: "Inter", sans-serif;
 	}
 
 	.animate-blink {
@@ -570,6 +580,13 @@
 
 .read_all-slider{
 	background-image: url("../../public/bg-slider.png");
+	background-size: cover;
+	background-position: center;
+	background-repeat: no-repeat;
+}
+
+.bg-background-user-profile {
+	background-image: url("../../public/user-profile-bg.png");
 	background-size: cover;
 	background-position: center;
 	background-repeat: no-repeat;
