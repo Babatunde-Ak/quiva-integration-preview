@@ -166,7 +166,7 @@ export const MintedComicCard = ({
                     <div className='flex flex-col items-center'>
                         <span className="text-white text-xs font-light">Mint Price</span>
                         <div className="flex items-center gap-1 mt-1">
-                            <span className="text-[10px]">{mintPrice}</span>
+                            <span className="text-[10px] text-white">{mintPrice}</span>
                             <Picture src={hbar} alt="HBAR" className="w-3 h-3"/>
                         </div>
                     </div>
@@ -303,7 +303,7 @@ export const ListedComicCard = ({
                         <div className='flex flex-col items-center'>
                             <span className="text-white text-xs font-light">Listing Price</span>
                             <div className="flex items-center gap-1 mt-1">
-                                <span className="text-[10px]">{listingPrice}</span>
+                                <span className="text-[10px] text-white">{listingPrice}</span>
                                 <Picture src={hbar} alt="HBAR" className="w-3 h-3"/>
                             </div>
                         </div>
@@ -311,7 +311,7 @@ export const ListedComicCard = ({
                         <div className='flex flex-col items-center'>
                             <span className="text-white text-xs font-light">Status</span>
                             <div className="flex items-center gap-1 mt-1 bg-black-200 border border-black-50 px-2 py-1 rounded-md">
-                                <span className="text-[10px]">Listed</span>
+                                <span className="text-[10px] text-white">Listed</span>
                                 <Check className="w-3 h-3 text-green-500"/>
                             </div>
                         </div>
