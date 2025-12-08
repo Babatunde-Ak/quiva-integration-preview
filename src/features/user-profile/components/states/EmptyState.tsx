@@ -56,9 +56,10 @@ const EmptyState = ({
 
     return (
         <div
-            className="flex flex-col items-center justify-center py-16 px-8 text-center">
+            className="flex flex-col items-center justify-center py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8 text-center">
             {/* Book Icon */}
-            <div className="w-16 h-16 mb-6 opacity-70">
+            <div
+                className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 mb-4 sm:mb-6 opacity-70">
                 <svg viewBox="0 0 64 64" className="w-full h-full text-white" fill="none">
                     {/* Open Book Icon */}
                     <path
@@ -94,19 +95,21 @@ const EmptyState = ({
             </div>
 
             {/* Title */}
-            <h3 className="text-2xl font-semibold text-white mb-3 font-recursive">
+            <h3
+                className="text-xl sm:text-2xl lg:text-3xl font-semibold text-white mb-2 sm:mb-3 font-recursive">
                 {config.title}
             </h3>
 
             {/* Description */}
-            <p className="text-white/70 text-sm leading-relaxed max-w-md mb-8 font-inter">
+            <p
+                className="text-white/70 text-sm sm:text-base leading-relaxed max-w-xs sm:max-w-md lg:max-w-lg mb-6 sm:mb-8 font-inter">
                 {config.description}
             </p>
 
             {/* Action Button */}
             <MainButton
                 onClick={config.action}
-                className="px-6 py-3 rounded-full font-medium transition-all duration-300 hover:scale-105">
+                className="px-4 sm:px-6 py-2.5 sm:py-3 rounded-full text-sm sm:text-base font-medium transition-all duration-300 hover:scale-105 w-full sm:w-auto max-w-xs">
                 {config.buttonText}
             </MainButton>
         </div>
