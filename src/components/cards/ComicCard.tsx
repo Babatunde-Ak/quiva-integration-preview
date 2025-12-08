@@ -30,6 +30,7 @@ interface ComicCardProps {
   size?: 'small' | 'medium' | 'large'
 }
 
+
 export function ComicCard({ 
   id,
   title, 

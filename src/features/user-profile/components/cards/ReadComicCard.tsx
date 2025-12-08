@@ -1,6 +1,6 @@
 import React from 'react';
 
-const ComicCard = ({
+const ReadComicCard = ({
     title = "Inosuke degen",
     description = "Read through the fun adventure and real life drama that happens in the world.",
     creator = "Estevao",
@@ -13,7 +13,7 @@ const ComicCard = ({
     variant = "default"
 }) => {
     return (
-        <div className={`group relative flex bg-zinc-900 rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-orange-500/20 ${className}`}>
+        <div className={`p-6 group relative flex bg-black-500 border-2 border-black-50 rounded-3xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-orange-500/20 ${className}`}>
             {/* Cover Image - Left Side */}
             <div className="relative w-64 flex-shrink-0">
                 <img
@@ -38,7 +38,7 @@ const ComicCard = ({
                         {genres.map((genre, index) => (
                             <span
                                 key={index}
-                                className="text-white text-xs font-medium px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm border border-white/20"
+                                className="text-white text-xs font-light px-3 py-1 rounded-md bg-black-200 backdrop-blur-sm border border-black-50"
                             >
                                 {genre}
                             </span>
@@ -47,7 +47,7 @@ const ComicCard = ({
                 </div>
 
                 {/* Description */}
-                <p className="text-sm text-gray-400 mb-4 leading-relaxed">
+                <p className="text-sm text-gray-500 mb-4 leading-relaxed">
                     {description}
                 </p>
 
@@ -56,13 +56,13 @@ const ComicCard = ({
                     <img
                         src={creatorAvatar}
                         alt={creator}
-                        className="w-8 h-8 rounded-full border-2 border-orange-500"
+                        className="w-8 h-8 rounded-md border border-black-50"
                     />
                     <div className="flex flex-col">
-                        <span className="text-xs text-gray-500 uppercase tracking-wide">
+                        <span className="text-xs text-white tracking-wide font-light">
                             Creator
                         </span>
-                        <span className="text-sm text-gray-300 font-medium">
+                        <span className="text-sm text-white font-bold">
                             {creator}
                         </span>
                     </div>
@@ -73,34 +73,28 @@ const ComicCard = ({
 
                 {/* Progress Bar */}
                 <div className="mb-4">
-                    <div className="flex justify-between items-center mb-2">
-                        <span className="text-xs text-gray-500 uppercase tracking-wide">Progress</span>
-                        <span className="text-sm font-bold text-orange-500">{progress}%</span>
+                    <div className="flex justify-between items-center mb-2 gap-4">
+                        <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                            <div
+                                className="h-full bg-secondary-200 hover:bg-primary-500 rounded-full transition-all duration-500"
+                                style={{ width: `${progress}%` }}
+                            />
+                        </div>
+                        <span className="text-sm font-bold text-white">{progress}%</span>
                     </div>
-                    <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
-                        <div
-                            className="h-full bg-gradient-to-r from-orange-500 to-yellow-500 rounded-full transition-all duration-500"
-                            style={{ width: `${progress}%` }}
-                        />
-                    </div>
+                    
                 </div>
 
                 {/* CTA Button */}
                 <button
-                    className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 text-black font-bold px-6 py-3 rounded-xl transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-orange-500/50 flex items-center justify-center gap-2"
+                    className="w-fit bg-secondary-200 hover:bg-primary-500 font-normal text-black-200 px-6 py-3 rounded-full transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary-500/50 flex items-center justify-center gap-2"
                     onClick={onContinueReading}
                 >
                     <span>Continue Reading</span>
-                    <svg
-                        viewBox="0 0 24 24"
-                        className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1"
-                    >
-                        <path d="M8 5v14l11-7z" fill="currentColor"/>
-                    </svg>
                 </button>
             </div>
         </div>
     );
 };
 
-export default ComicCard;
+export default ReadComicCard;
