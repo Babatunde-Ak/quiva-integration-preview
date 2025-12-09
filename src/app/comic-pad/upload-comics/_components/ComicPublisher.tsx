@@ -13,6 +13,8 @@ import { kiloScribeService, InscriptionProgress, InscriptionResult } from "@/lib
 import {useComicHashinalNFT} from "@/hook/useMintComic";
 import { useAccount } from "wagmi";
 import { useHederaWallet } from "@/providers/HashPackProvider";
+import { HashinalsWalletConnectSDK } from "@hashgraphonline/hashinal-wc";
+import {LedgerId, AccountId} from "@hashgraph/sdk"
 interface ExtractedFile {
 	name: string;
 	blob: Blob;
@@ -83,24 +85,158 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 	
 	const dispatch = useAppDispatch();
 	const {user} = useAppSelector((state) => state.wallet);
-	const { isConnected } = useAccount();
-	const { accountId, signer, isConnected: isHederaConnected } = useHederaWallet();
+	// const { isConnected } = useAccount();
+	const { 
+		account,
+		isConnected, 
+		connector,
+		signer,
+		connectWallet 
+	} = useHederaWallet();
+
+	// State for Hashinals SDK signer
+	const [hashinalSigner, setHashinalSigner] = useState<any>(null);
+	const [hashinalAccountId, setHashinalAccountId] = useState<string | null>(null);
+	const [isInitializingWallet, setIsInitializingWallet] = useState(false);
 
 	
 	// Check if we have a PDF file
 	const hasPdfFile = comicData.sourceType === 'pdf-file';
 	const pdfFile = hasPdfFile ? comicData.pages.find(file => file.type === 'pdf-file') : null;
-	
-	// const { createComicNFT, status, progress, result:comicHashinalResult, error:comicHashinalNFTError } = useComicHashinalNFT({
-	// 	accountId: user?.walletAddress || '',
-	// 	signer: null,
-	// 	network: 'testnet'
-	// });
+
+	// Initialize Hashinals SDK and get signer when Hedera wallet is connected
+	// useEffect(() => {
+	// 	const initHashinalsSigner = async () => {
+	// 		// Use existing Hedera wallet signer if connected
+	// 		// NOTE: inscribeWithSigner needs DAppSigner (which has getAccountId() method)
+	// 		if (isHederaConnected && hederaSigner && hederaAccount) {
+	// 			setHashinalAccountId(hederaAccount);
+	// 			setHashinalSigner(hederaSigner); // DAppSigner from connector.getSigner()
+	// 			console.log('✅ Using Hedera wallet signer:', hederaAccount);
+	// 			return;
+	// 		}
+
+	// 		// If we need to mint but don't have a signer, initialize the Hashinals SDK
+	// 		if (monetizationData.mintAsNFT && !hashinalSigner && !isInitializingWallet) {
+	// 			try {
+	// 				setIsInitializingWallet(true);
+	// 				console.log("⚡ Initializing Hashinals WC SDK for minting...");
+					
+	// 				const sdk = HashinalsWalletConnectSDK.getInstance();
+	// 				await sdk.init(
+	// 					process.env.NEXT_PUBLIC_HASHGRAPH_PROJECT_ID || "ec1bf58ee8034b1747cb72a34b6652ae",
+	// 					{
+	// 						name: "Quiva Comics",
+	// 						description: "Comic NFT minting with Hashinals",
+	// 						url: typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000',
+	// 						icons: ["https://quiva.com/icon.png"],
+	// 					},
+	// 					LedgerId.TESTNET
+	// 				);
+
+	// 				// Check if already has a session
+	// 				if (sdk.dAppConnector) {
+	// 					try {
+	// 						const accountInfo = await sdk.getAccountInfo();
+	// 						if (accountInfo?.accountId) {
+	// 							setHashinalAccountId(accountInfo.accountId);
+	// 							// Get the actual signer from dAppConnector.signers (has getAccountId method)
+	// 							const signers = sdk.dAppConnector.signers;
+	// 							if (signers && signers.length > 0) {
+	// 								setHashinalSigner(signers[0]);
+	// 								console.log(`🔗 Restored Hashinals session: ${accountInfo.accountId}`);
+	// 							}
+	// 						}
+	// 					} catch {
+	// 						console.log('📱 SDK initialized, waiting for wallet connection...');
+	// 					}
+	// 				}
+	// 			} catch (err) {
+	// 				console.error('❌ Failed to initialize Hashinals SDK:', err);
+	// 			} finally {
+	// 				setIsInitializingWallet(false);
+	// 			}
+	// 		}
+	// 	};
+
+	// 	initHashinalsSigner();
+	// }, [isHederaConnected, hederaSigner, hederaAccount, monetizationData.mintAsNFT, hashinalSigner, isInitializingWallet]);
+
+	// // Function to connect wallet if not connected (for publish flow)
+	// const ensureWalletConnected = async (): Promise<boolean> => {
+	// 	// If already have a signer, we're good
+	// 	if (hashinalSigner && hashinalAccountId) {
+	// 		return true;
+	// 	}
+
+	// 	// If Hedera wallet is connected via provider, use the DAppSigner
+	// 	// NOTE: inscribeWithSigner needs DAppSigner (which has getAccountId() method)
+	// 	if (isHederaConnected && hederaSigner && hederaAccount) {
+	// 		setHashinalAccountId(hederaAccount);
+	// 		setHashinalSigner(hederaSigner); // DAppSigner from connector.getSigner()
+	// 		return true;
+	// 	}
+
+	// 	// Try to connect via the provider's connect function
+	// 	if (connectWallet) {
+	// 		try {
+	// 			setIsInitializingWallet(true);
+	// 			await connectWallet();
+	// 			// After connecting, the signer should be available
+	// 			// We need to return true and let useEffect update the signer
+	// 			return true;
+	// 		} catch (err) {
+	// 			console.error('Failed to connect wallet via provider:', err);
+	// 		} finally {
+	// 			setIsInitializingWallet(false);
+	// 		}
+	// 	}
+
+	// 	// Fall back to Hashinals SDK direct connection
+	// 	try {
+	// 		setIsInitializingWallet(true);
+	// 		const sdk = HashinalsWalletConnectSDK.getInstance();
+			
+	// 		if (!sdk.dAppConnector) {
+	// 			await sdk.init(
+	// 				process.env.NEXT_PUBLIC_HASHGRAPH_PROJECT_ID || "ec1bf58ee8034b1747cb72a34b6652ae",
+	// 				{
+	// 					name: "Quiva Comics",
+	// 					description: "Comic NFT minting with Hashinals",
+	// 					url: typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000',
+	// 					icons: ["https://quiva.com/icon.png"],
+	// 				},
+	// 				LedgerId.TESTNET
+	// 			);
+	// 		}
+
+	// 		await sdk.connect();
+	// 		const accountInfo = await sdk.getAccountInfo();
+	// 		setHashinalAccountId(accountInfo.accountId);
+	// 		// Get the actual signer from dAppConnector.signers (has getAccountId method)
+	// 		const signers = sdk.dAppConnector.signers;
+	// 		if (signers && signers.length > 0) {
+	// 			setHashinalSigner(signers[0]);
+	// 			console.log(`🔗 Connected Hedera wallet: ${accountInfo.accountId}`);
+	// 			return true;
+	// 		} else {
+	// 			console.error('❌ No signers available after connection');
+	// 			return false;
+	// 		}
+	// 	} catch (err) {
+	// 		console.error('❌ Failed to connect wallet:', err);
+	// 		return false;
+	// 	} finally {
+	// 		setIsInitializingWallet(false);
+	// 	}
+	// };
+
+	// Use the comic minting hook with the DAppSigner (has getAccountId method)
 	const { createComicNFT, status, progress, result: comicHashinalResult, error: comicHashinalNFTError } = useComicHashinalNFT({
-  accountId: accountId || user?.walletAddress || '',
-  signer: signer,
-  network: 'testnet'
-});
+		accountId: account || user?.walletAddress || '',
+		signer: signer, // DAppSigner from connector.getSigner()
+		network: 'testnet'
+	});
 
 
 	// const {  } = ueListComic();
@@ -355,6 +491,15 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 			setIsPublishing(true);
 			setShowSuccessModal(false);
 
+			// Ensure wallet is connected before minting
+			setPublishingStep('Connecting wallet...');
+			// const walletReady = await ensureWalletConnected();
+			if (!signer || !account) {
+				setError("Please connect a Hedera wallet to mint your comic NFT");
+				setIsPublishing(false);
+				return;
+			}
+
 			const enhancedComicData = {
 				...comicData,
 				processingInstructions: hasPdfFile ? {
@@ -391,7 +536,9 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 			// 	});
 			// 	console.log('🎉 Free Comic published successfully:', freeComic);
 			// }
-
+            console.log("Comic data:", comicData);
+			
+			setPublishingStep('Creating NFT...');
 			const result = await createComicNFT({
 				name: comicData.title,
 				creator: user.walletAddress,

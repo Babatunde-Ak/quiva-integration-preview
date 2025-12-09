@@ -38,6 +38,7 @@ function ComicConnect() {
       setConnectedWallet(WalletType.RAINBOW);
     } else if (isHashpackConnected && account) {
       setConnectedWallet(WalletType.HASHPACK);
+       console.log(connectedWallet);
     } else {
       setConnectedWallet(WalletType.NONE);
     }

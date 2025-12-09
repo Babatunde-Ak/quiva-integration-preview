@@ -291,6 +291,7 @@ export const HederaWalletProvider = ({ children }: { children: React.ReactNode }
          
           if (signers && signers.length > 0) {
             const accountId = signers[0].getAccountId().toString();
+            console.log('Session updated, new account:', accountId);
             setAccount(accountId);
             setIsConnected(true);
           } else {
@@ -344,8 +345,8 @@ export const HederaWalletProvider = ({ children }: { children: React.ReactNode }
         connectWallet,
         disconnectWallet,
         signMessage,
-        signer: account ? connector?.getSigner(AccountId.fromString(account)) : null,
-        accountId: account ? AccountId.fromString(account) : null,
+         signer: account ? connector?.getSigner(AccountId.fromString(account)) : null,
+        // accountId: account ? AccountId.fromString(account) : null,
       }}
     >
       {children}
