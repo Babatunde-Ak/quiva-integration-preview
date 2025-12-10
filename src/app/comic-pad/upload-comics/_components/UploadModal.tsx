@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { X, Folder, AlertCircle, FileText, Eye } from "lucide-react";
-import JSZip from "jszip";
+// import JSZip from "jszip";
 import { ComicPreviewModal } from "./ComicPreviewModal";
 import Picture from "@/components/picture/Index";
 import { UploadImage } from "../../../../../public/dev_images";
@@ -21,7 +21,7 @@ interface ExtractedFile {
 }
 
 const VALID_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml', 'image/gif', 'image/webp'];
-const VALID_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.svg', '.gif', '.webp'];
+const VALID_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.svg', '.gif', '.webp', '.zip'];
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const MAX_PDF_SIZE = 100 * 1024 * 1024; // 100MB for PDFs
 
@@ -40,7 +40,7 @@ const UploadModal = ({ onClose }: UploadModalProps) => {
 		// Check file type
 		if (!VALID_IMAGE_TYPES.includes(file.type)) {
 			const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
-			if (!VALID_EXTENSIONS.includes(ext)) {
+			if (!VALID_EXTENSIONS.includes(ext) || ext === '.zip') {
 				return false;
 			}
 		}
@@ -51,6 +51,18 @@ const UploadModal = ({ onClose }: UploadModalProps) => {
 			return false;
 		}
 		
+		return true;
+	};
+
+	const validateZipFile = (file: File): boolean => {
+		if (file.size > MAX_PDF_SIZE) {
+			setError(`ZIP file "${file.name}" exceeds maximum size of 100MB`);
+			return false;
+		}
+		if (file.size < 1024) {
+			setError("ZIP file appears to be corrupted or empty");
+			return false;
+		}
 		return true;
 	};
 
@@ -123,95 +135,95 @@ const UploadModal = ({ onClose }: UploadModalProps) => {
 		}];
 	};
 
-	const extractZipFile = async (zipFile: File): Promise<ExtractedFile[]> => {
-		try {
-			setIsExtracting(true);
-			setProcessingStatus("Extracting ZIP file...");
-			setProgress(10);
+	// const extractZipFile = async (zipFile: File): Promise<ExtractedFile[]> => {
+	// 	try {
+	// 		setIsExtracting(true);
+	// 		setProcessingStatus("Extracting ZIP file...");
+	// 		setProgress(10);
 
-			const zip = new JSZip();
-			const zipContent = await zip.loadAsync(zipFile);
+	// 		const zip = new JSZip();
+	// 		const zipContent = await zip.loadAsync(zipFile);
 			
-			setProgress(30);
+	// 		setProgress(30);
 
-			const imageFiles: ExtractedFile[] = [];
-			const invalidFiles: string[] = [];
+	// 		const imageFiles: ExtractedFile[] = [];
+	// 		const invalidFiles: string[] = [];
 
-			let processedCount = 0;
-			const totalFiles = Object.keys(zipContent.files).length;
+	// 		let processedCount = 0;
+	// 		const totalFiles = Object.keys(zipContent.files).length;
 
-			for (const [filename, zipEntry] of Object.entries(zipContent.files)) {
-				// Skip directories, hidden files, and system files
-				if (
-					zipEntry.dir || 
-					filename.startsWith('__MACOSX') || 
-					filename.startsWith('.') ||
-					filename.includes('/.')
-				) {
-					processedCount++;
-					continue;
-				}
+	// 		for (const [filename, zipEntry] of Object.entries(zipContent.files)) {
+	// 			// Skip directories, hidden files, and system files
+	// 			if (
+	// 				zipEntry.dir || 
+	// 				filename.startsWith('__MACOSX') || 
+	// 				filename.startsWith('.') ||
+	// 				filename.includes('/.')
+	// 			) {
+	// 				processedCount++;
+	// 				continue;
+	// 			}
 
-				const ext = filename.substring(filename.lastIndexOf('.')).toLowerCase();
+	// 			const ext = filename.substring(filename.lastIndexOf('.')).toLowerCase();
 				
-				if (VALID_EXTENSIONS.includes(ext)) {
-					try {
-						const blob = await zipEntry.async('blob');
+	// 			if (VALID_EXTENSIONS.includes(ext)) {
+	// 				try {
+	// 					const blob = await zipEntry.async('blob');
 						
-						// Verify blob type
-						const fileType = blob.type || `image/${ext.substring(1)}`;
-						if (!VALID_IMAGE_TYPES.includes(fileType) && !VALID_EXTENSIONS.includes(ext)) {
-							invalidFiles.push(filename);
-							processedCount++;
-							continue;
-						}
+	// 					// Verify blob type
+	// 					const fileType = blob.type || `image/${ext.substring(1)}`;
+	// 					if (!VALID_IMAGE_TYPES.includes(fileType) && !VALID_EXTENSIONS.includes(ext)) {
+	// 						invalidFiles.push(filename);
+	// 						processedCount++;
+	// 						continue;
+	// 					}
 						
-						// Check size
-						if (blob.size > MAX_FILE_SIZE) {
-							invalidFiles.push(`${filename} (too large)`);
-							processedCount++;
-							continue;
-						}
+	// 					// Check size
+	// 					if (blob.size > MAX_FILE_SIZE) {
+	// 						invalidFiles.push(`${filename} (too large)`);
+	// 						processedCount++;
+	// 						continue;
+	// 					}
 						
-						const previewUrl = URL.createObjectURL(blob);
+	// 					const previewUrl = URL.createObjectURL(blob);
 						
-						imageFiles.push({
-							name: filename.split('/').pop() || filename,
-							blob,
-							preview: previewUrl,
-							type: 'image',
-							fileSize: blob.size
-						});
-					} catch (err) {
-						console.error(`Error processing ${filename}:`, err);
-						invalidFiles.push(filename);
-					}
-				}
+	// 					imageFiles.push({
+	// 						name: filename.split('/').pop() || filename,
+	// 						blob,
+	// 						preview: previewUrl,
+	// 						type: 'image',
+	// 						fileSize: blob.size
+	// 					});
+	// 				} catch (err) {
+	// 					console.error(`Error processing ${filename}:`, err);
+	// 					invalidFiles.push(filename);
+	// 				}
+	// 			}
 
-				processedCount++;
-				setProgress(30 + (processedCount / totalFiles) * 60);
-				setProcessingStatus(`Processing file ${processedCount} of ${totalFiles}...`);
-			}
+	// 			processedCount++;
+	// 			setProgress(30 + (processedCount / totalFiles) * 60);
+	// 			setProcessingStatus(`Processing file ${processedCount} of ${totalFiles}...`);
+	// 		}
 
-			// Sort files by name to maintain order
-			imageFiles.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+	// 		// Sort files by name to maintain order
+	// 		imageFiles.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
 
-			setProgress(100);
-			setProcessingStatus("Extraction completed!");
-			setIsExtracting(false);
+	// 		setProgress(100);
+	// 		setProcessingStatus("Extraction completed!");
+	// 		setIsExtracting(false);
 
-			// Show warning if some files were invalid
-			if (invalidFiles.length > 0) {
-				setError(`${invalidFiles.length} file(s) were skipped (invalid format or too large). ${imageFiles.length} valid images extracted.`);
-			}
+	// 		// Show warning if some files were invalid
+	// 		if (invalidFiles.length > 0) {
+	// 			setError(`${invalidFiles.length} file(s) were skipped (invalid format or too large). ${imageFiles.length} valid images extracted.`);
+	// 		}
 
-			return imageFiles;
-		} catch (err) {
-			console.error("Error extracting ZIP:", err);
-			setIsExtracting(false);
-			throw new Error("Failed to extract ZIP file. Please ensure it's a valid archive.");
-		}
-	};
+	// 		return imageFiles;
+	// 	} catch (err) {
+	// 		console.error("Error extracting ZIP:", err);
+	// 		setIsExtracting(false);
+	// 		throw new Error("Failed to extract ZIP file. Please ensure it's a valid archive.");
+	// 	}
+	// };
 
 	const processFile = async (selected: File) => {
 		setError(null);
@@ -254,20 +266,36 @@ const UploadModal = ({ onClose }: UploadModalProps) => {
 				setFile(null);
 				setIsExtracting(false);
 			}
+		// } else if (selected.name.toLowerCase().endsWith(".zip")) {
+		// 	setFile(selected);
+		// 	setPreview(null);
+		// 	try {
+		// 		const files = await extractZipFile(selected);
+		// 		setExtractedFiles(files);
+				
+		// 		if (files.length === 0) {
+		// 			setError("No valid image files found in ZIP archive. Please ensure your ZIP contains image files (JPEG, PNG, GIF, WebP, SVG).");
+		// 		}
+		// 	} catch (err) {
+		// 		setError(err instanceof Error ? err.message : "Failed to extract ZIP file. Please ensure it's a valid archive.");
+		// 		setFile(null);
+		// 	}
 		} else if (selected.name.toLowerCase().endsWith(".zip")) {
+			// Validate ZIP file
+			if (!validateZipFile(selected)) {
+				return;
+			}
+			
+			// For now, treat ZIP files as regular files without extraction
 			setFile(selected);
 			setPreview(null);
-			try {
-				const files = await extractZipFile(selected);
-				setExtractedFiles(files);
-				
-				if (files.length === 0) {
-					setError("No valid image files found in ZIP archive. Please ensure your ZIP contains image files (JPEG, PNG, GIF, WebP, SVG).");
-				}
-			} catch (err) {
-				setError(err instanceof Error ? err.message : "Failed to extract ZIP file. Please ensure it's a valid archive.");
-				setFile(null);
-			}
+			setExtractedFiles([{
+				name: selected.name,
+				blob: selected,
+				preview: "", // No preview for ZIP files currently
+				type: 'zip-images',
+				fileSize: selected.size
+			}]);
 		} else {
 			setError("Invalid file type. Please upload an image, PDF, or ZIP file.");
 		}
@@ -368,6 +396,13 @@ const UploadModal = ({ onClose }: UploadModalProps) => {
 					description: 'Ready for upload',
 					count: '1 image'
 				};
+			case 'zip-images':
+				return {
+					icon: <Folder className="text-blue-500" size={16} />,
+					label: 'ZIP Archive',
+					description: 'Ready for upload',
+					count: '1 ZIP file'
+				};
 			default:
 				return {
 					icon: <Folder className="text-blue-500" size={16} />,
@@ -454,6 +489,19 @@ const UploadModal = ({ onClose }: UploadModalProps) => {
 										<p className="text-white/60 text-xs">
 											{(extractedFiles[0].fileSize! / (1024 * 1024)).toFixed(1)} MB • 
 											~{extractedFiles[0].pageCount} pages
+										</p>
+									</div>
+								) : extractedFiles[0].type === 'zip-images' ? (
+									// ZIP Preview (without extraction)
+									<div className="flex flex-col items-center space-y-2">
+										<div className="bg-blue-500 rounded-lg p-4">
+											<Folder size={48} className="text-white" />
+										</div>
+										<p className="text-white/80 text-sm">
+											{extractedFiles[0].name}
+										</p>
+										<p className="text-white/60 text-xs">
+											{(extractedFiles[0].fileSize! / (1024 * 1024)).toFixed(1)} MB ZIP Archive
 										</p>
 									</div>
 								) : (
@@ -569,6 +617,8 @@ const UploadModal = ({ onClose }: UploadModalProps) => {
 							{extractedFiles.length > 0 ? 
 								extractedFiles[0].type === 'pdf-file' ? 
 									'Continue with PDF' : 
+								extractedFiles[0].type === 'zip-images' ?
+									'Continue with ZIP' :
 									`Continue with ${extractedFiles.length} file${extractedFiles.length !== 1 ? 's' : ''}` 
 								: 'Next'
 							}
