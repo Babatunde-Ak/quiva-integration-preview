@@ -1,4 +1,3 @@
-
 'use client'
 
 import ComicDetail from '@/features/comic-library/components/ComicDetail'
@@ -24,9 +23,151 @@ import {
 import { Loader2 } from 'lucide-react'
 import { useComicPurchase } from '../../../hook/usePurchaseComic'
 import { useClaimFreeComic, useCheckComicClaim } from '@/hook/useClaimFreeComic'
-import { parseEther } from 'viem'
 import { toast } from 'react-toastify'
 import { QUIVA_COMICS_ADDRESS } from '@/contracts/QuivaComics'
+
+// Exact dummy data 
+const DUMMY_COMIC_DATA = {
+  id: '2',
+  title: 'Avatar - Book of Beginnings',
+  issueNumber: 1,
+  author: {
+    name: 'Studio Kyra',
+    avatar: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=100&h=100&fit=crop'
+  },
+  coverImage: 'https://images.unsplash.com/photo-1635805737707-575885ab0820?w=300&h=450&fit=crop',
+  description: 'In a world torn between the elements, a young avatar rises to restore balance – not by choice, but by destiny. "Book of Beginnings" marks the first chapter of the Avatar Chronicles, where every mint helps since the legend.',
+  tags: ['Fantasy', 'Adventure', 'On-chain Epic'],
+  isFree: false,
+  publishType: 'nft',
+  price: 0.09,
+  nftDetails: {
+    tokenId: '2',
+    maxSupply: 1000,
+    currentSupply: 721,
+    mintStatus: 'minting'
+  },
+  tokenId: '2',
+  creatorWalletAddress: '0x1234567890abcdef1234567890abcdef12345678',
+  issueDetails: {
+    creators: 'Studio Kyra',
+    pages: 32,
+    publisher: 'Independent',
+    publicationDate: 'December 9, 2024'
+  },
+  otherIssues: [
+    {
+      id: 'ep1',
+      title: 'Episode 1 : The First Flame',
+      image: 'https://images.unsplash.com/photo-1635805737707-575885ab0820?w=150&h=225&fit=crop',
+      date: 'December 2, 2024',
+      isFree: false
+    },
+    {
+      id: 'ep2',
+      title: 'Episode 2 : Whispers of the Wind',
+      image: 'https://images.unsplash.com/photo-1635805737707-575885ab0820?w=150&h=225&fit=crop',
+      date: 'December 9, 2024',
+      isFree: false
+    },
+    {
+      id: 'ep3',
+      title: 'Episode 3 : Echoes Beneath the Earth',
+      image: 'https://images.unsplash.com/photo-1635805737707-575885ab0820?w=150&h=225&fit=crop',
+      date: 'December 16, 2024',
+      isFree: false
+    }
+  ],
+  views: 4500,
+  likes: 230,
+  status: "published",
+  
+  episodeList: [
+    {
+      id: 'ep1',
+      title: 'Episode 1 : The First Flame',
+      time: '8 min',
+      stats: {
+        floorPrice: '0.085 HBAR',
+        totalMints: '721 / 1,000',
+        volume: '45.8 HBAR'
+      }
+    },
+    {
+      id: 'ep2',
+      title: 'Episode 2 : Whispers of the Wind',
+      time: '8 min',
+      stats: {
+        floorPrice: '0.085 HBAR',
+        totalMints: '721 / 1,000',
+        volume: '45.8 HBAR'
+      }
+    },
+    {
+      id: 'ep3',
+      title: 'Episode 3 : Echoes Beneath the Earth',
+      time: '8 min',
+      stats: {
+        floorPrice: '0.085 HBAR',
+        totalMints: '721 / 1,000',
+        volume: '45.8 HBAR'
+      }
+    }
+  ],
+  marketStats: {
+    floorPrice: '0.085 HBAR',
+    totalMints: '721 / 1,000',
+    volume: '45.8 HBAR'
+  },
+  mintingDetails: {
+    mintPrice: '0.09 HBAR',
+    edition: '1,000',
+    royalties: '7% to creator'
+  },
+  collections: '389 Collections',
+  studioInfo: {
+    name: 'Studio Kyra',
+    description: 'Studio Kyra is a visionary town of artists and storytellers dedicated to making the boundaries of digital art and interactive narratives.'
+  },
+  moreAdventureComics: [
+    {
+      id: 'ma1',
+      title: 'Inosuke degen',
+      subtitle: 'Chrome Extreme',
+      image: 'https://images.unsplash.com/photo-1635805737707-575885ab0820?w=100&h=150&fit=crop'
+    },
+    {
+      id: 'ma2',
+      title: 'The son is also the father',
+      subtitle: 'New York A.B.R.C.',
+      image: 'https://images.unsplash.com/photo-1635805737707-575885ab0820?w=100&h=150&fit=crop'
+    },
+    {
+      id: 'ma3',
+      title: 'Spiderman: Mary Jane',
+      subtitle: 'Catera Marathon',
+      image: 'https://images.unsplash.com/photo-1635805737707-575885ab0820?w=100&h=150&fit=crop'
+    },
+    {
+      id: 'ma4',
+      title: 'John Pryce',
+      subtitle: 'A.B.R.C.',
+      image: 'https://images.unsplash.com/photo-1635805737707-575885ab0820?w=100&h=150&fit=crop'
+    },
+    {
+      id: 'ma5',
+      title: 'John Pryce',
+      subtitle: 'A.B.R.C.',
+      image: 'https://images.unsplash.com/photo-1635805737707-575885ab0820?w=100&h=150&fit=crop'
+    },
+    {
+      id: 'ma6',
+      title: 'John Pryce',
+      subtitle: 'A.B.R.C.',
+      image: 'https://images.unsplash.com/photo-1635805737707-575885ab0820?w=100&h=150&fit=crop'
+    }
+  ]
+}
 
 function Page() {
   const searchParams = useSearchParams()
@@ -51,8 +192,10 @@ function Page() {
   const [isClaimModalOpen, setIsClaimModalOpen] = useState(false)
   const [hasNFTAccess, setHasNFTAccess] = useState<boolean | null>(null)
   const [accessCheckComplete, setAccessCheckComplete] = useState(false)
+  const [useDummyData, setUseDummyData] = useState(false)
+  const [activeTab, setActiveTab] = useState('details') // 'details' or 'activity'
   
-  // Get comic ID from URL query params
+  // Getting comic ID from URL query params
   const id = searchParams.get('id')
   
   // Initialize purchase hook
@@ -61,14 +204,10 @@ function Page() {
   // Destructure with fallback values in case hook returns undefined/void
   const {
     purchaseComic = async () => {},
-    getListing = async (_tokenId: bigint, _seller: string) => Promise.resolve(null),
     isPurchasing = false,
-    // isWritePending = false,
     isConfirming = false,
-    isPurchaseComplete = false,
     purchaseSuccess = false,
     purchaseError = null,
-    purchaseHash = null,
     reset: resetPurchase = () => {},
     walletStatus = { isConnected: false, address: null },
     setComicId = () => {}
@@ -85,8 +224,6 @@ function Page() {
     resetClaimState,
   } = useClaimFreeComic()
   
-
- 
   // Fetch comic data on mount
   useEffect(() => {
     if (id) {
@@ -108,8 +245,13 @@ function Page() {
     }
   }, [id, currentComic, setComicId])
 
-  // Transform API data to match ComicDetail component interface
+  // Transforming API data to match ComicDetail component interface
   const transformedComic = useMemo(() => {
+    if (useDummyData) {
+      // Return dummy data for development
+      return DUMMY_COMIC_DATA
+    }
+
     if (!currentComic) return null
 
     const comic = currentComic
@@ -126,7 +268,7 @@ function Page() {
         name: comic.creatorId?.username || comic.creatorId?.walletAddress?.slice(0, 8) || "Unknown Creator",
         avatar: comic.creatorId?.avatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=default"
       },
-      coverImage: comic.coverImage || "https://via.placeholder.com/400x600?text=No+Cover",
+      coverImage: comic.coverImage || "https://via.placeholder.com/300x450?text=No+Cover",
       description: comic.description || "No description available.",
       tags: comic.genre || [],
       isFree: comic.publishType === "free",
@@ -165,92 +307,31 @@ function Page() {
       likes: comic.likes || 0,
       status: comic.status || "draft"
     }
-  }, [currentComic])
+  }, [currentComic, useDummyData])
 
-    const { hasClaimed, refetch: refetchClaimStatus } = useCheckComicClaim(
+  const { hasClaimed, refetch: refetchClaimStatus } = useCheckComicClaim(
     transformedComic?.tokenId,
     walletStatus.address
   )
-  //
 
-  // Enhanced access verification using transaction slice
+  // Auto-use dummy data for development
   useEffect(() => {
-    const checkUserAccess = async () => {
-      if (!transformedComic || !id) {
-        setAccessCheckComplete(true)
-        return
+    const timer = setTimeout(() => {
+      if (!transformedComic && id) {
+        setUseDummyData(true)
       }
-      
-      console.log('Checking user access for comic:', id, 'Type:', transformedComic.publishType)
-      
-      // ALL free comics require NFT claim
-      if (transformedComic.publishType === 'free') {
-        try {
-          console.log('Free comic - verifying NFT claim status')
-          
-          const verificationResult = await dispatch(verifyNftPurchase({ comicId: id } as any)).unwrap()
-          
-          console.log('Claim verification result:', verificationResult)
-          
-          const hasClaimedNFT = verificationResult?.data?.purchased === true
-          
-          setHasNFTAccess(hasClaimedNFT)
-          console.log(hasClaimedNFT ? 'User has claimed NFT' : 'User must claim NFT to read')
-          
-        } catch (error) {
-          console.error('Error verifying claim:', error)
-          setHasNFTAccess(false)
-          
-          if (error?.includes?.('not found') || error?.includes?.('No transaction')) {
-            dispatch(clearTransactionError())
-          }
-        } finally {
-          setAccessCheckComplete(true)
-        }
-        return
-      }
-      
-      // If it's an NFT comic, verify purchase through transaction history
-      if (transformedComic.publishType === 'nft') {
-        try {
-          console.log('NFT comic - checking transaction history')
-          
-          const verificationResult = await dispatch(verifyNftPurchase({ comicId: id } as any)).unwrap()
-          
-          console.log('Transaction verification result:', verificationResult)
-          
-          const hasSuccessfulPurchase = verificationResult?.data?.purchased === true
-          
-          setHasNFTAccess(hasSuccessfulPurchase)
-          console.log(hasSuccessfulPurchase ? 'User has purchased this NFT' : 'User has not purchased this NFT')
-          
-        } catch (error) {
-          console.error('Error verifying NFT purchase:', error)
-          setHasNFTAccess(false)
-          
-          if (error?.includes?.('not found') || error?.includes?.('No transaction')) {
-            dispatch(clearTransactionError())
-          }
-        } finally {
-          setAccessCheckComplete(true)
-        }
-      } else {
-        setAccessCheckComplete(true)
-      }
-    }
+    }, 500)
+    
+    return () => clearTimeout(timer)
+  }, [transformedComic, id])
 
-    checkUserAccess()
-  }, [transformedComic, id, dispatch])
-
-  // Handle purchase success - the hook already creates the transaction record
+  // Handle purchase success
   useEffect(() => {
     if (purchaseSuccess) {
-      console.log('Purchase successful - updating access status')
       setHasNFTAccess(true)
       setIsPurchaseModalOpen(false)
       resetPurchase()
       
-      // Show success message and redirect to reader
       setTimeout(() => {
         if (id) {
           toast.success('Purchase successful! Redirecting to reader...', { autoClose: 2000 })
@@ -263,11 +344,9 @@ function Page() {
   // Handle claim success
   useEffect(() => {
     if (claimSuccess && claimHash) {
-      console.log('Claim successful - updating access status')
       setHasNFTAccess(true)
       refetchClaimStatus()
       
-      // Show success for 2 seconds then redirect to reader
       setTimeout(() => {
         setIsClaimModalOpen(false)
         resetClaimState()
@@ -280,24 +359,27 @@ function Page() {
     }
   }, [claimSuccess, claimHash, id, router, resetClaimState, refetchClaimStatus])
 
-  // Wallet connection state monitoring
+  // Auto-use dummy data if loading fails
   useEffect(() => {
-    if (!walletStatus.isConnected && !accessCheckComplete) {
-      console.log('Wallet not connected')
-    } else if (walletStatus.isConnected && !accessCheckComplete) {
-      console.log('Wallet connected, checking access...')
+    if (isLoading) {
+      const timer = setTimeout(() => {
+        if (!currentComic) {
+          setUseDummyData(true)
+        }
+      }, 1000)
+      
+      return () => clearTimeout(timer)
     }
-  }, [walletStatus.isConnected, accessCheckComplete])
+  }, [isLoading, currentComic])
 
-    // Check if user has already claimed
- //Handle preview modal open
   const handlePreview = () => {
     if (!id) return
     setIsPreviewOpen(true)
-    dispatch(getComicPreview({id: id} as any))
+    if (!useDummyData) {
+      dispatch(getComicPreview({id: id} as any))
+    }
   }
 
-  // Handle claim comic
   const handleClaimComic = async () => {
     if (!walletStatus.isConnected) {
       toast.error('Please connect your wallet to claim this comic')
@@ -330,104 +412,59 @@ function Page() {
     dispatch(clearPreviewComic())
   }
 
-    const handleEnlargeCover = () => {
-    if (transformedComic.coverImage) {
+  const handleEnlargeCover = () => {
+    if (transformedComic?.coverImage) {
       window.open(transformedComic.coverImage, '_blank')
     }
   }
 
-  // const handlePurchase = async () => {
-  //   if (!transformedComic || !id) {
-  //     toast.error('Comic data not available')
-  //     return
-  //   }
-
-  //   if (!walletStatus.isConnected) {
-  //     toast.error('Please connect your wallet first')
-  //     return
-  //   }
-
-  //   if (!transformedComic.tokenId) {
-  //     toast.error('NFT token ID not available')
-  //     return
-  //   }
-
-  //   if (!transformedComic.price || transformedComic.price <= 0) {
-  //     toast.error('Invalid comic price')
-  //     return
-  //   }
-
-  //   try {
-  //     console.log('Initiating purchase:', {
-  //       tokenId: transformedComic.tokenId,
-  //       price: transformedComic.price,
-  //       creator: transformedComic.creatorWalletAddress
-  //     })
-
-  //     const priceInWei = parseEther(transformedComic.price.toString())
-  //     // const priceInWei = BigInt(transformedComic.price.toString())
-  //       const result = await purchaseComic({
-  //         tokenId: transformedComic.tokenId,
-  //         seller: transformedComic.creatorWalletAddress,
-  //         amount: BigInt(1),
-  //         pricePerToken: priceInWei,
-  //       })
-
-  //       console.log('Purchase initiated:', result);
-  //      return result;
-
-      
-  //   } catch (error: any) {
-  //     console.error('Purchase error:', error)
-  //     toast.error(error.message || 'Failed to purchase comic')
-  //   }
-  // }
-  
-
   const handlePurchase = async () => {
-  if (!transformedComic || !id) {
-    toast.error('Comic data not available');
-    return;
-  }
+    if (!transformedComic || !id) {
+      toast.error('Comic data not available')
+      return
+    }
 
-  if (!walletStatus.isConnected) {
-    toast.error('Please connect your wallet first');
-    return;
-  }
+    if (!walletStatus.isConnected) {
+      toast.error('Please connect your wallet first')
+      return
+    }
 
-  if (!transformedComic.tokenId) {
-    toast.error('NFT token ID not available');
-    return;
-  }
+    if (!transformedComic.tokenId) {
+      toast.error('NFT token ID not available')
+      return
+    }
 
-  try {
-    // console.log('Fetching on-chain listing...');
+    try {
+      if (useDummyData) {
+        // Simulate purchase for demo
+        toast.success('Demo purchase successful! Redirecting to reader...', { autoClose: 3000 })
+        setTimeout(() => {
+          router.push(`/reader?id=${id}`)
+        }, 1500)
+        return
+      }
+      
+      const result = await purchaseComic({
+        nftAddress: QUIVA_COMICS_ADDRESS,
+        tokenId: BigInt(transformedComic.tokenId),
+        amount: BigInt(1),
+      });
 
-    // ⭐ Pass the correct price from contract only
-    console.log("TokenId:", transformedComic.tokenId);
-    const result = await purchaseComic({
-      nftAddress: QUIVA_COMICS_ADDRESS,
-      tokenId: BigInt(transformedComic.tokenId),
-      amount: BigInt(1),
-      // pricePerToken: BigInt(listing.pricePerToken),
-    });
+      console.log('Purchase initiated:', result);
+      return result;
 
-    console.log('Purchase initiated:', result);
-    return result;
-
-  } catch (error: any) {
-    console.error('Purchase error:', error);
-    toast.error(error.message || 'Failed to purchase comic');
-  }
-};
+    } catch (error: any) {
+      console.error('Purchase error:', error);
+      toast.error(error.message || 'Failed to purchase comic');
+    }
+  };
 
   const handleBack = () => {
     router.back()
-   }
+  }
 
-  // Updated read issue handler
   const handleReadIssue = () => {
-    if (!walletStatus.isConnected) {
+    if (!walletStatus.isConnected && !useDummyData) {
       toast.error('Please connect your wallet to read this comic')
       return
     }
@@ -437,19 +474,21 @@ function Page() {
       return
     }
 
-    // ALL free comics must claim NFT first
+    // For demo/dummy data, to allow reading directly
+    if (useDummyData) {
+      router.push(`/reader?id=${id}`)
+      return
+    }
+
     if (transformedComic.publishType === 'free') {
       if (hasNFTAccess || hasClaimed) {
-        // User has claimed, allow reading
         router.push(`/reader?id=${id}`)
       } else {
-        // User hasn't claimed yet, show claim modal
         setIsClaimModalOpen(true)
       }
       return
     }
 
-    // Paid/NFT comics - must purchase
     if (transformedComic.publishType === 'nft') {
       if (hasNFTAccess) {
         router.push(`/reader?id=${id}`)
@@ -459,74 +498,75 @@ function Page() {
     }
   }
 
-  if (isLoading) {
+  const handleResell = () => {
+    toast.info('Resell feature coming soon!')
+  }
+
+  if (isLoading && !useDummyData) {
     return (
-      <div className="min-h-screen bg-black-500 flex items-center justify-center">
+      <div className="min-h-screen bg-[#161614] flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 text-primary-500 animate-spin mx-auto mb-4" />
-          <p className="text-white/60 text-sm font-medium">Loading comic...</p>
+          <Loader2 className="w-8 h-8 text-yellow-500 animate-spin mx-auto mb-3" />
+          <p className="text-white/60 text-xs font-medium">Loading comic...</p>
         </div>
       </div>
     )
   }
 
-  if (!transformedComic || !currentComic) {
+  if (!transformedComic && !useDummyData) {
     return (
-      <div className="min-h-screen bg-black-500 flex items-center justify-center">
+      <div className="min-h-screen bg-[#161614] flex items-center justify-center">
         <div className="text-center">
-          <div className="text-6xl mb-4">❌</div>
-          <h3 className="text-white text-xl font-bold mb-2">Comic Not Found</h3>
-          <p className="text-white/60 text-sm mb-6">
+          <div className="text-4xl mb-3">❌</div>
+          <h3 className="text-white text-lg font-bold mb-2">Comic Not Found</h3>
+          <p className="text-white/60 text-xs mb-4">
             The comic you're looking for doesn't exist or has been removed.
           </p>
-          <button
-            onClick={() => router.push('/marketplace')}
-            className="bg-secondary-200 hover:bg-primary-500 text-black font-medium px-6 py-3 rounded-full transition-all"
-          >
-            Back to Marketplace
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={() => router.push('/marketplace')}
+              className="bg-yellow-600 hover:bg-yellow-700 text-black text-xs font-medium px-4 py-2 rounded transition-all"
+            >
+              Back to Marketplace
+            </button>
+            <button
+              onClick={() => setUseDummyData(true)}
+              className="bg-white hover:bg-gray-200 text-black text-xs font-medium px-4 py-2 rounded transition-all"
+            >
+              Show Demo Comic
+            </button>
+          </div>
         </div>
       </div>
     )
   }
 
-  //   // Calculate limited edition string
-  const limitedEditionString = transformedComic.nftDetails 
-    ? `${transformedComic.nftDetails.currentSupply || 0}/${transformedComic.nftDetails.maxSupply || 100}`
-    : '0/100';
-
-  // Check if NFT is ready for purchase
-  const isNFTReady = transformedComic.publishType === 'nft' && 
-                      transformedComic.tokenId && 
-                      transformedComic.creatorWalletAddress;
-
-  // Determine verification status for UI
-  const isVerifying = isVerifyingTransaction || !accessCheckComplete
-
-  // Determine if purchase is in progress (includes all stages)
+  // this determine if purchase is in progress
   const isPurchaseInProgress = isPurchasing || isConfirming
+
   return (
     <>
       <ComicDetail
-    
         {...transformedComic}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
         onBack={handleBack}        
         onReadIssue={handleReadIssue}
+        onResell={handleResell}
         onPreviewIssue={handlePreview}
         onEnlargeCover={handleEnlargeCover}
-        isVerifyingAccess={isVerifying || isVerifyingTransaction || !accessCheckComplete}
-        hasNFTAccess={hasNFTAccess}
+        isVerifyingAccess={false}
+        hasNFTAccess={useDummyData ? false : hasNFTAccess}
       />
 
-
       <ComicPreviewModal
-      isOpen={isPreviewOpen}
-      onClose={handleClosePreview}
-      previewComic={previewComic}
-      isLoading={isPreviewing}
-    />
+        isOpen={isPreviewOpen}
+        onClose={handleClosePreview}
+        previewComic={previewComic}
+        isLoading={isPreviewing}
+      />
 
-      {isNFTReady && (
+      {transformedComic.publishType === 'nft' && (
         <PurchaseNFTModal
           isOpen={isPurchaseModalOpen}
           onClose={handleClosePurchaseModal}
@@ -537,7 +577,7 @@ function Page() {
           price={transformedComic.price}
           tokenId={transformedComic.tokenId}
           sellerAddress={transformedComic.creatorWalletAddress}
-          limitedEdition={limitedEditionString}
+          limitedEdition={`${transformedComic.nftDetails?.currentSupply || 0}/${transformedComic.nftDetails?.maxSupply || 100}`}
           onPurchase={handlePurchase}
           onPurchaseSuccess={() => setIsPurchaseModalOpen(false)}
           isPurchasing={isPurchaseInProgress}
@@ -547,7 +587,6 @@ function Page() {
         />
       )}
 
-      {/* Claim Modal */}
       <ClaimModal
         isOpen={isClaimModalOpen}
         onClose={() => setIsClaimModalOpen(false)}
