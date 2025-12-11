@@ -73,7 +73,7 @@ const notificationsData: NotificationItem[] = [
   },
 ];
 
-const NotificationsComponent = () => {
+const Notifications = () => {
   return (
     <div className="min-h-screen bg-black text-gray-300 font-mono p-4 md:p-8 flex justify-center">
       <div className="w-full max-w-4xl space-y-6">
@@ -133,4 +133,4 @@ const NotificationsComponent = () => {
   );
 };
 
-export default NotificationsComponent;
+export default Notifications;
