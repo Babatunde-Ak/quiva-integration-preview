@@ -1,4 +1,3 @@
-
 'use client'
 
 import React, {useState, useRef, useEffect, useMemo, useCallback} from 'react';
@@ -6,61 +5,24 @@ import {
     ChevronLeft,
     ChevronRight,
     Loader2,
-    Heart,
+    ThumbsUp,
     Share2,
-    Bookmark,
-    Home,
-    ChevronUp,
-    TrendingUp
 } from 'lucide-react';
 import {useSearchParams, useRouter} from 'next/navigation';
 import {useAppDispatch, useAppSelector} from '@/redux/hook';
 import {getComicById, clearCurrentComic} from '@/redux/slices/comicSlice';
-
-// image for demo
-const LOCAL_IMAGE = '/dev_images/avatar-2.png';
-
-// Dummy comic data using  images
-const DUMMY_READER_COMIC = {
-  id: '2',
-  title: 'Avatar - Book of Beginnings',
-  coverImage: LOCAL_IMAGE,
-  creator: {
-    name: 'Studio Kyra',
-    avatar: LOCAL_IMAGE
-  },
-  chapters: [
-    {
-      chapterNumber: 1,
-      title: 'Episode 1: The First Flame',
-      pages: Array.from({ length: 22 }, (_, i) => ({
-        imageUrl: LOCAL_IMAGE,
-        pageNumber: i + 1,
-        contentType: 'image'
-      }))
-    }
-  ]
-}
-
-// More collections data
-const MORE_COLLECTIONS = Array.from({ length: 6 }, (_, i) => ({
-  id: i + 1,
-  title: `Episode ${i + 1}`,
-  image: LOCAL_IMAGE,
-  time: '',
-  price: ''
-}));
-
-// Top selling comics data
-const TOP_SELLING_COMICS = Array.from({ length: 9 }, (_, i) => ({
-  id: i + 1,
-  title: ['Find Me', 'Lost World', 'Digital Dreams', 'Cyber Punk', 'Neo Tokyo', 'Future Shock', 'Star Bound', 'Moon Light', 'Cosmic Ride'][i],
-  creator: ['Studio Alpha', 'Pixel Arts', 'Digital Inc', 'Cyber Studio', 'Neo Arts', 'Future Lab', 'Star Works', 'Moon Studio', 'Cosmic Arts'][i],
-  avatar: LOCAL_IMAGE,
-  seriesCount: Math.floor(Math.random() * 20) + 1,
-  isUp: Math.random() > 0.3,
-  changePercent: Math.floor(Math.random() * 30) + 5
-}));
+// Import card components
+import { ComicCard } from '@/components/cards/ComicCard';
+import CollectionCard from '@/components/cards/TopSellingCard';
+// Import footer
+import { Footer } from '@/components/global/comic-library/Footer';
+// Import dummy data
+import {
+    LOCAL_IMAGE,
+    DUMMY_READER_COMIC,
+    MORE_COLLECTIONS,
+    TOP_SELLING_COMICS
+} from '@/components/utils/dummy-data';
 
 const ComicReaderViewer = () => {
     const [currentPage, setCurrentPage] = useState(1);
@@ -105,7 +67,7 @@ const ComicReaderViewer = () => {
     //  dummy or real comic data
     const activeComic = useMemo(() => {
         const comic = useDummyData ? DUMMY_READER_COMIC : currentComic;
-        // lets make sure creator object exists
+        // creator object exists
         if (comic && !comic.creator) {
             return {
                 ...comic,
@@ -158,7 +120,7 @@ const ComicReaderViewer = () => {
             const page = Math.floor(scrollTop / pageHeight) + 1;
             const newPage = Math.min(Math.max(1, page), totalPages);
             
-            // will Only update if page actually changed
+          
             if (newPage !== lastPageRef.current) {
                 setCurrentPage(newPage);
                 lastPageRef.current = newPage;
@@ -262,27 +224,11 @@ const ComicReaderViewer = () => {
 
     return (
         <div className="relative bg-[#161614] min-h-screen">
-            {/* Site Logo  */}
-            <div className="fixed top-3 left-4 z-50">
-                <div className="text-white text-lg font-bold">QUIVA</div>
-            </div>
-
-            {/* Navbar  */}
-            <div className="fixed top-0 left-0 right-0 z-40 bg-[#161614]/90 backdrop-blur-md border-b border-white/10 pt-10">
-                <div className="max-w-7xl mx-auto px-4">
-                    <div className="flex items-center justify-end py-2">
-                        <button className="bg-yellow-600 hover:bg-yellow-700 text-black text-sm font-medium px-4 py-1.5 rounded-md transition-colors">
-                            Connect Wallet
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            {/* Hero Banner */}
+           
             <div 
-                className="relative h-[30vh] min-h-[220px] max-h-[280px] overflow-visible"
+                className="relative h-[40vh] min-h-[280px] max-h-[350px] overflow-visible"
                 style={{
-                    marginTop: '60px', 
+                    marginTop: '0',
                     backgroundImage: `url('${LOCAL_IMAGE}')`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
@@ -300,9 +246,9 @@ const ComicReaderViewer = () => {
                     Back to Collection
                 </button>
 
-                {/* Comic Cover Image */}
-                <div className="absolute left-1/2 transform -translate-x-1/2 top-12">
-                    <div className="relative w-40 h-60 md:w-48 md:h-72 rounded-xl overflow-hidden shadow-2xl border-2 border-white/30">
+                {/* Comic Cover Image  */}
+                <div className="absolute left-1/2 transform -translate-x-1/2 bottom-[-60px] md:bottom-[-70px]">
+                    <div className="relative w-48 h-64 md:w-56 md:h-72 lg:w-64 lg:h-80 rounded-xl overflow-hidden shadow-2xl border-2 border-white/30">
                         <img
                             src={activeComic.coverImage || LOCAL_IMAGE}
                             alt={activeComic.title}
@@ -312,47 +258,60 @@ const ComicReaderViewer = () => {
                 </div>
             </div>
 
-            {/* Page Progress and Navigation */}
-            <div className="relative z-30 mt-4">
-                <div className="max-w-2xl mx-auto px-4">
-                    <div className="text-center mb-3">
-                        <div className="text-white text-base md:text-lg font-medium">
-                            Page <span className="text-yellow-500">{currentPage}</span> of <span className="text-yellow-500">{totalPages}</span>
+         
+            <div className="h-20 md:h-24"></div>
+
+            {/* Comic Reading Background */}
+            <div className="bg-[#1a1a1a] py-8 md:py-10">
+                {/* Page Progress and Navigation  */}
+                <div className="relative z-30">
+                    <div className="max-w-2xl mx-auto px-4">
+                        <div className="text-center mb-6">
+                            <div className="text-white text-base md:text-lg font-medium">
+                                Page <span className="text-yellow-500">{currentPage}</span> of <span className="text-yellow-500">{totalPages}</span>
+                            </div>
+                        </div>
+                        
+                        <div className="flex items-center justify-center gap-8">
+                            <button
+                                onClick={goToPreviousPage}
+                                disabled={currentPage === 1}
+                                className="bg-black/80 backdrop-blur-sm text-white p-3 rounded-full shadow-xl disabled:opacity-30 hover:bg-black transition-all hover:scale-105 border border-white/20"
+                            >
+                                <ChevronLeft className="w-6 h-6" />
+                            </button>
+                            
+                            <div className="text-white text-xl font-bold px-4 py-2 bg-black/40 rounded-lg">
+                                #{currentPage}
+                            </div>
+                            
+                            <button
+                                onClick={goToNextPage}
+                                disabled={currentPage === totalPages}
+                                className="bg-black/80 backdrop-blur-sm text-white p-3 rounded-full shadow-xl disabled:opacity-30 hover:bg-black transition-all hover:scale-105 border border-white/20"
+                            >
+                                <ChevronRight className="w-6 h-6" />
+                            </button>
                         </div>
                     </div>
-                    
-                    <div className="flex items-center justify-center gap-6">
-                        <button
-                            onClick={goToPreviousPage}
-                            disabled={currentPage === 1}
-                            className="bg-black/80 backdrop-blur-sm text-white p-2.5 rounded-full shadow-xl disabled:opacity-30 hover:bg-black transition-all hover:scale-105 border border-white/20"
-                        >
-                            <ChevronLeft className="w-5 h-5" />
-                        </button>
-                        
-                        <button
-                            onClick={goToNextPage}
-                            disabled={currentPage === totalPages}
-                            className="bg-black/80 backdrop-blur-sm text-white p-2.5 rounded-full shadow-xl disabled:opacity-30 hover:bg-black transition-all hover:scale-105 border border-white/20"
-                        >
-                            <ChevronRight className="w-5 h-5" />
-                        </button>
-                    </div>
                 </div>
+
+                
+                <div className="h-8"></div>
             </div>
 
             {/* Comics Area */}
-            <div className="bg-gradient-to-b from-gray-900/90 via-gray-900/80 to-[#161614]">
+            <div className="bg-[#1a1a1a]">
                 <div
                     ref={scrollContainerRef}
-                    className="pt-8 pb-20"
+                    className="pt-4 pb-20"
                     style={{ 
                         scrollbarWidth: 'none', 
                         msOverflowStyle: 'none',
                     }}
                 >
                     {/* Comic Pages */}
-                    <div className="max-w-3xl mx-auto px-4 space-y-6 md:space-y-8">
+                    <div className="max-w-3xl mx-auto px-4 space-y-8">
                         {comicPages.map((page, index) => (
                             <div key={index} className="flex items-center justify-center">
                                 <div className="w-full">
@@ -371,79 +330,67 @@ const ComicReaderViewer = () => {
                         ))}
                     </div>
 
-                    {/* Engagement Sections  */}
+                    {/* Engagement Sections */}
                     <div className="max-w-7xl mx-auto px-4 py-8 md:py-12">
                         
                         {/* Creator Section */}
-                        <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
-                            <div className="flex items-center gap-4">
-                                <div className="w-14 h-14 md:w-16 md:h-16 rounded-full overflow-hidden border-2 border-yellow-500/50">
-                                    <img
-                                        src={activeComic.creator?.avatar || LOCAL_IMAGE}
-                                        alt={activeComic.creator?.name || 'Creator'}
-                                        className="w-full h-full object-cover"
-                                    />
-                                </div>
-                                <div>
-                                    <div className="text-white/60 text-sm mb-1">creator</div>
-                                    <div className="text-white text-lg md:text-xl font-bold">
-                                        {activeComic.creator?.name || 'Studio Kyra'}
-                                    </div>
-                                </div>
+                        <div className="flex flex-col items-center justify-center gap-6 mb-8">
+                            {/* Avatar Image  */}
+                            <div className="w-16 h-16 md:w-18 md:h-18 overflow-hidden border-2 border-yellow-500/50 mb-2">
+                                <img
+                                    src={activeComic.creator?.avatar || LOCAL_IMAGE}
+                                    alt={activeComic.creator?.name || 'Creator'}
+                                    className="w-full h-full object-cover"
+                                />
                             </div>
                             
-                            <div>
-                                <div className="text-white/60 text-sm mb-3 text-center md:text-right">
-                                    share this series
+                            {/* Creator Label and Name */}
+                            <div className="text-center mb-4">
+                                <div className="text-white/60 text-sm mb-1">creator</div>
+                                <div className="text-white text-xl md:text-2xl font-bold">
+                                    {activeComic.creator?.name || 'Studio Kyra'}
                                 </div>
-                                <div className="flex items-center gap-3">
-                                    <button className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-full transition-all">
-                                        <span className="text-lg"></span>
+                            </div>
+
+                            {/* Share Section */}
+                            <div className="text-center">
+                                <div className="text-white/60 text-sm mb-3">
+                                    Share this series and show support for the creator
+                                </div>
+                                <div className="flex items-center justify-center gap-4">
+                                    <button className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-6 py-2.5 rounded-full transition-all">
+                                        <ThumbsUp className="w-4 h-4" />
                                         <span className="text-sm">Like</span>
                                     </button>
-                                    <button className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-full transition-all">
-                                        <span className="text-lg"></span>
+                                    <button className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-6 py-2.5 rounded-full transition-all">
+                                        <Share2 className="w-4 h-4" />
                                         <span className="text-sm">Share</span>
                                     </button>
                                 </div>
                             </div>
                         </div>
 
-                        {/* More Collections Section -  */}
+                        {/* More Collections Section */}
                         <div className="mb-12">
                             <h2 className="text-xl md:text-2xl font-bold text-white mb-6">
                                 More collections
                             </h2>
                             
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {MORE_COLLECTIONS.map((collection) => (
-                                    <div 
+                                    <ComicCard
                                         key={collection.id}
-                                        className="bg-white/5 rounded-lg overflow-hidden hover:bg-white/10 transition-all cursor-pointer hover:scale-[1.02] border border-white/10"
-                                        onClick={() => router.push(`/reader?id=${collection.id}`)}
-                                    >
-                                        <div className="relative h-40">
-                                            <img
-                                                src={collection.image}
-                                                alt={collection.title}
-                                                className="w-full h-full object-cover"
-                                            />
-                                            <div className="absolute top-2 right-2 bg-black/80 text-white text-xs px-2 py-1 rounded-full">
-                                                {collection.title}
-                                            </div>
-                                        </div>
-                                        <div className="p-3">
-                                            <h3 className="font-medium text-white mb-1">{collection.title}</h3>
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-yellow-500 text-sm font-medium">
-                                                    {collection.price}
-                                                </span>
-                                                <div className="text-white/40 text-xs">
-                                                    ● {collection.time}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                        id={collection.id}
+                                        title={collection.title}
+                                        creator={collection.creator}
+                                        creatorAvatar={collection.creatorAvatar}
+                                        mintPrice={collection.mintPrice}
+                                        currentPrice={collection.currentPrice}
+                                        views={collection.views}
+                                        image={collection.image}
+                                        premium={collection.premium}
+                                        number={collection.number}
+                                    />
                                 ))}
                             </div>
                         </div>
@@ -459,95 +406,28 @@ const ComicReaderViewer = () => {
                                 </div>
                             </div>
                             
+                            {/* 3x3 Grid Layout */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {TOP_SELLING_COMICS.map((comic) => (
-                                    <div 
+                                    <CollectionCard
                                         key={comic.id}
-                                        className="bg-white/5 rounded-lg p-3 hover:bg-white/10 transition-all cursor-pointer border border-white/10"
-                                        onClick={() => router.push(`/marketplace/detail?id=${comic.id}`)}
-                                    >
-                                        <div className="flex items-start gap-3">
-                                            <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border border-yellow-500/30">
-                                                <img
-                                                    src={comic.avatar}
-                                                    alt={comic.title}
-                                                    className="w-full h-full object-cover"
-                                                />
-                                            </div>
-                                            
-                                            <div className="flex-1 min-w-0">
-                                                <h3 className="font-medium text-white text-sm mb-1 line-clamp-1">
-                                                    {comic.title}
-                                                </h3>
-                                                <div className="text-white/60 text-xs mb-2">
-                                                    {comic.creator}
-                                                </div>
-                                                <div className="flex items-center justify-between">
-                                                    <div className="text-white text-xs">
-                                                        {comic.seriesCount} series
-                                                    </div>
-                                                    <div className={`flex items-center gap-1 text-xs ${
-                                                        comic.isUp ? 'text-green-500' : 'text-red-500'
-                                                    }`}>
-                                                        <TrendingUp className={`w-3 h-3 ${comic.isUp ? '' : 'rotate-180'}`} />
-                                                        <span>{comic.isUp ? '+' : '-'}{comic.changePercent}%</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                        id={comic.id}
+                                        rank={comic.rank}
+                                        name={comic.name}
+                                        image={comic.image}
+                                        sales={comic.sales}
+                                        percentageChange={comic.percentageChange}
+                                        isPositive={comic.isPositive}
+                                    />
                                 ))}
-                            </div>
-                        </div>
-
-                        {/* Footer */}
-                        <div className="pt-6 border-t border-white/10">
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-                                <div>
-                                    <div className="text-white text-lg font-bold mb-3">QUIVA</div>
-                                    <p className="text-white/60 text-xs">
-                                        The premier platform for digital comics and NFT collectibles.
-                                    </p>
-                                </div>
-                                
-                                <div>
-                                    <h3 className="text-white font-medium text-sm mb-3">Marketplace</h3>
-                                    <ul className="space-y-1.5">
-                                        <li><a href="#" className="text-white/60 hover:text-white text-xs">Browse Comics</a></li>
-                                        <li><a href="#" className="text-white/60 hover:text-white text-xs">Top Sellers</a></li>
-                                        <li><a href="#" className="text-white/60 hover:text-white text-xs">New Releases</a></li>
-                                        <li><a href="#" className="text-white/60 hover:text-white text-xs">Collections</a></li>
-                                    </ul>
-                                </div>
-                                
-                                <div>
-                                    <h3 className="text-white font-medium text-sm mb-3">Community</h3>
-                                    <ul className="space-y-1.5">
-                                        <li><a href="#" className="text-white/60 hover:text-white text-xs">For Creators</a></li>
-                                        <li><a href="#" className="text-white/60 hover:text-white text-xs">Community Hub</a></li>
-                                        <li><a href="#" className="text-white/60 hover:text-white text-xs">Events</a></li>
-                                        <li><a href="#" className="text-white/60 hover:text-white text-xs">Blog</a></li>
-                                    </ul>
-                                </div>
-                                
-                                <div>
-                                    <h3 className="text-white font-medium text-sm mb-3">Support</h3>
-                                    <ul className="space-y-1.5">
-                                        <li><a href="#" className="text-white/60 hover:text-white text-xs">Help Center</a></li>
-                                        <li><a href="#" className="text-white/60 hover:text-white text-xs">Contact Us</a></li>
-                                        <li><a href="#" className="text-white/60 hover:text-white text-xs">Terms of Service</a></li>
-                                        <li><a href="#" className="text-white/60 hover:text-white text-xs">Privacy Policy</a></li>
-                                    </ul>
-                                </div>
-                            </div>
-                            
-                            <div className="text-center text-white/40 text-xs pt-6 border-t border-white/10">
-                                © {new Date().getFullYear()} Quiva Comics. All rights reserved.
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            {/* imported Footer component */}
+            <Footer />
 
             {/* Demo Mode Indicator */}
             {useDummyData && (
