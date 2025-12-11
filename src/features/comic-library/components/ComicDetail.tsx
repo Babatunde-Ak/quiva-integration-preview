@@ -1,10 +1,12 @@
 'use client'
 
 import React from 'react'
-import {  User, Calendar, BookOpen, FileText, ChevronLeft, Loader2, Lock, CheckCircle, ShoppingCart } from 'lucide-react'
+import { ChevronLeft, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { MainButton } from '@/components/button'
+// Import ComicCard
+import { ComicCard } from '@/components/cards/ComicCard'
+// Import dummy dat
+import { LOCAL_IMAGE, MORE_ADVENTURE_COMICS } from '@/components/utils/dummy-data'
 
 interface ComicIssue {
   id: string
@@ -36,8 +38,11 @@ interface ComicDetailProps {
     publicationDate: string
   }
   otherIssues: ComicIssue[]
+  activeTab?: string
+  onTabChange?: (tab: string) => void
   onBack?: () => void
   onReadIssue?: () => void
+  onResell?: () => void
   onPreviewIssue?: () => void
   onEnlargeCover?: () => void
 }
@@ -56,134 +61,49 @@ const ComicDetail = ({
   hasNFTAccess = null,
   issueDetails,
   otherIssues,
+  activeTab = 'details',
+  onTabChange,
   onBack,
   onReadIssue,
+  onResell,
   onPreviewIssue,
   onEnlargeCover
 }: ComicDetailProps) => {
   
-  const formatPrice = (price: number | string): string => {
-    const numPrice = typeof price === 'string' ? parseFloat(price) : price
-    return numPrice.toFixed(3)
-  }
-  
   const getReadButtonContent = () => {
-        // If it's a free comic, always allow reading
     if (isFree || publishType === 'free') {
-      return (
-        <span className="flex items-center justify-center gap-2">
-          <BookOpen className="w-5 h-5" />
-          Read Issue
-        </span>
-      )
+      return 'Start Read'
     }
     
-        // If verifying access
     if (isVerifyingAccess) {
-      return (
-        <span className="flex items-center justify-center gap-2">
-          <Loader2 className="w-5 h-5 animate-spin" />
-          Verifying Access...
-        </span>
-      )
+      return 'Verifying...'
     }
     
-        // If user has access
     if (hasNFTAccess === true) {
-      return (
-        <span className="flex items-center justify-center gap-2">
-          <CheckCircle className="w-5 h-5" />
-          Read Issue
-        </span>
-      )
+      return 'Start Read'
     }
     
-        // If user doesn't have access
     if (hasNFTAccess === false) {
-      return (
-        <span className="flex items-center justify-center gap-2 hover:bg-primary-400">
-          <ShoppingCart className="w-5 h-5 " />
-          Purchase to Read
-        </span>
-      )
+      return 'Purchase to Read'
     }
     
-    return 'Read Issue'
+    return 'Start Read'
   }
   
-  const getReadButtonStyle = () => {
-    if (hasNFTAccess === true) {
-      return "bg-green-600 hover:bg-green-700"
-    }
-    if (hasNFTAccess === false) {
-      return "bg-secondary-200 hover:bg-primary-400"
-    }
-    return "bg-secondary-200 hover:bg-primary-400"
-  }
-  
-  const isReadButtonDisabled = isVerifyingAccess || (publishType === 'nft' && hasNFTAccess === null)
-
-  const getAccessStatusInfo = () => {
-    if (publishType === 'free' || isFree) {
-      return (
-        <div className="bg-green-600/10 border border-green-600/50 rounded-xl p-4">
-          <p className="text-green-400 text-sm text-center">
-            🎉 This comic is free to read! Enjoy unlimited access.
-          </p>
-        </div>
-      )
-    }
-
-    if (isVerifyingAccess) {
-      return (
-        <div className="bg-blue-600/10 border border-blue-600/50 rounded-xl p-4">
-          <p className="text-blue-400 text-sm text-center">
-            🔍 Checking your access permissions...
-          </p>
-        </div>
-      )
-    }
-
-    if (hasNFTAccess === true) {
-      return (
-        <div className="bg-green-600/10 border border-green-600/50 rounded-xl p-4">
-          <p className="text-green-400 text-sm text-center">
-            ✅ You own this NFT! Enjoy unlimited access to this comic.
-          </p>
-        </div>
-      )
-    }
-
-    if (hasNFTAccess === false) {
-      return (
-        <div className="bg-secondary-200/10 border border-secondary-200/50 rounded-xl p-4 space-y-2">
-          <p className="text-secondary-200 text-sm text-center">
-            🔒 This is a premium NFT comic. Purchase to unlock full access.
-          </p>
-          {price && (
-            <p className="text-secondary-300 text-xs text-center">
-              Price: {formatPrice(price)} HBAR
-            </p>
-          )}
-        </div>
-      )
-    }
-
-    return null
-  }
+  const isReadButtonDisabled = isVerifyingAccess
 
   return (
-    <div className="min-h-screen bg-black-500 text-white p-4 md:p-6 lg:p-8">
+    <div className="min-h-screen bg-[#161614] text-white">
       {/* Header */}
-      <div className="flex items-center mb-6">
+      <div className="border-b border-white/10 px-4 py-3">
         <Button 
           variant="ghost" 
           size="sm"
           onClick={onBack}
-          className="text-white hover:bg-gray-800 p-2"
+          className="text-white hover:bg-white/5 p-1.5 text-xs"
         >
-          <ChevronLeft className="w-4 h-4 mr-2" />
-          Back
+          <ChevronLeft className="w-3 h-3 mr-1.5" />
+          Back to Collection
         </Button>
       </div>
 
@@ -205,10 +125,39 @@ const ComicDetail = ({
               <div className="absolute top-0 left-10 bg-green-600 text-white px-3 py-1 text-sm font-medium">
                 Free
               </div>
-            )}
-            {publishType === 'nft' && !isFree && (
-              <div className="absolute top-0 left-10 bg-black-400 text-white px-3 py-1 text-sm font-medium">
-                NFT
+              
+              {/* Tags */}
+              <div className="flex flex-wrap gap-1.5 mb-4 justify-center lg:justify-start">
+                {tags.map((tag, index) => (
+                  <span 
+                    key={index}
+                    className="bg-white/20 text-white text-xs px-3 py-1.5 rounded-full backdrop-blur-sm"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+              
+              {/* Buttons */}
+              <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start mt-2">
+                <button
+                  onClick={onReadIssue}
+                  disabled={isReadButtonDisabled}
+                  className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all ${
+                    hasNFTAccess === false || publishType === 'nft' 
+                      ? 'bg-yellow-600 hover:bg-yellow-700 text-black' 
+                      : 'bg-green-600 hover:bg-green-700 text-white'
+                  } ${isReadButtonDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  {getReadButtonContent()}
+                </button>
+                
+                <button
+                  onClick={onResell}
+                  className="px-6 py-2.5 rounded-full text-sm font-medium bg-transparent border border-white/30 text-white hover:bg-white/20 transition-all backdrop-blur-sm"
+                >
+                  Resell
+                </button>
               </div>
             )}
             
@@ -230,6 +179,8 @@ const ComicDetail = ({
               </Button>
             </div>
           </div>
+        </div>
+      </div>
 
             {/* Comic Info */}
           <div className="space-y-6">
@@ -275,19 +226,26 @@ const ComicDetail = ({
               </div>
             </div>
 
-            <hr className='border-white/10 my-16'/>
-
-            {/* About Section */}
-            <div>
-              <h2 className="text-xl font-light mb-3">About This Comic</h2>
-              <p className="text-white/30 leading-relaxed">
-                {description}
-              </p>
+            {/* About Creator */}
+            <div className="bg-white/5 rounded-lg p-5 border border-white/10">
+              <h2 className="text-lg font-bold mb-3">About Creator</h2>
+              <div className="flex flex-col sm:flex-row items-start gap-3">
+                <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 border border-yellow-500/50">
+                  <img
+                    src={author.avatar || LOCAL_IMAGE}
+                    alt={author.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold mb-1">{author.name}</h3>
+                  <p className="text-white/70 text-sm">
+                    Studio Kyra is a visionary town of artists and storytellers dedicated to making the boundaries of digital art and interactive narratives.
+                  </p>
+                </div>
+              </div>
             </div>
-            
           </div>
-          
-        </div>
 
                {/* Issue Details */}
         <div>
@@ -302,27 +260,29 @@ const ComicDetail = ({
                     <p className="text-white font-light text-xs">Creators</p>
                     <p className="font-semibold">{issueDetails.creators}</p>
                   </div>
-                </div>
-                <div className="flex items-center gap-3 bg-gray-400 py-4 px-8 rounded-2xl">
-                  <BookOpen className="w-5 h-5 text-secondary-200" />
-                  <div>
-                    <p className="text-white font-light text-xs">Issue Length</p>
-                    <p className="font-semibold">{issueDetails.pages} pages</p>
+                  
+                  {/* Values row */}
+                  <div className="grid grid-cols-3 gap-4 mb-4">
+                    <div className="text-white text-sm font-bold">0.09H</div>
+                    <div className="text-white text-sm font-bold text-center">1,000</div>
+                    <div className="text-white text-sm font-bold text-right">7% to creator</div>
+                  </div>
+                  
+                  <div className="mb-2">
+                    <div className="text-white/50 text-xs mb-1">Blockchain</div>
+                    <div className="text-white text-xs font-medium">Hedera</div>
                   </div>
                 </div>
-                
-                <div className="flex items-center gap-3 bg-gray-400 py-4 px-8 rounded-2xl">
-                  <FileText className="w-5 h-5 text-secondary-200" />
-                  <div>
-                    <p className="text-white font-light text-xs">Publisher</p>
-                    <p className="font-semibold">{issueDetails.publisher}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 bg-gray-400 py-4 px-8 rounded-2xl">
-                  <Calendar className="w-5 h-5 text-secondary-200" />
-                  <div>
-                    <p className="text-white font-light text-xs">Publication Date</p>
-                    <p className="font-semibold">{issueDetails.publicationDate}</p>
+
+                {/* Market Stats */}
+                <div className="mb-6">
+                  <h3 className="text-base font-semibold text-white mb-4">Market Stats</h3>
+                  
+                  {/* Labels row */}
+                  <div className="grid grid-cols-3 gap-4 mb-1">
+                    <div className="text-white/70 text-xs">floor price</div>
+                    <div className="text-white/70 text-xs text-center">Total Mints</div>
+                    <div className="text-white/70 text-xs text-right">Volume</div>
                   </div>
                 </div>
                 
@@ -335,7 +295,13 @@ const ComicDetail = ({
                       <p className="font-semibold">{formatPrice(price)} HBAR</p>
                     </div>
                   </div>
-                )}
+                </div>
+
+              
+                <div>
+                  <div className="text-white/50 text-xs mb-1">Collectors</div>
+                  <div className="text-white text-xl font-bold">389</div>
+                </div>
               </div>
             </div>
           </div>
@@ -376,6 +342,4 @@ const ComicDetail = ({
   )
 }
 
-export default ComicDetail;
-
-
+export default ComicDetail

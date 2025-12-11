@@ -1,34 +1,37 @@
 'use client'
 
-import React, {useState, useRef, useEffect, useMemo} from 'react';
+import React, {useState, useRef, useEffect, useMemo, useCallback} from 'react';
 import {
-    X,
-    ZoomIn,
-    ZoomOut,
-    ChevronUp,
-    ChevronDown,
     ChevronLeft,
     ChevronRight,
     Loader2,
-    Menu,
-    MoreHorizontal
+    ThumbsUp,
+    Share2,
 } from 'lucide-react';
 import {useSearchParams, useRouter} from 'next/navigation';
 import {useAppDispatch, useAppSelector} from '@/redux/hook';
 import {getComicById, clearCurrentComic} from '@/redux/slices/comicSlice';
+// Import card components
+import { ComicCard } from '@/components/cards/ComicCard';
+import CollectionCard from '@/components/cards/TopSellingCard';
+// Import footer
+import { Footer } from '@/components/global/comic-library/Footer';
+// Import dummy data
+import {
+    LOCAL_IMAGE,
+    DUMMY_READER_COMIC,
+    MORE_COLLECTIONS,
+    TOP_SELLING_COMICS
+} from '@/components/utils/dummy-data';
 
 const ComicReaderViewer = () => {
     const [currentPage, setCurrentPage] = useState(1);
-    const [zoom, setZoom] = useState(1);
-    const scrollContainerRef = useRef(null);
-    const [showControls, setShowControls] = useState(true);
-    const [showMobileMenu, setShowMobileMenu] = useState(false);
-    const [isMobile, setIsMobile] = useState(false);
-    const [isTablet, setIsTablet] = useState(false);
-    const hideControlsTimeout = useRef(null);
-    const touchStartX = useRef(null);
-    const touchStartY = useRef(null);
-    const lastTouchTime = useRef(0);
+    const [useDummyData, setUseDummyData] = useState(false);
+    const [isScrolling, setIsScrolling] = useState(false);
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const isMounted = useRef(true);
+    const lastPageRef = useRef(1);
+    const [showEngagement, setShowEngagement] = useState(false);
 
     const searchParams = useSearchParams();
     const router = useRouter();
@@ -38,203 +41,114 @@ const ComicReaderViewer = () => {
         // Get comic ID from URL query params
     const comicId = searchParams.get('id');
 
-    useEffect(() => {
-        const checkScreenSize = () => {
-            const width = window.innerWidth;
-            setIsMobile(width < 768);
-            setIsTablet(width >= 768 && width < 1024);
-        };
-        
-        checkScreenSize();
-        window.addEventListener('resize', checkScreenSize);
-        return () => window.removeEventListener('resize', checkScreenSize);
-    }, []);
-
-        
     // Fetch comic data on mount
     useEffect(() => {
         if (comicId) {
             dispatch(getComicById({id: comicId} as any));
         }
 
-                // Cleanup on unmount
         return () => {
             dispatch(clearCurrentComic());
+            isMounted.current = false;
         };
     }, [comicId, dispatch]);
 
         // Extract all pages from all chapters
     const comicPages = useMemo(() => {
-        if (!currentComic?.chapters) return [];
+        if (!activeComic?.chapters) return [];
         
         const pages = [];
-        currentComic.chapters.forEach((chapter) => {
+        activeComic.chapters.forEach((chapter) => {
             if (chapter.pages && Array.isArray(chapter.pages)) {
                 chapter.pages.forEach((page) => {
                     pages.push({
-                        imageUrl: page.imageUrl,
+                        imageUrl: page.imageUrl || LOCAL_IMAGE,
                         pageNumber: page.pageNumber,
                         chapterNumber: chapter.chapterNumber,
                         chapterTitle: chapter.title,
-                        contentType: page.contentType,
-                        thumbnailUrl: page.thumbnailUrl
+                        contentType: page.contentType
                     });
                 });
             }
         });
         return pages;
-    }, [currentComic]);
+    }, [activeComic]);
 
     const totalPages = comicPages.length;
 
-        // Auto-hide controls with different timings for mobile/desktop
-    const resetHideControlsTimer = () => {
-        setShowControls(true);
-        if (hideControlsTimeout.current) {
-            clearTimeout(hideControlsTimeout.current);
-        }
-        hideControlsTimeout.current = setTimeout(() => {
-            setShowControls(false);
-        }, isMobile ? 2000 : 3000);  // Shorter timeout on mobile
-    };
-
-    useEffect(() => {
-        resetHideControlsTimer();
-        return () => {
-            if (hideControlsTimeout.current) {
-                clearTimeout(hideControlsTimeout.current);
-            }
-        };
-    }, [isMobile]);
-
-       // Track scroll position to update current page
+    // Track scroll position
     useEffect(() => {
         const container = scrollContainerRef.current;
         if (!container) return;
         
         const handleScroll = () => {
-            resetHideControlsTimer();
+            if (!isMounted.current) return;
+            
+            setIsScrolling(true);
+            
             const scrollTop = container.scrollTop;
             const pageHeight = window.innerHeight;
-            const page = Math.round(scrollTop / pageHeight) + 1;
-            setCurrentPage(Math.min(Math.max(1, page), totalPages));
+            
+            // Calculate current page
+            const page = Math.floor(scrollTop / pageHeight) + 1;
+            const newPage = Math.min(Math.max(1, page), totalPages);
+            
+          
+            if (newPage !== lastPageRef.current) {
+                setCurrentPage(newPage);
+                lastPageRef.current = newPage;
+            }
+            
+            // Show engagement section when we're near the end
+            if (newPage >= totalPages - 2) {
+                setShowEngagement(true);
+            }
+            
+            setTimeout(() => setIsScrolling(false), 100);
         };
 
         container.addEventListener('scroll', handleScroll);
         return () => container.removeEventListener('scroll', handleScroll);
     }, [totalPages]);
 
-        // Touch gesture handling
-    useEffect(() => {
-        const container = scrollContainerRef.current;
-        if (!container || !isMobile) return;
-
-        const handleTouchStart = (e) => {
-            touchStartX.current = e.touches[0].clientX;
-            touchStartY.current = e.touches[0].clientY;
-        };
-
-        const handleTouchEnd = (e) => {
-            if (!touchStartX.current || !touchStartY.current) return;
-
-            const touchEndX = e.changedTouches[0].clientX;
-            const touchEndY = e.changedTouches[0].clientY;
-            const deltaX = touchStartX.current - touchEndX;
-            const deltaY = touchStartY.current - touchEndY;
-
-                        // Determine if it's a horizontal or vertical swipe
-            if (Math.abs(deltaX) > Math.abs(deltaY)) {
-                               // Horizontal swipe - show/hide controls
-                if (Math.abs(deltaX) > 50) {
-                    resetHideControlsTimer();
-                }
-            } else {
-                               // Vertical swipe - page navigation
-                if (Math.abs(deltaY) > 50) {
-                    if (deltaY > 0 && currentPage < totalPages) {
-                                              // Swipe up - next page
-                        scrollToPage(currentPage + 1);
-                    } else if (deltaY < 0 && currentPage > 1) {
-                                               // Swipe down - previous page
-                        scrollToPage(currentPage - 1);
-                    }
-                }
-            }
-
-            touchStartX.current = null;
-            touchStartY.current = null;
-        };
-
-               // Double tap to toggle controls
-        const handleTouchStart2 = (e) => {
-            const currentTime = new Date().getTime();
-            const tapGap = currentTime - lastTouchTime.current;
-            
-            if (tapGap < 300 && tapGap > 0) {
-                               // Double tap
-                setShowControls(prev => !prev);
-            }
-            
-            lastTouchTime.current = currentTime;
-        };
-
-        container.addEventListener('touchstart', handleTouchStart);
-        container.addEventListener('touchstart', handleTouchStart2);
-        container.addEventListener('touchend', handleTouchEnd);
-
-        return () => {
-            container.removeEventListener('touchstart', handleTouchStart);
-            container.removeEventListener('touchstart', handleTouchStart2);
-            container.removeEventListener('touchend', handleTouchEnd);
-        };
-    }, [isMobile, currentPage, totalPages]);
-
-        // Scroll to specific page
-    const scrollToPage = (pageNumber) => {
+    // Scroll to specific page
+    const scrollToPage = useCallback((pageNumber: number) => {
         const container = scrollContainerRef.current;
         if (!container) return;
         
         const pageHeight = window.innerHeight;
+        const targetScroll = (pageNumber - 1) * pageHeight;
+        
+        
+        const maxScroll = totalPages * pageHeight;
+        const safeScroll = Math.min(targetScroll, maxScroll);
+        
         container.scrollTo({
-            top: (pageNumber - 1) * pageHeight,
+            top: safeScroll,
             behavior: 'smooth'
         });
-    };
+    }, [totalPages]);
 
-    const goToNextPage = () => {
+    const goToNextPage = useCallback(() => {
         if (currentPage < totalPages) {
             scrollToPage(currentPage + 1);
         }
-    };
+    }, [currentPage, totalPages, scrollToPage]);
 
-    const goToPreviousPage = () => {
+    const goToPreviousPage = useCallback(() => {
         if (currentPage > 1) {
             scrollToPage(currentPage - 1);
         }
+    }, [currentPage, scrollToPage]);
+
+    const handleBack = () => {
+        router.push(`/marketplace/detail?id=${comicId}`);
     };
 
-    const handleZoomIn = () => {
-        if (zoom < 3) setZoom(prev => Math.min(3, prev + (isMobile ? 0.5 : 0.25)));
-    };
-    
-    const handleZoomOut = () => {
-        if (zoom > 0.5) setZoom(prev => Math.max(0.5, prev - (isMobile ? 0.5 : 0.25)));
-    };
-    
-    const handleClose = () => {
-        router.back();
-    };
-
-    const toggleMobileMenu = () => {
-        setShowMobileMenu(prev => !prev);
-    };
-
-        // Keyboard navigation (desktop only)
+    // Keyboard navigation
     useEffect(() => {
-        if (isMobile) return;  // Disable keyboard nav on mobile
-        
-        const handleKeyPress = (e) => {
-            if (e.key === 'ArrowDown' || e.key === 'PageDown') {
+        const handleKeyPress = (e: KeyboardEvent) => {
+            if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') {
                 e.preventDefault();
                 goToNextPage();
             }
@@ -243,57 +157,37 @@ const ComicReaderViewer = () => {
                 goToPreviousPage();
             }
             if (e.key === 'Escape') {
-                handleClose();
+                handleBack();
             }
         };
         window.addEventListener('keydown', handleKeyPress);
         return () => window.removeEventListener('keydown', handleKeyPress);
-    }, [currentPage, totalPages, isMobile]);
+    }, [currentPage, totalPages, goToNextPage, goToPreviousPage]);
 
     // Loading state
-    if (isLoading) {
+    if (isLoading && !useDummyData) {
         return (
-            <div className="fixed inset-0 bg-black flex items-center justify-center">
+            <div className="fixed inset-0 bg-[#161614] flex items-center justify-center">
                 <div className="text-center px-4">
-                    <Loader2 className="w-8 h-8 sm:w-12 sm:h-12 text-yellow-500 animate-spin mx-auto mb-4"/>
-                    <p className="text-white/60 text-sm font-medium">Loading comic...</p>
+                    <Loader2 className="w-8 h-8 text-yellow-500 animate-spin mx-auto mb-3"/>
+                    <p className="text-white/60 text-xs font-medium">Loading comic...</p>
                 </div>
             </div>
         );
     }
 
-    // Error states
-    if (!comicId) {
+    if (!activeComic || comicPages.length === 0) {
         return (
-            <div className="fixed inset-0 bg-black flex items-center justify-center p-4">
+            <div className="fixed inset-0 bg-[#161614] flex items-center justify-center p-4">
                 <div className="text-center max-w-sm">
-                    <div className="text-4xl sm:text-6xl mb-4">❌</div>
-                    <h3 className="text-white text-lg sm:text-xl font-bold mb-2">Invalid Comic ID</h3>
-                    <p className="text-white/60 text-sm mb-6">
-                        No comic ID provided in the URL.
+                    <div className="text-3xl mb-3">📚</div>
+                    <h3 className="text-white text-base font-bold mb-2">No Comic Found</h3>
+                    <p className="text-white/60 text-xs mb-4">
+                        This comic doesn't exist or has no pages.
                     </p>
                     <button
                         onClick={() => router.push('/marketplace')}
-                        className="bg-yellow-600 hover:bg-yellow-700 text-black font-medium px-4 sm:px-6 py-2 sm:py-3 rounded-full transition-all text-sm sm:text-base">
-                        Back to Marketplace
-                    </button>
-                </div>
-            </div>
-        );
-    }
-
-    if (!currentComic || comicPages.length === 0) {
-        return (
-            <div className="fixed inset-0 bg-black flex items-center justify-center p-4">
-                <div className="text-center max-w-sm">
-                    <div className="text-4xl sm:text-6xl mb-4">📚</div>
-                    <h3 className="text-white text-lg sm:text-xl font-bold mb-2">No Pages Found</h3>
-                    <p className="text-white/60 text-sm mb-6">
-                        This comic doesn't have any pages yet or couldn't be loaded.
-                    </p>
-                    <button
-                        onClick={() => router.push('/marketplace')}
-                        className="bg-yellow-600 hover:bg-yellow-700 text-black font-medium px-4 sm:px-6 py-2 sm:py-3 rounded-full transition-all text-sm sm:text-base">
+                        className="bg-yellow-600 hover:bg-yellow-700 text-black text-xs font-medium px-4 py-2 rounded transition-all">
                         Back to Marketplace
                     </button>
                 </div>
@@ -302,197 +196,103 @@ const ComicReaderViewer = () => {
     }
 
     return (
-        <div
-            className="relative bg-black flex flex-col overflow-hidden h-screen"
-            onMouseMove={!isMobile ? resetHideControlsTimer : undefined}
-            onClick={!isMobile ? resetHideControlsTimer : undefined}>
-            
-            {/* Mobile Header */}
-            {isMobile && (
-                <div className={`absolute top-0 left-0 right-0 z-30 bg-gradient-to-b from-black/95 to-transparent transition-opacity duration-300 ${
-                    showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'
-                }`}>
-                    <div className="flex items-center justify-between p-3">
-                        <button
-                            className="text-white p-2 rounded-full hover:bg-white/10"
-                            onClick={handleClose}>
-                            <X size={20}/>
-                        </button>
-                        
-                        <div className="flex-1 text-center">
-                            <h2 className="text-white font-medium text-sm truncate px-2">
-                                {currentComic.title}
-                            </h2>
-                        </div>
-                        
-                        <button
-                            className="text-white p-2 rounded-full hover:bg-white/10"
-                            onClick={toggleMobileMenu}>
-                            <MoreHorizontal size={20}/>
-                        </button>
-                    </div>
-                    
-                    {/* Chapter info */}
-                    {comicPages[currentPage - 1] && (
-                        <div className="text-center pb-3">
-                            <p className="text-xs text-white/60">
-                                Chapter {comicPages[currentPage - 1].chapterNumber} - {comicPages[currentPage - 1].chapterTitle}
-                            </p>
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {/* Desktop Header */}
-            {!isMobile && (
-                <div className={`absolute top-0 left-0 right-0 z-20 bg-gradient-to-b from-black/90 to-transparent p-4 transition-opacity duration-300 ${
-                    showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'
-                }`}>
-                    <div className="max-w-7xl mx-auto flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                            <button
-                                className="text-white hover:text-gray-300 transition-colors p-2 rounded-full hover:bg-white/10"
-                                onClick={handleClose}
-                                title="Close reader">
-                                <X size={24}/>
-                            </button>
-                            <div className="text-white">
-                                <h2 className="font-bold text-lg">{currentComic.title}</h2>
-                                {comicPages[currentPage - 1] && (
-                                    <p className="text-sm text-white/60">
-                                        Chapter {comicPages[currentPage - 1].chapterNumber} - {comicPages[currentPage - 1].chapterTitle}
-                                    </p>
-                                )}
-                            </div>
-                        </div>
-
-                        <button
-                            onClick={() => router.push(`/marketplace/detail?id=${comicId}`)}
-                            className="text-white hover:text-yellow-500 transition-colors px-4 py-2 rounded-full hover:bg-white/10 text-sm font-medium">
-                            Back to Details
-                        </button>
-
-                        <div className="flex items-center gap-4">
-                            <button
-                                onClick={handleZoomOut}
-                                disabled={zoom <= 0.5}
-                                className="text-white hover:text-gray-300 transition-colors p-2 rounded-full hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed">
-                                <ZoomOut size={20}/>
-                            </button>
-
-                            <span className="text-white text-sm font-medium min-w-[60px] text-center">
-                                {Math.round(zoom * 100)}%
-                            </span>
-
-                            <button
-                                onClick={handleZoomIn}
-                                disabled={zoom >= 3}
-                                className="text-white hover:text-gray-300 transition-colors p-2 rounded-full hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed">
-                                <ZoomIn size={20}/>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Mobile Menu Overlay */}
-            {isMobile && showMobileMenu && (
-                <div className="absolute inset-0 z-40 bg-black/95 flex items-center justify-center">
-                    <div className="text-center space-y-6">
-                        <div className="flex items-center justify-center gap-4">
-                            <button
-                                onClick={handleZoomOut}
-                                disabled={zoom <= 0.5}
-                                className="text-white p-3 rounded-full bg-white/10 disabled:opacity-30">
-                                <ZoomOut size={24}/>
-                            </button>
-                            
-                            <span className="text-white text-lg font-medium min-w-[80px]">
-                                {Math.round(zoom * 100)}%
-                            </span>
-                            
-                            <button
-                                onClick={handleZoomIn}
-                                disabled={zoom >= 3}
-                                className="text-white p-3 rounded-full bg-white/10 disabled:opacity-30">
-                                <ZoomIn size={24}/>
-                            </button>
-                        </div>
-                        
-                        <button
-                            onClick={() => router.push(`/marketplace/detail?id=${comicId}`)}
-                            className="text-white px-6 py-3 rounded-full bg-yellow-600 hover:bg-yellow-700 font-medium">
-                            Back to Details
-                        </button>
-                        
-                        <button
-                            onClick={toggleMobileMenu}
-                            className="text-white/60 hover:text-white transition-colors">
-                            Close Menu
-                        </button>
-                    </div>
-                </div>
-            )}
-
-            {/* Vertical Scroll Container */}
-            <div
-                ref={scrollContainerRef}
-                className="flex-1 overflow-y-auto overflow-x-hidden snap-y snap-mandatory scroll-smooth"
+        <div className="relative bg-[#161614] min-h-screen">
+           
+            <div 
+                className="relative h-[40vh] min-h-[280px] max-h-[350px] overflow-visible"
                 style={{
-                    scrollbarWidth: 'none',
-                    msOverflowStyle: 'none'
-                }}>
+                    marginTop: '0',
+                    backgroundImage: `url('${LOCAL_IMAGE}')`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    backgroundRepeat: 'no-repeat'
+                }}
+            >
+                <div className="absolute inset-0 bg-black/60 backdrop-blur-lg"></div>
+                
+                {/* Back Button - Top left of banner */}
+                <button
+                    onClick={handleBack}
+                    className="absolute top-4 left-4 z-20 bg-black/80 text-white text-sm font-medium px-4 py-1.5 rounded-md hover:bg-black transition-colors flex items-center gap-1.5"
+                >
+                    <ChevronLeft className="w-4 h-4" />
+                    Back to Collection
+                </button>
 
-                {comicPages.map((page, index) => {
-                    if (page.contentType === 'image') {
-                        return (
-                            <div
-                                key={`${page.chapterNumber}-${page.pageNumber}`}
-                                className="w-full h-screen flex items-center justify-center snap-start snap-always bg-black">
-                                <div className="w-full h-full flex items-center justify-center px-2 sm:px-4">
-                                    <img
-                                        src={page.imageUrl}
-                                        alt={`Chapter ${page.chapterNumber} - Page ${page.pageNumber}`}
-                                        className={`max-w-full max-h-full object-contain transition-transform duration-300 ${
-                                            isMobile ? 'w-full' : ''
-                                        }`}
-                                        style={{
-                                            transform: `scale(${zoom})`,
-                                            transformOrigin: 'center center'
-                                        }}
-                                        loading={index > currentPage + 2 ? 'lazy' : 'eager'}
-                                    />
-                                </div>
+                {/* Comic Cover Image  */}
+                <div className="absolute left-1/2 transform -translate-x-1/2 bottom-[-60px] md:bottom-[-70px]">
+                    <div className="relative w-48 h-64 md:w-56 md:h-72 lg:w-64 lg:h-80 rounded-xl overflow-hidden shadow-2xl border-2 border-white/30">
+                        <img
+                            src={activeComic.coverImage || LOCAL_IMAGE}
+                            alt={activeComic.title}
+                            className="w-full h-full object-cover"
+                        />
+                    </div>
+                </div>
+            </div>
+
+         
+            <div className="h-20 md:h-24"></div>
+
+            {/* Comic Reading Background */}
+            <div className="bg-[#1a1a1a] py-8 md:py-10">
+                {/* Page Progress and Navigation  */}
+                <div className="relative z-30">
+                    <div className="max-w-2xl mx-auto px-4">
+                        <div className="text-center mb-6">
+                            <div className="text-white text-base md:text-lg font-medium">
+                                Page <span className="text-yellow-500">{currentPage}</span> of <span className="text-yellow-500">{totalPages}</span>
                             </div>
-                        );
-                    }
+                        </div>
+                        
+                        <div className="flex items-center justify-center gap-8">
+                            <button
+                                onClick={goToPreviousPage}
+                                disabled={currentPage === 1}
+                                className="bg-black/80 backdrop-blur-sm text-white p-3 rounded-full shadow-xl disabled:opacity-30 hover:bg-black transition-all hover:scale-105 border border-white/20"
+                            >
+                                <ChevronLeft className="w-6 h-6" />
+                            </button>
+                            
+                            <div className="text-white text-xl font-bold px-4 py-2 bg-black/40 rounded-lg">
+                                #{currentPage}
+                            </div>
+                            
+                            <button
+                                onClick={goToNextPage}
+                                disabled={currentPage === totalPages}
+                                className="bg-black/80 backdrop-blur-sm text-white p-3 rounded-full shadow-xl disabled:opacity-30 hover:bg-black transition-all hover:scale-105 border border-white/20"
+                            >
+                                <ChevronRight className="w-6 h-6" />
+                            </button>
+                        </div>
+                    </div>
+                </div>
 
-                    return (
-                       <div
-                            key={`${page.chapterNumber}-${page.pageNumber}`}
-                            className="w-full h-screen snap-start snap-always bg-black overflow-hidden">
-                            <div className="w-full h-full p-2 sm:p-4">
-                                <div 
-                                    className="w-full h-full relative"
-                                    style={{ 
-                                        transform: `scale(${zoom})`, 
-                                        transformOrigin: 'center center'
-                                    }}>
-                                    {/* Iframe container */}
-                                    <div className="w-full h-full relative overflow-hidden rounded">
-                                        <iframe
-                                            src={`${page.imageUrl}#view=FitH&toolbar=0&navpanes=0&statusbar=0&scrollbar=0`}
-                                            title={`Chapter ${page.chapterNumber} - Page ${page.pageNumber}`}
-                                            className="w-full h-full border-0"
-                                            loading={index > currentPage + 2 ? 'lazy' : 'eager'}
-                                            style={{ 
-                                                width: 'calc(100% + 40px)',
-                                                height: 'calc(100% + 40px)',
-                                                marginRight: '-40px',
-                                                marginBottom: '-40px',
-                                                scrollbarWidth: 'none',
-                                                msOverflowStyle: 'none'
-                                            }}
+                
+                <div className="h-8"></div>
+            </div>
+
+            {/* Comics Area */}
+            <div className="bg-[#1a1a1a]">
+                <div
+                    ref={scrollContainerRef}
+                    className="pt-4 pb-20"
+                    style={{ 
+                        scrollbarWidth: 'none', 
+                        msOverflowStyle: 'none',
+                    }}
+                >
+                    {/* Comic Pages */}
+                    <div className="max-w-3xl mx-auto px-4 space-y-8">
+                        {comicPages.map((page, index) => (
+                            <div key={index} className="flex items-center justify-center">
+                                <div className="w-full">
+                                    <div className="relative rounded-xl overflow-hidden shadow-2xl bg-black/40 border border-white/10">
+                                        <img
+                                            src={page.imageUrl}
+                                            alt={`Page ${page.pageNumber}`}
+                                            className="w-full h-auto max-h-[75vh] object-contain"
                                         />
                                         
                                                                                {/* Loading indicator for PDFs */}
@@ -571,16 +371,27 @@ const ComicReaderViewer = () => {
                         </span>
                     </div>
 
-                    {/* Progress Bar */}
-                    <div className="mt-2 sm:mt-4 w-full max-w-md mx-auto">
-                        <div className="h-1 bg-gray-700 rounded-full overflow-hidden">
-                            <div
-                                className="h-full bg-yellow-500 transition-all duration-300"
-                                style={{
-                                    width: `${(currentPage / totalPages) * 100}%`
-                                }}/>
-                        </div>
-                    </div>
+                    {/* Engagement Sections */}
+                    <div className="max-w-7xl mx-auto px-4 py-8 md:py-12">
+                        
+                        {/* Creator Section */}
+                        <div className="flex flex-col items-center justify-center gap-6 mb-8">
+                            {/* Avatar Image  */}
+                            <div className="w-16 h-16 md:w-18 md:h-18 overflow-hidden border-2 border-yellow-500/50 mb-2">
+                                <img
+                                    src={activeComic.creator?.avatar || LOCAL_IMAGE}
+                                    alt={activeComic.creator?.name || 'Creator'}
+                                    className="w-full h-full object-cover"
+                                />
+                            </div>
+                            
+                            {/* Creator Label and Name */}
+                            <div className="text-center mb-4">
+                                <div className="text-white/60 text-sm mb-1">creator</div>
+                                <div className="text-white text-xl md:text-2xl font-bold">
+                                    {activeComic.creator?.name || 'Studio Kyra'}
+                                </div>
+                            </div>
 
                                         {/* Page Thumbnails - Hidden on mobile */}
                     {!isMobile && (
@@ -619,19 +430,75 @@ const ComicReaderViewer = () => {
                                             </span>
                                         </div>
                                     </button>
-                                ))}
-                            {comicPages.length > (isTablet ? 15 : 20) && (
-                                <div className={`flex-shrink-0 flex items-center justify-center text-white/60 text-xs ${
-                                    isTablet ? 'w-10 h-12' : 'w-12 h-16'
-                                }`}>
-                                    +{comicPages.length - (isTablet ? 15 : 20)}
                                 </div>
-                            )}
+                            </div>
                         </div>
-                    )}
+
+                        {/* More Collections Section */}
+                        <div className="mb-12">
+                            <h2 className="text-xl md:text-2xl font-bold text-white mb-6">
+                                More collections
+                            </h2>
+                            
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {MORE_COLLECTIONS.map((collection) => (
+                                    <ComicCard
+                                        key={collection.id}
+                                        id={collection.id}
+                                        title={collection.title}
+                                        creator={collection.creator}
+                                        creatorAvatar={collection.creatorAvatar}
+                                        mintPrice={collection.mintPrice}
+                                        currentPrice={collection.currentPrice}
+                                        views={collection.views}
+                                        image={collection.image}
+                                        premium={collection.premium}
+                                        number={collection.number}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Top Selling Comics Section */}
+                        <div className="mb-12">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-6">
+                                <h2 className="text-xl md:text-2xl font-bold text-white">
+                                    Top selling comics
+                                </h2>
+                                <div className="text-white/60 text-sm">
+                                    highest moves in the past hour
+                                </div>
+                            </div>
+                            
+                            {/* 3x3 Grid Layout */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {TOP_SELLING_COMICS.map((comic) => (
+                                    <CollectionCard
+                                        key={comic.id}
+                                        id={comic.id}
+                                        rank={comic.rank}
+                                        name={comic.name}
+                                        image={comic.image}
+                                        sales={comic.sales}
+                                        percentageChange={comic.percentageChange}
+                                        isPositive={comic.isPositive}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
+            {/* imported Footer component */}
+            <Footer />
+
+            {/* Demo Mode Indicator */}
+            {useDummyData && (
+                <div className="fixed bottom-4 right-4 z-30 bg-yellow-600 text-black text-xs px-3 py-1.5 rounded-full font-medium shadow-lg">
+                    Demo Mode
+                </div>
+            )}
         </div>
     );
 };
