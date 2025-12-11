@@ -38,7 +38,7 @@ const ComicReaderViewer = () => {
     const dispatch = useAppDispatch();
     const {currentComic, isLoading} = useAppSelector((state) => state.comic);
 
-    // Get comic ID from URL query params
+        // Get comic ID from URL query params
     const comicId = searchParams.get('id');
 
     // Fetch comic data on mount
@@ -53,34 +53,7 @@ const ComicReaderViewer = () => {
         };
     }, [comicId, dispatch]);
 
-    // Auto-using dummy data for development
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            if (!currentComic && comicId && isMounted.current) {
-                setUseDummyData(true);
-            }
-        }, 500)
-        
-        return () => clearTimeout(timer)
-    }, [currentComic, comicId])
-
-    //  dummy or real comic data
-    const activeComic = useMemo(() => {
-        const comic = useDummyData ? DUMMY_READER_COMIC : currentComic;
-        // creator object exists
-        if (comic && !comic.creator) {
-            return {
-                ...comic,
-                creator: {
-                    name: 'Studio Kyra',
-                    avatar: LOCAL_IMAGE
-                }
-            };
-        }
-        return comic;
-    }, [useDummyData, currentComic]);
-
-    // Extracts all pages from all chapters
+        // Extract all pages from all chapters
     const comicPages = useMemo(() => {
         if (!activeComic?.chapters) return [];
         
@@ -321,13 +294,81 @@ const ComicReaderViewer = () => {
                                             alt={`Page ${page.pageNumber}`}
                                             className="w-full h-auto max-h-[75vh] object-contain"
                                         />
-                                        <div className="absolute bottom-3 right-3 bg-black/70 backdrop-blur-sm text-white text-xs px-2.5 py-1 rounded-full">
-                                            Page {page.pageNumber}
-                                        </div>
+                                        
+                                                                               {/* Loading indicator for PDFs */}
+                                        {!page.imageUrl && (
+                                            <div className="absolute inset-0 bg-black/10 flex items-center justify-center pointer-events-none">
+                                                <div className="text-white/30 text-xs">📄</div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
-                        ))}
+                        </div>
+                    );
+                })}
+            </div>
+
+         
+            {isMobile && (
+                <div className={`absolute left-2 top-1/2 -translate-y-1/2 z-20 transition-opacity duration-300 ${
+                    showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                }`}>
+                    <button
+                        onClick={goToPreviousPage}
+                        disabled={currentPage === 1}
+                        className="bg-black/60 hover:bg-black/80 text-white p-2 rounded-full transition-all disabled:opacity-30 disabled:cursor-not-allowed backdrop-blur-sm">
+                        <ChevronLeft size={20}/>
+                    </button>
+                </div>
+            )}
+            
+            {isMobile && (
+                <div className={`absolute right-2 top-1/2 -translate-y-1/2 z-20 transition-opacity duration-300 ${
+                    showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                }`}>
+                    <button
+                        onClick={goToNextPage}
+                        disabled={currentPage === totalPages}
+                        className="bg-black/60 hover:bg-black/80 text-white p-2 rounded-full transition-all disabled:opacity-30 disabled:cursor-not-allowed backdrop-blur-sm">
+                        <ChevronRight size={20}/>
+                    </button>
+                </div>
+            )}
+
+            {/* Desktop Navigation Arrows */}
+            {!isMobile && (
+                <div className={`absolute right-6 top-1/2 -translate-y-1/2 z-20 flex flex-col gap-3 transition-opacity duration-300 ${
+                    showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                }`}>
+                    <button
+                        onClick={goToPreviousPage}
+                        disabled={currentPage === 1}
+                        className="bg-black/60 hover:bg-black/80 text-white p-3 rounded-full transition-all disabled:opacity-30 disabled:cursor-not-allowed backdrop-blur-sm">
+                        <ChevronUp size={24}/>
+                    </button>
+
+                    <button
+                        onClick={goToNextPage}
+                        disabled={currentPage === totalPages}
+                        className="bg-black/60 hover:bg-black/80 text-white p-3 rounded-full transition-all disabled:opacity-30 disabled:cursor-not-allowed backdrop-blur-sm">
+                        <ChevronDown size={24}/>
+                    </button>
+                </div>
+            )}
+
+                        {/* Footer - Page Counter and Progress */}
+            <div className={`absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black/90 to-transparent transition-opacity duration-300 ${
+                showControls ? 'opacity-100' : 'opacity-0'
+            }`}>
+                <div className="p-3 sm:p-6">
+                    {/* Page Counter */}
+                    <div className="text-center">
+                        <span className={`text-white font-medium ${isMobile ? 'text-base' : 'text-lg'}`}>
+                            <span className="text-yellow-500">{currentPage} </span>
+                            of{' '}
+                            <span className="text-yellow-500">{totalPages}</span>
+                        </span>
                     </div>
 
                     {/* Engagement Sections */}
@@ -352,19 +393,42 @@ const ComicReaderViewer = () => {
                                 </div>
                             </div>
 
-                            {/* Share Section */}
-                            <div className="text-center">
-                                <div className="text-white/60 text-sm mb-3">
-                                    Share this series and show support for the creator
-                                </div>
-                                <div className="flex items-center justify-center gap-4">
-                                    <button className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-6 py-2.5 rounded-full transition-all">
-                                        <ThumbsUp className="w-4 h-4" />
-                                        <span className="text-sm">Like</span>
-                                    </button>
-                                    <button className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-6 py-2.5 rounded-full transition-all">
-                                        <Share2 className="w-4 h-4" />
-                                        <span className="text-sm">Share</span>
+                                        {/* Page Thumbnails - Hidden on mobile */}
+                    {!isMobile && (
+                        <div className="mt-4 flex gap-2 justify-center overflow-x-auto pb-2 max-w-full px-4">
+                            {comicPages
+                                .slice(0, isTablet ? 15 : 20)
+                                .map((page, index) => (
+                                    <button
+                                        key={`thumb-${page.chapterNumber}-${page.pageNumber}`}
+                                        onClick={() => scrollToPage(index + 1)}
+                                        className={`flex-shrink-0 relative transition-all ${
+                                            currentPage === index + 1
+                                                ? 'ring-2 ring-yellow-500 scale-110'
+                                                : 'opacity-50 hover:opacity-100'
+                                        }`}>
+                                        {page.contentType === 'image' ? (
+                                            <img
+                                                src={page.imageUrl}
+                                                alt={`Page ${index + 1}`}
+                                                className={`object-cover rounded ${isTablet ? 'w-10 h-12' : 'w-12 h-16'}`}/>
+                                        ) : page.thumbnailUrl ? (
+                                            <img
+                                                src={page.thumbnailUrl}
+                                                alt={`Page ${index + 1} preview`}
+                                                className={`object-cover rounded ${isTablet ? 'w-10 h-12' : 'w-12 h-16'}`}/>
+                                        ) : (
+                                            <div className={`bg-gray-800 rounded flex items-center justify-center text-xs text-white ${
+                                                isTablet ? 'w-10 h-12' : 'w-12 h-16'
+                                            }`}>
+                                                <span aria-hidden>🌐</span>
+                                            </div>
+                                        )}
+                                        <div className="absolute inset-0 flex items-center justify-center">
+                                            <span className="text-white text-xs font-bold drop-shadow-lg">
+                                                {index + 1}
+                                            </span>
+                                        </div>
                                     </button>
                                 </div>
                             </div>

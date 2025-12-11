@@ -33,7 +33,7 @@ function Page() {
   const router = useRouter()
   const dispatch = useAppDispatch()
   
-  // Comic state
+   // Comic state
   const { 
     currentComic, 
     previewComic, 
@@ -54,7 +54,6 @@ function Page() {
   const [useDummyData, setUseDummyData] = useState(false)
   const [activeTab, setActiveTab] = useState('details') // 'details' or 'activity'
   
-  // Getting comic ID from URL query params
   const id = searchParams.get('id')
   
   // Initialize purchase hook
@@ -200,7 +199,7 @@ function Page() {
     }
   }, [purchaseSuccess, id, router, resetPurchase])
 
-  // Handle claim success
+   // Handle claim success
   useEffect(() => {
     if (claimSuccess && claimHash) {
       setHasNFTAccess(true)
