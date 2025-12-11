@@ -68,7 +68,7 @@ const ComicDetail = ({
   }
   
   const getReadButtonContent = () => {
-    
+        // If it's a free comic, always allow reading
     if (isFree || publishType === 'free') {
       return (
         <span className="flex items-center justify-center gap-2">
@@ -78,7 +78,7 @@ const ComicDetail = ({
       )
     }
     
-    
+        // If verifying access
     if (isVerifyingAccess) {
       return (
         <span className="flex items-center justify-center gap-2">
@@ -88,7 +88,7 @@ const ComicDetail = ({
       )
     }
     
-    
+        // If user has access
     if (hasNFTAccess === true) {
       return (
         <span className="flex items-center justify-center gap-2">
@@ -98,7 +98,7 @@ const ComicDetail = ({
       )
     }
     
-    
+        // If user doesn't have access
     if (hasNFTAccess === false) {
       return (
         <span className="flex items-center justify-center gap-2 hover:bg-primary-400">
@@ -188,9 +188,9 @@ const ComicDetail = ({
       </div>
 
       <div className="max-w-7xl mx-auto">
-    
+            {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-[0.5fr_1fr] gap-8 mb-12">
-          
+                    {/* Cover Image */}
            <div className="relative">
             <div className="w-full max-w-md mx-auto lg:mx-0 aspect-[3/4] rounded-tl-3xl rounded-br-3xl shadow-2xl overflow-hidden">
               <img
@@ -200,7 +200,7 @@ const ComicDetail = ({
               />
             </div>
             
-            
+                        {/* Status Badge */}
             {(isFree || publishType === 'free') && (
               <div className="absolute top-0 left-10 bg-green-600 text-white px-3 py-1 text-sm font-medium">
                 Free
@@ -212,7 +212,7 @@ const ComicDetail = ({
               </div>
             )}
             
-           
+                       {/* Action Buttons */}
             <div className="flex gap-3 mt-6 justify-center lg:justify-start">
               <Button 
                 onClick={onPreviewIssue}
@@ -231,9 +231,9 @@ const ComicDetail = ({
             </div>
           </div>
 
-          
+            {/* Comic Info */}
           <div className="space-y-6">
-           
+                              {/* Tags */} 
             <div className="flex flex-wrap gap-2">
               {tags.map((tag, index) => (
                 <Badge 
@@ -245,12 +245,12 @@ const ComicDetail = ({
               ))}
             </div>
 
-            
+                        {/* Title */}
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
               {title}: Issue #{issueNumber}
             </h1>
 
-
+            {/* Read Button */}
             <MainButton 
               onClick={onReadIssue}
               disabled={isReadButtonDisabled}
@@ -259,10 +259,10 @@ const ComicDetail = ({
               {getReadButtonContent()}
             </MainButton>
             
-           
+                       {/* Access Status Info */}
             {getAccessStatusInfo()}
 
-           
+                       {/* Author */}
             <div className="flex items-center gap-3">
               <img
                 src={author.avatar}
@@ -289,7 +289,7 @@ const ComicDetail = ({
           
         </div>
 
-       
+               {/* Issue Details */}
         <div>
           <div className="grid grid-cols-1 lg:grid-cols-[0.5fr_1fr] gap-8 mb-12">
             <div></div>
@@ -326,7 +326,7 @@ const ComicDetail = ({
                   </div>
                 </div>
                 
-                
+                                {/* Show price for NFT comics */}
                 {publishType === 'nft' && price && (
                   <div className="flex items-center gap-3 bg-gray-400 py-4 px-8 rounded-2xl col-span-2">
                     <ShoppingCart className="w-5 h-5 text-primary-400" />
@@ -343,7 +343,7 @@ const ComicDetail = ({
 
         <hr className='border-white/10 my-16'/>
         
-       
+               {/* Other Issues */}
         <div>
           <h2 className="text-2xl font-bold mb-6">Other Issues in this comic</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
