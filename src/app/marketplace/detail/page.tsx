@@ -25,149 +25,8 @@ import { useComicPurchase } from '../../../hook/usePurchaseComic'
 import { useClaimFreeComic, useCheckComicClaim } from '@/hook/useClaimFreeComic'
 import { toast } from 'react-toastify'
 import { QUIVA_COMICS_ADDRESS } from '@/contracts/QuivaComics'
-
-// Exact dummy data 
-const DUMMY_COMIC_DATA = {
-  id: '2',
-  title: 'Avatar - Book of Beginnings',
-  issueNumber: 1,
-  author: {
-    name: 'Studio Kyra',
-    avatar: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=100&h=100&fit=crop'
-  },
-  coverImage: 'https://images.unsplash.com/photo-1635805737707-575885ab0820?w=300&h=450&fit=crop',
-  description: 'In a world torn between the elements, a young avatar rises to restore balance – not by choice, but by destiny. "Book of Beginnings" marks the first chapter of the Avatar Chronicles, where every mint helps since the legend.',
-  tags: ['Fantasy', 'Adventure', 'On-chain Epic'],
-  isFree: false,
-  publishType: 'nft',
-  price: 0.09,
-  nftDetails: {
-    tokenId: '2',
-    maxSupply: 1000,
-    currentSupply: 721,
-    mintStatus: 'minting'
-  },
-  tokenId: '2',
-  creatorWalletAddress: '0x1234567890abcdef1234567890abcdef12345678',
-  issueDetails: {
-    creators: 'Studio Kyra',
-    pages: 32,
-    publisher: 'Independent',
-    publicationDate: 'December 9, 2024'
-  },
-  otherIssues: [
-    {
-      id: 'ep1',
-      title: 'Episode 1 : The First Flame',
-      image: 'https://images.unsplash.com/photo-1635805737707-575885ab0820?w=150&h=225&fit=crop',
-      date: 'December 2, 2024',
-      isFree: false
-    },
-    {
-      id: 'ep2',
-      title: 'Episode 2 : Whispers of the Wind',
-      image: 'https://images.unsplash.com/photo-1635805737707-575885ab0820?w=150&h=225&fit=crop',
-      date: 'December 9, 2024',
-      isFree: false
-    },
-    {
-      id: 'ep3',
-      title: 'Episode 3 : Echoes Beneath the Earth',
-      image: 'https://images.unsplash.com/photo-1635805737707-575885ab0820?w=150&h=225&fit=crop',
-      date: 'December 16, 2024',
-      isFree: false
-    }
-  ],
-  views: 4500,
-  likes: 230,
-  status: "published",
-  
-  episodeList: [
-    {
-      id: 'ep1',
-      title: 'Episode 1 : The First Flame',
-      time: '8 min',
-      stats: {
-        floorPrice: '0.085 HBAR',
-        totalMints: '721 / 1,000',
-        volume: '45.8 HBAR'
-      }
-    },
-    {
-      id: 'ep2',
-      title: 'Episode 2 : Whispers of the Wind',
-      time: '8 min',
-      stats: {
-        floorPrice: '0.085 HBAR',
-        totalMints: '721 / 1,000',
-        volume: '45.8 HBAR'
-      }
-    },
-    {
-      id: 'ep3',
-      title: 'Episode 3 : Echoes Beneath the Earth',
-      time: '8 min',
-      stats: {
-        floorPrice: '0.085 HBAR',
-        totalMints: '721 / 1,000',
-        volume: '45.8 HBAR'
-      }
-    }
-  ],
-  marketStats: {
-    floorPrice: '0.085 HBAR',
-    totalMints: '721 / 1,000',
-    volume: '45.8 HBAR'
-  },
-  mintingDetails: {
-    mintPrice: '0.09 HBAR',
-    edition: '1,000',
-    royalties: '7% to creator'
-  },
-  collections: '389 Collections',
-  studioInfo: {
-    name: 'Studio Kyra',
-    description: 'Studio Kyra is a visionary town of artists and storytellers dedicated to making the boundaries of digital art and interactive narratives.'
-  },
-  moreAdventureComics: [
-    {
-      id: 'ma1',
-      title: 'Inosuke degen',
-      subtitle: 'Chrome Extreme',
-      image: 'https://images.unsplash.com/photo-1635805737707-575885ab0820?w=100&h=150&fit=crop'
-    },
-    {
-      id: 'ma2',
-      title: 'The son is also the father',
-      subtitle: 'New York A.B.R.C.',
-      image: 'https://images.unsplash.com/photo-1635805737707-575885ab0820?w=100&h=150&fit=crop'
-    },
-    {
-      id: 'ma3',
-      title: 'Spiderman: Mary Jane',
-      subtitle: 'Catera Marathon',
-      image: 'https://images.unsplash.com/photo-1635805737707-575885ab0820?w=100&h=150&fit=crop'
-    },
-    {
-      id: 'ma4',
-      title: 'John Pryce',
-      subtitle: 'A.B.R.C.',
-      image: 'https://images.unsplash.com/photo-1635805737707-575885ab0820?w=100&h=150&fit=crop'
-    },
-    {
-      id: 'ma5',
-      title: 'John Pryce',
-      subtitle: 'A.B.R.C.',
-      image: 'https://images.unsplash.com/photo-1635805737707-575885ab0820?w=100&h=150&fit=crop'
-    },
-    {
-      id: 'ma6',
-      title: 'John Pryce',
-      subtitle: 'A.B.R.C.',
-      image: 'https://images.unsplash.com/photo-1635805737707-575885ab0820?w=100&h=150&fit=crop'
-    }
-  ]
-}
+// Import dummy data
+import { DUMMY_COMIC_DATA } from '@/components/utils/dummy-data'
 
 function Page() {
   const searchParams = useSearchParams()
@@ -230,7 +89,7 @@ function Page() {
       dispatch(getComicById({id:id} as any));
     }
 
-    // Cleanup on unmount
+    // unmount
     return () => {
       dispatch(clearCurrentComic())
       dispatch(clearPreviewComic())
@@ -314,7 +173,7 @@ function Page() {
     walletStatus.address
   )
 
-  // Auto-use dummy data for development
+  // Auto-use of dummy data for development
   useEffect(() => {
     const timer = setTimeout(() => {
       if (!transformedComic && id) {
@@ -359,7 +218,7 @@ function Page() {
     }
   }, [claimSuccess, claimHash, id, router, resetClaimState, refetchClaimStatus])
 
-  // Auto-use dummy data if loading fails
+  // Auto-use of dummy data if loading fails
   useEffect(() => {
     if (isLoading) {
       const timer = setTimeout(() => {
