@@ -35,7 +35,7 @@ const ComicReaderViewer = () => {
     const dispatch = useAppDispatch();
     const {currentComic, isLoading} = useAppSelector((state) => state.comic);
 
-    
+        // Get comic ID from URL query params
     const comicId = searchParams.get('id');
 
     useEffect(() => {
@@ -50,19 +50,20 @@ const ComicReaderViewer = () => {
         return () => window.removeEventListener('resize', checkScreenSize);
     }, []);
 
-    
+        
+    // Fetch comic data on mount
     useEffect(() => {
         if (comicId) {
             dispatch(getComicById({id: comicId} as any));
         }
 
-       
+                // Cleanup on unmount
         return () => {
             dispatch(clearCurrentComic());
         };
     }, [comicId, dispatch]);
 
-    
+        // Extract all pages from all chapters
     const comicPages = useMemo(() => {
         if (!currentComic?.chapters) return [];
         
@@ -86,7 +87,7 @@ const ComicReaderViewer = () => {
 
     const totalPages = comicPages.length;
 
-    
+        // Auto-hide controls with different timings for mobile/desktop
     const resetHideControlsTimer = () => {
         setShowControls(true);
         if (hideControlsTimeout.current) {
@@ -94,7 +95,7 @@ const ComicReaderViewer = () => {
         }
         hideControlsTimeout.current = setTimeout(() => {
             setShowControls(false);
-        }, isMobile ? 2000 : 3000); 
+        }, isMobile ? 2000 : 3000);  // Shorter timeout on mobile
     };
 
     useEffect(() => {
@@ -106,7 +107,7 @@ const ComicReaderViewer = () => {
         };
     }, [isMobile]);
 
-    
+       // Track scroll position to update current page
     useEffect(() => {
         const container = scrollContainerRef.current;
         if (!container) return;
@@ -123,7 +124,7 @@ const ComicReaderViewer = () => {
         return () => container.removeEventListener('scroll', handleScroll);
     }, [totalPages]);
 
-    
+        // Touch gesture handling
     useEffect(() => {
         const container = scrollContainerRef.current;
         if (!container || !isMobile) return;
@@ -141,20 +142,20 @@ const ComicReaderViewer = () => {
             const deltaX = touchStartX.current - touchEndX;
             const deltaY = touchStartY.current - touchEndY;
 
-            
+                        // Determine if it's a horizontal or vertical swipe
             if (Math.abs(deltaX) > Math.abs(deltaY)) {
-               
+                               // Horizontal swipe - show/hide controls
                 if (Math.abs(deltaX) > 50) {
                     resetHideControlsTimer();
                 }
             } else {
-                
+                               // Vertical swipe - page navigation
                 if (Math.abs(deltaY) > 50) {
                     if (deltaY > 0 && currentPage < totalPages) {
-                      
+                                              // Swipe up - next page
                         scrollToPage(currentPage + 1);
                     } else if (deltaY < 0 && currentPage > 1) {
-                       
+                                               // Swipe down - previous page
                         scrollToPage(currentPage - 1);
                     }
                 }
@@ -164,13 +165,13 @@ const ComicReaderViewer = () => {
             touchStartY.current = null;
         };
 
-       
+               // Double tap to toggle controls
         const handleTouchStart2 = (e) => {
             const currentTime = new Date().getTime();
             const tapGap = currentTime - lastTouchTime.current;
             
             if (tapGap < 300 && tapGap > 0) {
-               
+                               // Double tap
                 setShowControls(prev => !prev);
             }
             
@@ -188,7 +189,7 @@ const ComicReaderViewer = () => {
         };
     }, [isMobile, currentPage, totalPages]);
 
-    
+        // Scroll to specific page
     const scrollToPage = (pageNumber) => {
         const container = scrollContainerRef.current;
         if (!container) return;
@@ -228,9 +229,9 @@ const ComicReaderViewer = () => {
         setShowMobileMenu(prev => !prev);
     };
 
-    
+        // Keyboard navigation (desktop only)
     useEffect(() => {
-        if (isMobile) return; 
+        if (isMobile) return;  // Disable keyboard nav on mobile
         
         const handleKeyPress = (e) => {
             if (e.key === 'ArrowDown' || e.key === 'PageDown') {
@@ -494,7 +495,7 @@ const ComicReaderViewer = () => {
                                             }}
                                         />
                                         
-                                       
+                                                                               {/* Loading indicator for PDFs */}
                                         {!page.imageUrl && (
                                             <div className="absolute inset-0 bg-black/10 flex items-center justify-center pointer-events-none">
                                                 <div className="text-white/30 text-xs">📄</div>
@@ -556,7 +557,7 @@ const ComicReaderViewer = () => {
                 </div>
             )}
 
-            
+                        {/* Footer - Page Counter and Progress */}
             <div className={`absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black/90 to-transparent transition-opacity duration-300 ${
                 showControls ? 'opacity-100' : 'opacity-0'
             }`}>
@@ -581,7 +582,7 @@ const ComicReaderViewer = () => {
                         </div>
                     </div>
 
-                    
+                                        {/* Page Thumbnails - Hidden on mobile */}
                     {!isMobile && (
                         <div className="mt-4 flex gap-2 justify-center overflow-x-auto pb-2 max-w-full px-4">
                             {comicPages
