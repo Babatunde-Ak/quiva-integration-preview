@@ -100,13 +100,30 @@ export const createComicMetadata = ({
   mimeType = "image/png",
   priceHbar,
   totalPages,
+  zipArchiveUri, // Optional: URI of ZIP archive containing all pages
+}: {
+  name: string;
+  creator: string;
+  description: string;
+  genres: string[];
+  copiesOfComic: number;
+  ageRating: string;
+  coverUri: string;
+  pageUris: string[];
+  mimeType?: string;
+  priceHbar: number;
+  totalPages: number;
+  zipArchiveUri?: string;
 }) => {
+  // Determine if this is a ZIP-based comic
+  const isZipArchive = zipArchiveUri != null || mimeType === "application/zip";
+  
   return {
     name,
     creator,
     description,
     image: coverUri, // preview / cover
-    type: mimeType,
+    type: isZipArchive ? "application/zip" : mimeType,
     format: "HIP412@2.0.0",
     properties: {
       genres,
@@ -115,15 +132,30 @@ export const createComicMetadata = ({
       priceHbar,
       totalPages,
       category: "ComicBook",
+      // Add ZIP-specific properties
+      ...(isZipArchive && {
+        archiveFormat: "zip",
+        archiveUri: zipArchiveUri || pageUris[0],
+      }),
     },
-    files: pageUris.map((uri, i) => ({
-      uri,
-      type: mimeType,
-      is_default_file: i === 0, // first page default
-      metadata: {
-        name: `${name} - Page ${i + 1}`,
-        description: `Page ${i + 1} of ${name}`,
-      },
-    })),
+    files: isZipArchive 
+      ? [{
+          uri: zipArchiveUri || pageUris[0],
+          type: "application/zip",
+          is_default_file: true,
+          metadata: {
+            name: `${name} - Comic Archive`,
+            description: `ZIP archive containing all pages of ${name}`,
+          },
+        }]
+      : pageUris.map((uri, i) => ({
+          uri,
+          type: mimeType,
+          is_default_file: i === 0, // first page default
+          metadata: {
+            name: `${name} - Page ${i + 1}`,
+            description: `Page ${i + 1} of ${name}`,
+          },
+        })),
   };
 };

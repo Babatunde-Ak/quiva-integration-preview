@@ -81,7 +81,9 @@ const createComicNFT = async (formData: {
   copiesOfComic: number;
   ageRating: string;
   coverFile: File;
-  pageFiles: File[];
+  pageFiles: File[]; // Individual image files
+  zipFile?: File; // Optional ZIP file containing comic pages
+  sourceType?: 'image' | 'zip-images' | 'pdf-file'; // Type of source files
   priceHbar: number;
   mintNow?: number;
 }) => {
@@ -89,15 +91,18 @@ const createComicNFT = async (formData: {
     setStatus("inscribing");
     setProgress(0);
 
-    // Validate inputs
-    if (!formData.pageFiles || formData.pageFiles.length === 0) {
-      throw new Error("No page files provided for inscription");
+    // Validate inputs - either pageFiles OR zipFile must be provided
+    const hasPageFiles = formData.pageFiles && formData.pageFiles.length > 0;
+    const hasZipFile = formData.zipFile != null;
+    
+    if (!hasPageFiles && !hasZipFile) {
+      throw new Error("No page files or ZIP file provided for inscription");
     }
     if (!formData.coverFile) {
       throw new Error("No cover file provided");
     }
 
-  // Step 1: Upload or inscribe all pages to IPFS / KiloScribe
+  // Step 1: Get signer ready
       const pageUris: string[] = [];
       const activeSigner = await getActiveSigner();
       console.log("🪙 Active signer ready:", activeSigner);
@@ -106,39 +111,108 @@ const createComicNFT = async (formData: {
       if (!activeSigner || typeof activeSigner.getAccountId !== 'function') {
         throw new Error("Invalid signer: must have getAccountId() method. Make sure you're passing a DAppSigner, not DAppConnector.");
       }
-  
-      for (const page of formData.pageFiles) {
-        const arrayBuffer = await page.arrayBuffer();
-       
-        const res = await inscribeWithSigner(
+
+      // Handle ZIP file - inscribe ZIP + metadata together in ONE call
+      if (hasZipFile && formData.sourceType === 'zip-images') {
+        console.log("📦 Inscribing ZIP file with metadata (single call):", formData.zipFile!.name);
+        setProgress(10);
+        
+        // Create metadata for the ZIP file
+        const zipMetadata = createComicMetadata({
+          name: formData.name,
+          creator: formData.creator,
+          description: formData.description,
+          genres: formData.genres,
+          copiesOfComic: formData.copiesOfComic,
+          ageRating: formData.ageRating,
+          coverUri: formData.name, // Will be replaced by the inscription topic
+          pageUris: [], // Will contain the ZIP topic after inscription
+          priceHbar: formData.priceHbar,
+          totalPages: 1,
+          mimeType: "application/zip",
+          zipArchiveUri: undefined, // Will be set after inscription
+        });
+
+        const zipBuffer = await formData.zipFile!.arrayBuffer();
+        
+        // Single inscription call for ZIP + metadata together
+        const zipNftInscription = await inscribeWithSigner(
           {
             type: "buffer",
-            buffer: arrayBuffer,
-            fileName: page.name,
-            mimeType: page.type || "image/png",
+            buffer: zipBuffer,
+            fileName: formData.zipFile!.name,
+            mimeType: "application/zip",
           },
           activeSigner,
-          
           {
-          //  mode: "file",
+            mode: "hashinal",
+            metadata: zipMetadata,
             waitForConfirmation: true,
-            network
+            progressCallback: (data) => setProgress(10 + data.progressPercent * 0.85),
+            network,
           }
         );
-  
-        const uri = `hcs://1/${res.inscription.topic_id}`;
-        pageUris.push(uri);
+
+        const comicHRL = `hcs://1/${zipNftInscription.inscription.topic_id}`;
+        const metadataHRL = `hcs://1/${zipNftInscription.inscription.jsonTopicId}`;
+        
+        setProgress(100);
+        console.log("✅ ZIP + Metadata inscribed together in single call!");
+        console.log("📄 Comic HRL:", comicHRL);
+        console.log("📄 Metadata HRL:", metadataHRL);
+
+        // For ZIP files, we're done - return result directly
+        const zipResult = {
+          comicHRL,
+          metadataHRL,
+          zipUri: comicHRL,
+          totalPages: 1,
+          isZipArchive: true,
+        };
+
+        setResult(zipResult);
+        setStatus("done");
+        return zipResult;
+      } 
+      
+      // Handle individual image files inscription
+      if (hasPageFiles) {
+        console.log("🖼️ Inscribing individual page files:", formData.pageFiles.length);
+        let processedCount = 0;
+        
+        for (const page of formData.pageFiles) {
+          const arrayBuffer = await page.arrayBuffer();
+         
+          const res = await inscribeWithSigner(
+            {
+              type: "buffer",
+              buffer: arrayBuffer,
+              fileName: page.name,
+              mimeType: page.type || "image/png",
+            },
+            activeSigner,
+            {
+              waitForConfirmation: true,
+              network
+            }
+          );
+    
+          const uri = `hcs://1/${res.inscription.topic_id}`;
+          pageUris.push(uri);
+          
+          processedCount++;
+          setProgress(Math.min(10 + (processedCount / formData.pageFiles.length) * 40, 50));
+        }
+        console.log("✅ All pages inscribed:", pageUris.length);
       }
   
-      // Step 2: Get cover URI (can be one of the pages)
+      // Step 2: Get cover URI from the first inscribed page
       const coverUri = pageUris[0];
       
-        setProgress(30)
-        console.log(
-          "file inscribed",
-          coverUri
-        );
-      // Step 3: Generate HIP-412 metadata
+      setProgress(50);
+      console.log("Files inscribed, coverUri:", coverUri);
+      
+      // Step 3: Generate HIP-412 metadata for individual images
       const metadata = createComicMetadata({
         name: formData.name,
         creator: formData.creator,
@@ -146,12 +220,13 @@ const createComicNFT = async (formData: {
         genres: formData.genres,
         copiesOfComic: formData.copiesOfComic,
         ageRating: formData.ageRating,
-        coverUri,
-        pageUris,
+        coverUri: coverUri || formData.name,
+        pageUris: pageUris,
         priceHbar: formData.priceHbar,
         totalPages: formData.pageFiles.length,
         mimeType: "image/png",
       });
+      
     // Step 4: Inscribe metadata + cover image
     const coverBuffer = await formData.coverFile.arrayBuffer();
 
@@ -167,7 +242,7 @@ const createComicNFT = async (formData: {
         mode: "hashinal",
         metadata,
         waitForConfirmation: true,
-        progressCallback: (data) => setProgress(data.progressPercent),
+        progressCallback: (data) => setProgress(50 + data.progressPercent * 0.5),
         network
       }
     );

@@ -539,6 +539,12 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
             console.log("Comic data:", comicData);
 			
 			setPublishingStep('Creating NFT...');
+			
+			// Determine source type and prepare files accordingly
+			const zipPage = comicData.pages.find(page => page.type === 'zip-images');
+			const imagePages = comicData.pages.filter(page => page.type === 'image');
+			const sourceType = zipPage ? 'zip-images' : (comicData.sourceType as 'image' | 'zip-images' | 'pdf-file' || 'image');
+			
 			const result = await createComicNFT({
 				name: comicData.title,
 				creator: user.walletAddress,
@@ -547,7 +553,11 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 				copiesOfComic: monetizationData.mintAsNFT && monetizationData.nftCopies,
 				ageRating: comicData.ageRating,
 				coverFile: comicData.coverImage,
-				pageFiles: comicData.pages.filter(page => page.type === 'image').map(page => new File([page.blob], page.name, { type: page.blob.type })),
+				// Pass image files if available
+				pageFiles: imagePages.map(page => new File([page.blob], page.name, { type: page.blob.type })),
+				// Pass ZIP file if user uploaded a ZIP
+				zipFile: zipPage ? new File([zipPage.blob], zipPage.name, { type: 'application/zip' }) : undefined,
+				sourceType,
 				priceHbar: monetizationData.publishType === "paid" && monetizationData.nftPrice ? monetizationData.nftPrice : 0,
 			});
 

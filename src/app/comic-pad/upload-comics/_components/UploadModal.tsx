@@ -123,6 +123,52 @@ const UploadModal = ({ onClose }: UploadModalProps) => {
 		}];
 	};
 
+	// Handle ZIP file without extraction - keep as single file
+	const processZipFileWithoutExtraction = async (zipFile: File): Promise<ExtractedFile[]> => {
+		setProcessingStatus("Processing ZIP file...");
+		setProgress(50);
+
+		// Create a preview placeholder for ZIP
+		const canvas = document.createElement('canvas');
+		canvas.width = 400;
+		canvas.height = 300;
+		const ctx = canvas.getContext('2d')!;
+		
+		// Create comic preview placeholder
+		ctx.fillStyle = '#f8f9fa';
+		ctx.fillRect(0, 0, canvas.width, canvas.height);
+		
+		// Add ZIP icon and info
+		ctx.fillStyle = '#007bff';
+		ctx.font = 'bold 24px Arial';
+		ctx.textAlign = 'center';
+		ctx.fillText('📦 ZIP ARCHIVE', canvas.width / 2, canvas.height / 2 - 40);
+		
+		ctx.fillStyle = '#6c757d';
+		ctx.font = '16px Arial';
+		ctx.fillText(zipFile.name, canvas.width / 2, canvas.height / 2);
+		ctx.fillText(`${(zipFile.size / (1024 * 1024)).toFixed(1)} MB`, canvas.width / 2, canvas.height / 2 + 25);
+		ctx.fillText('Comic pages included', canvas.width / 2, canvas.height / 2 + 50);
+
+		const previewBlob = await new Promise<Blob>(resolve => {
+			canvas.toBlob(blob => resolve(blob!), 'image/jpeg', 0.8);
+		});
+
+		const previewUrl = URL.createObjectURL(previewBlob);
+
+		setProgress(100);
+		setProcessingStatus("ZIP file ready for upload!");
+
+		return [{
+			name: zipFile.name,
+			blob: zipFile, // Keep original ZIP file without extraction
+			preview: previewUrl,
+			type: 'zip-images',
+			originalFileName: zipFile.name,
+			fileSize: zipFile.size
+		}];
+	};
+
 	const extractZipFile = async (zipFile: File): Promise<ExtractedFile[]> => {
 		try {
 			setIsExtracting(true);
@@ -257,16 +303,16 @@ const UploadModal = ({ onClose }: UploadModalProps) => {
 		} else if (selected.name.toLowerCase().endsWith(".zip")) {
 			setFile(selected);
 			setPreview(null);
+			setIsExtracting(true);
 			try {
-				const files = await extractZipFile(selected);
+				// Process ZIP file without extraction - keep as single file
+				const files = await processZipFileWithoutExtraction(selected);
 				setExtractedFiles(files);
-				
-				if (files.length === 0) {
-					setError("No valid image files found in ZIP archive. Please ensure your ZIP contains image files (JPEG, PNG, GIF, WebP, SVG).");
-				}
+				setIsExtracting(false);
 			} catch (err) {
-				setError(err instanceof Error ? err.message : "Failed to extract ZIP file. Please ensure it's a valid archive.");
+				setError(err instanceof Error ? err.message : "Failed to process ZIP file.");
 				setFile(null);
+				setIsExtracting(false);
 			}
 		} else {
 			setError("Invalid file type. Please upload an image, PDF, or ZIP file.");
