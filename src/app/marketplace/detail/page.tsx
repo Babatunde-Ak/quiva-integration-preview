@@ -33,7 +33,7 @@ function Page() {
   const router = useRouter()
   const dispatch = useAppDispatch()
   
- 
+   // Comic state
   const { 
     currentComic, 
     previewComic, 
@@ -41,7 +41,7 @@ function Page() {
     isPreviewing 
   } = useAppSelector((state) => state.comic)
   
-
+  // Transaction state
   const isVerifyingTransaction = useAppSelector(selectIsVerifying)
   const transactionError = useAppSelector(selectTransactionError)
   
@@ -62,7 +62,8 @@ function Page() {
     purchaseComic = async () => {},
     getListing = async (_tokenId: bigint, _seller: string) => Promise.resolve(null),
     isPurchasing = false,
-    
+
+        // isWritePending = false,
     isConfirming = false,
     isPurchaseComplete = false,
     purchaseSuccess = false,
@@ -92,7 +93,7 @@ function Page() {
       dispatch(getComicById({id:id} as any));
     }
 
-    // amount
+    // Cleanup on unmount
     return () => {
       dispatch(clearCurrentComic())
       dispatch(clearPreviewComic())
@@ -107,7 +108,7 @@ function Page() {
     }
   }, [id, currentComic, setComicId])
 
-  // Transformed API data to match ComicDetail component interface
+  // Transform API data to match ComicDetail component interface
   const transformedComic = useMemo(() => {
     if (!currentComic) return null
 
@@ -172,7 +173,7 @@ function Page() {
   )
   
 
-  // access verification using transaction slice
+   // Enhanced access verification using transaction slice
   useEffect(() => {
     const checkUserAccess = async () => {
       if (!transformedComic || !id) {
@@ -209,7 +210,7 @@ function Page() {
         return
       }
       
-     
+           // If it's an NFT comic, verify purchase through transaction history
       if (transformedComic.publishType === 'nft') {
         try {
           console.log('NFT comic - checking transaction history')
@@ -241,7 +242,7 @@ function Page() {
     checkUserAccess()
   }, [transformedComic, id, dispatch])
 
- 
+   // Handle purchase success - the hook already creates the transaction record
   useEffect(() => {
     if (purchaseSuccess) {
       console.log('Purchase successful - updating access status')
@@ -249,7 +250,7 @@ function Page() {
       setIsPurchaseModalOpen(false)
       resetPurchase()
       
-     
+           // Show success message and redirect to reader
       setTimeout(() => {
         if (id) {
           toast.success('Purchase successful! Redirecting to reader...', { autoClose: 2000 })
@@ -259,14 +260,14 @@ function Page() {
     }
   }, [purchaseSuccess, id, router, resetPurchase])
 
- 
+   // Handle claim success
   useEffect(() => {
     if (claimSuccess && claimHash) {
       console.log('Claim successful - updating access status')
       setHasNFTAccess(true)
       refetchClaimStatus()
       
-     
+           // Show success for 2 seconds then redirect to reader
       setTimeout(() => {
         setIsClaimModalOpen(false)
         resetClaimState()
@@ -279,7 +280,7 @@ function Page() {
     }
   }, [claimSuccess, claimHash, id, router, resetClaimState, refetchClaimStatus])
 
- 
+   // Wallet connection state monitoring
   useEffect(() => {
     if (!walletStatus.isConnected && !accessCheckComplete) {
       console.log('Wallet not connected')
@@ -287,14 +288,16 @@ function Page() {
       console.log('Wallet connected, checking access...')
     }
   }, [walletStatus.isConnected, accessCheckComplete])
-
-
+    
+  // Check if user has already claimed
+ //Handle preview modal open
   const handlePreview = () => {
     if (!id) return
     setIsPreviewOpen(true)
     dispatch(getComicPreview({id: id} as any))
   }
 
+    // Handle claim comic
   const handleClaimComic = async () => {
     if (!walletStatus.isConnected) {
       toast.error('Please connect your wallet to claim this comic')
@@ -398,13 +401,15 @@ function Page() {
   }
 
   try {
-  
+    // console.log('Fetching on-chain listing...');
+
+    // ⭐ Pass the correct price from contract only
     console.log("TokenId:", transformedComic.tokenId);
     const result = await purchaseComic({
       nftAddress: QUIVA_COMICS_ADDRESS,
       tokenId: BigInt(transformedComic.tokenId),
       amount: BigInt(1),
-    
+          // pricePerToken: BigInt(listing.pricePerToken),
     });
 
     console.log('Purchase initiated:', result);
@@ -432,13 +437,13 @@ function Page() {
       return
     }
 
- 
+     // ALL free comics must claim NFT first
     if (transformedComic.publishType === 'free') {
       if (hasNFTAccess || hasClaimed) {
-       
+               // User has claimed, allow reading
         router.push(`/reader?id=${id}`)
       } else {
-      
+              // User hasn't claimed yet, show claim modal
         setIsClaimModalOpen(true)
       }
       return
@@ -485,6 +490,7 @@ function Page() {
   }
 
 
+    //   // Calculate limited edition string
   const limitedEditionString = transformedComic.nftDetails 
     ? `${transformedComic.nftDetails.currentSupply || 0}/${transformedComic.nftDetails.maxSupply || 100}`
     : '0/100';
@@ -493,10 +499,11 @@ function Page() {
                       transformedComic.tokenId && 
                       transformedComic.creatorWalletAddress;
 
-  
+
+    // Determine verification status for UI
   const isVerifying = isVerifyingTransaction || !accessCheckComplete
 
-  
+    // Determine if purchase is in progress (includes all stages)
   const isPurchaseInProgress = isPurchasing || isConfirming
   return (
     <>
@@ -540,7 +547,7 @@ function Page() {
         />
       )}
 
-     
+           {/* Claim Modal */}
       <ClaimModal
         isOpen={isClaimModalOpen}
         onClose={() => setIsClaimModalOpen(false)}
