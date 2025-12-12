@@ -1,10 +1,13 @@
 'use client';
 
 import UserProfile from '@/features/user-profile/components/user-profile-view'
+import { useRouter } from 'next/navigation'
 
 function page() {
+    const router = useRouter()
     const onEditProfile = () => {
         // Handle edit profile action
+        router.push("/marketplace/profile/edit")
     }
 
     const onComicAction = (comic, action) => {
