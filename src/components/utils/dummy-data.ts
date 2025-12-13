@@ -1,3 +1,5 @@
+
+
 // Images for demo
 export const LOCAL_IMAGE = '/dev_images/avatar-2.png';
 export const DUMMY_COVER_IMAGE = '/dev_images/avatar-2.png';
@@ -406,7 +408,23 @@ export const DUMMY_COMIC_DATA = {
   ]
 };
 
-//  all data as a single object for convenience
+// Activity data for minting page
+export const ACTIVITY_DATA = [
+  { username: '@co4edt8', event: 'Minted', price: '0.09 H', edition: '#001', time: '21s ago' },
+  { username: '@co4edt8', event: 'Sold', price: '0.09 H', edition: '#021', time: '1m ago' },
+  { username: '@co4edt8', event: 'Minted', price: '0.09 H', edition: '#201', time: '20m ago' },
+  { username: '@co4edt8', event: 'Minted', price: '0.09 H', edition: '#1,001', time: '30m ago' },
+  { username: '@co4edt8', event: 'Minted', price: '0.09 H', edition: '#001', time: '21min ago' }
+];
+
+// Episode list data
+export const EPISODE_LIST = [
+  { title: 'Episode 1 : The First Flame', time: '8 min' },
+  { title: 'Episode 2 : Whispers of the Wind', time: '8 min' },
+  { title: 'Episode 3 : Echoes Beneath the Earth', time: '8 min' }
+];
+
+// All data as a single object
 export default {
   LOCAL_IMAGE,
   DUMMY_COVER_IMAGE,
@@ -416,5 +434,7 @@ export default {
   MORE_COLLECTIONS,
   TOP_SELLING_COMICS,
   MORE_ADVENTURE_COMICS,
-  DUMMY_COMIC_DATA
+  DUMMY_COMIC_DATA,
+  ACTIVITY_DATA,
+  EPISODE_LIST
 };
