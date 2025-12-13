@@ -54,12 +54,12 @@ const EditProfileView = ({ user }) => {
     };
 
     const EditProfileContent = () => (
-        <form onSubmit={handleSubmit} className="p-4 sm:p-6 lg:p-8 max-w-4xl">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 lg:p-8 max-w-4xl mb-12">
             {/* Change Image Section */}
-            <div className="mb-8">
+            <div className="mb-8 bg-black-200 p-4 rounded-lg border border-black-50">
                 <h2 className="text-lg font-semibold text-white mb-6">Change image</h2>
                 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Display Picture */}
                     <div className="space-y-4">
                         <div className="text-center">
@@ -71,8 +71,7 @@ const EditProfileView = ({ user }) => {
                                 />
                             </div>
                             <h3 className="text-sm font-medium text-white mt-4 mb-2">Display Picture</h3>
-                            <label className="inline-flex items-center gap-2 px-4 py-2 bg-black-200 text-white text-sm rounded-lg border border-black-50 hover:bg-black-100/50 transition-colors cursor-pointer">
-                                <Upload className="w-4 h-4" />
+                            <label className="inline-flex items-center justify-center gap-2 bg-white/25 w-full py-2 px-4 text-white text-sm rounded-full hover:bg-black-100/50 transition-colors cursor-pointer">
                                 Upload picture
                                 <input
                                     type="file"
@@ -80,23 +79,23 @@ const EditProfileView = ({ user }) => {
                                     className="hidden"
                                     onChange={(e) => handleImageUpload('avatar', e)}
                                 />
+                                <Upload className="w-4 h-4" />
                             </label>
                         </div>
                     </div>
 
                     {/* Banner Picture */}
-                    <div className="space-y-4">
+                    <div className="space-y-4 col-span-2">
                         <div>
                             <div className="relative">
                                 <img
                                     src={formData.bannerImage}
                                     alt="Banner"
-                                    className="w-full h-32 sm:h-40 object-cover rounded-lg border border-black-50"
+                                    className="w-full h-24 sm:h-32 object-cover rounded-lg border border-black-50"
                                 />
                             </div>
                             <h3 className="text-sm font-medium text-white mt-4 mb-2">Banner Picture</h3>
-                            <label className="inline-flex items-center gap-2 px-4 py-2 bg-black-200 text-white text-sm rounded-lg border border-black-50 hover:bg-black-100/50 transition-colors cursor-pointer">
-                                <Upload className="w-4 h-4" />
+                            <label className="inline-flex items-center justify-center gap-2 bg-white/25 w-full py-2 px-4 text-white text-sm rounded-full hover:bg-black-100/50 transition-colors cursor-pointer">                                
                                 Upload picture
                                 <input
                                     type="file"
@@ -104,6 +103,7 @@ const EditProfileView = ({ user }) => {
                                     className="hidden"
                                     onChange={(e) => handleImageUpload('bannerImage', e)}
                                 />
+                                <Upload className="w-4 h-4" />
                             </label>
                         </div>
                     </div>
@@ -111,7 +111,7 @@ const EditProfileView = ({ user }) => {
             </div>
 
             {/* Update Details Section */}
-            <div className="mb-8">
+            <div className="mb-8 bg-black-200 p-4 rounded-lg border border-black-50">
                 <h2 className="text-lg font-semibold text-white mb-6">Update details</h2>
                 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
@@ -122,7 +122,7 @@ const EditProfileView = ({ user }) => {
                             placeholder="Display name"
                             value={formData.displayName}
                             onChange={(e) => handleInputChange('displayName', e.target.value)}
-                            className="w-full px-4 py-3 bg-black-200 border border-black-50 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-secondary-200 transition-colors"
+                            className="w-full px-4 py-3 bg-white/5 border border-black-50 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-secondary-200 transition-colors"
                         />
                     </div>
 
@@ -133,7 +133,7 @@ const EditProfileView = ({ user }) => {
                             placeholder="Username"
                             value={formData.username}
                             onChange={(e) => handleInputChange('username', e.target.value)}
-                            className="w-full px-4 py-3 bg-black-200 border border-black-50 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-secondary-200 transition-colors"
+                            className="w-full px-4 py-3 bg-white/5 border border-black-50 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-secondary-200 transition-colors"
                         />
                     </div>
                 </div>
@@ -145,13 +145,13 @@ const EditProfileView = ({ user }) => {
                         rows={4}
                         value={formData.bio}
                         onChange={(e) => handleInputChange('bio', e.target.value)}
-                        className="w-full px-4 py-3 bg-black-200 border border-black-50 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-secondary-200 transition-colors resize-none"
+                        className="w-full px-4 py-3 bg-white/5 border border-black-50 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-secondary-200 transition-colors resize-none"
                     />
                 </div>
             </div>
 
             {/* Link Your Socials Section */}
-            <div className="mb-8">
+            <div className="mb-8 bg-black-200 p-4 rounded-lg border border-black-50">
                 <h2 className="text-lg font-semibold text-white mb-6">Link your socials</h2>
                 
                 <div className="space-y-4">
@@ -185,43 +185,14 @@ const EditProfileView = ({ user }) => {
                 </div>
             </div>
 
-            {/* Additional Settings */}
-            <div className="border-t border-black-50 pt-8 mb-8">
-                <h2 className="text-lg font-semibold text-white mb-6">Privacy Settings</h2>
-                
-                <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 bg-black-200 border border-black-50 rounded-lg">
-                        <div>
-                            <h3 className="text-white font-medium">Public Profile</h3>
-                            <p className="text-white/60 text-sm">Make your profile visible to other users</p>
-                        </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" className="sr-only peer" defaultChecked />
-                            <div className="w-11 h-6 bg-black-100 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary-200"></div>
-                        </label>
-                    </div>
-                    
-                    <div className="flex items-center justify-between p-4 bg-black-200 border border-black-50 rounded-lg">
-                        <div>
-                            <h3 className="text-white font-medium">Show Collection</h3>
-                            <p className="text-white/60 text-sm">Display your NFT collection on your profile</p>
-                        </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" className="sr-only peer" defaultChecked />
-                            <div className="w-11 h-6 bg-black-100 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary-200"></div>
-                        </label>
-                    </div>
-                </div>
-            </div>
-
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-black-50">
-                <button
+                {/* <button
                     type="button"
                     className="px-6 py-3 bg-black-200 text-white border border-black-50 rounded-lg font-medium hover:bg-black-100/50 transition-colors"
                 >
                     Cancel
-                </button>
+                </button> */}
                 <button
                     type="submit"
                     className="px-6 py-3 bg-secondary-200 text-black-200 rounded-lg font-medium hover:bg-primary-500 transition-colors"

@@ -40,15 +40,9 @@ const WalletView = ({ user }) => {
 
     const WalletContent = () => (
         <div className="p-4 sm:p-6 lg:p-8 max-w-4xl">
-            {/* Description */}
-            <div className="mb-8">
-                <p className="text-white/60 text-sm leading-relaxed">
-                    Link multiple wallets and set one as our primary. Your primary wallet can't be unlinked and is used by default.
-                </p>
-            </div>
 
             {/* Link Wallet Section */}
-            <div className="mb-8">
+            <div className="mb-8 bg-black-200 p-4 rounded-lg border border-black-50">
                 <h2 className="text-lg font-semibold text-white mb-6">Link Wallet</h2>
                 
                 <div className="space-y-4">
@@ -92,39 +86,13 @@ const WalletView = ({ user }) => {
                 {/* Add New Wallet Button */}
                 <button
                     onClick={handleAddWallet}
-                    className="mt-6 flex items-center gap-2 px-6 py-3 bg-secondary-200 text-black-200 rounded-lg font-medium hover:bg-primary-500 transition-colors"
+                    className="mt-6 flex items-center gap-2 px-6 py-3 bg-secondary-200 text-black-200 rounded-full font-medium hover:bg-primary-500 transition-colors"
                 >
                     <Plus className="w-4 h-4" />
                     Add new wallet
                 </button>
             </div>
 
-            {/* Wallet Security Section */}
-            <div className="border-t border-black-50 pt-8">
-                <h2 className="text-lg font-semibold text-white mb-4">Security Settings</h2>
-                <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 bg-black-200 border border-black-50 rounded-lg">
-                        <div>
-                            <h3 className="text-white font-medium">Two-Factor Authentication</h3>
-                            <p className="text-white/60 text-sm">Add an extra layer of security to your wallet connections</p>
-                        </div>
-                        <button className="text-secondary-200 hover:text-primary-500 text-sm font-medium transition-colors">
-                            Enable
-                        </button>
-                    </div>
-                    
-                    <div className="flex items-center justify-between p-4 bg-black-200 border border-black-50 rounded-lg">
-                        <div>
-                            <h3 className="text-white font-medium">Transaction Notifications</h3>
-                            <p className="text-white/60 text-sm">Get notified for all wallet transactions</p>
-                        </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" className="sr-only peer" defaultChecked />
-                            <div className="w-11 h-6 bg-black-100 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary-200"></div>
-                        </label>
-                    </div>
-                </div>
-            </div>
         </div>
     );
 

@@ -23,7 +23,7 @@ const NotificationsView = ({ user }) => {
     };
 
     const ToggleSwitch = ({ enabled, onChange, disabled = false }) => (
-        <label className={`relative inline-flex items-center transition-all duration-300 cursor-pointer ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}>
+        <label className={`relative inline-flex items-center cursor-pointer transition-opacity duration-300 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}>
             <input 
                 type="checkbox" 
                 className="sr-only peer" 
@@ -31,12 +31,12 @@ const NotificationsView = ({ user }) => {
                 onChange={onChange}
                 disabled={disabled}
             />
-            <div className="w-11 h-6 bg-black-100 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary-200"></div>
+            <div className="w-11 h-6 bg-black-100 rounded-full peer-focus:outline-none transition-colors duration-300 ease-in-out peer-checked:bg-black-100 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-secondary-200 after:rounded-full after:h-5 after:w-5 after:transition-transform after:duration-300 after:ease-in-out peer-checked:after:translate-x-full peer-checked:after:border-secondary-200"></div>
         </label>
     );
 
     const NotificationItem = ({ title, description, isEnabled, onToggle, disabled = false }) => (
-        <div className={`flex items-center justify-between p-4 bg-black-200 border border-black-50 rounded-lg hover:bg-black-100/30 transition-colors ${disabled ? 'opacity-60' : ''}`}>
+        <div className={`flex items-center justify-between p-4 bg-white/5 border border-black-50 rounded-lg hover:bg-black-100/30 transition-colors ${disabled ? 'opacity-60' : ''}`}>
             <div className="flex-1">
                 <h3 className="text-white font-medium mb-1">{title}</h3>
                 <p className="text-white/60 text-sm leading-relaxed">{description}</p>
@@ -53,15 +53,9 @@ const NotificationsView = ({ user }) => {
 
     const NotificationsContent = () => (
         <div className="p-4 sm:p-6 lg:p-8 max-w-4xl">
-            {/* Description */}
-            <div className="mb-8">
-                <p className="text-white/60 text-sm leading-relaxed">
-                    Manage your password
-                </p>
-            </div>
 
             {/* Email & In-App Notifications */}
-            <div className="mb-8">
+            <div className="mb-8 bg-black-200 p-4 rounded-lg border border-black-50">
                 <h2 className="text-lg font-semibold text-white mb-2">Email & In-App Notifications</h2>
                 <p className="text-white/60 text-sm mb-6">
                     Select the updates you want to receive for your Quiva activities.
@@ -106,7 +100,7 @@ const NotificationsView = ({ user }) => {
             </div>
 
             {/* Email Preferences */}
-            <div className="border-t border-black-50 pt-8 mb-8">
+            <div className="bg-black-200 p-4 rounded-lg border border-black-50 pt-8 mb-8">
                 <h2 className="text-lg font-semibold text-white mb-2">Email Preferences</h2>
                 <p className="text-white/60 text-sm mb-6">
                     Control what emails you receive from Quiva.
@@ -138,7 +132,7 @@ const NotificationsView = ({ user }) => {
             </div>
 
             {/* Push Notification Settings */}
-            <div className="border-t border-black-50 pt-8">
+            <div className="bg-black-200 p-4 rounded-lg border border-black-50 pt-8">
                 <h2 className="text-lg font-semibold text-white mb-2">Push Notifications</h2>
                 <p className="text-white/60 text-sm mb-6">
                     Enable browser and mobile push notifications for real-time updates.

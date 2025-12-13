@@ -3,8 +3,10 @@
 import React from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
+import { mockUser } from '@/features/user-profile/utils/userData';
 
-const layout = ({ children, title, subtitle, user }) => {
+const layout = ({ children, title }) => {
+    const user = mockUser;
     const router = useRouter();
     const pathname = usePathname();
 
@@ -23,8 +25,22 @@ const layout = ({ children, title, subtitle, user }) => {
         return 'general';
     };
 
+    const getSubtitle = () => {
+        const activeSection = getActiveSection();
+        switch (activeSection) {
+            case 'edit':
+                return "Set up your Quiva presence";
+            case 'wallet':
+                return "Link multiple wallets and set one as our primary. Your primary wallet can't be unlinked and is used by default.";
+            case 'notifications':
+                return "Manage your email and in-app notification preferences.";
+            default:
+                return "Manage your account settings";
+        }
+    };
+
     const handleNavigation = (href) => {
-        router.push('/marketplace'+href);
+        router.push('/marketplace' + href);
     };
 
     const handleBack = () => {
@@ -32,11 +48,12 @@ const layout = ({ children, title, subtitle, user }) => {
     };
 
     const activeSection = getActiveSection();
+    const subtitle = getSubtitle();
 
     return (
-        <div className="min-h-screen bg-background-primary text-text-primary font-space">
+        <div className="min-h-screen bg-background-primary text-text-primary font-space bg-black-500">
             {/* Header */}
-            <div className="border-b border-black-50 bg-black-200">
+            <div className="">
                 <div className="flex items-center gap-4 px-4 sm:px-6 lg:px-8 py-4">
                     <button 
                         onClick={handleBack}
@@ -56,7 +73,7 @@ const layout = ({ children, title, subtitle, user }) => {
                                 {title || `${user?.name || 'Yuna Dean'} / Settings`}
                             </h1>
                             <p className="text-sm text-white/60">
-                                {subtitle || 'Manage your account settings'}
+                                {subtitle}
                             </p>
                         </div>
                     </div>
@@ -65,7 +82,7 @@ const layout = ({ children, title, subtitle, user }) => {
 
             <div className="flex flex-col lg:flex-row min-h-[calc(100vh-80px)]">
                 {/* Sidebar Navigation */}
-                <div className="w-full lg:w-64 bg-black-200 border-r border-black-50">
+                <div className="w-full lg:w-64 ">
                     {/* Mobile Navigation */}
                     <div className="lg:hidden border-b border-black-50">
                         <div className="flex overflow-x-auto no-scrollbar">
@@ -104,7 +121,7 @@ const layout = ({ children, title, subtitle, user }) => {
                 </div>
 
                 {/* Main Content */}
-                <div className="flex-1 bg-black-400">
+                <div className="flex-1 ">
                     {children}
                 </div>
             </div>
