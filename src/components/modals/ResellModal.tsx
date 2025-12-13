@@ -152,8 +152,11 @@ const ListingStep = ({
           className="w-full bg-neutral-800/50 border border-neutral-700 rounded-lg py-3 px-4 text-white placeholder:text-neutral-500 focus:outline-none focus:ring-1 focus:ring-amber-500 transition-all"
         />
       </div>
-      <p className="text-xs text-neutral-400 mt-2">
-        Minimum resale price: 0.1 <span className="font-sans">H</span>
+      <p className="flex text-xs items-center text-neutral-400 mt-2">
+        Minimum resale price: 0.1
+        <span className="text-[10px] align-center">
+          <img src="/hbar.png" />
+        </span>
       </p>
     </div>
 
@@ -183,7 +186,7 @@ const SuccessStep = ({ comic, onClose }: any) => (
     initial={{ opacity: 0, scale: 0.95, y: 10 }}
     animate={{ opacity: 1, scale: 1, y: 0 }}
     transition={{ duration: 0.3, type: "spring" }}
-    className="bg-black border border-neutral-800 rounded-2xl p-8 shadow-2xl text-center relative overflow-hidden"
+    className="bg-[#000] border font-mono border-neutral-800 rounded-2xl p-8 shadow-2xl text-center relative overflow-hidden"
   >
     {/* Confetti / Success Visual */}
     <div className="relative w-24 h-32 mx-auto mb-6">
