@@ -4,6 +4,8 @@ import React, {useState, useRef, useEffect, useMemo, useCallback} from 'react';
 import {
     ChevronLeft,
     ChevronRight,
+    ChevronUp,
+    ChevronDown,
     Loader2,
     ThumbsUp,
     Share2,
@@ -28,18 +30,37 @@ const ComicReaderViewer = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [useDummyData, setUseDummyData] = useState(false);
     const [isScrolling, setIsScrolling] = useState(false);
+    const [showControls, setShowControls] = useState(true);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const isMounted = useRef(true);
     const lastPageRef = useRef(1);
     const [showEngagement, setShowEngagement] = useState(false);
+
+    // Media queries
+    const [isMobile, setIsMobile] = useState(false);
+    const [isTablet, setIsTablet] = useState(false);
+
+    useEffect(() => {
+        const checkScreenSize = () => {
+            setIsMobile(window.innerWidth < 768);
+            setIsTablet(window.innerWidth >= 768 && window.innerWidth < 1024);
+        };
+        
+        checkScreenSize();
+        window.addEventListener('resize', checkScreenSize);
+        return () => window.removeEventListener('resize', checkScreenSize);
+    }, []);
 
     const searchParams = useSearchParams();
     const router = useRouter();
     const dispatch = useAppDispatch();
     const {currentComic, isLoading} = useAppSelector((state) => state.comic);
 
-        // Get comic ID from URL query params
+    // Get comic ID from URL query params
     const comicId = searchParams.get('id');
+
+    // Use current comic or dummy data
+    const activeComic = useDummyData ? DUMMY_READER_COMIC : currentComic;
 
     // Fetch comic data on mount
     useEffect(() => {
@@ -53,7 +74,7 @@ const ComicReaderViewer = () => {
         };
     }, [comicId, dispatch]);
 
-        // Extract all pages from all chapters
+    // Extract all pages from all chapters
     const comicPages = useMemo(() => {
         if (!activeComic?.chapters) return [];
         
@@ -66,7 +87,8 @@ const ComicReaderViewer = () => {
                         pageNumber: page.pageNumber,
                         chapterNumber: chapter.chapterNumber,
                         chapterTitle: chapter.title,
-                        contentType: page.contentType
+                        contentType: page.contentType,
+                        thumbnailUrl: page.thumbnailUrl
                     });
                 });
             }
@@ -93,7 +115,6 @@ const ComicReaderViewer = () => {
             const page = Math.floor(scrollTop / pageHeight) + 1;
             const newPage = Math.min(Math.max(1, page), totalPages);
             
-          
             if (newPage !== lastPageRef.current) {
                 setCurrentPage(newPage);
                 lastPageRef.current = newPage;
@@ -118,7 +139,6 @@ const ComicReaderViewer = () => {
         
         const pageHeight = window.innerHeight;
         const targetScroll = (pageNumber - 1) * pageHeight;
-        
         
         const maxScroll = totalPages * pageHeight;
         const safeScroll = Math.min(targetScroll, maxScroll);
@@ -162,7 +182,7 @@ const ComicReaderViewer = () => {
         };
         window.addEventListener('keydown', handleKeyPress);
         return () => window.removeEventListener('keydown', handleKeyPress);
-    }, [currentPage, totalPages, goToNextPage, goToPreviousPage]);
+    }, [goToNextPage, goToPreviousPage, handleBack]);
 
     // Loading state
     if (isLoading && !useDummyData) {
@@ -197,7 +217,6 @@ const ComicReaderViewer = () => {
 
     return (
         <div className="relative bg-[#161614] min-h-screen">
-           
             <div 
                 className="relative h-[40vh] min-h-[280px] max-h-[350px] overflow-visible"
                 style={{
@@ -223,15 +242,14 @@ const ComicReaderViewer = () => {
                 <div className="absolute left-1/2 transform -translate-x-1/2 bottom-[-60px] md:bottom-[-70px]">
                     <div className="relative w-48 h-64 md:w-56 md:h-72 lg:w-64 lg:h-80 rounded-xl overflow-hidden shadow-2xl border-2 border-white/30">
                         <img
-                            src={activeComic.coverImage || LOCAL_IMAGE}
-                            alt={activeComic.title}
+                            src={activeComic?.coverImage || LOCAL_IMAGE}
+                            alt={activeComic?.title || 'Comic Cover'}
                             className="w-full h-full object-cover"
                         />
                     </div>
                 </div>
             </div>
 
-         
             <div className="h-20 md:h-24"></div>
 
             {/* Comic Reading Background */}
@@ -269,7 +287,6 @@ const ComicReaderViewer = () => {
                     </div>
                 </div>
 
-                
                 <div className="h-8"></div>
             </div>
 
@@ -295,7 +312,7 @@ const ComicReaderViewer = () => {
                                             className="w-full h-auto max-h-[75vh] object-contain"
                                         />
                                         
-                                                                               {/* Loading indicator for PDFs */}
+                                        {/* Loading indicator for PDFs */}
                                         {!page.imageUrl && (
                                             <div className="absolute inset-0 bg-black/10 flex items-center justify-center pointer-events-none">
                                                 <div className="text-white/30 text-xs">📄</div>
@@ -304,12 +321,12 @@ const ComicReaderViewer = () => {
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    );
-                })}
+                        ))}
+                    </div>
+                </div>
             </div>
 
-         
+            {/* Mobile Navigation Arrows */}
             {isMobile && (
                 <div className={`absolute left-2 top-1/2 -translate-y-1/2 z-20 transition-opacity duration-300 ${
                     showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'
@@ -357,7 +374,7 @@ const ComicReaderViewer = () => {
                 </div>
             )}
 
-                        {/* Footer - Page Counter and Progress */}
+            {/* Footer - Page Counter and Progress */}
             <div className={`absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black/90 to-transparent transition-opacity duration-300 ${
                 showControls ? 'opacity-100' : 'opacity-0'
             }`}>
@@ -377,10 +394,10 @@ const ComicReaderViewer = () => {
                         {/* Creator Section */}
                         <div className="flex flex-col items-center justify-center gap-6 mb-8">
                             {/* Avatar Image  */}
-                            <div className="w-16 h-16 md:w-18 md:h-18 overflow-hidden border-2 border-yellow-500/50 mb-2">
+                            <div className="w-16 h-16 md:w-18 md:h-18 rounded-full overflow-hidden border-2 border-yellow-500/50 mb-2">
                                 <img
-                                    src={activeComic.creator?.avatar || LOCAL_IMAGE}
-                                    alt={activeComic.creator?.name || 'Creator'}
+                                    src={activeComic?.creator?.avatar || LOCAL_IMAGE}
+                                    alt={activeComic?.creator?.name || 'Creator'}
                                     className="w-full h-full object-cover"
                                 />
                             </div>
@@ -389,49 +406,50 @@ const ComicReaderViewer = () => {
                             <div className="text-center mb-4">
                                 <div className="text-white/60 text-sm mb-1">creator</div>
                                 <div className="text-white text-xl md:text-2xl font-bold">
-                                    {activeComic.creator?.name || 'Studio Kyra'}
+                                    {activeComic?.creator?.name || 'Studio Kyra'}
                                 </div>
                             </div>
 
-                                        {/* Page Thumbnails - Hidden on mobile */}
-                    {!isMobile && (
-                        <div className="mt-4 flex gap-2 justify-center overflow-x-auto pb-2 max-w-full px-4">
-                            {comicPages
-                                .slice(0, isTablet ? 15 : 20)
-                                .map((page, index) => (
-                                    <button
-                                        key={`thumb-${page.chapterNumber}-${page.pageNumber}`}
-                                        onClick={() => scrollToPage(index + 1)}
-                                        className={`flex-shrink-0 relative transition-all ${
-                                            currentPage === index + 1
-                                                ? 'ring-2 ring-yellow-500 scale-110'
-                                                : 'opacity-50 hover:opacity-100'
-                                        }`}>
-                                        {page.contentType === 'image' ? (
-                                            <img
-                                                src={page.imageUrl}
-                                                alt={`Page ${index + 1}`}
-                                                className={`object-cover rounded ${isTablet ? 'w-10 h-12' : 'w-12 h-16'}`}/>
-                                        ) : page.thumbnailUrl ? (
-                                            <img
-                                                src={page.thumbnailUrl}
-                                                alt={`Page ${index + 1} preview`}
-                                                className={`object-cover rounded ${isTablet ? 'w-10 h-12' : 'w-12 h-16'}`}/>
-                                        ) : (
-                                            <div className={`bg-gray-800 rounded flex items-center justify-center text-xs text-white ${
-                                                isTablet ? 'w-10 h-12' : 'w-12 h-16'
-                                            }`}>
-                                                <span aria-hidden>🌐</span>
-                                            </div>
-                                        )}
-                                        <div className="absolute inset-0 flex items-center justify-center">
-                                            <span className="text-white text-xs font-bold drop-shadow-lg">
-                                                {index + 1}
-                                            </span>
-                                        </div>
-                                    </button>
+                            {/* Page Thumbnails - Hidden on mobile */}
+                            {!isMobile && (
+                                <div className="mt-4 flex gap-2 justify-center overflow-x-auto pb-2 max-w-full px-4">
+                                    {comicPages
+                                        .slice(0, isTablet ? 15 : 20)
+                                        .map((page, index) => (
+                                            <button
+                                                key={`thumb-${page.chapterNumber}-${page.pageNumber}`}
+                                                onClick={() => scrollToPage(index + 1)}
+                                                className={`flex-shrink-0 relative transition-all ${
+                                                    currentPage === index + 1
+                                                        ? 'ring-2 ring-yellow-500 scale-110'
+                                                        : 'opacity-50 hover:opacity-100'
+                                                }`}>
+                                                {page.contentType === 'image' ? (
+                                                    <img
+                                                        src={page.imageUrl}
+                                                        alt={`Page ${index + 1}`}
+                                                        className={`object-cover rounded ${isTablet ? 'w-10 h-12' : 'w-12 h-16'}`}/>
+                                                ) : page.thumbnailUrl ? (
+                                                    <img
+                                                        src={page.thumbnailUrl}
+                                                        alt={`Page ${index + 1} preview`}
+                                                        className={`object-cover rounded ${isTablet ? 'w-10 h-12' : 'w-12 h-16'}`}/>
+                                                ) : (
+                                                    <div className={`bg-gray-800 rounded flex items-center justify-center text-xs text-white ${
+                                                        isTablet ? 'w-10 h-12' : 'w-12 h-16'
+                                                    }`}>
+                                                        <span aria-hidden>🌐</span>
+                                                    </div>
+                                                )}
+                                                <div className="absolute inset-0 flex items-center justify-center">
+                                                    <span className="text-white text-xs font-bold drop-shadow-lg">
+                                                        {index + 1}
+                                                    </span>
+                                                </div>
+                                            </button>
+                                        ))}
                                 </div>
-                            </div>
+                            )}
                         </div>
 
                         {/* More Collections Section */}
