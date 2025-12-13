@@ -4,6 +4,7 @@ import ComicDetail from '@/features/comic-library/components/ComicDetail'
 import ComicPreviewModal from '@/features/comic-library/components/ComicPreviewModal'
 import PurchaseNFTModal from '@/features/comic-library/components/PurchaseModal'
 import ClaimModal from '@/features/comic-library/components/ClaimModal'
+import MintComicModal from '@/features/comic-library/components/MintComicModal'
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useAppDispatch, useAppSelector } from '@/redux/hook'
@@ -13,19 +14,11 @@ import {
   getComicPreview, 
   clearPreviewComic 
 } from '@/redux/slices/comicSlice'
-import {
-  verifyNftPurchase,
-  clearError as clearTransactionError,
-  selectIsVerifying,
-  selectTransactionError,
-  clearCurrentTransaction
-} from '@/redux/slices/transactionSlice'
 import { Loader2 } from 'lucide-react'
 import { useComicPurchase } from '../../../hook/usePurchaseComic'
 import { useClaimFreeComic, useCheckComicClaim } from '@/hook/useClaimFreeComic'
 import { toast } from 'react-toastify'
 import { QUIVA_COMICS_ADDRESS } from '@/contracts/QuivaComics'
-// Import dummy data
 import { DUMMY_COMIC_DATA } from '@/components/utils/dummy-data'
 
 function Page() {
@@ -33,7 +26,7 @@ function Page() {
   const router = useRouter()
   const dispatch = useAppDispatch()
   
-   // Comic state
+  // Comic state
   const { 
     currentComic, 
     previewComic, 
@@ -41,25 +34,21 @@ function Page() {
     isPreviewing 
   } = useAppSelector((state) => state.comic)
   
-  // Transaction state
-  const isVerifyingTransaction = useAppSelector(selectIsVerifying)
-  const transactionError = useAppSelector(selectTransactionError)
-  
   // Local state
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
   const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false)
   const [isClaimModalOpen, setIsClaimModalOpen] = useState(false)
+  const [showMintPage, setShowMintPage] = useState(false) // NEW: Controls which page to show
   const [hasNFTAccess, setHasNFTAccess] = useState<boolean | null>(null)
-  const [accessCheckComplete, setAccessCheckComplete] = useState(false)
   const [useDummyData, setUseDummyData] = useState(false)
-  const [activeTab, setActiveTab] = useState('details') // 'details' or 'activity'
+  const [activeTab, setActiveTab] = useState('details')
   
+  // Getting comic ID from URL query params
   const id = searchParams.get('id')
   
   // Initialize purchase hook
   const purchaseHookResult = useComicPurchase()
   
-  // Destructure with fallback values in case hook returns undefined/void
   const {
     purchaseComic = async () => {},
     isPurchasing = false,
@@ -82,31 +71,28 @@ function Page() {
     resetClaimState,
   } = useClaimFreeComic()
   
-  // Fetch comic data on mount
+  // Fetch comic data
   useEffect(() => {
     if (id) {
       dispatch(getComicById({id:id} as any));
     }
 
-    // unmount
     return () => {
       dispatch(clearCurrentComic())
       dispatch(clearPreviewComic())
-      dispatch(clearCurrentTransaction())
-    }
+    };
   }, [id, dispatch])
 
-  // Set comicId in the purchase hook when comic loads
+  // Set comicId in the purchase hook
   useEffect(() => {
     if (id && currentComic) {
       setComicId(id)
     }
   }, [id, currentComic, setComicId])
 
-  // Transforming API data to match ComicDetail component interface
+  // Transform comic data
   const transformedComic = useMemo(() => {
     if (useDummyData) {
-      // Return dummy data for development
       return DUMMY_COMIC_DATA
     }
 
@@ -115,33 +101,25 @@ function Page() {
     const comic = currentComic
     const nftData = comic.nftId || {}
     const tokenId = nftData?.tokenId
-    const price = nftData?.price || 0
-    const maxSupply = nftData?.maxSupply || 100
-    const currentSupply = nftData?.currentSupply || 0
+    const price = nftData?.price || 0.09
 
     return {
-      title: comic.title || "Untitled Comic",
+      title: comic.title || "Avatar - Book of Beginnings",
       issueNumber: comic.chapters?.[0]?.chapterNumber || 1,
       author: {
-        name: comic.creatorId?.username || comic.creatorId?.walletAddress?.slice(0, 8) || "Unknown Creator",
-        avatar: comic.creatorId?.avatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=default"
+        name: comic.creatorId?.username || "Studio Kyra",
+        avatar: comic.creatorId?.avatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=kyra"
       },
-      coverImage: comic.coverImage || "https://via.placeholder.com/300x450?text=No+Cover",
-      description: comic.description || "No description available.",
-      tags: comic.genre || [],
+      coverImage: comic.coverImage || "https://via.placeholder.com/300x450?text=Comic+Cover",
+      description: comic.description || "In a world torn between the elements, a young avatar rises to restore balance – not by choice, but by destiny. 'Book of Beginnings' marks the first chapter of the Avatar Chronicles, where every mint helps since the legend.",
+      tags: comic.genre || ['Fantasy', 'Adventure', 'On-chain Epic'],
       isFree: comic.publishType === "free",
-      publishType: comic.publishType,
+      publishType: comic.publishType || "nft",
       price: price,
-      nftDetails: {
-        tokenId: tokenId,
-        maxSupply: maxSupply,
-        currentSupply: currentSupply,
-        mintStatus: nftData?.mintStatus || 'pending'
-      },
       tokenId: tokenId,
       creatorWalletAddress: comic.creatorId?.walletAddress,
       issueDetails: {
-        creators: comic.creatorId?.username || "Unknown",
+        creators: comic.creatorId?.username || "Studio Kyra",
         pages: comic.totalPages || 0,
         publisher: "Independent",
         publicationDate: new Date(comic.createdAt).toLocaleDateString('en-US', {
@@ -150,20 +128,7 @@ function Page() {
           year: 'numeric'
         })
       },
-      otherIssues: comic.chapters?.slice(0, 4).map((chapter: any, index: number) => ({
-        id: chapter._id,
-        title: `${comic.title} - ${chapter.title}`,
-        image: chapter.pages?.[0]?.imageUrl || comic.coverImage,
-        date: new Date(chapter.createdAt).toLocaleDateString('en-US', {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric'
-        }),
-        isFree: comic.publishType === "free"
-      })) || [],
-      views: comic.views || 0,
-      likes: comic.likes || 0,
-      status: comic.status || "draft"
+      otherIssues: []
     }
   }, [currentComic, useDummyData])
 
@@ -172,7 +137,7 @@ function Page() {
     walletStatus.address
   )
 
-  // Auto-use of dummy data for development
+  // Auto-use dummy data
   useEffect(() => {
     const timer = setTimeout(() => {
       if (!transformedComic && id) {
@@ -188,6 +153,7 @@ function Page() {
     if (purchaseSuccess) {
       setHasNFTAccess(true)
       setIsPurchaseModalOpen(false)
+      setShowMintPage(false)
       resetPurchase()
       
       setTimeout(() => {
@@ -199,7 +165,7 @@ function Page() {
     }
   }, [purchaseSuccess, id, router, resetPurchase])
 
-   // Handle claim success
+  // Handle claim success
   useEffect(() => {
     if (claimSuccess && claimHash) {
       setHasNFTAccess(true)
@@ -217,19 +183,7 @@ function Page() {
     }
   }, [claimSuccess, claimHash, id, router, resetClaimState, refetchClaimStatus])
 
-  // Auto-use of dummy data if loading fails
-  useEffect(() => {
-    if (isLoading) {
-      const timer = setTimeout(() => {
-        if (!currentComic) {
-          setUseDummyData(true)
-        }
-      }, 1000)
-      
-      return () => clearTimeout(timer)
-    }
-  }, [isLoading, currentComic])
-
+  // Event handlers
   const handlePreview = () => {
     if (!id) return
     setIsPreviewOpen(true)
@@ -276,7 +230,8 @@ function Page() {
     }
   }
 
-  const handlePurchase = async () => {
+  // Handle minting from MintComicModal
+  const handleMintComic = async () => {
     if (!transformedComic || !id) {
       toast.error('Comic data not available')
       return
@@ -287,79 +242,56 @@ function Page() {
       return
     }
 
-    if (!transformedComic.tokenId) {
-      toast.error('NFT token ID not available')
-      return
-    }
-
     try {
       if (useDummyData) {
-        // Simulate purchase for demo
-        toast.success('Demo purchase successful! Redirecting to reader...', { autoClose: 3000 })
+        // Simulate minting for demo
+        toast.success('Demo mint successful! Redirecting to reader...', { autoClose: 3000 })
         setTimeout(() => {
+          setShowMintPage(false)
           router.push(`/reader?id=${id}`)
         }, 1500)
         return
       }
       
+      if (!transformedComic.tokenId) {
+        toast.error('NFT token ID not available')
+        return
+      }
+
       const result = await purchaseComic({
         nftAddress: QUIVA_COMICS_ADDRESS,
         tokenId: BigInt(transformedComic.tokenId),
         amount: BigInt(1),
       });
 
-      console.log('Purchase initiated:', result);
+      console.log('Mint initiated:', result);
       return result;
 
     } catch (error: any) {
-      console.error('Purchase error:', error);
-      toast.error(error.message || 'Failed to purchase comic');
+      console.error('Mint error:', error);
+      toast.error(error.message || 'Failed to mint comic');
     }
   };
 
   const handleBack = () => {
-    router.back()
+    if (showMintPage) {
+      setShowMintPage(false)
+    } else {
+      router.back()
+    }
   }
 
+  // Handle "Start Read" button click - SHOW MINT PAGE
   const handleReadIssue = () => {
-    if (!walletStatus.isConnected && !useDummyData) {
-      toast.error('Please connect your wallet to read this comic')
-      return
-    }
-
-    if (!transformedComic) {
-      toast.error('Comic data not available')
-      return
-    }
-
-    // For demo/dummy data, to allow reading directly
-    if (useDummyData) {
-      router.push(`/reader?id=${id}`)
-      return
-    }
-
-    if (transformedComic.publishType === 'free') {
-      if (hasNFTAccess || hasClaimed) {
-        router.push(`/reader?id=${id}`)
-      } else {
-        setIsClaimModalOpen(true)
-      }
-      return
-    }
-
-    if (transformedComic.publishType === 'nft') {
-      if (hasNFTAccess) {
-        router.push(`/reader?id=${id}`)
-      } else {
-        setIsPurchaseModalOpen(true)
-      }
-    }
+    console.log('Opening mint page for:', transformedComic?.title)
+    setShowMintPage(true)
   }
 
   const handleResell = () => {
     toast.info('Resell feature coming soon!')
   }
 
+  // Loading state
   if (isLoading && !useDummyData) {
     return (
       <div className="min-h-screen bg-[#161614] flex items-center justify-center">
@@ -399,63 +331,95 @@ function Page() {
     )
   }
 
-  // this determine if purchase is in progress
+  // Determine if purchase is in progress
   const isPurchaseInProgress = isPurchasing || isConfirming
 
+  // RENDER MINT PAGE OR COMIC DETAIL PAGE
   return (
     <>
-      <ComicDetail
-        {...transformedComic}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        onBack={handleBack}        
-        onReadIssue={handleReadIssue}
-        onResell={handleResell}
-        onPreviewIssue={handlePreview}
-        onEnlargeCover={handleEnlargeCover}
-        isVerifyingAccess={false}
-        hasNFTAccess={useDummyData ? false : hasNFTAccess}
-      />
-
-      <ComicPreviewModal
-        isOpen={isPreviewOpen}
-        onClose={handleClosePreview}
-        previewComic={previewComic}
-        isLoading={isPreviewing}
-      />
-
-      {transformedComic.publishType === 'nft' && (
-        <PurchaseNFTModal
-          isOpen={isPurchaseModalOpen}
-          onClose={handleClosePurchaseModal}
-          comicTitle={transformedComic.title}
-          comicImage={transformedComic.coverImage}
-          creatorName={transformedComic.author.name}
-          creatorAvatar={transformedComic.author.avatar}
-          price={transformedComic.price}
-          tokenId={transformedComic.tokenId}
-          sellerAddress={transformedComic.creatorWalletAddress}
-          limitedEdition={`${transformedComic.nftDetails?.currentSupply || 0}/${transformedComic.nftDetails?.maxSupply || 100}`}
-          onPurchase={handlePurchase}
-          onPurchaseSuccess={() => setIsPurchaseModalOpen(false)}
-          isPurchasing={isPurchaseInProgress}
-          purchaseError={purchaseError}
-          purchaseSuccess={purchaseSuccess}
-          comicId={id}
+      {showMintPage ? (
+        // SHOW MINT COMIC PAGE
+        <MintComicModal
+          title={transformedComic.title}
+          issueNumber={transformedComic.issueNumber}
+          author={transformedComic.author}
+          coverImage={transformedComic.coverImage}
+          description={transformedComic.description}
+          tags={transformedComic.tags}
+          price={transformedComic.price || '0.09 ₽'}
+          isWalletConnected={walletStatus.isConnected}
+          walletAddress={walletStatus.address ? 
+            `${walletStatus.address.slice(0, 6)}...${walletStatus.address.slice(-4)}` : 
+            '0xA182...C3D4'
+          }
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          onBack={() => setShowMintPage(false)}
+          onMintComic={handleMintComic}
+          onAddToFavourite={() => toast.info('Added to favourites!')}
+          onConnectWallet={() => toast.info('Connect wallet clicked!')}
         />
-      )}
+      ) : (
+        // SHOW REGULAR COMIC DETAIL PAGE
+        <>
+          <ComicDetail
+            {...transformedComic}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            onBack={handleBack}
+            onReadIssue={handleReadIssue}
+            onResell={handleResell}
+            onPreviewIssue={handlePreview}
+            onEnlargeCover={handleEnlargeCover}
+            isVerifyingAccess={false}
+            hasNFTAccess={useDummyData ? false : hasNFTAccess}
+          />
 
-      <ClaimModal
-        isOpen={isClaimModalOpen}
-        onClose={() => setIsClaimModalOpen(false)}
-        onClaim={handleClaimComic}
-        comicTitle={transformedComic.title}
-        isClaiming={isClaiming}
-        claimSuccess={claimSuccess}
-        claimError={claimError}
-        claimProgress={claimProgress}
-        transactionHash={claimHash}
-      />
+          <ComicPreviewModal
+            isOpen={isPreviewOpen}
+            onClose={handleClosePreview}
+            previewComic={previewComic}
+            isLoading={isPreviewing}
+          />
+
+          {/* Keep PurchaseModal for backward compatibility */}
+          {transformedComic.publishType === 'nft' && (
+            <PurchaseNFTModal
+              isOpen={isPurchaseModalOpen}
+              onClose={handleClosePurchaseModal}
+              comicTitle={transformedComic.title}
+              comicImage={transformedComic.coverImage}
+              creatorName={transformedComic.author.name}
+              creatorAvatar={transformedComic.author.avatar}
+              price={transformedComic.price}
+              tokenId={BigInt(transformedComic.tokenId || 1)}
+              sellerAddress={transformedComic.creatorWalletAddress}
+              limitedEdition="1,000"
+              onPurchase={handleMintComic}
+              onPurchaseSuccess={() => {
+                setIsPurchaseModalOpen(false)
+                router.push(`/reader?id=${id}`)
+              }}
+              isPurchasing={isPurchaseInProgress}
+              purchaseError={purchaseError}
+              purchaseSuccess={purchaseSuccess}
+              comicId={id}
+            />
+          )}
+
+          <ClaimModal
+            isOpen={isClaimModalOpen}
+            onClose={() => setIsClaimModalOpen(false)}
+            onClaim={handleClaimComic}
+            comicTitle={transformedComic.title}
+            isClaiming={isClaiming}
+            claimSuccess={claimSuccess}
+            claimError={claimError}
+            claimProgress={claimProgress}
+            transactionHash={claimHash}
+          />
+        </>
+      )}
     </>
   )
 }
