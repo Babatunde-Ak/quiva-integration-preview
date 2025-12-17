@@ -591,3 +591,125 @@
 	background-position: center;
 	background-repeat: no-repeat;
 }
+
+
+/* Marketplace Sidebar Styles - Add to your globals.css */
+
+/* Sidebar state utilities */
+.sidebar-expanded .sidebar-responsive-margin {
+  margin-left: 16rem; /* 256px */
+}
+
+.sidebar-collapsed .sidebar-responsive-margin {
+  margin-left: 4rem; /* 64px */
+}
+
+/* Enhanced tooltip styles for collapsed sidebar */
+.sidebar-tooltip {
+  position: absolute;
+  left: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: rgb(40, 40, 40);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease-in-out;
+  z-index: 1000;
+}
+
+/* Tooltip arrow */
+.sidebar-tooltip::before {
+  content: '';
+  position: absolute;
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 6px solid transparent;
+  border-right-color: rgb(40, 40, 40);
+}
+
+/* Focus states for accessibility */
+.sidebar-focus:focus-visible {
+  outline: 2px solid rgba(255, 107, 53, 0.6); /* Your secondary-200 with opacity */
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* Show tooltip on hover */
+.group:hover .sidebar-tooltip {
+  opacity: 1;
+}
+
+/* Smooth hover effects for sidebar buttons */
+.sidebar-button-hover {
+  transition: all 0.2s ease-out;
+}
+
+.sidebar-button-hover:hover {
+  transform: translateX(2px);
+}
+
+/* Active state indicator line (only show when expanded) */
+.sidebar-active-indicator {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  /* background-color: #ff6b35; */
+  border-radius: 0 4px 4px 0;
+}
+
+/* Prevent layout shift during transitions */
+.sidebar-container {
+  flex-shrink: 0;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Sidebar navigation scrolling - UPDATED for h-screen */
+.sidebar-nav {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+  /* Enable smooth scrolling */
+  scroll-behavior: smooth;
+  /* Ensure only y-axis scrolling */
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.sidebar-nav::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* Hide horizontal scrollbar completely */
+.sidebar-nav::-webkit-scrollbar-horizontal {
+  display: none;
+}
+
+/* Ensure main content area doesn't scroll horizontally */
+.main-content-scroll {
+  overflow-x: hidden;
+  overflow-y: auto;
+  height: 100%;
+}
