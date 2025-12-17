@@ -30,17 +30,17 @@ const getNavIcon = (label: string) => {
   
   switch (label.toLowerCase()) {
     case 'explore':
-      return <Search className={iconClass} />
-    case 'my library':
-      return <BookOpen className={iconClass} />
+      return <img src="/category.svg" alt="Explore" className={iconClass} />
+    case 'favourites':
+      return <img src="/heart-circle-icon.svg" alt="Explore" className={iconClass} />
     case 'collections':
-      return <Folder className={iconClass} />
+      return <img src="/collections-icon.svg" alt="Explore" className={iconClass} />
     case 'top creators':
-      return <Users className={iconClass} />
+      return <img src="/users-icons.png" alt="Explore" className={iconClass} />
     case 'user profile':
-      return <User className={iconClass} />
+      return <img src="/wallet-icon.svg" alt="Explore" className={iconClass} />
     default:
-      return <Search className={iconClass} />
+      return <img src="/category.svg" alt="Explore" className={iconClass} />
   }
 }
 
@@ -86,11 +86,6 @@ export function Sidebar({ isMobileMenuOpen, onMobileMenuClose, isCollapsed, onTo
       isActive: pathname === '/marketplace'
     },
     {
-      label: 'My Library', 
-      path: '/marketplace/library',
-      isActive: pathname === '/marketplace/library'
-    },
-    {
       label: 'Collections', 
       path: '/marketplace/collections',
       isActive: pathname === '/marketplace/collections'
@@ -99,6 +94,11 @@ export function Sidebar({ isMobileMenuOpen, onMobileMenuClose, isCollapsed, onTo
       label: 'Top Creators', 
       path: '/marketplace/top-creators',
       isActive: pathname === '/marketplace/top-creators'
+    },
+    {
+      label: 'Favourites', 
+      path: '/marketplace/library',
+      isActive: pathname === '/marketplace/library'
     },
     {
       label: 'User Profile', 
@@ -252,7 +252,7 @@ export function Sidebar({ isMobileMenuOpen, onMobileMenuClose, isCollapsed, onTo
                   )}
                   
                   <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'}`}>
-                    <div className={`${item.isActive && isCollapsed ? 'text-secondary-200' : ''}`}>
+                    <div className={`${item.isActive && isCollapsed ? 'bg-secondary-200 px-1.5 py-1.5 rounded-full' : ''}`}>
                       {getNavIcon(item.label)}
                     </div>
                     {!isCollapsed && (
