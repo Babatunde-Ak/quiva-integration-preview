@@ -81,7 +81,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 // Custom Legend Component - Always vertical layout
 const CustomLegend = ({ payload }: any) => {
   return (
-    <div className="flex flex-row sm:flex-col items-center sm:items-start justify-center sm:justify-end gap-2 sm:gap-4 ml-0 sm:ml-4 pl-0 sm:pl-4 mb-4 sm:mb-0">
+    <div className="flex flex-row lg:flex-col items-center lg:items-start justify-center lg:justify-end gap-2 lg:gap-4 ml-0 lg:ml-4 pl-0 lg:pl-4 mb-4 lg:mb-0">
       {payload.map((entry: any, index: number) => (
         <div key={index} className="flex items-center gap-1.5">
           <div 
