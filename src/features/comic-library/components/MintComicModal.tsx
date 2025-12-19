@@ -1,27 +1,12 @@
 'use client'
 
 import React, { useState } from 'react'
-import { ChevronLeft, User, Heart, ChevronRight, Wallet, LogOut } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { ComicCard } from '@/components/cards/ComicCard'
-import { 
-  LOCAL_IMAGE, 
-  MORE_ADVENTURE_COMICS, 
-  ACTIVITY_DATA, 
-  EPISODE_LIST 
-} from '@/components/utils/dummy-data'
+import { ChevronLeft, Lock, Heart, ChevronRight, Wallet, LogOut } from 'lucide-react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import MintConfirmationModal from './MintConfirmationModal'
 import MintProcessingModal from './MintProcessingModal'
 import MintSuccessModal from './MintSuccessModal'
-
-interface ComicIssue {
-  id: string
-  title: string
-  image: string
-  date: string
-  isFree?: boolean
-}
 
 interface MintComicModalProps {
   title: string
@@ -64,73 +49,59 @@ const MintComicModal: React.FC<MintComicModalProps> = ({
   const [editionNumber, setEditionNumber] = useState('#1,001')
   const [isMinting, setIsMinting] = useState(false)
   
-  // Wallet states - For demo, set to connected by default
+  // Wallet states
   const [isWalletConnected, setIsWalletConnected] = useState(true)
   const [walletAddress, setWalletAddress] = useState('0xA182...C3D4')
 
   // Handle Connect Wallet
   const handleConnectWallet = () => {
-    // For demo, simulate wallet connection
     setIsWalletConnected(true)
     setWalletAddress('0xA182...C3D4')
     setShowConnectWallet(false)
   }
 
-  // Handle Disconnect Wallet
+  // Disconnect Wallet
   const handleDisconnectWallet = () => {
     setIsWalletConnected(false)
     setWalletAddress('')
   }
 
-  // Handle Mint Comic button click
+  //  Mint Comic button click
   const handleMintClick = () => {
-    // COMMENTED OUT FOR DEMO - Allow minting without wallet
-    // if (!isWalletConnected) {
-    //   setShowConnectWallet(true)
-    //   return
-    // }
-    
-    // FOR DEMO: Allow minting without wallet
     if (!isWalletConnected) {
-      // Auto-connect wallet for demo
       handleConnectWallet()
     }
     
     setShowConfirmModal(true)
   }
 
-  // Handle confirm mint
+  //  confirm mint
   const handleConfirmMint = async () => {
     setShowConfirmModal(false)
     setShowProcessingModal(true)
     setIsMinting(true)
     
-    // will replace with actual minting logic
-    // For now, it simulate minting process
     setTimeout(() => {
-      // Simulate successful transaction
       setTransactionHash('0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef')
-      setEditionNumber('#721') // Next available edition
+      setEditionNumber('#721')
       setShowProcessingModal(false)
       setShowSuccessModal(true)
       setIsMinting(false)
     }, 3000)
   }
 
-  // Handle view comic after success
+  //  view comic after success
   const handleViewComic = () => {
     setShowSuccessModal(false)
-    // Navigate to reader page
     router.push(`/reader?id=${comicId}`)
   }
 
-  // Handle add to favourite
+  //  add to favourite
   const handleAddToFavourite = () => {
-    //Add to favourites logic
     alert('Added to favourites!')
   }
 
-  // Handle back button
+  //  back button
   const handleBack = () => {
     if (onBack) {
       onBack()
@@ -139,7 +110,7 @@ const MintComicModal: React.FC<MintComicModalProps> = ({
     }
   }
 
-  // Handle tab change
+  // tab change
   const handleTabChange = (tab: string) => {
     if (onTabChange) {
       onTabChange(tab)
@@ -148,94 +119,89 @@ const MintComicModal: React.FC<MintComicModalProps> = ({
 
   return (
     <>
-      <div className="min-h-screen bg-[#161614] text-white">
-        {/* Header */}
-        <div className="border-b border-white/10 px-4 py-3">
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={handleBack}
-            className="text-white hover:bg-white/5 p-1.5 text-xs"
-          >
-            <ChevronLeft className="w-3 h-3 mr-1.5" />
-            Back to Collection
-          </Button>
-        </div>
+      <div className="min-h-screen bg-[#0a0a0a] text-gray-200 font-sans selection:bg-orange-500 selection:text-white pb-20">
+        {/*  HERO SECTION  */}
+        <div className="relative w-full overflow-hidden mb-10">
+          {/* Background Blur Effect */}
+          <div className="absolute inset-0 z-0">
+            <img
+              src={coverImage}
+              alt="Background Blur"
+              className="w-full h-full object-cover blur-2xl scale-110"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b opacity-90 from-[#0a0a0a]/60 via-[#0a0a0a]/90 to-[#0a0a0a]" />
+          </div>
 
-        {/* HERO BANNER SECTION */}
-        <div 
-          className="relative px-4 py-8 md:py-10 overflow-hidden"
-          style={{
-            backgroundImage: `url('${LOCAL_IMAGE}')`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat'
-          }}
-        >
-          
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
-          
-          <div className="relative max-w-6xl mx-auto z-10">
-            <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-end">
-             
-              {/* Comic Cover Image */}
-              <div className="w-full lg:w-auto flex justify-center lg:justify-start">
-                <div className="w-48 md:w-56 lg:w-64 rounded-lg overflow-hidden shadow-2xl border-2 border-white/20">
+          <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-12">
+            {/* Back Button */}
+            <button
+              onClick={handleBack}
+              className="flex items-center text-[#fff]/70 space-x-2 bg-[#000] backdrop-blur-md px-4 py-2 rounded-full border border-white/10 hover:bg-[#000]/70 transition-colors mb-8 text-sm font-medium"
+            >
+              <ChevronLeft size={16} />
+              <span>Back to Collection</span>
+            </button>
+
+            <div className="flex flex-col md:flex-row gap-8 items-start md:items-end">
+              {/* Cover Image */}
+              <div className="w-full md:w-[320px] shrink-0 group perspective">
+                <div className="relative rounded-xl w-[279px] h-[356px] overflow-hidden shadow-2xl shadow-black/50 transition-transform duration-300 hover:scale-[1.02]">
                   <img
-                    src={coverImage || LOCAL_IMAGE}
-                    alt={title}
-                    className="w-full h-auto object-cover"
+                    src={coverImage}
+                    alt="Avatar Cover"
+                    className="w-[279px] h-[356px] object-cover border border-white/5"
                   />
                 </div>
               </div>
-              
-              {/* Comic Info and Buttons */}
-              <div className="flex-1 min-h-[200px] lg:min-h-[220px] flex flex-col justify-end">
-           
-                <h1 className="text-xl md:text-2xl lg:text-3xl font-bold mb-2 text-center lg:text-left">
+
+              {/* Hero Info */}
+              <div className="flex-1 pb-2 flex flex-col">
+                <h1 className="text-3xl font-mono font-bold text-white mb-2 flex gap-2 items-center tracking-tight">
                   {title}
-                </h1>
                 
-                {/* Author Info */}
-                <div className="mb-3 text-center lg:text-left">
-                  <div className="flex items-center gap-2 mb-1 justify-center lg:justify-start">
-                    <div className="w-8 h-8 md:w-10 md:h-10 rounded-full overflow-hidden border border-yellow-500/50">
+                </h1>
+
+                <div className="flex items-center space-x-3 mb-6">
+                  <div className="flex font-mono items-center space-x-2">
+                    <div className="w-8 h-8 rounded-sm bg-blue-600 overflow-hidden border border-white/10">
                       <img
-                        src={author.avatar || LOCAL_IMAGE}
-                        alt={author.name}
+                        src={author.avatar}
+                        alt="creator"
                         className="w-full h-full object-cover"
                       />
                     </div>
-                    <div className="flex flex-col items-start">
-                      <span className="text-white text-sm md:text-base font-semibold">
-                        {author.name}
-                      </span>
-                      <div className="flex items-center gap-1">
-                        <User className="w-3 h-3 text-white/60" />
-                        <span className="text-white/70 text-xs font-medium">creator</span>
-                      </div>
-                    </div>
+                    <span className="flex flex-col text-sm text-white/60">
+                      <p className="leading-none text-[10px] tracking-wider">
+                        Creator
+                      </p>
+                      <strong className="text-white">{author.name}</strong>
+                    </span>
                   </div>
                 </div>
-                
+
                 {/* Tags */}
-                <div className="flex flex-wrap gap-1.5 mb-4 justify-center lg:justify-start">
-                  {tags.map((tag, index) => (
-                    <span 
-                      key={index}
-                      className="bg-white/20 text-white text-xs px-3 py-1.5 rounded-full backdrop-blur-sm"
+                <div className="flex flex-wrap gap-2 mb-8">
+                  {tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="px-3 font-mono py-1.5 rounded-lg bg-[#000] border border-white/5 text-xs text-white/70 font-medium hover:bg-[#000]/70 cursor-default transition-colors"
                     >
                       {tag}
                     </span>
                   ))}
                 </div>
-                
+
                 {/* Price Display */}
                 <div className="mb-4">
                   <div className="text-white/70 text-xs mb-1">Price</div>
-                  <div className="text-white text-xl font-bold">{price}</div>
+                  <div className="text-white text-xl font-bold flex items-center gap-1">
+                    0.09
+                    <span className="text-xs align-center opacity-70">
+                      <img src="/hbar.png" alt="HBAR" />
+                    </span>
+                  </div>
                 </div>
-                
+
                 {/* Wallet Status Section */}
                 <div className="mb-4">
                   {isWalletConnected ? (
@@ -261,26 +227,22 @@ const MintComicModal: React.FC<MintComicModalProps> = ({
                     </button>
                   )}
                 </div>
-                
-                {/* Primary Action Buttons */}
-                <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start mt-2">
-                  {/* Mint Comic Button */}
-                  <button
+
+                {/* Action Buttons*/}
+                <div className="flex gap-3 md:gap-4 font-mono max-w-md">
+                  <button 
                     onClick={handleMintClick}
-                    // COMMENTED OUT FOR DEMO: disabled={isMinting}
                     disabled={isMinting}
-                    className={`px-6 py-2.5 rounded-full text-sm font-medium bg-yellow-600 hover:bg-yellow-700 text-black transition-all flex items-center justify-center gap-2 ${isMinting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    className="flex-1 bg-[#FAA31E] text-black font-bold py-2 px-1 md:py-2 md:px-1 rounded-full hover:brightness-110 transition-all shadow-lg shadow-orange-500/20 flex items-center justify-center gap-2 text-sm md:text-base"
                   >
                     <span>{isMinting ? 'Minting...' : 'Mint Comic'}</span>
-                    {!isMinting && <ChevronRight className="w-4 h-4" />}
+                    {!isMinting && <ChevronRight className="w-3 h-3 md:w-4 md:h-4" />}
                   </button>
-                  
-                  {/* Add to Favourite Button */}
                   <button
                     onClick={handleAddToFavourite}
-                    className="px-6 py-2.5 rounded-full text-sm font-medium bg-transparent border border-white/30 text-white hover:bg-white/20 transition-all flex items-center justify-center gap-2"
+                    className="flex-1 bg-transparent border border-white text-white font-medium py-2 px-1 md:py-2 md:px-1 rounded-full hover:bg-white/5 transition-all flex items-center justify-center gap-2 text-sm md:text-base"
                   >
-                    <Heart className="w-4 h-4" />
+                    <Heart className="w-3 h-3 md:w-4 md:h-4" />
                     <span>Add to favourite</span>
                   </button>
                 </div>
@@ -289,125 +251,139 @@ const MintComicModal: React.FC<MintComicModalProps> = ({
           </div>
         </div>
 
-        {/* MAIN CONTENT */}
-        <div className="max-w-6xl mx-auto px-4 py-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left Column */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Tab Buttons */}
-              <div className="flex space-x-3">
-                <button
-                  onClick={() => handleTabChange('details')}
-                  className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
-                    activeTab === 'details' 
-                      ? 'bg-yellow-600 text-black' 
-                      : 'bg-white/10 text-white/70 hover:bg-white/20'
-                  }`}
-                >
-                  Comic Details
-                </button>
-                <button
-                  onClick={() => handleTabChange('activity')}
-                  className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
-                    activeTab === 'activity' 
-                      ? 'bg-white/20 text-white' 
-                      : 'bg-white/10 text-white/70 hover:bg-white/20'
-                }`}
-                >
-                  Activity
-                </button>
-              </div>
+        {/*  MAIN CONTENT GRID */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-4 relative z-20">
+          {/* Tabs */}
+          <div className="flex space-x-1 bg-[#151515] font-mono p-1 rounded-full w-fit mb-8 border border-white/5">
+            <button 
+              onClick={() => handleTabChange('details')}
+              className={`px-6 py-2 rounded-full text-sm transition-all ${
+                activeTab === 'details' 
+                  ? 'bg-[#FAA31E] text-[#000] font-bold shadow-md' 
+                  : 'text-white hover:text-white/70 font-medium'
+              }`}
+            >
+              Comic Details
+            </button>
+            <button 
+              onClick={() => handleTabChange('activity')}
+              className={`px-6 py-2 rounded-full text-sm transition-all ${
+                activeTab === 'activity' 
+                  ? 'bg-[#FAA31E] text-[#000] font-bold shadow-md' 
+                  : 'text-white hover:text-white/70 font-medium'
+              }`}
+            >
+              Activity
+            </button>
+          </div>
 
-              {/* CONTENT BASED ON ACTIVE TAB */}
+          <div className="grid grid-cols-1 text-white/70 font-mono lg:grid-cols-12 gap-6">
+            {/* Details or Activity */}
+            <div className="lg:col-span-7 space-y-6">
               {activeTab === 'details' ? (
                 <>
-                  {/* About the Comic Section */}
-                  <div className="bg-white/5 rounded-lg p-5 border border-white/10">
-                    <h2 className="text-lg font-bold mb-3">About the Comic</h2>
-                    <p className="text-white/70 text-sm leading-relaxed">
+                  {/* About Card */}
+                  <div className="bg-[#111] border border-white/5 rounded-2xl p-6 md:p-8">
+                    <h3 className="text-xl font-medium mb-4">About</h3>
+                    <p className="leading-relaxed text-sm md:text-base">
                       {description}
                     </p>
                   </div>
 
                   {/* Episode List */}
-                  <div className="bg-white/5 rounded-lg p-5 border border-white/10">
-                    <h2 className="text-lg font-bold mb-3">Episode List</h2>
-                    <div className="space-y-3">
-                      {EPISODE_LIST.map((episode, index) => (
-                        <div 
-                          key={index} 
-                          className="flex items-center justify-between p-0" 
+                  <div className="bg-[#111] border text-white/70 font-mono border-white/5 rounded-2xl p-6 md:p-8">
+                    <h3 className="text-xl font-medium mb-6">Episode List</h3>
+                    <div className="space-y-4">
+                      {[
+                        { title: "Episode 1 : The First Flame", status: "Open" },
+                        { title: "Episode 2 : Whispers of the Wind", status: "Open" },
+                        { title: "Episode 3 : Echoes Beneath the Earth", status: "Open" },
+                      ].map((ep, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between group cursor-pointer"
                         >
-                          <div className="flex items-center gap-3">
-                            <div>
-                              <h3 className="text-sm font-medium">{episode.title}</h3>
-                              <p className="text-white/60 text-xs">Time: {episode.time}</p>
-                            </div>
+                          <div className="flex items-center space-x-3 group-hover:text-orange-400 transition-colors">
+                            <span className="font-mono text-sm">
+                              Episode {idx + 1} :
+                            </span>
+                            <span className="font-medium">{ep.title}</span>
                           </div>
-                          <span className="bg-black/70 text-white text-xs px-3 py-1.5 rounded-full">
-                            open 🔓
-                          </span>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-[10px] bg-[#1a1a1a] border border-white/10 px-1.5 py-0.5 rounded font-mono uppercase tracking-wider">
+                              {ep.status}
+                            </span>
+                            <Lock size={12} className="text-yellow-500" />
+                          </div>
                         </div>
                       ))}
                     </div>
                   </div>
 
                   {/* About Creator */}
-                  <div className="bg-white/5 rounded-lg p-5 border border-white/10">
-                    <h2 className="text-lg font-bold mb-3">About Creator</h2>
-                    <div className="flex flex-col sm:flex-row items-start gap-3">
-                      <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 border border-yellow-500/50">
+                  <div className="bg-[#111] border text-white/70 font-mono border-white/5 rounded-2xl p-6 md:p-8">
+                    <h3 className="text-xl font-medium mb-4">About Creator</h3>
+                    <div className="flex items-center space-x-3 mb-4">
+                      <div className="w-8 h-8 rounded bg-blue-600 flex items-center justify-center overflow-hidden">
                         <img
-                          src={author.avatar || LOCAL_IMAGE}
-                          alt={author.name}
+                          src={author.avatar}
+                          alt="creator"
                           className="w-full h-full object-cover"
                         />
                       </div>
-                      <div>
-                        <h3 className="text-base font-semibold mb-1">{author.name}</h3>
-                        <p className="text-white/70 text-sm">
-                          Studio Kyra is a visionary town of artists and storytellers dedicated to making the boundaries of digital art and interactive narratives.
-                        </p>
-                      </div>
+                      <span className="font-bold text-white">{author.name}</span>
                     </div>
+                    <p className="leading-relaxed text-sm">
+                      Studio Kyra is a visionary team of artists and storytellers
+                      dedicated to pushing the boundaries of digital art and
+                      interactive narratives.
+                    </p>
                   </div>
                 </>
               ) : (
                 /* ACTIVITY TAB CONTENT */
-                <div className="bg-white/5 rounded-lg p-5 border border-white/10">
-                  <h2 className="text-lg font-bold mb-4">Live Activity</h2>
+                <div className="bg-[#111] border border-white/5 rounded-2xl p-6 md:p-8">
+                  <h3 className="text-xl font-medium mb-4">Live Activity</h3>
                   <p className="text-white/60 text-sm mb-5">
-                    See who is minting, Listing and trading this comic
+                    See who is minting, listing and trading this comic
                   </p>
                   
-                  {/* Activity Table */}
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
+                  {/* Activity Table - Horizontal scroll on mobile */}
+                  <div className="overflow-x-auto md:overflow-visible">
+                    <table className="w-full min-w-[600px] md:min-w-0">
                       <thead>
                         <tr className="border-b border-white/10">
-                          <th className="text-left text-white/60 text-xs font-medium pb-3">Username</th>
-                          <th className="text-left text-white/60 text-xs font-medium pb-3">Event</th>
-                          <th className="text-left text-white/60 text-xs font-medium pb-3">Price</th>
-                          <th className="text-left text-white/60 text-xs font-medium pb-3">Edition</th>
-                          <th className="text-left text-white/60 text-xs font-medium pb-3">Time</th>
+                          <th className="text-left text-white/60 text-xs font-medium pb-3 px-2">Username</th>
+                          <th className="text-left text-white/60 text-xs font-medium pb-3 px-2">Event</th>
+                          <th className="text-left text-white/60 text-xs font-medium pb-3 px-2">Price</th>
+                          <th className="text-left text-white/60 text-xs font-medium pb-3 px-2">Edition</th>
+                          <th className="text-left text-white/60 text-xs font-medium pb-3 px-2">Time</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {ACTIVITY_DATA.map((activity, index) => (
+                        {/* Using ACTIVITY_DATA from props or dummy data */}
+                        {[
+                          { username: "quiva_creator", event: "Mint", price: "0.09", edition: "#721", time: "2 mins ago" },
+                          { username: "nft_collector", event: "Purchase", price: "0.095", edition: "#720", time: "5 mins ago" },
+                          { username: "crypto_artist", event: "List", price: "0.10", edition: "#719", time: "10 mins ago" }
+                        ].map((activity, index) => (
                           <tr key={index} className="border-b border-white/5 hover:bg-white/5">
-                            <td className="py-3">
+                            <td className="py-3 px-2">
                               <span className="text-white text-sm font-medium">{activity.username}</span>
                             </td>
-                            <td className="py-3">
+                            <td className="py-3 px-2">
                               <span className="text-white text-sm font-medium">{activity.event}</span>
                             </td>
-                            <td className="py-3">
-                              <span className="text-white text-sm font-medium">{activity.price}</span>
+                            <td className="py-3 px-2">
+                              <span className="text-white text-sm font-medium flex items-center gap-1">
+                                {activity.price}
+                                <img src="/hbar.png" alt="HBAR" className="inline-block" />
+                              </span>
                             </td>
-                            <td className="py-3">
+                            <td className="py-3 px-2">
                               <span className="text-white text-sm font-medium">{activity.edition}</span>
                             </td>
-                            <td className="py-3">
+                            <td className="py-3 px-2">
                               <span className="text-white/60 text-sm">{activity.time}</span>
                             </td>
                           </tr>
@@ -419,81 +395,121 @@ const MintComicModal: React.FC<MintComicModalProps> = ({
               )}
             </div>
 
-            {/* Right Column - Minting Details Card */}
-            <div className="lg:col-span-1">
-              <div className="lg:mt-[60px]"> 
-                <div className="bg-white/5 rounded-lg p-5 border border-white/10 sticky top-6">
-                  {/* Minting Details */}
-                  <div className="mb-6">
-                    <h3 className="text-base font-semibold text-white mb-4">Minting Details</h3>
-                    
-                    {/* Labels row */}
-                    <div className="grid grid-cols-3 gap-4 mb-1">
-                      <div className="text-white/70 text-xs">Mint Price</div>
-                      <div className="text-white/70 text-xs text-center">Editions</div>
-                      <div className="text-white/70 text-xs text-right">Royalties</div>
-                    </div>
-                    
-                    {/* Values row */}
-                    <div className="grid grid-cols-3 gap-4 mb-4">
-                      <div className="text-white text-sm font-bold">0.09 H</div>
-                      <div className="text-white text-sm font-bold text-center">1,000</div>
-                      <div className="text-white text-sm font-bold text-right">7% to creator</div>
-                    </div>
-                    
-                    <div className="mb-2">
-                      <div className="text-white/50 text-xs mb-1">Blockchain</div>
-                      <div className="text-white text-xs font-medium">Hedera</div>
-                    </div>
-                  </div>
+            {/* RIGHT COLUMN Stats */}
+            <div className="lg:col-span-5 space-y-6">
+              {/* Minting Details */}
+              <div className="bg-[#111] border text-white/70 font-mono border-white/5 rounded-2xl p-6 md:p-8">
+                <h3 className="text-xl font-medium mb-6">Minting Details</h3>
 
-                  {/* Market Stats */}
-                  <div className="mb-6">
-                    <h3 className="text-base font-semibold text-white mb-4">Market Stats</h3>
-                    
-                    {/* Labels row */}
-                    <div className="grid grid-cols-3 gap-4 mb-1">
-                      <div className="text-white/70 text-xs">Floor Price</div>
-                      <div className="text-white/70 text-xs text-center">Total Mints</div>
-                      <div className="text-white/70 text-xs text-right">Volume</div>
-                    </div>
-                    
-                    {/* Values row */}
-                    <div className="grid grid-cols-3 gap-4 mb-4">
-                      <div className="text-white text-sm font-bold">0.085 H</div>
-                      <div className="text-white text-sm font-bold text-center">721/1,000</div>
-                      <div className="text-white text-sm font-bold text-right">45.8 H</div>
-                    </div>
-                  </div>
-
-                  {/* Collectors */}
+                <div className="grid grid-cols-3 gap-6 mb-6 border-b border-white/5 pb-6">
                   <div>
-                    <div className="text-white/50 text-xs mb-1">Collectors</div>
-                    <div className="text-white text-xl font-bold">389</div>
+                    <p className="text-xs mb-1">Mint Price</p>
+                    <p className="flex text-lg items-center font-bold text-white">
+                      <p>0.09</p>
+                      <span className="text-xs align-center opacity-70">
+                        <img src="/hbar.png" alt="HBAR" />
+                      </span>
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs mb-1">Editions</p>
+                    <p className="text-lg font-bold text-white">1,000</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">Royalties</p>
+                    <p className="text-lg font-bold text-white">
+                      7% <span className="text-sm font-normal">to creator</span>
+                    </p>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs mb-1">Blockchain</p>
+                  <p className="text-lg font-bold text-white">Hedera</p>
+                </div>
+              </div>
+
+              {/* Market Stats */}
+              <div className="bg-[#111] border text-white/70 font-mono border-white/5 rounded-2xl p-6 md:p-8">
+                <h3 className="text-xl font-medium mb-6">Market Stats</h3>
+
+                <div className="grid grid-cols-3 gap-y-8 gap-x-4">
+                  <div>
+                    <p className="text-xs mb-1">Floor Price</p>
+                    <div className="flex text-lg items-center font-bold text-white">
+                      <p>0.085</p>
+                      <span className="text-xs align-center opacity-70">
+                        <img src="/hbar.png" alt="HBAR" />
+                      </span>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs mb-1">Total Mints</p>
+                    <p className="text-lg font-bold text-white">721 / 1,000</p>
+                  </div>
+                  <div>
+                    <p className="text-xs mb-1">Volume</p>
+                    <div className="flex text-lg items-center font-bold text-white">
+                      <p>45.8</p>
+                      <span className="text-xs align-center opacity-70">
+                        <img src="/hbar.png" alt="HBAR" />
+                      </span>
+                    </div>
+                  </div>
+                  <div className="col-span-3">
+                    <p className="text-xs mb-1">Collectors</p>
+                    <p className="text-lg font-bold text-white">389</p>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* More from Adventure Section */}
-          <div className="mt-10">
-            <h2 className="text-lg font-bold mb-6">More from Adventure</h2>
+          {/*  MORE FROM ADVENTURE  */}
+          <div className="mt-16">
+            <h2 className="text-2xl font-bold text-white mb-6">
+              More from Adventure
+            </h2>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {MORE_ADVENTURE_COMICS.slice(0, 6).map((comic) => (
-                <ComicCard
-                  key={comic.id}
-                  id={comic.id}
-                  title={comic.title}
-                  creator={comic.creator}
-                  creatorAvatar={comic.creatorAvatar}
-                  mintPrice={comic.mintPrice}
-                  currentPrice={comic.currentPrice}
-                  views={comic.views}
-                  image={comic.image}
-                  premium={comic.premium}
-                  number={comic.number}
-                />
+              {/* Sample related comics */}
+              {Array.from({ length: 6 }).map((_, idx) => (
+                <div key={idx} className="group bg-[#111] rounded-xl overflow-hidden border border-white/5 hover:border-white/20 transition-all hover:-translate-y-1 cursor-pointer">
+                  <div className="aspect-video w-full overflow-hidden bg-gray-800 relative">
+                    <img
+                      src={coverImage}
+                      alt="Related Comic"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                  <div className="p-4">
+                    <h4 className="font-bold text-white mb-3 truncate">Related Comic {idx + 1}</h4>
+                    <div className="flex items-end justify-between">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-6 h-6 rounded bg-gray-700 overflow-hidden border border-white/10">
+                          <img
+                            src={author.avatar}
+                            alt="creator"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div>
+                          <p className="text-[10px] text-[#fff]/70">Creator</p>
+                          <p className="text-xs font-medium text-white">{author.name}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[10px] text-white/70">Mint Price</p>
+                        <div className="flex text-sm font-bold text-white">
+                          <p>0.09</p>
+                          <span className="text-[10px] align-center">
+                            <img src="/hbar.png" alt="HBAR" />
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               ))}
             </div>
           </div>
@@ -519,14 +535,13 @@ const MintComicModal: React.FC<MintComicModalProps> = ({
                 Connect your wallet to mint this comic and manage your NFTs.
               </p>
 
-              {/* Wallet Options */}
               <div className="space-y-3 mb-6">
                 <button
                   onClick={handleConnectWallet}
                   className="w-full bg-white/10 hover:bg-white/20 text-white font-medium py-4 rounded-xl transition-all flex items-center justify-center gap-3"
                 >
                   <div className="w-8 h-8 bg-yellow-600 rounded-lg flex items-center justify-center">
-                    <span className="text-black font-bold">H</span>
+                    <img src="/hbar.png" alt="HBAR" width={20} height={20} />
                   </div>
                   <span>Hedera HashPack</span>
                 </button>
@@ -559,6 +574,7 @@ const MintComicModal: React.FC<MintComicModalProps> = ({
         onClose={() => setShowConfirmModal(false)}
         onConfirm={handleConfirmMint}
         comicTitle={title}
+         coverImage={coverImage}
         price={price.toString()}
         walletAddress={walletAddress}
         edition="1 of 1000"
