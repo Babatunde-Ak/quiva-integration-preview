@@ -39,6 +39,8 @@ const getNavIcon = (label: string) => {
       return <img src="/users-icons.png" alt="Explore" className={iconClass} />
     case 'user profile':
       return <img src="/wallet-icon.svg" alt="Explore" className={iconClass} />
+    case 'analytics':
+      return <img src="/folder-icon.svg" alt="analytics" className={iconClass} />
     default:
       return <img src="/category.svg" alt="Explore" className={iconClass} />
   }
@@ -101,10 +103,16 @@ export function Sidebar({ isMobileMenuOpen, onMobileMenuClose, isCollapsed, onTo
       isActive: pathname === '/marketplace/library'
     },
     {
+      label: 'Analytics', 
+      path: '/marketplace/analytics',
+      isActive: pathname === '/marketplace/analytics'
+    },
+    {
       label: 'User Profile', 
       path: '/marketplace/user-profile',
       isActive: pathname === '/marketplace/user-profile'
-    },
+    }
+    
   ]
 
   const handleNavigation = (path: string) => {
