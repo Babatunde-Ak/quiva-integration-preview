@@ -1,524 +1,471 @@
 'use client'
 
-import React, {useState, useRef, useEffect, useMemo, useCallback} from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import {
-    ChevronLeft,
-    ChevronRight,
-    ChevronUp,
-    ChevronDown,
-    Loader2,
-    ThumbsUp,
-    Share2,
+  Loader2,
+  ThumbsUp,
+  Share2,
+  ArrowUp,
+  ChevronLeft,
 } from 'lucide-react';
-import {useSearchParams, useRouter} from 'next/navigation';
-import {useAppDispatch, useAppSelector} from '@/redux/hook';
-import {getComicById, clearCurrentComic} from '@/redux/slices/comicSlice';
-// Import card components
+import { useSearchParams, useRouter } from 'next/navigation';
+import { useAppDispatch, useAppSelector } from '@/redux/hook';
+import { getComicById, clearCurrentComic } from '@/redux/slices/comicSlice';
+//  IMPORT FOR COMPATIBILITY
 import { ComicCard } from '@/components/cards/ComicCard';
 import CollectionCard from '@/components/cards/TopSellingCard';
-// Import footer
 import { Footer } from '@/components/global/comic-library/Footer';
-// Import dummy data
 import {
-    LOCAL_IMAGE,
-    DUMMY_READER_COMIC,
-    MORE_COLLECTIONS,
-    TOP_SELLING_COMICS
+  LOCAL_IMAGE,
+  DUMMY_READER_COMIC,
+  TOP_SELLING_COMICS
 } from '@/components/utils/dummy-data';
 
+const COMICS_PER_PAGE = 3;
+
 const ComicReaderViewer = () => {
-    const [currentPage, setCurrentPage] = useState(1);
-    const [useDummyData, setUseDummyData] = useState(false);
-    const [isScrolling, setIsScrolling] = useState(false);
-    const [showControls, setShowControls] = useState(true);
-    const scrollContainerRef = useRef<HTMLDivElement>(null);
-    const isMounted = useRef(true);
-    const lastPageRef = useRef(1);
-    const [showEngagement, setShowEngagement] = useState(false);
+  const [useDummyData, setUseDummyData] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [isScrolling, setIsScrolling] = useState(false);
+  const [currentComicSet, setCurrentComicSet] = useState(1);
 
-    // Media queries
-    const [isMobile, setIsMobile] = useState(false);
-    const [isTablet, setIsTablet] = useState(false);
+  const isMounted = useRef(true);
+  const comicsContainerRef = useRef<HTMLDivElement>(null);
 
-    useEffect(() => {
-        const checkScreenSize = () => {
-            setIsMobile(window.innerWidth < 768);
-            setIsTablet(window.innerWidth >= 768 && window.innerWidth < 1024);
-        };
-        
-        checkScreenSize();
-        window.addEventListener('resize', checkScreenSize);
-        return () => window.removeEventListener('resize', checkScreenSize);
-    }, []);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const dispatch = useAppDispatch();
+  const { currentComic, isLoading } = useAppSelector((state) => state.comic);
 
-    const searchParams = useSearchParams();
-    const router = useRouter();
-    const dispatch = useAppDispatch();
-    const {currentComic, isLoading} = useAppSelector((state) => state.comic);
+  const comicId = searchParams.get('id');
 
-    // Get comic ID from URL query params
-    const comicId = searchParams.get('id');
+  //  images as fallback
+  const images = {
+    //  comic data if available, otherwise  images
+    cover: currentComic?.coverImage || "/dev_images/Rectangle3051.png",
+    avatar: currentComic?.creator?.avatar || "/dev_images/Rectangle3048.png",
+    //  hardcoded images for other sections
+    inosuke: "/dev_images/Image2.png",
+    cross: "/dev_images/Group427320759.png",
+    mj: "/dev_images/Grouup9.png",
+  };
 
-    // Use current comic or dummy data
-    const activeComic = useDummyData ? DUMMY_READER_COMIC : currentComic;
+  /* data fetching */
 
-    // Fetch comic data on mount
-    useEffect(() => {
-        if (comicId) {
-            dispatch(getComicById({id: comicId} as any));
-        }
+  useEffect(() => {
+    if (comicId) dispatch(getComicById({ id: comicId } as any));
+    return () => {
+      dispatch(clearCurrentComic());
+      isMounted.current = false;
+    };
+  }, [comicId, dispatch]);
 
-        return () => {
-            dispatch(clearCurrentComic());
-            isMounted.current = false;
-        };
-    }, [comicId, dispatch]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!currentComic && comicId && isMounted.current) {
+        setUseDummyData(true);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [currentComic, comicId]);
 
-    // Extract all pages from all chapters
-    const comicPages = useMemo(() => {
-        if (!activeComic?.chapters) return [];
-        
-        const pages = [];
-        activeComic.chapters.forEach((chapter) => {
-            if (chapter.pages && Array.isArray(chapter.pages)) {
-                chapter.pages.forEach((page) => {
-                    pages.push({
-                        imageUrl: page.imageUrl || LOCAL_IMAGE,
-                        pageNumber: page.pageNumber,
-                        chapterNumber: chapter.chapterNumber,
-                        chapterTitle: chapter.title,
-                        contentType: page.contentType,
-                        thumbnailUrl: page.thumbnailUrl
-                    });
-                });
-            }
+  const activeComic = useMemo(() => {
+    const comic = useDummyData ? DUMMY_READER_COMIC : currentComic;
+    if (!comic) return null;
+    return {
+      ...comic,
+      creator: comic.creator ?? {
+        name: 'Studio Kyra',
+        avatar: images.avatar, 
+      },
+    };
+  }, [useDummyData, currentComic, images.avatar]);
+
+  const comicPages = useMemo(() => {
+    if (!activeComic?.chapters) return [];
+    const pages = [];
+    activeComic.chapters.forEach((chapter: any) => {
+      if (chapter.pages && Array.isArray(chapter.pages)) {
+        chapter.pages.forEach((page: any) => {
+          pages.push({
+            imageUrl: page.imageUrl || LOCAL_IMAGE,
+            pageNumber: page.pageNumber,
+            chapterNumber: chapter.chapterNumber,
+            chapterTitle: chapter.title,
+            contentType: page.contentType
+          });
         });
-        return pages;
-    }, [activeComic]);
+      }
+    });
+    return pages.slice(0, 15);
+  }, [activeComic]);
 
-    const totalPages = comicPages.length;
+  const totalPages = comicPages.length;
+  const totalComicSets = Math.ceil(totalPages / COMICS_PER_PAGE);
 
-    // Track scroll position
-    useEffect(() => {
-        const container = scrollContainerRef.current;
-        if (!container) return;
-        
-        const handleScroll = () => {
-            if (!isMounted.current) return;
-            
-            setIsScrolling(true);
-            
-            const scrollTop = container.scrollTop;
-            const pageHeight = window.innerHeight;
-            
-            // Calculate current page
-            const page = Math.floor(scrollTop / pageHeight) + 1;
-            const newPage = Math.min(Math.max(1, page), totalPages);
-            
-            if (newPage !== lastPageRef.current) {
-                setCurrentPage(newPage);
-                lastPageRef.current = newPage;
-            }
-            
-            // Show engagement section when we're near the end
-            if (newPage >= totalPages - 2) {
-                setShowEngagement(true);
-            }
-            
-            setTimeout(() => setIsScrolling(false), 100);
-        };
+  // Calculates current page number 
+  const currentPageNumber = useMemo(() => {
+    return (currentComicSet - 1) * COMICS_PER_PAGE + 1;
+  }, [currentComicSet]);
 
-        container.addEventListener('scroll', handleScroll);
-        return () => container.removeEventListener('scroll', handleScroll);
-    }, [totalPages]);
+  // Gets the current set of 3 comics
+  const visibleComicPages = useMemo(() => {
+    const startIndex = (currentComicSet - 1) * COMICS_PER_PAGE;
+    const endIndex = Math.min(startIndex + COMICS_PER_PAGE, totalPages);
+    return comicPages.slice(startIndex, endIndex);
+  }, [comicPages, currentComicSet, totalPages]);
 
-    // Scroll to specific page
-    const scrollToPage = useCallback((pageNumber: number) => {
-        const container = scrollContainerRef.current;
-        if (!container) return;
-        
-        const pageHeight = window.innerHeight;
-        const targetScroll = (pageNumber - 1) * pageHeight;
-        
-        const maxScroll = totalPages * pageHeight;
-        const safeScroll = Math.min(targetScroll, maxScroll);
-        
-        container.scrollTo({
-            top: safeScroll,
-            behavior: 'smooth'
-        });
-    }, [totalPages]);
+  /* scroll logic  */
 
-    const goToNextPage = useCallback(() => {
-        if (currentPage < totalPages) {
-            scrollToPage(currentPage + 1);
-        }
-    }, [currentPage, totalPages, scrollToPage]);
-
-    const goToPreviousPage = useCallback(() => {
-        if (currentPage > 1) {
-            scrollToPage(currentPage - 1);
-        }
-    }, [currentPage, scrollToPage]);
-
-    const handleBack = () => {
-        router.push(`/marketplace/detail?id=${comicId}`);
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!isMounted.current) return;
+      setIsScrolling(true);
+      
+      const scrollTop = window.scrollY || document.documentElement.scrollTop;
+      const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+      
+      if (scrollHeight > 0) {
+        const progress = (scrollTop / scrollHeight) * 100;
+        setScrollProgress(Math.min(100, Math.max(0, progress)));
+      }
+      
+      setTimeout(() => setIsScrolling(false), 100);
     };
 
-    // Keyboard navigation
-    useEffect(() => {
-        const handleKeyPress = (e: KeyboardEvent) => {
-            if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') {
-                e.preventDefault();
-                goToNextPage();
-            }
-            if (e.key === 'ArrowUp' || e.key === 'PageUp') {
-                e.preventDefault();
-                goToPreviousPage();
-            }
-            if (e.key === 'Escape') {
-                handleBack();
-            }
-        };
-        window.addEventListener('keydown', handleKeyPress);
-        return () => window.removeEventListener('keydown', handleKeyPress);
-    }, [goToNextPage, goToPreviousPage, handleBack]);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
-    // Loading state
-    if (isLoading && !useDummyData) {
-        return (
-            <div className="fixed inset-0 bg-[#161614] flex items-center justify-center">
-                <div className="text-center px-4">
-                    <Loader2 className="w-8 h-8 text-yellow-500 animate-spin mx-auto mb-3"/>
-                    <p className="text-white/60 text-xs font-medium">Loading comic...</p>
-                </div>
-            </div>
-        );
+  const goToNextSet = useCallback(() => {
+    if (currentComicSet < totalComicSets) {
+      setCurrentComicSet(prev => prev + 1);
+      // Scroll to top of comics section when changing to next set
+      if (comicsContainerRef.current) {
+        comicsContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     }
+  }, [currentComicSet, totalComicSets]);
 
-    if (!activeComic || comicPages.length === 0) {
-        return (
-            <div className="fixed inset-0 bg-[#161614] flex items-center justify-center p-4">
-                <div className="text-center max-w-sm">
-                    <div className="text-3xl mb-3">📚</div>
-                    <h3 className="text-white text-base font-bold mb-2">No Comic Found</h3>
-                    <p className="text-white/60 text-xs mb-4">
-                        This comic doesn't exist or has no pages.
-                    </p>
-                    <button
-                        onClick={() => router.push('/marketplace')}
-                        className="bg-yellow-600 hover:bg-yellow-700 text-black text-xs font-medium px-4 py-2 rounded transition-all">
-                        Back to Marketplace
-                    </button>
-                </div>
-            </div>
-        );
+  const goToPreviousSet = useCallback(() => {
+    if (currentComicSet > 1) {
+      setCurrentComicSet(prev => prev - 1);
+      // Scroll to top of comics section when changing to previous set
+      if (comicsContainerRef.current) {
+        comicsContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     }
+  }, [currentComicSet]);
 
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  /*  loading  */
+
+  if (isLoading && !useDummyData) {
     return (
-        <div className="relative bg-[#161614] min-h-screen">
-            <div 
-                className="relative h-[40vh] min-h-[280px] max-h-[350px] overflow-visible"
-                style={{
-                    marginTop: '0',
-                    backgroundImage: `url('${LOCAL_IMAGE}')`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                    backgroundRepeat: 'no-repeat'
-                }}
-            >
-                <div className="absolute inset-0 bg-black/60 backdrop-blur-lg"></div>
-                
-                {/* Back Button - Top left of banner */}
-                <button
-                    onClick={handleBack}
-                    className="absolute top-4 left-4 z-20 bg-black/80 text-white text-sm font-medium px-4 py-1.5 rounded-md hover:bg-black transition-colors flex items-center gap-1.5"
-                >
-                    <ChevronLeft className="w-4 h-4" />
-                    Back to Collection
-                </button>
-
-                {/* Comic Cover Image  */}
-                <div className="absolute left-1/2 transform -translate-x-1/2 bottom-[-60px] md:bottom-[-70px]">
-                    <div className="relative w-48 h-64 md:w-56 md:h-72 lg:w-64 lg:h-80 rounded-xl overflow-hidden shadow-2xl border-2 border-white/30">
-                        <img
-                            src={activeComic?.coverImage || LOCAL_IMAGE}
-                            alt={activeComic?.title || 'Comic Cover'}
-                            className="w-full h-full object-cover"
-                        />
-                    </div>
-                </div>
-            </div>
-
-            <div className="h-20 md:h-24"></div>
-
-            {/* Comic Reading Background */}
-            <div className="bg-[#1a1a1a] py-8 md:py-10">
-                {/* Page Progress and Navigation  */}
-                <div className="relative z-30">
-                    <div className="max-w-2xl mx-auto px-4">
-                        <div className="text-center mb-6">
-                            <div className="text-white text-base md:text-lg font-medium">
-                                Page <span className="text-yellow-500">{currentPage}</span> of <span className="text-yellow-500">{totalPages}</span>
-                            </div>
-                        </div>
-                        
-                        <div className="flex items-center justify-center gap-8">
-                            <button
-                                onClick={goToPreviousPage}
-                                disabled={currentPage === 1}
-                                className="bg-black/80 backdrop-blur-sm text-white p-3 rounded-full shadow-xl disabled:opacity-30 hover:bg-black transition-all hover:scale-105 border border-white/20"
-                            >
-                                <ChevronLeft className="w-6 h-6" />
-                            </button>
-                            
-                            <div className="text-white text-xl font-bold px-4 py-2 bg-black/40 rounded-lg">
-                                #{currentPage}
-                            </div>
-                            
-                            <button
-                                onClick={goToNextPage}
-                                disabled={currentPage === totalPages}
-                                className="bg-black/80 backdrop-blur-sm text-white p-3 rounded-full shadow-xl disabled:opacity-30 hover:bg-black transition-all hover:scale-105 border border-white/20"
-                            >
-                                <ChevronRight className="w-6 h-6" />
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="h-8"></div>
-            </div>
-
-            {/* Comics Area */}
-            <div className="bg-[#1a1a1a]">
-                <div
-                    ref={scrollContainerRef}
-                    className="pt-4 pb-20"
-                    style={{ 
-                        scrollbarWidth: 'none', 
-                        msOverflowStyle: 'none',
-                    }}
-                >
-                    {/* Comic Pages */}
-                    <div className="max-w-3xl mx-auto px-4 space-y-8">
-                        {comicPages.map((page, index) => (
-                            <div key={index} className="flex items-center justify-center">
-                                <div className="w-full">
-                                    <div className="relative rounded-xl overflow-hidden shadow-2xl bg-black/40 border border-white/10">
-                                        <img
-                                            src={page.imageUrl}
-                                            alt={`Page ${page.pageNumber}`}
-                                            className="w-full h-auto max-h-[75vh] object-contain"
-                                        />
-                                        
-                                        {/* Loading indicator for PDFs */}
-                                        {!page.imageUrl && (
-                                            <div className="absolute inset-0 bg-black/10 flex items-center justify-center pointer-events-none">
-                                                <div className="text-white/30 text-xs">📄</div>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-
-            {/* Mobile Navigation Arrows */}
-            {isMobile && (
-                <div className={`absolute left-2 top-1/2 -translate-y-1/2 z-20 transition-opacity duration-300 ${
-                    showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'
-                }`}>
-                    <button
-                        onClick={goToPreviousPage}
-                        disabled={currentPage === 1}
-                        className="bg-black/60 hover:bg-black/80 text-white p-2 rounded-full transition-all disabled:opacity-30 disabled:cursor-not-allowed backdrop-blur-sm">
-                        <ChevronLeft size={20}/>
-                    </button>
-                </div>
-            )}
-            
-            {isMobile && (
-                <div className={`absolute right-2 top-1/2 -translate-y-1/2 z-20 transition-opacity duration-300 ${
-                    showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'
-                }`}>
-                    <button
-                        onClick={goToNextPage}
-                        disabled={currentPage === totalPages}
-                        className="bg-black/60 hover:bg-black/80 text-white p-2 rounded-full transition-all disabled:opacity-30 disabled:cursor-not-allowed backdrop-blur-sm">
-                        <ChevronRight size={20}/>
-                    </button>
-                </div>
-            )}
-
-            {/* Desktop Navigation Arrows */}
-            {!isMobile && (
-                <div className={`absolute right-6 top-1/2 -translate-y-1/2 z-20 flex flex-col gap-3 transition-opacity duration-300 ${
-                    showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'
-                }`}>
-                    <button
-                        onClick={goToPreviousPage}
-                        disabled={currentPage === 1}
-                        className="bg-black/60 hover:bg-black/80 text-white p-3 rounded-full transition-all disabled:opacity-30 disabled:cursor-not-allowed backdrop-blur-sm">
-                        <ChevronUp size={24}/>
-                    </button>
-
-                    <button
-                        onClick={goToNextPage}
-                        disabled={currentPage === totalPages}
-                        className="bg-black/60 hover:bg-black/80 text-white p-3 rounded-full transition-all disabled:opacity-30 disabled:cursor-not-allowed backdrop-blur-sm">
-                        <ChevronDown size={24}/>
-                    </button>
-                </div>
-            )}
-
-            {/* Footer - Page Counter and Progress */}
-            <div className={`absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black/90 to-transparent transition-opacity duration-300 ${
-                showControls ? 'opacity-100' : 'opacity-0'
-            }`}>
-                <div className="p-3 sm:p-6">
-                    {/* Page Counter */}
-                    <div className="text-center">
-                        <span className={`text-white font-medium ${isMobile ? 'text-base' : 'text-lg'}`}>
-                            <span className="text-yellow-500">{currentPage} </span>
-                            of{' '}
-                            <span className="text-yellow-500">{totalPages}</span>
-                        </span>
-                    </div>
-
-                    {/* Engagement Sections */}
-                    <div className="max-w-7xl mx-auto px-4 py-8 md:py-12">
-                        
-                        {/* Creator Section */}
-                        <div className="flex flex-col items-center justify-center gap-6 mb-8">
-                            {/* Avatar Image  */}
-                            <div className="w-16 h-16 md:w-18 md:h-18 rounded-full overflow-hidden border-2 border-yellow-500/50 mb-2">
-                                <img
-                                    src={activeComic?.creator?.avatar || LOCAL_IMAGE}
-                                    alt={activeComic?.creator?.name || 'Creator'}
-                                    className="w-full h-full object-cover"
-                                />
-                            </div>
-                            
-                            {/* Creator Label and Name */}
-                            <div className="text-center mb-4">
-                                <div className="text-white/60 text-sm mb-1">creator</div>
-                                <div className="text-white text-xl md:text-2xl font-bold">
-                                    {activeComic?.creator?.name || 'Studio Kyra'}
-                                </div>
-                            </div>
-
-                            {/* Page Thumbnails - Hidden on mobile */}
-                            {!isMobile && (
-                                <div className="mt-4 flex gap-2 justify-center overflow-x-auto pb-2 max-w-full px-4">
-                                    {comicPages
-                                        .slice(0, isTablet ? 15 : 20)
-                                        .map((page, index) => (
-                                            <button
-                                                key={`thumb-${page.chapterNumber}-${page.pageNumber}`}
-                                                onClick={() => scrollToPage(index + 1)}
-                                                className={`flex-shrink-0 relative transition-all ${
-                                                    currentPage === index + 1
-                                                        ? 'ring-2 ring-yellow-500 scale-110'
-                                                        : 'opacity-50 hover:opacity-100'
-                                                }`}>
-                                                {page.contentType === 'image' ? (
-                                                    <img
-                                                        src={page.imageUrl}
-                                                        alt={`Page ${index + 1}`}
-                                                        className={`object-cover rounded ${isTablet ? 'w-10 h-12' : 'w-12 h-16'}`}/>
-                                                ) : page.thumbnailUrl ? (
-                                                    <img
-                                                        src={page.thumbnailUrl}
-                                                        alt={`Page ${index + 1} preview`}
-                                                        className={`object-cover rounded ${isTablet ? 'w-10 h-12' : 'w-12 h-16'}`}/>
-                                                ) : (
-                                                    <div className={`bg-gray-800 rounded flex items-center justify-center text-xs text-white ${
-                                                        isTablet ? 'w-10 h-12' : 'w-12 h-16'
-                                                    }`}>
-                                                        <span aria-hidden>🌐</span>
-                                                    </div>
-                                                )}
-                                                <div className="absolute inset-0 flex items-center justify-center">
-                                                    <span className="text-white text-xs font-bold drop-shadow-lg">
-                                                        {index + 1}
-                                                    </span>
-                                                </div>
-                                            </button>
-                                        ))}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* More Collections Section */}
-                        <div className="mb-12">
-                            <h2 className="text-xl md:text-2xl font-bold text-white mb-6">
-                                More collections
-                            </h2>
-                            
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {MORE_COLLECTIONS.map((collection) => (
-                                    <ComicCard
-                                        key={collection.id}
-                                        id={collection.id}
-                                        title={collection.title}
-                                        creator={collection.creator}
-                                        creatorAvatar={collection.creatorAvatar}
-                                        mintPrice={collection.mintPrice}
-                                        currentPrice={collection.currentPrice}
-                                        views={collection.views}
-                                        image={collection.image}
-                                        premium={collection.premium}
-                                        number={collection.number}
-                                    />
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Top Selling Comics Section */}
-                        <div className="mb-12">
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-6">
-                                <h2 className="text-xl md:text-2xl font-bold text-white">
-                                    Top selling comics
-                                </h2>
-                                <div className="text-white/60 text-sm">
-                                    highest moves in the past hour
-                                </div>
-                            </div>
-                            
-                            {/* 3x3 Grid Layout */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {TOP_SELLING_COMICS.map((comic) => (
-                                    <CollectionCard
-                                        key={comic.id}
-                                        id={comic.id}
-                                        rank={comic.rank}
-                                        name={comic.name}
-                                        image={comic.image}
-                                        sales={comic.sales}
-                                        percentageChange={comic.percentageChange}
-                                        isPositive={comic.isPositive}
-                                    />
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* imported Footer component */}
-            <Footer />
-
-            {/* Demo Mode Indicator */}
-            {useDummyData && (
-                <div className="fixed bottom-4 right-4 z-30 bg-yellow-600 text-black text-xs px-3 py-1.5 rounded-full font-medium shadow-lg">
-                    Demo Mode
-                </div>
-            )}
-        </div>
+      <div className="fixed inset-0 bg-[#161614] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-yellow-500 animate-spin" />
+      </div>
     );
+  }
+
+  if (!activeComic) return null;
+
+  /* RENDER  */
+
+  return (
+    <div className="relative bg-[#0a0a0a] min-h-screen text-white">
+
+      {/* BANNER */}
+      <div className="relative w-full overflow-hidden min-h-[380px]">
+        <div className="absolute inset-0">
+          <img
+            src={images.cover}
+            className="w-full h-full object-cover blur-2xl scale-110"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/80 to-black" />
+        </div>
+
+        <div className="relative z-10 max-w-7xl mx-auto px-6 pt-8">
+          <button
+            onClick={() => router.push(`/marketplace/detail?id=${comicId}`)}
+            className="flex items-center gap-2 bg-[#000] px-4 py-2 rounded-full border border-white/10"
+          >
+            <ChevronLeft size={16} />
+            Back to Collection
+          </button>
+        </div>
+      </div>
+
+      {/* COVER Image */}
+      <div className="absolute left-1/2 -translate-x-1/2 top-[190px] z-30">
+        <div className="w-[279px] h-[356px] rounded-xl overflow-hidden shadow-2xl">
+          <img src={images.cover} className="w-full h-full object-cover" />
+        </div>
+      </div>
+
+      {/*  READING PANEL*/}
+      <div ref={comicsContainerRef} className="relative bg-[#1a1a1a] min-h-screen max-w-[80%] mx-auto rounded-t-2xl overflow-hidden mt-[240px]">
+        {/* PROGRESS BAR */}
+        <div className="absolute top-0 left-0 right-0 z-50 h-1">
+          <div
+            className="h-full bg-yellow-500 transition-all duration-150 ease-out"
+            style={{ width: `${scrollProgress}%` }}
+          />
+        </div>
+
+        {/* READING CONTROLS */}
+        <div className="sticky top-0 z-40 bg-[#1a1a1a]/90 backdrop-blur-sm border-b border-white/5 pt-2">
+          <div className="max-w-6xl mx-auto px-4 py-3">
+            <div className="text-center">
+              {/*  Page 1 of 15 */}
+              <div className="text-white text-sm md:text-base font-medium mb-3">
+                Page <span className="text-white">{currentPageNumber}</span> of <span className="text-white">{totalPages}</span>
+              </div>
+
+              <div className="flex items-center justify-center gap-3">
+                <button
+                  onClick={goToPreviousSet}
+                  disabled={currentComicSet === 1}
+                  className="bg-black/80 backdrop-blur-sm text-white px-5 py-2.5 shadow-xl disabled:opacity-30 hover:bg-black transition-all hover:scale-105 border border-white/40 rounded-2xl min-w-[90px]"
+                >
+                  <ArrowUp className="w-4 h-4 transform -rotate-90 mx-auto" />
+                </button>
+                
+                {/*  "#1" */}
+                <div className="text-white text-lg font-bold px-5 py-2.5 bg-black/40 rounded-xl">
+                  #{currentComicSet}
+                </div>
+                
+                <button
+                  onClick={goToNextSet}
+                  disabled={currentComicSet === totalComicSets}
+                  className="bg-black/80 backdrop-blur-md text-white px-5 py-2.5 shadow-xl disabled:opacity-30 hover:bg-black transition-all hover:scale-105 border border-white/40 rounded-2xl min-w-[90px]"
+                >
+                  <ArrowUp className="w-4 h-4 transform rotate-90 mx-auto" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* COMIC PAGES */}
+        <div className="pt-6">
+          {visibleComicPages.map((page, index) => {
+            const actualPageNumber = (currentComicSet - 1) * COMICS_PER_PAGE + index + 1;
+            return (
+              <div key={index} className="flex items-center justify-center w-full mb-3 sm:mb-6 last:mb-0">
+                <div className="w-full px-2 sm:px-4">
+                  <div className="relative w-full mx-auto">
+                   
+                    <img
+                      src={page.imageUrl}
+                      alt={`Page ${actualPageNumber}`}
+                      className="w-[90%] sm:w-[80%] h-auto object-contain rounded-lg shadow-lg min-h-[calc(70vh-80px)] max-h-[80vh] sm:min-h-[calc(80vh-100px)] sm:max-h-[90vh] md:min-h-[calc(160vh-200px)] md:max-h-[180vh] mx-auto"
+                    />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+
+          {/* BACK TO TOP BUTTON */}
+          <button
+            onClick={scrollToTop}
+            className="fixed right-8 sm:right-12 top-1/2 transform -translate-y-1/2 z-50 p-3 rounded-md transition-all hover:bg-black/30"
+            style={{
+              background: 'transparent',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              borderTopColor: 'rgba(255, 255, 255, 0.3)',
+              borderRightColor: 'rgba(255, 255, 255, 0.3)',
+              borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+              borderLeftColor: 'rgba(255, 255, 255, 0.1)',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
+            }}
+          >
+            <ArrowUp className="w-4 h-4 sm:w-5 sm:h-5 text-white/70" />
+          </button>
+        </div>
+      </div>
+
+      {/*  CREATOR SECTION  */}
+     
+      <div className="max-w-7xl mx-auto px-4 py-8 md:py-12 bg-[#0a0a0a]">
+        <div className="flex flex-col items-center justify-center gap-4 mb-8">
+          <div className="w-14 h-14 md:w-16 md:h-16 overflow-hidden border-2 border-yellow-500/50">
+            <img
+              src={activeComic.creator?.avatar || images.avatar}
+              alt={activeComic.creator?.name || 'Creator'}
+              className="w-full h-full object-cover"
+            />
+          </div>
+          
+          <div className="text-center -mt-1">
+            <div className="text-white/60 text-xs mb-0.5">creator</div>
+            <div className="text-white text-lg md:text-xl font-bold">
+              {activeComic.creator?.name || 'Studio Kyra'}
+            </div>
+          </div>
+          
+          <div className="text-center mt-2">
+            <div className="text-white/60 text-xs mb-2">
+              Share this series and show support for the creator
+            </div>
+            <div className="flex items-center justify-center gap-3">
+              <button className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white px-5 py-2 rounded-full transition-all text-sm border border-white/40 min-w-[100px] justify-center">
+                <ThumbsUp className="w-3 h-3" />
+                <span>Like</span>
+              </button>
+              <button className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white px-5 py-2 rounded-full transition-all text-sm border border-white/40 min-w-[100px] justify-center">
+                <Share2 className="w-3 h-3" />
+                <span>Share</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* MORE EPISODES SECTION  */}
+    
+      <div className="bg-[#0a0a0a]">
+        <div className="bg-[#1a1a1a] max-w-[80%] mx-auto rounded-2xl p-6 mb-12">
+          <h2 className="text-2xl font-bold text-white mb-6">More Episodes</h2>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Episode 1 Card */}
+            <div className="group bg-[#111] rounded-xl overflow-hidden border border-white/5 hover:border-yellow-500/50 transition-all hover:-translate-y-1 cursor-pointer">
+              <div className="px-3 pt-3">
+                <div className="aspect-video w-full overflow-hidden bg-gray-800 relative border border-white/5 rounded-xl">
+                  <img
+                    src={images.inosuke}
+                    alt="Episode 1"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+              </div>
+              <div className="p-4">
+                <div className="text-white text-lg font-bold">Episode 1</div>
+              </div>
+            </div>
+
+            {/* Episode 2 Card */}
+            <div className="group bg-[#111] rounded-xl overflow-hidden border border-white/5 hover:border-yellow-500/50 transition-all hover:-translate-y-1 cursor-pointer">
+              <div className="px-3 pt-3">
+                <div className="aspect-video w-full overflow-hidden bg-gray-800 relative border border-white/5 rounded-xl">
+                  <img
+                    src={images.cross}
+                    alt="Episode 2"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+              </div>
+              <div className="p-4">
+                <div className="text-white text-lg font-bold">Episode 2</div>
+              </div>
+            </div>
+
+            {/* Episode 3 Card */}
+            <div className="group bg-[#111] rounded-xl overflow-hidden border border-white/5 hover:border-yellow-500/50 transition-all hover:-translate-y-1 cursor-pointer">
+              <div className="px-3 pt-3">
+                <div className="aspect-video w-full overflow-hidden bg-gray-800 relative border border-white/5 rounded-xl">
+                  <img
+                    src={images.mj}
+                    alt="Episode 3"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+              </div>
+              <div className="p-4">
+                <div className="text-white text-lg font-bold">Episode 3</div>
+              </div>
+            </div>
+
+            {/* Episode 4 Card */}
+            <div className="group bg-[#111] rounded-xl overflow-hidden border border-white/5 hover:border-yellow-500/50 transition-all hover:-translate-y-1 cursor-pointer">
+              <div className="px-3 pt-3">
+                <div className="aspect-video w-full overflow-hidden bg-gray-800 relative border border-white/5 rounded-xl">
+                  <img
+                    src={images.inosuke}
+                    alt="Episode 4"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+              </div>
+              <div className="p-4">
+                <div className="text-white text-lg font-bold">Episode 4</div>
+              </div>
+            </div>
+
+            {/* Episode 5 Card */}
+            <div className="group bg-[#111] rounded-xl overflow-hidden border border-white/5 hover:border-yellow-500/50 transition-all hover:-translate-y-1 cursor-pointer">
+              <div className="px-3 pt-3">
+                <div className="aspect-video w-full overflow-hidden bg-gray-800 relative border border-white/5 rounded-xl">
+                  <img
+                    src={images.cross}
+                    alt="Episode 5"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+              </div>
+              <div className="p-4">
+                <div className="text-white text-lg font-bold">Episode 5</div>
+              </div>
+            </div>
+
+            {/* Episode 6 Card */}
+            <div className="group bg-[#111] rounded-xl overflow-hidden border border-white/5 hover:border-yellow-500/50 transition-all hover:-translate-y-1 cursor-pointer">
+              <div className="px-3 pt-3">
+                <div className="aspect-video w-full overflow-hidden bg-gray-800 relative border border-white/5 rounded-xl">
+                  <img
+                    src={images.mj}
+                    alt="Episode 6"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+              </div>
+              <div className="p-4">
+                <div className="text-white text-lg font-bold">Episode 6</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/*TOP SELLING  SECTION */}
+        <div className="max-w-[80%] mx-auto p-6 mb-12">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-2">
+            <h2 className="text-xl md:text-2xl font-bold text-white">Top selling comics</h2>
+          </div>
+          <div className="text-white/60 text-sm mb-6 text-left">highest moves in the past hour</div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {TOP_SELLING_COMICS.map((comic) => (
+              <CollectionCard
+                key={comic.id}
+                id={comic.id}
+                rank={comic.rank}
+                name={comic.name}
+                image={comic.image}
+                sales={comic.sales}
+                percentageChange={comic.percentageChange}
+                isPositive={comic.isPositive}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* FOOTER  */}
+      <Footer />
+    </div>
+  );
 };
 
 export default ComicReaderViewer;
