@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { X } from 'lucide-react'
+import { motion } from 'framer-motion'
 import { LOCAL_IMAGE } from '@/components/utils/dummy-data'
 import { useRouter } from 'next/navigation'
 
@@ -33,7 +33,7 @@ const MintSuccessModal: React.FC<MintSuccessModalProps> = ({
   // fallback image if coverImage is invalid
   const imageSrc = coverImage && coverImage !== '' ? coverImage : LOCAL_IMAGE
 
-  // Handle Mint More - Navigate to collection page
+  // Mint More - Navigate to collection page
   const handleMintMore = () => {
     onClose() // Close the modal first
     // Navigate to the comic's collection/detail page
@@ -41,74 +41,71 @@ const MintSuccessModal: React.FC<MintSuccessModalProps> = ({
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-      <div 
-        className="relative bg-[#1A1A1A] rounded-2xl border border-white/10 shadow-2xl overflow-hidden"
-        style={{
-          width: '638px',
-          height: '449px',
-          padding: '24px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '16px'
-        }}
-      >
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-white/60 hover:text-white transition-colors z-10"
-        >
-          <X size={20} />
-        </button>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
+      {/* Backdrop with blur */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+      />
 
-        {/* Title */}
-        <div className="text-center">
-          <h2 className="text-xl font-bold text-white mb-2">
+      {/* Modal Content */}
+      <div className="relative z-10 w-full max-w-lg overflow-hidden">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.3, type: "spring" }}
+          className="bg-[#000] border font-mono border-neutral-800 rounded-2xl p-8 shadow-2xl text-center relative overflow-hidden"
+        >
+          {/* Success Visual */}
+          <div className="relative w-24 h-32 mx-auto mb-6">
+            {/* Main Image */}
+            <div className="relative z-10 w-24 h-32 rounded-lg border-2 border-neutral-700 overflow-hidden shadow-lg transform rotate-[-3deg]">
+              <img
+                src={imageSrc}
+                alt={comicTitle}
+                className="object-cover w-full h-full"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = LOCAL_IMAGE
+                }}
+              />
+            </div>
+            {/* Success Icon Badge */}
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, type: "spring" }}
+              className="absolute -bottom-2 -right-2 z-20 bg-neutral-800 border border-neutral-700 rounded-full p-2 shadow-lg"
+            >
+              <span className="text-xl">🎉</span>
+            </motion.div>
+          </div>
+
+          <h2 className="text-xl font-bold text-white mb-3">
             Mint Successful!
           </h2>
-        </div>
-
-        {/*  Comic Cover Image */}
-        <div className="flex justify-center">
-          <div className="w-36 h-48 rounded-lg overflow-hidden shadow-2xl border-2 border-white/20">
-            <img
-              src={imageSrc}
-              alt={comicTitle}
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = LOCAL_IMAGE
-              }}
-            />
-          </div>
-        </div>
-
-        {/* Spacer */}
-        <div className="flex-1" />
-
-        {/* Success Message */}
-        <div className="text-center mb-2">
-          <p className="text-white/70 text-sm">
-            You successfully minted <span className="text-white font-semibold">{comicTitle}</span>, 
-            Edition <span className="text-white font-semibold">{editionNumber}</span> into your wallet:{" "}
+          <p className="text-sm text-neutral-400 mb-8 leading-relaxed max-w-xs mx-auto">
+            You successfully minted{" "}
+            <span className="text-white font-medium">{comicTitle}</span>, 
+            Edition <span className="text-white font-medium">{editionNumber}</span> into your wallet:{" "}
             <span className="text-white font-medium">{walletAddress}</span>.
           </p>
-        </div>
 
-        {/* Action Buttons  */}
-        <div className="flex gap-3 mt-2">
-          <button
-            onClick={onViewComic}
-            className="flex-1 bg-yellow-600 hover:bg-yellow-700 text-black font-medium py-3 rounded-xl transition-all"
-          >
-            View Comic
-          </button>
-          <button
-            onClick={handleMintMore}
-            className="flex-1 bg-transparent border border-white/30 text-white font-medium py-3 rounded-xl hover:bg-white/10 transition-all"
-          >
-            Mint More
-          </button>
-        </div>
+          <div className="flex gap-3">
+            <button
+              onClick={onViewComic}
+              className="flex-1 bg-yellow-600 hover:bg-yellow-700 text-black font-medium py-3 rounded-xl transition-colors"
+            >
+              View Comic
+            </button>
+            <button
+              onClick={handleMintMore}
+              className="flex-1 border border-neutral-600 hover:border-neutral-500 text-white font-medium py-3 rounded-xl transition-colors"
+            >
+              Mint More
+            </button>
+          </div>
+        </motion.div>
       </div>
     </div>
   )

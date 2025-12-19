@@ -1,5 +1,3 @@
-
-
 // Images for demo
 export const LOCAL_IMAGE = '/dev_images/avatar-2.png';
 export const DUMMY_COVER_IMAGE = '/dev_images/avatar-2.png';
@@ -35,8 +33,8 @@ export const MORE_COLLECTIONS = [
     title: 'Episode 1',
     creator: 'Studio Kyra',
     creatorAvatar: LOCAL_IMAGE,
-    mintPrice: '0.09H',
-    currentPrice: '0.12H',
+    mintPrice: 0.09,
+    currentPrice: 0.12,
     views: '4.5K',
     image: LOCAL_IMAGE,
     premium: true,
@@ -47,8 +45,8 @@ export const MORE_COLLECTIONS = [
     title: 'Episode 2',
     creator: 'Studio Kyra',
     creatorAvatar: LOCAL_IMAGE,
-    mintPrice: '0.09H',
-    currentPrice: '0.11H',
+    mintPrice: 0.09,
+    currentPrice: 0.11,
     views: '3.8K',
     image: LOCAL_IMAGE,
     premium: true,
@@ -59,8 +57,8 @@ export const MORE_COLLECTIONS = [
     title: 'Episode 3',
     creator: 'Studio Kyra',
     creatorAvatar: LOCAL_IMAGE,
-    mintPrice: '0.09H',
-    currentPrice: '0.10H',
+    mintPrice: 0.09,
+    currentPrice: 0.10,
     views: '2.9K',
     image: LOCAL_IMAGE,
     premium: true,
@@ -71,8 +69,8 @@ export const MORE_COLLECTIONS = [
     title: 'Episode 4',
     creator: 'Studio Kyra',
     creatorAvatar: LOCAL_IMAGE,
-    mintPrice: '0.09H',
-    currentPrice: '0.13H',
+    mintPrice: 0.09,
+    currentPrice: 0.13,
     views: '5.1K',
     image: LOCAL_IMAGE,
     premium: true,
@@ -83,8 +81,8 @@ export const MORE_COLLECTIONS = [
     title: 'Episode 5',
     creator: 'Studio Kyra',
     creatorAvatar: LOCAL_IMAGE,
-    mintPrice: '0.09H',
-    currentPrice: '0.14H',
+    mintPrice: 0.09,
+    currentPrice: 0.14,
     views: '6.2K',
     image: LOCAL_IMAGE,
     premium: true,
@@ -95,8 +93,8 @@ export const MORE_COLLECTIONS = [
     title: 'Episode 6',
     creator: 'Studio Kyra',
     creatorAvatar: LOCAL_IMAGE,
-    mintPrice: '0.09H',
-    currentPrice: '0.15H',
+    mintPrice: 0.09,
+    currentPrice: 0.15,
     views: '7.3K',
     image: LOCAL_IMAGE,
     premium: true,
@@ -196,7 +194,7 @@ export const MORE_ADVENTURE_COMICS = [
     title: 'Inosuke Degen', 
     creator: 'Chrome Extreme',
     creatorAvatar: LOCAL_IMAGE,
-    mintPrice: '0.09H',
+    mintPrice: 0.09,
     currentPrice: '3,000',
     views: '4.89K',
     image: LOCAL_IMAGE,
@@ -208,7 +206,7 @@ export const MORE_ADVENTURE_COMICS = [
     title: 'The Son is Also The Father', 
     creator: 'New York A.B.R.C.',
     creatorAvatar: LOCAL_IMAGE,
-    mintPrice: '0.12H',
+    mintPrice: 0.12,
     currentPrice: '3,500',
     views: '3.75K',
     image: LOCAL_IMAGE,
@@ -220,7 +218,7 @@ export const MORE_ADVENTURE_COMICS = [
     title: 'Spiderman: Mary Jane', 
     creator: 'Catera Marathon',
     creatorAvatar: LOCAL_IMAGE,
-    mintPrice: '0.08H',
+    mintPrice: 0.08,
     currentPrice: '2,800',
     views: '5.21K',
     image: LOCAL_IMAGE,
@@ -232,7 +230,7 @@ export const MORE_ADVENTURE_COMICS = [
     title: 'John Pryce', 
     creator: 'A.B.R.C.',
     creatorAvatar: LOCAL_IMAGE,
-    mintPrice: '0.15H',
+    mintPrice: 0.15,
     currentPrice: '4,200',
     views: '2.95K',
     image: LOCAL_IMAGE,
@@ -244,7 +242,7 @@ export const MORE_ADVENTURE_COMICS = [
     title: 'Avatar Returns', 
     creator: 'Studio Zen',
     creatorAvatar: LOCAL_IMAGE,
-    mintPrice: '0.10H',
+    mintPrice: 0.10,
     currentPrice: '3,200',
     views: '4.12K',
     image: LOCAL_IMAGE,
@@ -256,7 +254,7 @@ export const MORE_ADVENTURE_COMICS = [
     title: 'Fire Nation Tales', 
     creator: 'Element Studio',
     creatorAvatar: LOCAL_IMAGE,
-    mintPrice: '0.07H',
+    mintPrice: 0.07,
     currentPrice: '2,500',
     views: '6.34K',
     image: LOCAL_IMAGE,
@@ -327,9 +325,9 @@ export const DUMMY_COMIC_DATA = {
       title: 'Episode 1 : The First Flame',
       time: '8 min',
       stats: {
-        floorPrice: '0.085 HBAR',
+        floorPrice: 0.085,
         totalMints: '721 / 1,000',
-        volume: '45.8 HBAR'
+        volume: 45.8
       }
     },
     {
@@ -337,9 +335,9 @@ export const DUMMY_COMIC_DATA = {
       title: 'Episode 2 : Whispers of the Wind',
       time: '8 min',
       stats: {
-        floorPrice: '0.085 HBAR',
+        floorPrice: 0.085,
         totalMints: '721 / 1,000',
-        volume: '45.8 HBAR'
+        volume: 45.8
       }
     },
     {
@@ -347,19 +345,19 @@ export const DUMMY_COMIC_DATA = {
       title: 'Episode 3 : Echoes Beneath the Earth',
       time: '8 min',
       stats: {
-        floorPrice: '0.085 HBAR',
+        floorPrice: 0.085,
         totalMints: '721 / 1,000',
-        volume: '45.8 HBAR'
+        volume: 45.8
       }
     }
   ],
   marketStats: {
-    floorPrice: '0.085 HBAR',
+    floorPrice: 0.085,
     totalMints: '721 / 1,000',
-    volume: '45.8 HBAR'
+    volume: 45.8
   },
   mintingDetails: {
-    mintPrice: '0.09 HBAR',
+    mintPrice: 0.09,
     edition: '1,000',
     royalties: '7% to creator'
   },
@@ -410,11 +408,11 @@ export const DUMMY_COMIC_DATA = {
 
 // Activity data for minting page
 export const ACTIVITY_DATA = [
-  { username: '@co4edt8', event: 'Minted', price: '0.09 H', edition: '#001', time: '21s ago' },
-  { username: '@co4edt8', event: 'Sold', price: '0.09 H', edition: '#021', time: '1m ago' },
-  { username: '@co4edt8', event: 'Minted', price: '0.09 H', edition: '#201', time: '20m ago' },
-  { username: '@co4edt8', event: 'Minted', price: '0.09 H', edition: '#1,001', time: '30m ago' },
-  { username: '@co4edt8', event: 'Minted', price: '0.09 H', edition: '#001', time: '21min ago' }
+  { username: '@co4edt8', event: 'Minted', price: 0.09, edition: '#001', time: '21s ago' },
+  { username: '@co4edt8', event: 'Sold', price: 0.09, edition: '#021', time: '1m ago' },
+  { username: '@co4edt8', event: 'Minted', price: 0.09, edition: '#201', time: '20m ago' },
+  { username: '@co4edt8', event: 'Minted', price: 0.09, edition: '#1,001', time: '30m ago' },
+  { username: '@co4edt8', event: 'Minted', price: 0.09, edition: '#001', time: '21min ago' }
 ];
 
 // Episode list data
