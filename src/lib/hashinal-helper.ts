@@ -108,7 +108,7 @@ export const createComicMetadata = ({
   genres: string[];
   copiesOfComic: number;
   ageRating: string;
-  coverUri: string;
+  coverUri: File | string;
   pageUris: string[];
   mimeType?: string;
   priceHbar: number;

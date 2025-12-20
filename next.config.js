@@ -217,6 +217,38 @@ const webpack = require('webpack');
 const NodePolyfillPlugin = require('node-polyfill-webpack-plugin');
 const nextConfig = {
   
+  // Configure image domains for external images (IPFS gateways, etc.)
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "gateway.pinata.cloud",
+      },
+      {
+        protocol: "https",
+        hostname: "*.pinata.cloud",
+      },
+      {
+        protocol: "https",
+        hostname: "ipfs.io",
+      },
+      {
+        protocol: "https",
+        hostname: "cloudflare-ipfs.com",
+      },
+      {
+        protocol: "https",
+        hostname: "dweb.link",
+      },
+      {
+        protocol: "https",
+        hostname: "*.ipfs.dweb.link",
+      },
+    ],
+    // Optionally disable optimization for external images
+    unoptimized: true,
+  },
+
 webpack: (config) => {
     config.resolve = config.resolve ?? {};
     config.resolve.alias = {

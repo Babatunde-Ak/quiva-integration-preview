@@ -10,7 +10,8 @@ import { useAppDispatch, useAppSelector } from "@/redux/hook";
 // import { useFreeComicMinting } from "@/hook/useFreeComicMinting";
 // import { useAccount } from "@/hook/useUnifiedWallet";
 import { kiloScribeService, InscriptionProgress, InscriptionResult } from "@/lib/kiloscribe-service";
-import {useComicHashinalNFT} from "@/hook/useMintComic";
+import { useMintComic } from "@/hook/useMintComic";
+import { useComicInscription } from "@/hook/useComicInscription"
 import { useAccount } from "wagmi";
 import { useHederaWallet } from "@/providers/HashPackProvider";
 import { HashinalsWalletConnectSDK } from "@hashgraphonline/hashinal-wc";
@@ -103,178 +104,28 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 	// Check if we have a PDF file
 	const hasPdfFile = comicData.sourceType === 'pdf-file';
 	const pdfFile = hasPdfFile ? comicData.pages.find(file => file.type === 'pdf-file') : null;
-
-	// Initialize Hashinals SDK and get signer when Hedera wallet is connected
-	// useEffect(() => {
-	// 	const initHashinalsSigner = async () => {
-	// 		// Use existing Hedera wallet signer if connected
-	// 		// NOTE: inscribeWithSigner needs DAppSigner (which has getAccountId() method)
-	// 		if (isHederaConnected && hederaSigner && hederaAccount) {
-	// 			setHashinalAccountId(hederaAccount);
-	// 			setHashinalSigner(hederaSigner); // DAppSigner from connector.getSigner()
-	// 			console.log('✅ Using Hedera wallet signer:', hederaAccount);
-	// 			return;
-	// 		}
-
-	// 		// If we need to mint but don't have a signer, initialize the Hashinals SDK
-	// 		if (monetizationData.mintAsNFT && !hashinalSigner && !isInitializingWallet) {
-	// 			try {
-	// 				setIsInitializingWallet(true);
-	// 				console.log("⚡ Initializing Hashinals WC SDK for minting...");
-					
-	// 				const sdk = HashinalsWalletConnectSDK.getInstance();
-	// 				await sdk.init(
-	// 					process.env.NEXT_PUBLIC_HASHGRAPH_PROJECT_ID || "ec1bf58ee8034b1747cb72a34b6652ae",
-	// 					{
-	// 						name: "Quiva Comics",
-	// 						description: "Comic NFT minting with Hashinals",
-	// 						url: typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000',
-	// 						icons: ["https://quiva.com/icon.png"],
-	// 					},
-	// 					LedgerId.TESTNET
-	// 				);
-
-	// 				// Check if already has a session
-	// 				if (sdk.dAppConnector) {
-	// 					try {
-	// 						const accountInfo = await sdk.getAccountInfo();
-	// 						if (accountInfo?.accountId) {
-	// 							setHashinalAccountId(accountInfo.accountId);
-	// 							// Get the actual signer from dAppConnector.signers (has getAccountId method)
-	// 							const signers = sdk.dAppConnector.signers;
-	// 							if (signers && signers.length > 0) {
-	// 								setHashinalSigner(signers[0]);
-	// 								console.log(`🔗 Restored Hashinals session: ${accountInfo.accountId}`);
-	// 							}
-	// 						}
-	// 					} catch {
-	// 						console.log('📱 SDK initialized, waiting for wallet connection...');
-	// 					}
-	// 				}
-	// 			} catch (err) {
-	// 				console.error('❌ Failed to initialize Hashinals SDK:', err);
-	// 			} finally {
-	// 				setIsInitializingWallet(false);
-	// 			}
-	// 		}
-	// 	};
-
-	// 	initHashinalsSigner();
-	// }, [isHederaConnected, hederaSigner, hederaAccount, monetizationData.mintAsNFT, hashinalSigner, isInitializingWallet]);
-
-	// // Function to connect wallet if not connected (for publish flow)
-	// const ensureWalletConnected = async (): Promise<boolean> => {
-	// 	// If already have a signer, we're good
-	// 	if (hashinalSigner && hashinalAccountId) {
-	// 		return true;
-	// 	}
-
-	// 	// If Hedera wallet is connected via provider, use the DAppSigner
-	// 	// NOTE: inscribeWithSigner needs DAppSigner (which has getAccountId() method)
-	// 	if (isHederaConnected && hederaSigner && hederaAccount) {
-	// 		setHashinalAccountId(hederaAccount);
-	// 		setHashinalSigner(hederaSigner); // DAppSigner from connector.getSigner()
-	// 		return true;
-	// 	}
-
-	// 	// Try to connect via the provider's connect function
-	// 	if (connectWallet) {
-	// 		try {
-	// 			setIsInitializingWallet(true);
-	// 			await connectWallet();
-	// 			// After connecting, the signer should be available
-	// 			// We need to return true and let useEffect update the signer
-	// 			return true;
-	// 		} catch (err) {
-	// 			console.error('Failed to connect wallet via provider:', err);
-	// 		} finally {
-	// 			setIsInitializingWallet(false);
-	// 		}
-	// 	}
-
-	// 	// Fall back to Hashinals SDK direct connection
-	// 	try {
-	// 		setIsInitializingWallet(true);
-	// 		const sdk = HashinalsWalletConnectSDK.getInstance();
-			
-	// 		if (!sdk.dAppConnector) {
-	// 			await sdk.init(
-	// 				process.env.NEXT_PUBLIC_HASHGRAPH_PROJECT_ID || "ec1bf58ee8034b1747cb72a34b6652ae",
-	// 				{
-	// 					name: "Quiva Comics",
-	// 					description: "Comic NFT minting with Hashinals",
-	// 					url: typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000',
-	// 					icons: ["https://quiva.com/icon.png"],
-	// 				},
-	// 				LedgerId.TESTNET
-	// 			);
-	// 		}
-
-	// 		await sdk.connect();
-	// 		const accountInfo = await sdk.getAccountInfo();
-	// 		setHashinalAccountId(accountInfo.accountId);
-	// 		// Get the actual signer from dAppConnector.signers (has getAccountId method)
-	// 		const signers = sdk.dAppConnector.signers;
-	// 		if (signers && signers.length > 0) {
-	// 			setHashinalSigner(signers[0]);
-	// 			console.log(`🔗 Connected Hedera wallet: ${accountInfo.accountId}`);
-	// 			return true;
-	// 		} else {
-	// 			console.error('❌ No signers available after connection');
-	// 			return false;
-	// 		}
-	// 	} catch (err) {
-	// 		console.error('❌ Failed to connect wallet:', err);
-	// 		return false;
-	// 	} finally {
-	// 		setIsInitializingWallet(false);
-	// 	}
-	// };
-
-	// Use the comic minting hook with the DAppSigner (has getAccountId method)
-	const { createComicNFT, status, progress, result: comicHashinalResult, error: comicHashinalNFTError } = useComicHashinalNFT({
+	
+	// Hook for full NFT minting (inscription + NFT creation)
+	const { 
+		createComicNFT, 
+		mintAdditionalCopies,
+		status: mintStatus, 
+		progress: mintProgress, 
+		result: mintResult, 
+		error: mintHookError,
+		statusText: mintStatusText,
+		reset: resetMint 
+	} = useMintComic({
 		accountId: account || user?.walletAddress || '',
-		signer: signer, // DAppSigner from connector.getSigner()
+		signer: signer,
 		network: 'testnet'
 	});
 
-
-	// const {  } = ueListComic();
-	// // Use the comic minting hooks
-	// const {
-	// publishComic,
-	// isUploading: paidIsUploading,
-	// isMinting: paidIsMinting,
-	// isListing,
-	// uploadProgress: paidUploadProgress,
-	// mintingProgress: paidMintingProgress,
-	// isWritePending: paidIsWritePending,
-	// isConfirming: paidIsConfirming,
-	// isMintSuccess,
-	// isComplete: paidIsComplete,
-	// mintError: paidMintError,
-	// tokenId: paidTokenId,
-	// mintHash: paidMintHash,
-	// comicId,
-	// } = useComicMinting();
-
-	// const {
-	// isUploading: freeIsUploading,
-	// isMinting: freeIsMinting,
-	// uploadProgress: freeUploadProgress,
-	// mintingProgress: freeMintingProgress,
-	// publishFreeComic,
-	// updateComicWithMintData,
-	// reset,
-	// checkCreatorApproval,
-	// isWritePending: freeIsWritePending,
-	// isConfirming: freeIsConfirming,
-	// mintHash: freeMintHash,
-	// approvalStatus,
-	// isComplete: freeIsComplete,
-	// mintError: freeError,
-	// tokenId: freeTokenId,
-	// } = useFreeComicMinting();
+	const { createInscription, status: inscriptionStatus, progress: inscriptionProgress, result: inscriptionResult, error: inscriptionError, uploadProgress } = useComicInscription({
+	accountId: account || user?.walletAddress || '',
+	signer: signer, // DAppSigner from connector.getSigner()
+	network: 'testnet'
+	})
 
 	const isCurrentlyPaid = monetizationData.publishType === "paid";
 
@@ -283,10 +134,9 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 	// need these variables to exist so the component can compile and render safely.
 	// These defaults are neutral (no activity) and will be replaced by real values
 	// when the minting/upload hooks are enabled.
-	const isUploading: boolean = false;
-	const isMinting: boolean = false;
-	const uploadProgress: number = 0;
-	const mintingProgress: number = 0;
+	const isUploading: boolean = inscriptionStatus === 'inscribing' && uploadProgress < 100;
+	const isMinting: boolean = mintStatus === 'minting';
+	const mintingProgress: number = mintProgress;
 	const isWritePending: boolean = false;
 	const isConfirming: boolean = false;
 	const isListing: boolean = false;
@@ -318,7 +168,6 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 		};
 
 		checkHashinalSupport();
-	// }, [comicData, monetizationData.enableHashinal]);
 
 	// Monitor completion and handle Hashinal inscription
 	// useEffect(() => {
@@ -538,31 +387,108 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 			// }
             console.log("Comic data:", comicData);
 			
-			setPublishingStep('Creating NFT...');
-			
 			// Determine source type and prepare files accordingly
 			const zipPage = comicData.pages.find(page => page.type === 'zip-images');
+			const pdfPage = comicData.pages.find(page => page.type === 'pdf-file');
 			const imagePages = comicData.pages.filter(page => page.type === 'image');
-			const sourceType = zipPage ? 'zip-images' : (comicData.sourceType as 'image' | 'zip-images' | 'pdf-file' || 'image');
 			
-			const result = await createComicNFT({
-				name: comicData.title,
-				creator: user.walletAddress,
-				description: comicData.description,
-				genres: comicData.genre,
-				copiesOfComic: monetizationData.mintAsNFT && monetizationData.nftCopies,
-				ageRating: comicData.ageRating,
-				coverFile: comicData.coverImage,
-				// Pass image files if available
-				pageFiles: imagePages.map(page => new File([page.blob], page.name, { type: page.blob.type })),
-				// Pass ZIP file if user uploaded a ZIP
-				zipFile: zipPage ? new File([zipPage.blob], zipPage.name, { type: 'application/zip' }) : undefined,
-				sourceType,
-				priceHbar: monetizationData.publishType === "paid" && monetizationData.nftPrice ? monetizationData.nftPrice : 0,
-			});
+			// Helper function to ensure we have a proper File object from ExtractedFile
+			const extractFileFromBlob = (extractedFile: { blob: Blob; name: string; type?: string }, mimeType: string): File => {
+				// If the blob is already a File, return it as-is
+				if (extractedFile.blob instanceof File) {
+					console.log(`✅ Blob is already a File: ${extractedFile.blob.name}`);
+					return extractedFile.blob;
+				}
+				// Otherwise, create a new File from the Blob
+				console.log(`📦 Converting Blob to File: ${extractedFile.name}, size: ${extractedFile.blob.size}`);
+				return new File([extractedFile.blob], extractedFile.name, { type: mimeType });
+			};
+			
+			// Prepare files - ensure they are properly extracted as File objects
+			let zipFile: File | undefined;
+			let pdfFileForInscription: File | undefined;
+			let imageFilesForInscription: File[] = [];
+			
+			if (zipPage) {
+				zipFile = extractFileFromBlob(zipPage, 'application/zip');
+				console.log("📦 Prepared ZIP file:", zipFile.name, "Size:", zipFile.size, "Type:", zipFile.type);
+			}
+			
+			if (pdfPage) {
+				pdfFileForInscription = extractFileFromBlob(pdfPage, 'application/pdf');
+				console.log("📄 Prepared PDF file:", pdfFileForInscription.name, "Size:", pdfFileForInscription.size, "Type:", pdfFileForInscription.type);
+			}
+			
+			// Handle individual image files if no ZIP or PDF
+			if (!zipPage && !pdfPage && imagePages.length > 0) {
+				console.log(`🖼️ Processing ${imagePages.length} image file(s)...`);
+				imageFilesForInscription = imagePages.map((imgPage, index) => {
+					const mimeType = imgPage.blob.type || 'image/jpeg';
+					const file = extractFileFromBlob(imgPage, mimeType);
+					console.log(`  📷 Image ${index + 1}: ${file.name}, Size: ${file.size}, Type: ${file.type}`);
+					return file;
+				});
+			}
+			
+			// Determine the cover URI (use first page preview or cover image)
+			const coverUri = comicData.coverImage 
+				? URL.createObjectURL(comicData.coverImage)
+				: comicData.pages[0]?.preview || '';
 
+			let result: any;
 
-			console.log('🎉 Comic NFT created successfully:', result);
+			// Check if we should mint as NFT or just inscribe
+			if (monetizationData.mintAsNFT) {
+				// Full NFT minting flow (inscription + NFT creation)
+				setPublishingStep('Creating Comic NFT...');
+				console.log("🪙 Minting comic as NFT...");
+				
+				result = await createComicNFT({
+					name: comicData.title,
+					creator: account || user?.walletAddress || '',
+					description: comicData.description,
+					genres: comicData.genre,
+					copiesOfComic: monetizationData.nftCopies || 100,
+					ageRating: comicData.ageRating,
+					coverUri: coverUri,
+					coverFile: comicData.coverImage || undefined,
+					zipFile: zipFile,
+					pdfFile: pdfFileForInscription,
+					pageFiles: imageFilesForInscription.length > 0 ? imageFilesForInscription : undefined,
+					sourceType: zipFile ? 'zip-images' : (pdfFileForInscription ? 'pdf-file' : 'image'),
+					priceHbar: monetizationData.publishType === "paid" && monetizationData.nftPrice 
+						? monetizationData.nftPrice 
+						: 0,
+				});
+				
+
+				// const moreCopies = await mintAdditionalCopies(result.tokenId, monetizationData.nftCopies, result.metadataTopicIds)  // Assuming result contains tokenId)
+
+				console.log('🎉 Comic NFT created successfully:', result);
+				console.log('🪙 Token ID:', result?.tokenId);
+				console.log('📝 Serial:', result?.serial);
+				console.log('MetadaTopicIds:', result.metadataTopicIds);
+				// console.log('🔷 Additional copies minted successfully:', moreCopies);
+				
+			} else {
+				// Just inscription (no NFT minting)
+				setPublishingStep('Inscribing comic to Hedera...');
+				console.log("📝 Inscribing comic (no NFT)...");
+				
+				// Pass comicData and monetizationData to createInscription
+				result = await createInscription(comicData, monetizationData);
+
+				console.log('🎉 Comic inscribed successfully:', result);
+				console.log('📝 Topic ID:', result?.topic_id);
+				console.log('🔗 Transaction ID:', result?.transactionId);
+			}
+
+			// Check if operation was successful
+			if (!result) {
+				throw new Error(monetizationData.mintAsNFT 
+					? 'NFT minting failed - no result returned'
+					: 'Inscription failed - no result returned');
+			}
 
 			setShowNotification(true);
             setIsPublishing(false);
@@ -599,6 +525,10 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 				errorMessage = 'Transaction was rejected. Please approve the transaction in your wallet.';
 			} else if (errorMessage.toLowerCase().includes('pdf')) {
 				errorMessage = 'PDF processing error. Please check your PDF file and try again.';
+			} else if (errorMessage.toLowerCase().includes('inscription')) {
+				errorMessage = 'Inscription error. Please check your file and try again.';
+			} else if (errorMessage.toLowerCase().includes('signer')) {
+				errorMessage = 'Wallet signer error. Please reconnect your wallet and try again.';
 			}
 
 			setError(errorMessage);
@@ -835,24 +765,43 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 					)}
 
 					{/* Publishing Progress */}
-					{(isUploading || isMinting  || isListing || isWritePending || isConfirming) && (
+					{(isUploading || inscriptionStatus === 'inscribing' || isMinting || isListing || isWritePending || isConfirming) && (
 						<div className='mx-6 mb-4 bg-blue-500/20 border border-blue-500/50 rounded-lg p-4'>
 							<div className='space-y-3'>
 								{/* Upload Progress */}
-								{isUploading && (
+								<div className='flex items-center gap-3'>
+									<Upload size={18} className={uploadProgress >= 100 ? 'text-green-400' : 'text-primary-400'} />
+									<div className='flex-1'>
+										<div className='flex justify-between items-center mb-1'>
+											<span className={`text-sm font-medium ${uploadProgress >= 100 ? 'text-green-300' : 'text-blue-300'}`}>
+												{uploadProgress >= 100 ? '✓ Upload Complete' : (hasPdfFile ? 'Uploading PDF to IPFS...' : 'Uploading to IPFS...')}
+											</span>
+											<span className={`text-xs ${uploadProgress >= 100 ? 'text-green-300' : 'text-blue-300'}`}>{uploadProgress}%</span>
+										</div>
+										<div className='w-full bg-white/10 rounded-full h-2'>
+											<div 
+												className={`h-2 rounded-full transition-all duration-300 ${uploadProgress >= 100 ? 'bg-green-400' : 'bg-primary-400'}`}
+												style={{ width: `${uploadProgress}%` }}
+											/>
+										</div>
+									</div>
+								</div>
+
+								{/* Inscription Progress */}
+								{(inscriptionStatus === 'inscribing' || inscriptionStatus === 'done') && uploadProgress >= 100 && (
 									<div className='flex items-center gap-3'>
-										<Upload size={18} className='text-primary-400' />
+										<Database size={18} className={inscriptionStatus === 'done' ? 'text-green-400' : 'text-purple-400'} />
 										<div className='flex-1'>
 											<div className='flex justify-between items-center mb-1'>
-												<span className='text-blue-300 text-sm font-medium'>
-													{hasPdfFile ? 'Uploading PDF to IPFS...' : 'Uploading to IPFS...'}
+												<span className={`text-sm font-medium ${inscriptionStatus === 'done' ? 'text-green-300' : 'text-purple-300'}`}>
+													{inscriptionStatus === 'done' ? '✓ Inscription Complete' : 'Inscribing to Hedera...'}
 												</span>
-												<span className='text-blue-300 text-xs'>{uploadProgress}%</span>
+												<span className={`text-xs ${inscriptionStatus === 'done' ? 'text-green-300' : 'text-purple-300'}`}>{inscriptionProgress}%</span>
 											</div>
 											<div className='w-full bg-white/10 rounded-full h-2'>
 												<div 
-													className='bg-primary-400 h-2 rounded-full transition-all duration-300'
-													style={{ width: `${uploadProgress}%` }}
+													className={`h-2 rounded-full transition-all duration-300 ${inscriptionStatus === 'done' ? 'bg-green-400' : 'bg-purple-400'}`}
+													style={{ width: `${inscriptionProgress}%` }}
 												/>
 											</div>
 										</div>
@@ -860,7 +809,7 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 								)}
 
 								{/* Minting Progress */}
-								{(isMinting  || isWritePending || isConfirming) && !isListing && (
+								{(isMinting || isWritePending || isConfirming) && !isListing && (
 									<div className='flex items-center gap-3'>
 										<Zap size={18} className='text-primary-400' />
 										<div className='flex-1'>
@@ -933,28 +882,31 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 						</div>
 					)}
 
-					{/* Hashinal Inscription Progress */}
-					{status !== 'idle' && status !== 'done' && (
+					{/* Mint/Inscription Progress */}
+					{(mintStatus !== 'idle' && mintStatus !== 'done') || (inscriptionStatus !== 'idle' && inscriptionStatus !== 'done') ? (
 						<div className='mx-6 mb-4 bg-purple-500/20 border border-purple-500/50 rounded-lg p-4'>
 							<div className='flex items-center gap-3'>
 								<Hash size={18} className='text-purple-400 animate-spin' />
 								<div className='flex-1'>
 									<div className='flex justify-between items-center mb-1'>
 										<span className='text-purple-400 text-sm font-medium'>
-											{status === 'inscribing' && 'Inscribing comic as Hashinal...'}
+											{mintStatus === 'inscribing' && 'Inscribing comic to Hedera...'}
+											{mintStatus === 'minting' && 'Creating NFT collection...'}
+											{inscriptionStatus === 'inscribing' && mintStatus === 'idle' && 'Inscribing comic to Hedera...'}
+											{mintStatusText && <span className='ml-2 text-xs opacity-75'>({mintStatusText})</span>}
 										</span>
-										<span className='text-purple-400 text-xs'>{progress}%</span>
+										<span className='text-purple-400 text-xs'>{mintProgress || inscriptionProgress}%</span>
 									</div>
 									<div className='w-full bg-white/10 rounded-full h-2'>
 										<div 
 											className='bg-purple-400 h-2 rounded-full transition-all duration-300'
-											style={{ width: `${progress}%` }}
+											style={{ width: `${mintProgress || inscriptionProgress}%` }}
 										/>
 									</div>
 								</div>
 							</div>
 						</div>
-					)}
+					) : null}
 
 					{/* Hashinal Success/Error */}
 					{hashinalState.result && (
@@ -971,15 +923,15 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 								)}
 								<div>
 									<p className={`${
-										status === 'done' 
+										hashinalState.result.status === 'completed' 
 											? 'text-purple-400' 
 											: 'text-red-400'
 									} font-semibold text-sm mb-1`}>
-										{status === 'done' 
+										{hashinalState.result.status === 'completed' 
 											? 'Hashinal Inscription Successful!' 
 											: 'Hashinal Inscription Failed'}
 									</p>
-									{status === 'done' ? (
+									{hashinalState.result.status === 'completed' ? (
 										<div className='text-purple-300 text-sm space-y-1'>
 											<p>Inscription ID: {hashinalState.result.inscriptionId}</p>
 											{hashinalState.result.hashinalsUrl && (
@@ -1003,14 +955,32 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 						</div>
 					)}
 
-					{/* Mint Error */}
-					{mintError && (
+					{/* NFT Mint Result */}
+					{mintResult && (
+						<div className='mx-6 mb-4 bg-green-500/20 border border-green-500/50 rounded-lg p-3'>
+							<div className='flex items-start gap-2'>
+								<CheckCircle size={18} className='text-green-400 flex-shrink-0 mt-0.5' />
+								<div>
+									<p className='text-green-400 font-semibold text-sm mb-1'>Comic NFT Created Successfully!</p>
+									<div className='text-green-300 text-sm space-y-1'>
+										{mintResult.tokenId && <p>Token ID: {mintResult.tokenId}</p>}
+										{mintResult.serial && <p>Serial #: {mintResult.serial}</p>}
+										{mintResult.transactionId && <p>Transaction: {mintResult.transactionId}</p>}
+										{mintResult.inscriptionTopicId && <p>Inscription Topic: {mintResult.inscriptionTopicId}</p>}
+									</div>
+								</div>
+							</div>
+						</div>
+					)}
+
+					{/* Mint Hook Error */}
+					{mintHookError && (
 						<div className='mx-6 mb-4 bg-red-500/20 border border-red-500/50 rounded-lg p-3'>
 							<div className='flex items-start gap-2'>
 								<AlertCircle size={18} className='text-red-400 flex-shrink-0 mt-0.5' />
 								<div>
 									<p className='text-red-400 font-semibold text-sm mb-1'>NFT Minting Error</p>
-									<p className='text-red-300 text-sm'>{mintError.message || 'Failed to mint NFT'}</p>
+									<p className='text-red-300 text-sm'>{mintHookError}</p>
 								</div>
 							</div>
 						</div>
@@ -1020,17 +990,20 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 					<div className='px-6 pb-6 space-y-3 mt-4'>
 						<button
 							onClick={handlePublish}
-							disabled={isPublishing || isUploading || isMinting  || isListing || isWritePending || isConfirming || hashinalState.isInscribing}
+							disabled={isPublishing || isUploading || isMinting || isListing || isWritePending || isConfirming || hashinalState.isInscribing || inscriptionStatus === 'inscribing' || mintStatus === 'inscribing' || mintStatus === 'minting'}
 							className='w-full bg-secondary-200/80 hover:bg-secondary-200 text-black font-semibold py-3 rounded-full transition disabled:cursor-not-allowed disabled:opacity-50 flex items-center justify-center gap-2'
 						>
-							{isPublishing || isUploading || isMinting  || isListing || isWritePending || isConfirming || hashinalState.isInscribing ? (
+							{isPublishing || isUploading || isMinting || isListing || isWritePending || isConfirming || hashinalState.isInscribing || inscriptionStatus === 'inscribing' || mintStatus === 'inscribing' || mintStatus === 'minting' ? (
 								<>
 									<div className='animate-spin rounded-full h-5 w-5 border-b-2 border-black'></div>
 									{isUploading ? 'Uploading to IPFS...' : 
-									isMinting || isWritePending  ? 'Minting NFT...' : 
+									isMinting || isWritePending ? 'Minting NFT...' : 
 									isListing ? 'Listing on marketplace...' :
 									isConfirming ? 'Confirming...' : 
 									hashinalState.isInscribing ? 'Inscribing Hashinal...' :
+									mintStatus === 'inscribing' ? 'Inscribing to Hedera...' :
+									mintStatus === 'minting' ? 'Creating NFT Collection...' :
+									inscriptionStatus === 'inscribing' ? 'Inscribing to Hedera...' :
 									'Publishing...'}
 								</>
 							) : (
@@ -1046,26 +1019,554 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 
 						<button
 							onClick={onclose}
-							disabled={isPublishing || isUploading || isMinting  || isListing || isWritePending || isConfirming || hashinalState.isInscribing}
+							disabled={isPublishing || isUploading || isMinting || isListing || isWritePending || isConfirming || hashinalState.isInscribing || mintStatus === 'inscribing' || mintStatus === 'minting'}
 							className='w-full border border-white/20 text-white/70 hover:text-white hover:bg-white/5 py-3 rounded-full transition disabled:cursor-not-allowed disabled:opacity-50'
 						>
-							{isPublishing || isUploading || isMinting  || isListing || hashinalState.isInscribing ? 'Please wait...' : 'Go Back'}
+							{isPublishing || isUploading || isMinting || isListing || hashinalState.isInscribing || mintStatus === 'inscribing' || mintStatus === 'minting' ? 'Please wait...' : 'Go Back'}
 						</button>
 					</div>
 				</div>
 			)}
 
 			{/* SUCCESS MODAL */}
-			{showSuccessModal && isComplete && tokenId && mintHash && showNotification && (
+			{showSuccessModal && showNotification && (mintResult || inscriptionResult) && (
 				<ComicNotification 
 					onclose={() => setShowNotification(true)} 
 					comicData={comicData}
 					monetizationData={monetizationData} 
-					mintHash={comicHashinalResult}
-					tokenId={tokenId}
-					hashinalResult={comicHashinalResult} // Pass Hashinal results to notification
+					mintHash={mintResult?.transactionId || inscriptionResult?.transactionId || null}
+					tokenId={mintResult?.tokenId || null}
+					hashinalResult={mintResult || inscriptionResult}
 				/>
 			)}
 		</>
 	);
 }
+
+// components/ComicPublisher.tsx (Enhanced with integrated inscription & minting)
+// "use client";
+
+// import { useEffect, useState } from "react";
+// import { AlertCircle, CheckCircle, Upload, Zap, Database, Hash } from "lucide-react";
+// import { ComicNotification } from "./ComicNotification";
+// import Picture from "@/components/picture/Index";
+// import { useAppDispatch, useAppSelector } from "@/redux/hook";
+// import { useMintComic } from "@/hook/useMintComic"; // Using the refactored hook
+// import { useHederaWallet } from "@/providers/HashPackProvider";
+
+// interface ExtractedFile {
+// 	name: string;
+// 	blob: Blob;
+// 	preview: string;
+// 	type?: 'image' | 'pdf-file' | 'zip-images';
+// 	originalFileName?: string;
+// 	fileSize?: number;
+// 	pageCount?: number;
+// }
+
+// interface ComicData {
+// 	title: string;
+// 	description: string;
+// 	genre: string[];
+// 	tags: string[];
+// 	ageRating: string;
+// 	coverImage: File | null;
+// 	pages: ExtractedFile[];
+// 	sourceType?: string;
+// 	pdfMetadata?: {
+// 		originalFileName?: string;
+// 		fileSize?: number;
+// 		estimatedPageCount?: number;
+// 	};
+// }
+
+// interface MonetizationData {
+// 	publishType: "free" | "paid";
+// 	price?: number;
+// 	mintAsNFT: boolean;
+// 	nftCopies?: number;
+// 	nftPrice?: number;
+// 	enableHashinal?: boolean;
+// }
+
+// interface ComicPublisherProps {
+// 	onclose: () => void;
+// 	comicData: ComicData;
+// 	monetizationData: MonetizationData;
+// }
+
+// export default function ComicPublisher({ onclose, comicData, monetizationData }: ComicPublisherProps) {
+// 	const [showNotification, setShowNotification] = useState(false);
+// 	const [isPublishing, setIsPublishing] = useState(false);
+// 	const [error, setError] = useState<string | null>(null);
+// 	const [validationErrors, setValidationErrors] = useState<string[]>([]);
+// 	const [publishingStep, setPublishingStep] = useState<string>('');
+// 	const [showSuccessModal, setShowSuccessModal] = useState(false);
+	
+// 	const dispatch = useAppDispatch();
+// 	const { user } = useAppSelector((state) => state.wallet);
+// 	const { 
+// 		account,
+// 		isConnected, 
+// 		connector,
+// 		signer,
+// 		connectWallet 
+// 	} = useHederaWallet();
+
+// 	// Check if we have a PDF or ZIP file
+// 	const hasPdfFile = comicData.sourceType === 'pdf-file';
+// 	const hasZipFile = comicData.sourceType === 'zip-images';
+// 	const pdfFile = hasPdfFile ? comicData.pages.find(file => file.type === 'pdf-file') : null;
+// 	const zipFile = hasZipFile ? comicData.pages.find(file => file.type === 'zip-images') : null;
+	
+// 	// Use the refactored hook that handles both inscription and minting
+// 	const { 
+// 		createComicNFT, 
+// 		status, 
+// 		progress, 
+// 		result, 
+// 		error: mintError, 
+// 		statusText,
+// 		reset,
+// 		inscriptionStatus,
+// 		inscriptionProgress,
+// 		inscriptionResult
+// 	} = useMintComic({
+// 		accountId: account || user?.walletAddress || '',
+// 		signer: signer,
+// 		network: 'testnet'
+// 	});
+
+// 	const isCurrentlyPaid = monetizationData.publishType === "paid";
+
+// 	// Validation
+// 	const validate = (): string[] => {
+// 		const errors: string[] = [];
+		
+// 		if (!comicData.title || comicData.title.trim() === '') {
+// 			errors.push("Comic title is required");
+// 		}
+		
+// 		if (!comicData.coverImage) {
+// 			errors.push("Cover image is required");
+// 		}
+		
+// 		if (!pdfFile && !zipFile && (!comicData.pages || comicData.pages.length === 0)) {
+// 			errors.push("Comic pages are required");
+// 		}
+		
+// 		if (isCurrentlyPaid && (!monetizationData.price || monetizationData.price <= 0)) {
+// 			errors.push("Price must be greater than 0 for paid comics");
+// 		}
+		
+// 		if (monetizationData.mintAsNFT) {
+// 			if (!monetizationData.nftCopies || monetizationData.nftCopies <= 0) {
+// 				errors.push("Number of NFT copies must be greater than 0");
+// 			}
+// 			if (!monetizationData.nftPrice || monetizationData.nftPrice <= 0) {
+// 				errors.push("NFT price must be greater than 0");
+// 			}
+// 		}
+		
+// 		if (!account && monetizationData.mintAsNFT) {
+// 			errors.push("Please connect your wallet to mint NFT");
+// 		}
+		
+// 		return errors;
+// 	};
+
+// 	/**
+// 	 * Prepare file for inscription/minting
+// 	 */
+// 	const prepareComicFile = async (): Promise<{ zipFile?: File; pdfFile?: File } | null> => {
+// 		try {
+// 			// If we have a PDF file
+// 			if (pdfFile) {
+// 				const pdfBlob = pdfFile.blob;
+// 				const file = new File([pdfBlob], pdfFile.originalFileName || 'comic.pdf', {
+// 					type: 'application/pdf'
+// 				});
+// 				return { pdfFile: file };
+// 			}
+			
+// 			// If we have a ZIP file
+// 			if (zipFile) {
+// 				const zipBlob = zipFile.blob;
+// 				const file = new File([zipBlob], zipFile.originalFileName || 'comic.zip', {
+// 					type: 'application/zip'
+// 				});
+// 				return { zipFile: file };
+// 			}
+			
+// 			// If we have individual pages, create a ZIP
+// 			if (comicData.pages && comicData.pages.length > 0) {
+// 				// You'll need to implement ZIP creation from individual pages
+// 				// For now, we'll just use the first page as an example
+// 				console.warn("Creating ZIP from individual pages not yet implemented");
+// 				return null;
+// 			}
+			
+// 			return null;
+// 		} catch (error) {
+// 			console.error("Error preparing comic file:", error);
+// 			return null;
+// 		}
+// 	};
+
+// 	/**
+// 	 * Handle the publish action
+// 	 */
+// 	const handlePublish = async () => {
+// 		try {
+// 			// Validate inputs
+// 			const errors = validate();
+// 			if (errors.length > 0) {
+// 				setValidationErrors(errors);
+// 				return;
+// 			}
+
+// 			setIsPublishing(true);
+// 			setError(null);
+// 			setValidationErrors([]);
+
+// 			// Check wallet connection for NFT minting
+// 			if (monetizationData.mintAsNFT && !signer) {
+// 				setError("Please connect your wallet to mint NFT");
+// 				setIsPublishing(false);
+// 				return;
+// 			}
+
+// 			// Prepare the comic file
+// 			const comicFile = await prepareComicFile();
+// 			if (!comicFile) {
+// 				setError("Failed to prepare comic file");
+// 				setIsPublishing(false);
+// 				return;
+// 			}
+
+// 			// Prepare cover image
+// 			let coverUri = '';
+// 			if (comicData.coverImage) {
+// 				// You might want to upload the cover to IPFS or another service
+// 				// For now, we'll use a placeholder
+// 				coverUri = 'cover-placeholder';
+// 			}
+
+// 			// Execute inscription and minting
+// 			const mintResult = await createComicNFT({
+// 				name: comicData.title,
+// 				creator: user?.username || account || 'Unknown',
+// 				description: comicData.description || '',
+// 				genres: comicData.genre || [],
+// 				copiesOfComic: monetizationData.nftCopies || 100,
+// 				ageRating: comicData.ageRating || 'T',
+// 				coverUri: coverUri,
+// 				coverFile: comicData.coverImage || undefined,
+// 				zipFile: comicFile.zipFile,
+// 				pdfFile: comicFile.pdfFile,
+// 				sourceType: comicData.sourceType as any,
+// 				priceHbar: monetizationData.nftPrice || 10,
+// 				mintNow: 1, // Mint at least 1 copy initially
+// 			});
+
+// 			console.log("✅ Comic NFT created successfully:", mintResult);
+			
+// 			// Show success notification
+// 			setShowSuccessModal(true);
+// 			setShowNotification(true);
+			
+// 		} catch (err: any) {
+// 			console.error("Error publishing comic:", err);
+// 			setError(err.message || "Failed to publish comic");
+// 		} finally {
+// 			setIsPublishing(false);
+// 		}
+// 	};
+
+// 	// Get display status text
+// 	const getStatusDisplay = () => {
+// 		if (status === 'inscribing' || inscriptionStatus === 'inscribing') {
+// 			return {
+// 				text: statusText || 'Inscribing comic to Hedera...',
+// 				progress: inscriptionProgress || progress,
+// 				color: 'purple'
+// 			};
+// 		} else if (status === 'minting') {
+// 			return {
+// 				text: 'Creating NFT collection...',
+// 				progress: progress,
+// 				color: 'green'
+// 			};
+// 		} else if (status === 'done') {
+// 			return {
+// 				text: 'Comic NFT created successfully!',
+// 				progress: 100,
+// 				color: 'green'
+// 			};
+// 		}
+// 		return null;
+// 	};
+
+// 	const statusDisplay = getStatusDisplay();
+
+// 	return (
+// 		<>
+// 			{/* Preview Section */}
+// 			{!showSuccessModal && (
+// 				<div className='max-w-2xl mx-auto'>
+// 					{/* Header */}
+// 					<div className='text-center mb-6'>
+// 						<h2 className='text-2xl font-bold text-white mb-2'>
+// 							Final Review & Publish
+// 						</h2>
+// 						<p className='text-white/70'>
+// 							Review your comic details before publishing
+// 						</p>
+// 					</div>
+
+// 					{/* Comic Preview */}
+// 					<div className='bg-white/5 backdrop-blur rounded-lg mb-4'>
+// 						<div className='px-6 py-4 border-b border-white/10'>
+// 							<h3 className='text-white font-semibold'>Comic Details</h3>
+// 						</div>
+// 						<div className='p-6 space-y-4'>
+// 							{/* Title and Cover */}
+// 							<div className='flex gap-4'>
+// 								{comicData.coverImage && (
+// 									<div className='w-24 h-32 bg-white/10 rounded-lg overflow-hidden'>
+// 										<Picture
+// 											src={URL.createObjectURL(comicData.coverImage)}
+// 											alt="Cover"
+// 											className='w-full h-full object-cover'
+// 										/>
+// 									</div>
+// 								)}
+// 								<div className='flex-1'>
+// 									<h4 className='text-white font-semibold text-lg mb-1'>
+// 										{comicData.title}
+// 									</h4>
+// 									<p className='text-white/70 text-sm'>
+// 										{comicData.description || 'No description provided'}
+// 									</p>
+// 									<div className='flex flex-wrap gap-2 mt-2'>
+// 										{comicData.genre.map((g, i) => (
+// 											<span key={i} className='px-2 py-1 bg-secondary-200/20 text-secondary-200 rounded text-xs'>
+// 												{g}
+// 											</span>
+// 										))}
+// 									</div>
+// 								</div>
+// 							</div>
+
+// 							{/* File Info */}
+// 							<div className='grid grid-cols-2 gap-4 text-sm'>
+// 								<div>
+// 									<span className='text-white/50'>Source Type:</span>
+// 									<span className='text-white ml-2'>
+// 										{hasPdfFile ? 'PDF' : hasZipFile ? 'ZIP Archive' : `${comicData.pages.length} Pages`}
+// 									</span>
+// 								</div>
+// 								<div>
+// 									<span className='text-white/50'>Age Rating:</span>
+// 									<span className='text-white ml-2'>{comicData.ageRating || 'Not Rated'}</span>
+// 								</div>
+// 							</div>
+
+// 							{/* Monetization Info */}
+// 							{monetizationData.mintAsNFT && (
+// 								<div className='p-4 bg-primary-600/20 rounded-lg border border-primary-600/30'>
+// 									<div className='flex items-center gap-2 mb-2'>
+// 										<Database size={16} className='text-primary-400' />
+// 										<span className='text-primary-400 font-semibold text-sm'>
+// 											NFT Details
+// 										</span>
+// 									</div>
+// 									<div className='grid grid-cols-2 gap-3 text-sm'>
+// 										<div>
+// 											<span className='text-white/50'>Edition Size:</span>
+// 											<span className='text-white ml-2'>{monetizationData.nftCopies}</span>
+// 										</div>
+// 										<div>
+// 											<span className='text-white/50'>Price:</span>
+// 											<span className='text-white ml-2'>{monetizationData.nftPrice} HBAR</span>
+// 										</div>
+// 									</div>
+// 									{monetizationData.enableHashinal && (
+// 										<div className='mt-2 text-purple-400 text-xs'>
+// 											✨ Will be inscribed as Hashinal
+// 										</div>
+// 									)}
+// 								</div>
+// 							)}
+// 						</div>
+// 					</div>
+
+// 					{/* Validation Errors */}
+// 					{validationErrors.length > 0 && (
+// 						<div className='mx-6 mb-4 bg-red-500/20 border border-red-500/50 rounded-lg p-3'>
+// 							<div className='flex items-start gap-2'>
+// 								<AlertCircle size={18} className='text-red-400 flex-shrink-0 mt-0.5' />
+// 								<div>
+// 									<p className='text-red-400 font-semibold text-sm mb-1'>Please fix the following:</p>
+// 									<ul className='text-red-300 text-sm space-y-1'>
+// 										{validationErrors.map((err, i) => (
+// 											<li key={i}>• {err}</li>
+// 										))}
+// 									</ul>
+// 								</div>
+// 							</div>
+// 						</div>
+// 					)}
+
+// 					{/* General Error */}
+// 					{error && (
+// 						<div className='mx-6 mb-4 bg-red-500/20 border border-red-500/50 rounded-lg p-3'>
+// 							<div className='flex items-start gap-2'>
+// 								<AlertCircle size={18} className='text-red-400 flex-shrink-0 mt-0.5' />
+// 								<div>
+// 									<p className='text-red-400 font-semibold text-sm mb-1'>Error</p>
+// 									<p className='text-red-300 text-sm'>{error}</p>
+// 								</div>
+// 							</div>
+// 						</div>
+// 					)}
+
+// 					{/* Mint Error */}
+// 					{mintError && (
+// 						<div className='mx-6 mb-4 bg-red-500/20 border border-red-500/50 rounded-lg p-3'>
+// 							<div className='flex items-start gap-2'>
+// 								<AlertCircle size={18} className='text-red-400 flex-shrink-0 mt-0.5' />
+// 								<div>
+// 									<p className='text-red-400 font-semibold text-sm mb-1'>Minting Error</p>
+// 									<p className='text-red-300 text-sm'>{mintError}</p>
+// 								</div>
+// 							</div>
+// 						</div>
+// 					)}
+
+// 					{/* Progress Indicator */}
+// 					{statusDisplay && status !== 'idle' && status !== 'error' && (
+// 						<div className={`mx-6 mb-4 bg-${statusDisplay.color}-500/20 border border-${statusDisplay.color}-500/50 rounded-lg p-4`}>
+// 							<div className='flex items-center gap-3'>
+// 								{status === 'done' ? (
+// 									<CheckCircle size={18} className={`text-${statusDisplay.color}-400`} />
+// 								) : (
+// 									<Hash size={18} className={`text-${statusDisplay.color}-400 animate-spin`} />
+// 								)}
+// 								<div className='flex-1'>
+// 									<div className='flex justify-between items-center mb-1'>
+// 										<span className={`text-${statusDisplay.color}-400 text-sm font-medium`}>
+// 											{statusDisplay.text}
+// 										</span>
+// 										<span className={`text-${statusDisplay.color}-400 text-xs`}>
+// 											{Math.round(statusDisplay.progress)}%
+// 										</span>
+// 									</div>
+// 									<div className='w-full bg-white/10 rounded-full h-2'>
+// 										<div 
+// 											className={`bg-${statusDisplay.color}-400 h-2 rounded-full transition-all duration-300`}
+// 											style={{ width: `${statusDisplay.progress}%` }}
+// 										/>
+// 									</div>
+// 								</div>
+// 							</div>
+// 						</div>
+// 					)}
+
+// 					{/* Success Message */}
+// 					{result && (
+// 						<div className='mx-6 mb-4 bg-green-500/20 border border-green-500/50 rounded-lg p-3'>
+// 							<div className='flex items-start gap-2'>
+// 								<CheckCircle size={18} className='text-green-400 flex-shrink-0 mt-0.5' />
+// 								<div>
+// 									<p className='text-green-400 font-semibold text-sm mb-1'>
+// 										Comic NFT Created Successfully!
+// 									</p>
+// 									<div className='text-green-300 text-sm space-y-1'>
+// 										<p>Token ID: {result.tokenId}</p>
+// 										<p>Serial: #{result.serial}</p>
+// 										{result.inscriptionTopicId && (
+// 											<p>Inscription: {result.inscriptionTopicId}</p>
+// 										)}
+// 										{result.metadataTopicIds && result.metadataTopicIds.length > 0 && (
+// 											<p>Metadata Topics: {result.metadataTopicIds.length} topics created</p>
+// 										)}
+// 										<p className='text-xs mt-2'>
+// 											Transaction: {result.transactionId.slice(0, 10)}...{result.transactionId.slice(-8)}
+// 										</p>
+// 									</div>
+// 								</div>
+// 							</div>
+// 						</div>
+// 					)}
+
+// 					{/* Action Buttons */}
+// 					<div className='px-6 pb-6 space-y-3 mt-4'>
+// 						<button
+// 							onClick={handlePublish}
+// 							disabled={isPublishing || status !== 'idle'}
+// 							className='w-full bg-secondary-200/80 hover:bg-secondary-200 text-black font-semibold py-3 rounded-full transition disabled:cursor-not-allowed disabled:opacity-50 flex items-center justify-center gap-2'
+// 						>
+// 							{status !== 'idle' && status !== 'done' && status !== 'error' ? (
+// 								<>
+// 									<div className='animate-spin rounded-full h-5 w-5 border-b-2 border-black'></div>
+// 									{status === 'inscribing' ? 'Inscribing...' : 
+// 									 status === 'minting' ? 'Minting NFT...' : 
+// 									 'Processing...'}
+// 								</>
+// 							) : (
+// 								<>
+// 									<Database size={18} />
+// 									{monetizationData.mintAsNFT ? 
+// 										'Publish & Mint NFT' : 
+// 										'Publish Comic'
+// 									}
+// 								</>
+// 							)}
+// 						</button>
+
+// 						<button
+// 							onClick={onclose}
+// 							disabled={isPublishing || (status !== 'idle' && status !== 'done' && status !== 'error')}
+// 							className='w-full border border-white/20 text-white/70 hover:text-white hover:bg-white/5 py-3 rounded-full transition disabled:cursor-not-allowed disabled:opacity-50'
+// 						>
+// 							{status !== 'idle' && status !== 'done' && status !== 'error' ? 
+// 								'Please wait...' : 
+// 								'Go Back'
+// 							}
+// 						</button>
+
+// 						{status === 'error' && (
+// 							<button
+// 								onClick={reset}
+// 								className='w-full bg-red-500/20 hover:bg-red-500/30 text-red-400 py-3 rounded-full transition'
+// 							>
+// 								Reset & Try Again
+// 							</button>
+// 						)}
+// 					</div>
+// 				</div>
+// 			)}
+
+// 			{/* SUCCESS MODAL */}
+// 			{showSuccessModal && result && showNotification && (
+// 				<ComicNotification 
+// 					onclose={() => {
+// 						setShowNotification(false);
+// 						setShowSuccessModal(false);
+// 						reset();
+// 						onclose();
+// 					}} 
+// 					comicData={comicData}
+// 					monetizationData={monetizationData} 
+// 					mintHash={result.transactionId}
+// 					tokenId={result.tokenId}
+// 					hashinalResult={{
+// 						...result,
+// 						status: 'completed' as const
+// 					}}
+// 				/>
+// 			)}
+// 		</>
+// 	);
+// }

@@ -249,9 +249,11 @@ import {
   DAppConnector,
   HederaSessionEvent,
   HederaJsonRpcMethod,
-  HederaChainId
+  HederaChainId,
+  
 } from '@hashgraph/hedera-wallet-connect';
 import { LedgerId, AccountId } from '@hashgraph/sdk';
+
 // import { Account } from "@hashgraphonline/hashinal-wc";
 
 
@@ -284,6 +286,8 @@ export const HederaWalletProvider = ({ children }: { children: React.ReactNode }
       await dAppConnector.init({ logger: 'error' });
       setConnector(dAppConnector);
         const signers = dAppConnector.signers;
+        
+         
         console.log('Initial signers:', signers);
       // Subscribe to session events via WalletConnect client
       if (dAppConnector.walletConnectClient) {

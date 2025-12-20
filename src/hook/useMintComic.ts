@@ -1,218 +1,220 @@
+// import { useRef, useState, useEffect } from "react";
+// import { Client, TokenCreateTransaction, TokenMintTransaction, TokenType, TokenSupplyType } from "@hashgraph/sdk";
+// import { inscribeWithSigner, retrieveInscription } from "@hashgraphonline/standards-sdk";
+// import { Buffer } from "buffer";
 // import { createComicMetadata } from "../lib/hashinal-helper";
-// import { useState, useRef, useEffect } from "react";
-// import {inscribe, inscribeWithSigner } from "@hashgraphonline/standards-sdk";
-//  import { HashinalsWalletConnectSDK } from "@hashgraphonline/hashinal-wc";
-// import {
-//   Client,
-//   TokenCreateTransaction,
-//   TokenType,
-//   TokenSupplyType,
-//   TokenMintTransaction,
-//   LedgerId,
-//   AccountId,
-// } from "@hashgraph/sdk";
-// import { Buffer } from "buffer/";
-
- 
+// import { InscriptionSDK } from '@kiloscribe/inscription-sdk';
 
 // interface UseComicHashinalProps {
 //   accountId: string;
-//   signer: any; // DAppSigner from connector.getSigner() - must have getAccountId() method
+//   signer: any;
 //   network?: "testnet" | "mainnet";
 // }
 
-//   export function useComicHashinalNFT({ accountId, signer, network = "testnet" }: UseComicHashinalProps) {
-//  const [status, setStatus] = useState<"idle" | "uploading" | "inscribing" | "minting" | "done" | "error">("idle");
-//   const [progress, setProgress] = useState<number>(0);
-//   const [result, setResult] = useState<any>(null);
-//   const [error, setError] = useState<string | null>(null);
-
-//   // Use refs to always get the latest values
-//   const signerRef = useRef(signer);
-//   console.log('signerRef:', signerRef);
-//   const accountIdRef = useRef(accountId);
-//   console.log('accountIdRef:', accountIdRef);
-
-//   // Keep refs in sync with props
-//   useEffect(() => {
-//     signerRef.current = signer;
-//     accountIdRef.current = accountId;
-//   }, [signer, accountId]);
-
-//   // Resolve signer: prefer provided signer, fallback to WalletConnect SDK
-// const getActiveSigner = async () => {
-//   // Always read from ref to get latest value
-//   const currentSigner = signerRef.current;
-  
-//   if (currentSigner) {
-//     console.log("🪙 Using provided signer from HashPack/Kabila");
-//     return currentSigner;
-//   }
-
-//   // throw new Error("No signer available. Please connect your wallet first.");
-
-//   console.log("⚡ No signer passed — initializing Hashinals WC SDK...");
-//   const sdk = HashinalsWalletConnectSDK.getInstance();
-
-//   await sdk.init(
-//     "ec1bf58ee8034b1747cb72a34b6652ae", // replace with your project ID
-//     {
-//       name: "Quiva Comics",
-//       description: "Client-side inscription with Hashinals",
-//       url: window.location.origin,
-//       icons: ["https://quiva.com/icon.png"],
-//     },
-//     network === "testnet" ? LedgerId.TESTNET : LedgerId.MAINNET
-//   );
-
-//   const session = await sdk.connect();
-//   const accountInfo = await sdk.getAccountInfo();
-//   console.log(`🔗 Connected Hedera wallet: ${accountInfo.accountId}`);
-
-//   return sdk.dAppConnector; // this acts as a signer for inscribeWithSigner
-// };
-
-// // active signer will be resolved when needed inside createComicNFT
-// const createComicNFT = async (formData: {
+// interface ComicFormData {
 //   name: string;
 //   creator: string;
 //   description: string;
 //   genres: string[];
 //   copiesOfComic: number;
+//   coverUri: File;
 //   ageRating: string;
-//   coverFile: File;
-//   pageFiles: File[]; // Individual image files
-//   zipFile?: File; // Optional ZIP file containing comic pages
-//   sourceType?: 'image' | 'zip-images' | 'pdf-file'; // Type of source files
 //   priceHbar: number;
+//   zipFile?: File;
+//   pdfFile?: File;
 //   mintNow?: number;
-// }) => {
-//   try {
-//     setStatus("inscribing");
-//     setProgress(0);
+// }
 
-//     // Validate inputs - either pageFiles OR zipFile must be provided
-//     const hasPageFiles = formData.pageFiles && formData.pageFiles.length > 0;
-//     const hasZipFile = formData.zipFile != null;
-    
-//     if (!hasPageFiles && !hasZipFile) {
-//       throw new Error("No page files or ZIP file provided for inscription");
-//     }
-//     if (!formData.coverFile) {
-//       throw new Error("No cover file provided");
-//     }
+// export function useComicHashinalNFT({
+//   accountId,
+//   signer,
+//   network = "testnet",
+// }: UseComicHashinalProps) {
+//   const [status, setStatus] = useState<"idle" | "uploading" | "inscribing" | "waiting" | "minting" | "done" | "error">("idle");
+//   const [progress, setProgress] = useState<number>(0);
+//   const [result, setResult] = useState<any>(null);
+//   const [error, setError] = useState<string | null>(null);
+//   const [statusText, setStatusText] = useState<string>("");
 
-//   // Step 1: Get signer ready
-//       const pageUris: string[] = [];
-//       const activeSigner = await getActiveSigner();
-//       console.log("🪙 Active signer ready:", activeSigner);
-      
-//       // Validate signer has required method
-//       if (!activeSigner || typeof activeSigner.getAccountId !== 'function') {
-//         throw new Error("Invalid signer: must have getAccountId() method. Make sure you're passing a DAppSigner, not DAppConnector.");
-//       }
+//   const pollingRef = useRef<NodeJS.Timeout | null>(null);
 
-//       // Handle ZIP file - inscribe ZIP + metadata together in ONE call
-//       if (hasZipFile && formData.sourceType === 'zip-images') {
-//         console.log("📦 Inscribing ZIP file with metadata (single call):", formData.zipFile!.name);
-//         setProgress(10);
-        
-//         // Create metadata for the ZIP file
-//         const zipMetadata = createComicMetadata({
-//           name: formData.name,
-//           creator: formData.creator,
-//           description: formData.description,
-//           genres: formData.genres,
-//           copiesOfComic: formData.copiesOfComic,
-//           ageRating: formData.ageRating,
-//           coverUri: formData.name, // Will be replaced by the inscription topic
-//           pageUris: [], // Will contain the ZIP topic after inscription
-//           priceHbar: formData.priceHbar,
-//           totalPages: 1,
-//           mimeType: "application/zip",
-//           zipArchiveUri: undefined, // Will be set after inscription
-//         });
+//   // const sdk = new InscriptionSDK({
+//   //   apiKey: 'U2FsdGVkX1/TURlTVZ2pvTS2EhsOghpHukSJUC3Cedl66+PHbLHNYAHykYCkplVmMA086oZkJiqKsu/FjXdERA==',
+//   //   network: network,
+//   // });
 
-//         const zipBuffer = await formData.zipFile!.arrayBuffer();
-        
-//         // Single inscription call for ZIP + metadata together
-//         const zipNftInscription = await inscribeWithSigner(
-//           {
-//             type: "buffer",
-//             buffer: zipBuffer,
-//             fileName: formData.zipFile!.name,
-//             mimeType: "application/zip",
-//           },
-//           activeSigner,
-//           {
-//             mode: "hashinal",
-//             metadata: zipMetadata,
-//             waitForConfirmation: true,
-//             progressCallback: (data) => setProgress(10 + data.progressPercent * 0.85),
-//             network,
-//           }
-//         );
+//   // 🧠 Helper: background polling for confirmation
+//   // const pollForConfirmation = async (transactionId: string, attempts = 0) => {
+//   //   try {
+//   //     const result = await retrieveInscription(transactionId, { network });
+//   //     // Accept any of the known confirmation shapes returned by retrieveInscription:
+//   //     // - result.content (primary)
+//   //     // - result.topicId / result.topic_id
+//   //     // - result.transactionId
+//   //     // - legacy/third-party "inscription" field (guarded via any)
+//   //     const r: any = result;
+//   //     if (r?.content || r?.topicId || r?.topic_id || r?.transactionId || r?.inscription) {
+//   //       console.log("✅ Inscription confirmed:", result);
+//   //       setStatus("minting");
+//   //       setProgress(100);
+//   //       setStatusText("Inscription confirmed on Hedera ✅");
 
-//         const comicHRL = `hcs://1/${zipNftInscription.inscription.topic_id}`;
-//         const metadataHRL = `hcs://1/${zipNftInscription.inscription.jsonTopicId}`;
-        
-//         setProgress(100);
-//         console.log("✅ ZIP + Metadata inscribed together in single call!");
-//         console.log("📄 Comic HRL:", comicHRL);
-//         console.log("📄 Metadata HRL:", metadataHRL);
+//   //       // Stop polling
+//   //       if (pollingRef.current) clearTimeout(pollingRef.current);
+//   //       return true;
+//   //     }
+//   //     throw new Error("Not confirmed yet");
+//   //   } catch (err) {
+//   //     if (attempts < 60) { // retry up to 60 times (~5 minutes)
+//   //       console.log(`⏳ Waiting for inscription confirmation (attempt ${attempts + 1}/60)...`);
+//   //       pollingRef.current = setTimeout(() => pollForConfirmation(transactionId, attempts + 1), 5000);
+//   //     } else {
+//   //       setError("Inscription confirmation timed out");
+//   //       setStatus("error");
+//   //     }
+//   //   }
+//   // };
 
-//         // For ZIP files, we're done - return result directly
-//         const zipResult = {
-//           comicHRL,
-//           metadataHRL,
-//           zipUri: comicHRL,
-//           totalPages: 1,
-//           isZipArchive: true,
-//         };
-
-//         setResult(zipResult);
-//         setStatus("done");
-//         return zipResult;
-//       } 
-      
-//       // Handle individual image files inscription
-//       if (hasPageFiles) {
-//         console.log("🖼️ Inscribing individual page files:", formData.pageFiles.length);
-//         let processedCount = 0;
-        
-//         for (const page of formData.pageFiles) {
-//           const arrayBuffer = await page.arrayBuffer();
-         
-//           const res = await inscribeWithSigner(
-//             {
-//               type: "buffer",
-//               buffer: arrayBuffer,
-//               fileName: page.name,
-//               mimeType: page.type || "image/png",
-//             },
-//             activeSigner,
-//             {
-//               waitForConfirmation: true,
-//               network
-//             }
-//           );
-    
-//           const uri = `hcs://1/${res.inscription.topic_id}`;
-//           pageUris.push(uri);
-          
-//           processedCount++;
-//           setProgress(Math.min(10 + (processedCount / formData.pageFiles.length) * 40, 50));
-//         }
-//         console.log("✅ All pages inscribed:", pageUris.length);
-//       }
+//   // Check status every 2 seconds
+// // const pollStatus = async (jobId) => {
+// //   const status = await sdk.retrieveInscription(jobId);
   
-//       // Step 2: Get cover URI from the first inscribed page
-//       const coverUri = pageUris[0];
-      
-//       setProgress(50);
-//       console.log("Files inscribed, coverUri:", coverUri);
-      
-//       // Step 3: Generate HIP-412 metadata for individual images
+// //   switch(status.status) {
+// //     case 'completed':
+// //       console.log('Success!', status);
+// //       break;
+// //     case 'paid':
+// //       console.log('payment verified', status);
+// //       break;
+// //     case 'failed':
+// //       console.error('Failed:', status);
+// //       break;
+// //     default:
+// //       setTimeout(() => pollStatus(jobId), 2000);
+// //   }
+// // };
+//   const createComicNFT = async (formData: ComicFormData) => {
+//     try {
+//       setStatus("inscribing");
+//       setProgress(0);
+
+//       if (!signer || typeof signer.sign !== "function")
+//         throw new Error("Wallet signer not available. Please connect your wallet.");
+
+//       if (!formData.zipFile && !formData.pdfFile)
+//         throw new Error("No comic ZIP or PDF file provided.");
+
+//       const fileToInscribe = formData.zipFile || formData.pdfFile!;
+//       const arrayBuffer = await fileToInscribe.arrayBuffer();
+//      if (fileToInscribe.size > 500 * 1024) {
+//   console.warn("ZIP too large for WalletConnect inscription, use backend route");
+// }
+//       console.log("🚀 Starting inscription:", fileToInscribe.name);
+
+// // const result = await sdk.inscribe({
+// //   // file: {
+// //   file:{
+// //     type: "base64",
+// //     base64: Buffer.from(arrayBuffer).toString('base64'),
+// //         //  buffer: Buffer.from(arrayBuffer),
+// //           fileName: fileToInscribe.name,
+// //          mimeType: fileToInscribe.type || "application/zip",
+// //   },
+// //   // },
+// //   holderId: accountId,
+// //   mode: 'hashinal-collection',
+// //   network: network,
+// // }, signer);
+
+// // pollStatus(result.jobId);
+
+// // const complete = await sdk.waitForInscription(
+// //   result.jobId,
+// //   30,     // Try up to 30 times
+// //   4000,   // Wait 4 seconds between attempts
+// //   true    // Also check for status === 'completed'
+// // );
+
+// // console.log('Topics:', {
+// //   content: complete.topic_id,
+// //   metadata: complete.jsonTopicId,
+// //   registry: complete.registryTopicId
+// // });
+
+// // Check status
+// // const status = await sdk.retrieveInscription(result.jobId);
+// // console.log('Inscription status:', status);
+
+// // const transactionId = status.transactionId;
+// // console.log('Inscription transaction ID:', transactionId);
+
+//       const inscriptionResult = await inscribeWithSigner(
+//         {
+//           type: "buffer",
+//           buffer: Buffer.from(arrayBuffer),
+//           fileName: fileToInscribe.name,
+//           mimeType: fileToInscribe.type || "application/zip",
+//         },
+//         signer,
+//         {
+//           mode: "hashinal-collection",
+//           waitForConfirmation: true, // 🚀 let’s not block UI here
+//             waitMaxAttempts: 50,
+//             waitIntervalMs: 10000,
+//             chunkSize: 1024 * 256,
+//           network,
+
+//           progressCallback: (data: any) => {
+//             const pct = Math.min(data.progressPercent || 0, 95);
+//             setProgress(pct);
+//             setStatusText(data.message || "Inscribing...");
+//           },
+//         }
+//       );
+
+//       const transactionId = (() => {
+//         // Prefer explicit inscription.transactionId
+//         const insTx = inscriptionResult?.inscription?.transactionId;
+//         if (insTx) return insTx;
+//         console.log('Inscription result:', insTx);
+//         // If result is a plain string, treat it as the transactionId
+//         if (typeof inscriptionResult?.result === "string") return inscriptionResult!.result;
+//         console.log('Inscription result object:', inscriptionResult?.result);
+//         // If result is an object that contains transactionId, use it
+//         if (inscriptionResult?.result && typeof inscriptionResult.result === "object") {
+//           if ("transactionId" in inscriptionResult.result) {
+//             return (inscriptionResult.result as any).transactionId;
+//             console.log('Found transactionId in result:', (inscriptionResult.result as any).transactionId);
+//           }
+//           // Some implementations may nest transactionId under result.transaction
+//           if ("transaction" in inscriptionResult.result && (inscriptionResult.result as any).transaction?.transactionId) {
+//             return (inscriptionResult.result as any).transaction.transactionId;
+//           }
+//         }
+//         return undefined;
+//       })();
+
+// if (!transactionId) {
+//   throw new Error("Failed to get inscription transaction ID");
+// }
+// const metadataHRL = `hcs://1/${inscriptionResult.inscription.jsonTopicId}`;
+// console.log(`Metadata HRL: ${metadataHRL}`);
+//       // const imageHRL = inscriptionResult?.inscription?.topic_id;
+//       // if (!imageHRL) throw new Error("Failed to retrieve inscription topic ID.");
+//       const jobId = inscriptionResult?.inscription?.jobId;
+//       console.log(`Job ID: ${jobId}`);
+//       // const transactionId = inscriptionResult?.inscription?.tx_id.toString();
+//       // if (!transactionId) throw new Error("Failed to get inscription transaction ID");
+//       //    // Background poller
+//       //  pollForConfirmation(transactionId);
+//       setStatus("waiting");
+//       setStatusText("Waiting for network confirmation...");
+//       console.log("🕓 Inscription submitted, polling confirmation for:", transactionId);
+//     const retrieve = `http://v2-api.tier.bot/api/inscriptions/retrieve-inscription?id=${transactionId}&network=${network}`;
+//     console.log('Retrieve URL:', retrieve);
+    
+     
+//       // Prepare metadata right away
 //       const metadata = createComicMetadata({
 //         name: formData.name,
 //         creator: formData.creator,
@@ -220,113 +222,88 @@
 //         genres: formData.genres,
 //         copiesOfComic: formData.copiesOfComic,
 //         ageRating: formData.ageRating,
-//         coverUri: coverUri || formData.name,
-//         pageUris: pageUris,
+//         coverUri: formData.coverUri,
+//         pageUris: [`hcs://tx/${transactionId}`],
 //         priceHbar: formData.priceHbar,
-//         totalPages: formData.pageFiles.length,
-//         mimeType: "image/png",
+//         totalPages: 1,
+//         mimeType: "application/zip",
 //       });
-      
-//     // Step 4: Inscribe metadata + cover image
-//     const coverBuffer = await formData.coverFile.arrayBuffer();
 
-//     const nftInscription = await inscribeWithSigner(
-//       {
-//         type: "buffer",
-//         buffer: coverBuffer,
-//         fileName: formData.coverFile.name,
-//         mimeType: formData.coverFile.type || "image/png",
-//       },
-//       activeSigner,
-//       {
-//         mode: "hashinal",
-//         metadata,
-//         waitForConfirmation: true,
-//         progressCallback: (data) => setProgress(50 + data.progressPercent * 0.5),
-//         network
-//       }
-//     );
-
-//     const comicHRL = `hcs://1/${nftInscription.inscription.topic_id}`;
-//     const metadataHRL = `hcs://1/${nftInscription.inscription.jsonTopicId}`;
-//       setProgress(80)
-//     // Step 5: Continue with NFT creation + mint as before
-//     // ... your existing TokenCreateTransaction + TokenMintTransaction logic
-
-//     // const client = Client.forName(network);
-//     const client = Client.forTestnet();
-//     client.setOperator(accountId, activeSigner);
-//       // const publicKey = activeSigner.getAccountKey ? await activeSigner.getAccountKey() : activeSigner.publicKey;
-//       // client.setOperatorWith(accountId, publicKey, (msg) => activeSigner.sign(msg));
+//       // 🪙 Mint NFT collection once confirmation done
+//       // You can call this manually after confirmation if you want
+//       const client = Client.forName(network);
+//       const publicKey = signer.getAccountKey?.() || signer.publicKey || null;
+//       client.setOperatorWith(accountId, publicKey, (msg) => signer.sign(msg));
 
 //       const tokenCreateTx = new TokenCreateTransaction()
-//         .setTokenName(metadata.name || "Comic NFT")
-//         .setTokenSymbol("QuivaCOMIC")
+//         .setTokenName(metadata.name)
+//         .setTokenSymbol("QCOMIC")
 //         .setTokenType(TokenType.NonFungibleUnique)
 //         .setDecimals(0)
 //         .setInitialSupply(0)
 //         .setMaxSupply(metadata.properties.copiesOfComic)
 //         .setSupplyType(TokenSupplyType.Finite)
 //         .freezeWith(client);
-        
-//       const signedCreateTx = await activeSigner.signTransaction(tokenCreateTx);
+
+//       const signedCreateTx = await signer.signTransaction(tokenCreateTx);
 //       const nftCreateSubmit = await signedCreateTx.execute(client);
 //       const nftCreateReceipt = await nftCreateSubmit.getReceipt(client);
 //       const tokenId = nftCreateReceipt.tokenId?.toString();
 
-//       console.log("🪙 Comic NFT Collection Created:", tokenId);
-//       setProgress(90);
-//      let lastSerial: number = 0;
-//      for (let i = 0; i < (formData.mintNow || 1); i++) {
+//       console.log("🪙 NFT Collection Created:", tokenId);
+//       setProgress(95);
+
 //       const mintTx = new TokenMintTransaction()
 //         .setTokenId(tokenId!)
-//         .setMetadata([Buffer.from(metadataHRL)])
+//         .setMetadata([Buffer.from(JSON.stringify(metadataHRL))])
 //         .freezeWith(client);
 
-//       const signedMintTx = await activeSigner.signTransaction(mintTx);
+//       const signedMintTx = await signer.signTransaction(mintTx);
 //       const mintSubmit = await signedMintTx.execute(client);
 //       const mintReceipt = await mintSubmit.getReceipt(client);
-//       lastSerial = mintReceipt.serials[0].toNumber();
-//       console.log(`🎉 Minted Comic NFT #${lastSerial}`);
-//      }
+//       const serial = mintReceipt.serials[0].toNumber();
 
-//       const nftResult = {
-//         tokenId,
-//         serial: lastSerial,
-//         metadataHRL,
-//         comicHRL,
-//         totalPages: formData.pageFiles.length,
-//       };
-
+//       const nftResult = { tokenId, serial, transactionId };
 //       setResult(nftResult);
 //       setStatus("done");
 //       setProgress(100);
+//       console.log("✅ NFT fully created:", nftResult);
+
 //       return nftResult;
 //     } catch (err: any) {
 //       console.error("❌ Error creating comic NFT:", err);
 //       setError(err.message);
 //       setStatus("error");
-//       throw err;
 //     }
 //   };
 
-//   return { createComicNFT, status, progress, result, error };
+//   // 🧹 Clean up polling on unmount
+//   useEffect(() => {
+//     return () => {
+//       if (pollingRef.current) clearTimeout(pollingRef.current);
+//     };
+//   }, []);
 
-// };
-    
+//   return { createComicNFT, status, progress, result, error, statusText };
+// }
 
 
-import { useState } from "react";
-import { Client, TokenCreateTransaction, TokenMintTransaction, TokenType, TokenSupplyType } from "@hashgraph/sdk";
-import { inscribeWithSigner } from "@hashgraphonline/standards-sdk"; // Handles user-signed inscription
+import { useState, useEffect, useRef } from "react";
 import { Buffer } from "buffer";
+import {
+  Client,
+  TokenCreateTransaction,
+  TokenType,
+  TokenSupplyType,
+  TokenMintTransaction,
+  AccountId,
+  TransactionId,
+Hbar
+} from "@hashgraph/sdk";
+import { useComicInscription } from "./useComicInscription";
 import { createComicMetadata } from "../lib/hashinal-helper";
-
-interface UseComicHashinalProps {
-  accountId: string;
-  signer: any; // Wallet signer (e.g., DAppSigner from Kabila or HashPack)
-  network?: "testnet" | "mainnet";
-}
+import { HederaMirrorNode } from "@hashgraphonline/standards-sdk";
+   import { Logger } from '@hashgraphonline/standards-sdk';
 
 interface ComicFormData {
   name: string;
@@ -335,152 +312,389 @@ interface ComicFormData {
   genres: string[];
   copiesOfComic: number;
   ageRating: string;
+  coverUri: string;
+  coverFile?: File;
+  pageFiles?: File[];
+  zipFile?: File;
+  pdfFile?: File;
+  sourceType?: "image" | "zip-images" | "pdf-file";
   priceHbar: number;
-  zipFile?: File; // 📦 ZIP file containing /images and /metadata
-  pdfFile?: File; // 📄 Optional single PDF comic
   mintNow?: number;
 }
 
-export function useComicHashinalNFT({
+interface UseMintComicProps {
+  accountId: string;
+  signer: any;
+  network?: "testnet" | "mainnet";
+}
+
+interface MintResult {
+  tokenId: string;
+  serial: number;
+  transactionId: string;
+  inscriptionTopicId?: string;
+  metadataTopicIds?: string[];
+}
+
+export function useMintComic({
   accountId,
   signer,
   network = "testnet",
-}: UseComicHashinalProps) {
-  const [status, setStatus] = useState<
-    "idle" | "uploading" | "inscribing" | "minting" | "done" | "error"
-  >("idle");
-  const [progress, setProgress] = useState<number>(0);
-  const [result, setResult] = useState<any>(null);
-  const [error, setError] = useState<string | null>(null);
+}: UseMintComicProps) {
+  // State for minting process
+  const [mintStatus, setMintStatus] = useState<"idle" | "inscribing" | "minting" | "done" | "error">("idle");
+  const [mintProgress, setMintProgress] = useState<number>(0);
+  const [mintError, setMintError] = useState<string | null>(null);
+  const [mintResult, setMintResult] = useState<MintResult | null>(null);
+  const [mintStatusText, setMintStatusText] = useState<string>("");
 
-  const createComicNFT = async (formData: ComicFormData) => {
+  // Use the inscription hook
+  const {
+    createInscription,
+    status: inscriptionStatus,
+    progress: inscriptionProgress,
+    result: inscriptionResult,
+    error: inscriptionError,
+    statusText: inscriptionStatusText,
+    reset: resetInscription,
+  } = useComicInscription({ accountId, signer, network });
+
+  // Update mint status based on inscription status
+  useEffect(() => {
+    if (inscriptionStatus === "inscribing") {
+      setMintStatus("inscribing");
+      setMintProgress(inscriptionProgress * 0.5); // Inscription is 50% of total progress
+      setMintStatusText(inscriptionStatusText || "Inscribing comic...");
+    } else if (inscriptionStatus === "error") {
+      setMintStatus("error");
+      setMintError(inscriptionError || "Inscription failed");
+    }
+  }, [inscriptionStatus, inscriptionProgress, inscriptionError, inscriptionStatusText]);
+
+  /**
+   * Create metadata for the comic NFT
+   */
+  const buildComicMetadata = (formData: ComicFormData, inscriptionData: any) => {
+    // Use metadataTopicIds from inscription result for the HCS URIs
+    const metadataTopicIds = inscriptionData?.metadataTopicIds || [];
+    const transactionId = inscriptionData?.transactionId;
+    const topicId = inscriptionData?.topicId;
+
+    // Build HCS URIs from the inscription data
+    const pageUris: string[] = [];
+    
+    // Add transaction-based URI if available
+    if (transactionId) {
+      pageUris.push(`hcs://tx/${transactionId}`);
+    }
+    
+    // Add topic-based URIs if available
+    if (topicId) {
+      pageUris.push(`hcs://1/${topicId}`);
+    }
+    
+    // Add metadata topic URIs
+    metadataTopicIds.forEach((id: string) => {
+      if (id) {
+        pageUris.push(`hcs://1/${id}`);
+      }
+    });
+
+    const metadata = createComicMetadata({
+      name: formData.name,
+      creator: formData.creator,
+      description: formData.description,
+      genres: formData.genres,
+      copiesOfComic: formData.copiesOfComic,
+      ageRating: formData.ageRating,
+      coverUri: formData.coverUri || pageUris[0] || "",
+      pageUris,
+      priceHbar: formData.priceHbar,
+      totalPages: 1,
+      mimeType: formData.zipFile ? "application/zip" : "application/pdf",
+      zipArchiveUri: pageUris[0], // Use first URI as archive URI
+    });
+
+    return metadata;
+  };
+
+  /**
+   * Mint NFT on Hedera using HTS
+   */
+  const mintNFTOnHedera = async (
+    formData: ComicFormData,
+    inscriptionData: any,
+    count: number
+  ): Promise<MintResult> => {
+    let tokenId: string | undefined;
+    let serial: number[] = [];
+
     try {
-      setStatus("inscribing");
-      setProgress(0);
-
-      if (!signer || typeof signer.sign !== "function") {
-        throw new Error("No valid signer available. Please connect your wallet.");
-      }
-
-      if (!formData.zipFile && !formData.pdfFile) {
-        throw new Error("No comic ZIP or PDF provided.");
-      }
-
-      // 📦 Step 1: Choose which file to inscribe
-      const fileToInscribe = formData.zipFile || formData.pdfFile!;
-      const arrayBuffer = await fileToInscribe.arrayBuffer();
-
-      console.log("🚀 Starting Hashinal inscription for collection:", fileToInscribe.name);
-
-      // 🧾 Step 2: Inscribe the entire ZIP/PDF as a collection
-      const inscriptionResult = await inscribeWithSigner(
-        {
-          type: "buffer",
-          buffer: Buffer.from(arrayBuffer),
-          fileName: fileToInscribe.name,
-          mimeType: fileToInscribe.type || "application/zip",
-        },
-        signer,
-        {
-          mode: "hashinal-collection", // 🧩 Key update — inscribe as full collection
-          waitForConfirmation: true,
-          network,
-          progressCallback: (data) => {
-            if (data?.progressPercent) setProgress(data.progressPercent);
-          },
-        }
-      );
-
-      const topicId = inscriptionResult?.inscription?.topic_id;
-      if (!topicId) throw new Error("Failed to retrieve inscription topic ID.");
-
-      const comicHRL = `hcs://1/${topicId}`;
-      console.log("✅ Comic ZIP inscribed successfully:", comicHRL);
-
-      setProgress(70);
-
-      // 🧠 Step 3: Generate metadata for NFT minting
-      const metadata = createComicMetadata({
-        name: formData.name,
-        creator: formData.creator,
-        description: formData.description,
-        genres: formData.genres,
-        copiesOfComic: formData.copiesOfComic,
-        ageRating: formData.ageRating,
-        coverUri: comicHRL,
-        pageUris: [comicHRL],
-        priceHbar: formData.priceHbar,
-        totalPages: 1,
-        mimeType: "application/zip",
-      });
-
-      // 🪙 Step 4: Create NFT collection
-      setStatus("minting");
+      console.log("🪙 Starting NFT minting on Hedera...");
+      
+    
+      // Initialize Hedera client
       const client = Client.forName(network);
-      const publicKey =
-        signer.getAccountKey?.() || signer.publicKey || null;
+    //  const client = Client.forTestnet();
+     console.log("🌐 Hedera client initialized for network:", client);
+     const inscriptionName = inscriptionData?.name;
 
-      if (!publicKey) {
-        throw new Error("Signer does not provide a valid public key.");
-      }
+const logger = new Logger({ module: 'MyApp', level: 'info' });
 
-      client.setOperatorWith(accountId, publicKey, (msg) => signer.sign(msg));
+// Basic initialization
+  const mirrorNode = new HederaMirrorNode('testnet', logger);
+ const publicKey = await mirrorNode.getPublicKey(accountId.toString());
+console.log('Public key:', publicKey.toString());
 
+      // Create NFT Collection
+      console.log("📦 Creating NFT collection...");
       const tokenCreateTx = new TokenCreateTransaction()
-        .setTokenName(metadata.name || "Comic Collection")
+        .setTokenName( formData.name || "Comic NFT")
         .setTokenSymbol("QCOMIC")
         .setTokenType(TokenType.NonFungibleUnique)
         .setDecimals(0)
         .setInitialSupply(0)
-        .setMaxSupply(metadata.properties.copiesOfComic)
+        .setMaxSupply(10000)
         .setSupplyType(TokenSupplyType.Finite)
-        .freezeWith(client);
+        .setTreasuryAccountId(AccountId.fromString(accountId))
+        .setSupplyKey(publicKey)
+        .setTransactionId(TransactionId.generate(AccountId.fromString(accountId)));
+       
 
       const signedCreateTx = await signer.signTransaction(tokenCreateTx);
       const nftCreateSubmit = await signedCreateTx.execute(client);
       const nftCreateReceipt = await nftCreateSubmit.getReceipt(client);
-      const tokenId = nftCreateReceipt.tokenId?.toString();
+      tokenId = nftCreateReceipt.tokenId?.toString();
 
-      console.log("🪙 NFT Collection Created:", tokenId);
-      setProgress(85);
-
-      // 🎨 Step 5: Mint the NFTs
-      let lastSerial = 0;
-      const mintCount = formData.mintNow || 1;
-
-      for (let i = 0; i < mintCount; i++) {
-        const mintTx = new TokenMintTransaction()
-          .setTokenId(tokenId!)
-          .setMetadata([Buffer.from(JSON.stringify(metadata))])
-          .freezeWith(client);
-
-        const signedMintTx = await signer.signTransaction(mintTx);
-        const mintSubmit = await signedMintTx.execute(client);
-        const mintReceipt = await mintSubmit.getReceipt(client);
-        lastSerial = mintReceipt.serials[0].toNumber();
-        console.log(`🎉 Minted NFT #${lastSerial}`);
+      if (!tokenId) {
+        throw new Error("Failed to create NFT collection");
       }
 
-      const nftResult = {
-        tokenId,
-        serial: lastSerial,
-        comicHRL,
-        totalFiles: 1,
+      console.log("✅ NFT Collection Created:", tokenId);
+      setMintProgress(75);
+
+      // Prepare metadata for minting
+      // Store the metadata URI reference instead of full metadata
+      // const metadataHRL = `hcs://1/${inscriptionData.metadataTopicIds?.[0].topic_id}`;
+
+    const metadataHRL = `hcs://1/${inscriptionData.topicId}`
+       
+      console.log("📄 Metadata HRL:", metadataHRL);
+   
+      const metadataBuffers = Array(count).fill(
+       Buffer.from(metadataHRL || "")
+      );
+        
+
+        const mintTx = new TokenMintTransaction()
+        .setTokenId(tokenId)
+        // .setMetadata([Buffer.from(metadataHRL)])
+        .setMetadata(metadataBuffers)
+        .setTransactionId(TransactionId.generate(AccountId.fromString(accountId)))
+        // .freezeWithSigner(signer)
+        
+      const signedMintTx = await signer.signTransaction(mintTx);
+      const mintSubmit = await signedMintTx.execute(client);
+      const mintReceipt = await mintSubmit.getReceipt(client);
+
+      serial = mintReceipt.serials?.map(s => s.toNumber()) || [];
+      console.log("✅ NFT Minted with serials:", serial);
+        console.log(`🎉 Minted ${mintReceipt.serials.length} NFTs in batch.`);
+
+      setMintProgress(95);
+
+      return {
+        tokenId: tokenId || "",
+        serial: serial[0] || 0,
+        transactionId: inscriptionData.transactionId,
+        inscriptionTopicId: inscriptionData.topicId,
+        metadataTopicIds: inscriptionData.metadataTopicIds,
+      };
+    } catch (error: any) {
+      console.error("❌ Error minting NFT:", error);
+      throw error;
+    }
+  };
+
+  /**
+   * Main function to create comic NFT (inscription + minting)
+   */
+  const createComicNFT = async (formData: ComicFormData) => {
+    try {
+      // Reset states
+      setMintStatus("inscribing");
+      setMintProgress(0);
+      setMintError(null);
+      setMintResult(null);
+
+      // Validate inputs
+      if (!signer || typeof signer.sign !== "function") {
+        throw new Error("Wallet signer not available. Please connect your wallet.");
+      }
+
+      // Log what files we received
+      console.log("📁 Files received in createComicNFT:", {
+        hasZipFile: !!formData.zipFile,
+        hasPdfFile: !!formData.pdfFile,
+        pageFilesCount: formData.pageFiles?.length || 0,
+      });
+
+      // Build comicData object for the inscription hook
+      const comicData = {
+        title: formData.name,
+        description: formData.description,
+        genre: formData.genres,
+        tags: [], // Tags not in formData, default to empty
+        ageRating: formData.ageRating,
+        coverImage: formData.coverFile || null,
+        pages: formData.pageFiles?.map((file, index) => ({
+          name: file.name,
+          blob: file,
+          preview: '',
+          type: 'image' as const,
+          fileSize: file.size
+        })) || (formData.zipFile ? [{
+          name: formData.zipFile.name,
+          blob: formData.zipFile,
+          preview: '',
+          type: 'zip-images' as const,
+          fileSize: formData.zipFile.size
+        }] : formData.pdfFile ? [{
+          name: formData.pdfFile.name,
+          blob: formData.pdfFile,
+          preview: '',
+          type: 'pdf-file' as const,
+          fileSize: formData.pdfFile.size
+        }] : [])
       };
 
-      setResult(nftResult);
-      setStatus("done");
-      setProgress(100);
-      console.log("✅ Comic NFT fully created:", nftResult);
+      // Build monetizationData object for the inscription hook
+      const monetizationData = {
+        publishType: formData.priceHbar > 0 ? 'paid' as const : 'free' as const,
+        price: formData.priceHbar,
+        mintAsNFT: true,
+        nftCopies: formData.copiesOfComic,
+        nftPrice: formData.priceHbar
+      };
 
-      return nftResult;
+      // Step 1: Inscribe the comic file (uploads to backend + inscribes metadata)
+      console.log("📝 Step 1: Starting inscription...");
+      const inscriptionData = await createInscription(comicData, monetizationData);
+
+      if (!inscriptionData) {
+        throw new Error("Inscription failed - no data returned");
+      }
+
+      console.log("✅ Inscription complete:", inscriptionData);
+       console.log("✅ Topic ID:", inscriptionData.topicId);
+      setMintProgress(50);
+      setMintStatus("minting");
+      setMintStatusText("Creating NFT collection on Hedera...");
+
+      // Step 2: Mint NFT on Hedera
+      console.log("🪙 Step 2: Minting NFT on Hedera...");
+      const mintData = await mintNFTOnHedera(formData, inscriptionData, formData.copiesOfComic);
+     
+       console.log("✅ NFT minting complete:", mintData);
+      // Set final result
+      const finalResult: MintResult = {
+        ...mintData,
+        inscriptionTopicId: inscriptionData.topicId,
+        // metadataTopicIds: inscriptionData.metadataTopicIds,
+      };
+
+      
+
+      setMintResult(finalResult);
+      setMintStatus("done");
+      setMintProgress(100);
+      setMintStatusText("Comic NFT created successfully!");
+
+      console.log("🎉 Comic NFT fully created:", finalResult);
+      return finalResult;
+
     } catch (err: any) {
       console.error("❌ Error creating comic NFT:", err);
-      setError(err.message || "Unexpected error during NFT creation.");
-      setStatus("error");
+      const errorMessage = err.message || "Unexpected error during comic NFT creation";
+      setMintError(errorMessage);
+      setMintStatus("error");
+      setMintStatusText(`Error: ${errorMessage}`);
       throw err;
     }
   };
 
-  return { createComicNFT, status, progress, result, error };
+  /**
+   * Reset all states
+   */
+  const reset = () => {
+    setMintStatus("idle");
+    setMintProgress(0);
+    setMintError(null);
+    setMintResult(null);
+    setMintStatusText("");
+    resetInscription();
+  };
+
+  /**
+   * Mint additional copies of an existing NFT
+   */
+  const mintAdditionalCopies = async (
+    tokenId: string,
+    count: number,
+    metadataHRL?: string
+  ) => {
+    try {
+      if (!signer || !tokenId || count <= 0) {
+        throw new Error("Invalid parameters for minting additional copies");
+      }
+
+      console.log(`🔄 Minting ${count} additional copies of token ${tokenId}`);
+      
+      const client = Client.forName(network);
+
+      // Prepare metadata buffers for each copy
+      const metadataBuffers = Array(count).fill(
+        Buffer.from(metadataHRL || "")
+      );
+
+      const mintTx = new TokenMintTransaction()
+        .setTokenId(tokenId)
+        .setMetadata(metadataBuffers)
+        // .freezeWith(client);
+        .setTransactionId(TransactionId.generate(AccountId.fromString(accountId)));
+
+      const signedMintTx = await signer.signTransaction(mintTx);
+      const mintSubmit = await signedMintTx.execute(client);
+      const mintReceipt = await mintSubmit.getReceipt(client);
+      
+      const serials = mintReceipt.serials?.map(s => s.toNumber()) || [];
+      
+      console.log(`✅ Minted ${serials.length} additional copies:`, serials);
+      return serials;
+
+    } catch (error: any) {
+      console.error("❌ Error minting additional copies:", error);
+      throw error;
+    }
+  };
+
+  return {
+    // Main functions
+    createComicNFT,
+    mintAdditionalCopies,
+    reset,
+    
+    // Status
+    status: mintStatus,
+    progress: mintProgress,
+    error: mintError,
+    result: mintResult,
+    statusText: mintStatusText,
+    
+    // Inscription details (for debugging/display)
+    inscriptionStatus,
+    inscriptionProgress,
+    inscriptionResult,
+  };
 }
+
