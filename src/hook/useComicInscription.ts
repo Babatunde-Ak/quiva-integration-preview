@@ -277,10 +277,11 @@ export function useComicInscription({
             : new File([page.blob], fileName, { type: mimeType });
           
           // Use appropriate field name based on file type
+          // Backend expects 'pages' for all file types (images, ZIP, PDF)
           if (page.type === 'zip-images') {
-            formData.append('zipFile', file);
+            formData.append('pages', file);  // Changed from 'zipFile' to 'pages'
           } else if (page.type === 'pdf-file') {
-            formData.append('pdfFile', file);
+            formData.append('pages', file);  // Changed from 'pdfFile' to 'pages'
           } else {
             formData.append('pages', file);
           }
@@ -289,32 +290,33 @@ export function useComicInscription({
         }
       }); 
 
-         // Prepare comic data
-      const comicPayload = {
+      // Append individual fields as expected by the backend (matching curl format)
+      formData.append('title', comicData.title);
+      formData.append('description', comicData.description);
+      formData.append('genre', Array.isArray(comicData.genre) ? comicData.genre.join(',') : comicData.genre);
+      formData.append('tags', Array.isArray(comicData.tags) ? comicData.tags.join(',') : comicData.tags);
+      formData.append('publishType', monetizationData.mintAsNFT ? 'nft' : monetizationData.publishType);
+      formData.append('status', 'draft');
+
+      // Add NFT details if minting
+      if (monetizationData.mintAsNFT) {
+        const nftDetails = {
+          mintStatus: 'pending',
+          price: monetizationData.nftPrice || 0,
+          maxSupply: monetizationData.nftCopies || 100,
+          currentSupply: 0,
+          royaltyPercentage: 10, // Default 10% royalty
+        };
+        formData.append('nftDetails', JSON.stringify(nftDetails));
+      }
+
+      // Debug: Log what we're sending
+      console.log("📤 Sending to /api/comics/full:", {
         title: comicData.title,
         description: comicData.description,
         genre: comicData.genre,
         tags: comicData.tags,
-        publishType: monetizationData.mintAsNFT ? 'nft' : monetizationData.publishType,
-      };
-
-      // Add NFT details if minting
-      if (monetizationData.mintAsNFT) {
-        (comicPayload as any).nftDetails = {
-          price: monetizationData.nftPrice || 0,
-          maxSupply: monetizationData.nftCopies || 100,
-          royaltyPercentage: 10, // Default 10% royalty
-        };
-      }
-
-      formData.append('comicData', JSON.stringify(comicPayload));
-
-      // Debug: Log what we're sending
-      console.log("📤 Sending to /api/comics/full:", {
-        comicPayload,
         hasPages: formData.getAll('pages').length,
-        hasZipFile: formData.has('zipFile'),
-        hasPdfFile: formData.has('pdfFile'),
         hasCoverImage: formData.has('coverImage'),
         formDataEntries: Array.from(formData.keys()),
       });

@@ -330,7 +330,7 @@ interface UseMintComicProps {
 
 interface MintResult {
   tokenId: string;
-  serial: number;
+  serial: number | number[];
   transactionId: string;
   inscriptionTopicId?: string;
   metadataTopicIds?: string[];
@@ -459,6 +459,9 @@ console.log('Public key:', publicKey.toString());
         .setTreasuryAccountId(AccountId.fromString(accountId))
         .setSupplyKey(publicKey)
         .setTransactionId(TransactionId.generate(AccountId.fromString(accountId)));
+        
+        // .freezeWithSigner(signer)
+      
        
 
       const signedCreateTx = await signer.signTransaction(tokenCreateTx);
@@ -473,43 +476,103 @@ console.log('Public key:', publicKey.toString());
       console.log("✅ NFT Collection Created:", tokenId);
       setMintProgress(75);
 
-      // Prepare metadata for minting
-      // Store the metadata URI reference instead of full metadata
-      // const metadataHRL = `hcs://1/${inscriptionData.metadataTopicIds?.[0].topic_id}`;
+      
 
     const metadataHRL = `hcs://1/${inscriptionData.topicId}`
        
       console.log("📄 Metadata HRL:", metadataHRL);
+
+      const BATCH_SIZE = 10;
+      let allSerials: number[] = [];
+      let mintedCount = 0;
    
-      const metadataBuffers = Array(count).fill(
-       Buffer.from(metadataHRL || "")
-      );
+      // const metadataBuffers = Array(count).fill(
+      //  Buffer.from(metadataHRL || "")
+      // );
         
+
+      //   const mintTx = new TokenMintTransaction()
+      //   .setTokenId(tokenId)
+      //   // .setMetadata([Buffer.from(metadataHRL)])
+      //   .setMetadata(metadataBuffers)
+      //   .setTransactionId(TransactionId.generate(AccountId.fromString(accountId)))
+      //   // .freezeWithSigner(signer)
+        
+      // const signedMintTx = await signer.signTransaction(mintTx);
+      // const mintSubmit = await signedMintTx.execute(client);
+      // const mintReceipt = await mintSubmit.getReceipt(client);
+
+      // serial = mintReceipt.serials?.map(s => s.toNumber()) || [];
+      // console.log("✅ NFT Minted with serials:", serial);
+      //   console.log(`🎉 Minted ${mintReceipt.serials.length} NFTs in batch.`);
+
+      setMintStatusText(`Minting ${count}  Copies...`);
+
+      for (let batchStart = 0; batchStart < count; batchStart += BATCH_SIZE) {
+        const batchEnd = Math.min(batchStart + BATCH_SIZE, count);
+        const batchCount = batchEnd - batchStart;
+        
+        console.log(`📦 Minting batch: NFTs ${batchStart + 1}-${batchEnd} (${batchCount} NFTs)`);
+        
+        // Create metadata buffers for this batch only
+        const metadataBuffers = Array(batchCount).fill(
+          Buffer.from(metadataHRL || "")
+        );
 
         const mintTx = new TokenMintTransaction()
-        .setTokenId(tokenId)
-        // .setMetadata([Buffer.from(metadataHRL)])
-        .setMetadata(metadataBuffers)
-        .setTransactionId(TransactionId.generate(AccountId.fromString(accountId)))
-        // .freezeWithSigner(signer)
+          .setTokenId(tokenId)
+          .setMetadata(metadataBuffers)
+          .setTransactionId(TransactionId.generate(AccountId.fromString(accountId)));
+         
+          // .freezeWithSigner(signer);
         
-      const signedMintTx = await signer.signTransaction(mintTx);
-      const mintSubmit = await signedMintTx.execute(client);
-      const mintReceipt = await mintSubmit.getReceipt(client);
+        try {
+          const signedMintTx = await signer.signTransaction(mintTx);
+          const mintSubmit = await signedMintTx.execute(client);
+          const mintReceipt = await mintSubmit.getReceipt(client);
 
-      serial = mintReceipt.serials?.map(s => s.toNumber()) || [];
-      console.log("✅ NFT Minted with serials:", serial);
-        console.log(`🎉 Minted ${mintReceipt.serials.length} NFTs in batch.`);
+          const batchSerials = mintReceipt.serials?.map(s => s.toNumber()) || [];
+          allSerials = [...allSerials, ...batchSerials];
+          mintedCount += batchSerials.length;
+          
+          console.log(`✅ Batch ${Math.ceil((batchStart + 1) / BATCH_SIZE)} minted successfully. Serials: ${batchSerials.join(", ")}`);
+          
+          // Update progress based on minting completion
+          const mintingProgress = 75 + (mintedCount / count) * 20; // Progress from 75% to 95%
+          setMintProgress(mintingProgress);
+          setMintStatusText(`Minted ${mintedCount}/${count} copies...`);
+          
+        } catch (batchError: any) {
+          console.error(`❌ Error minting batch ${Math.ceil((batchStart + 1) / BATCH_SIZE)}:`, batchError);
+          // Continue with remaining batches or throw based on your preference
+          throw new Error(`Failed to mint batch ${Math.ceil((batchStart + 1) / BATCH_SIZE)}: ${batchError.message}`);
+        }
+        
+        // Small delay between batches to avoid rate limiting
+        if (batchEnd < count) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
+
+
+      
+      serial = allSerials;
+      console.log(`🎉 Successfully minted total of ${allSerials.length} NFTs across ${Math.ceil(count / BATCH_SIZE)} batches`);
+      console.log("✅ All serials:", serial);
 
       setMintProgress(95);
+      
+      // setMintProgress(95);
 
       return {
         tokenId: tokenId || "",
-        serial: serial[0] || 0,
+        // serial: serial[0] || 0,
+        serial: serial.length === 1 ? serial[0] : serial,
         transactionId: inscriptionData.transactionId,
         inscriptionTopicId: inscriptionData.topicId,
         metadataTopicIds: inscriptionData.metadataTopicIds,
       };
+      
     } catch (error: any) {
       console.error("❌ Error minting NFT:", error);
       throw error;
