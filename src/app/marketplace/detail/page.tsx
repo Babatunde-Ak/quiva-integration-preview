@@ -18,7 +18,7 @@ import { Loader2 } from 'lucide-react'
 // import { useComicPurchase } from '../../../hook/usePurchaseComic'
 // import { useClaimFreeComic, useCheckComicClaim } from '@/hook/useClaimFreeComic'
 import { toast } from 'react-toastify'
-import { QUIVA_COMICS_ADDRESS } from '@/contracts/QuivaComics'
+import { QUIVA_COMICS_ABI as QUIVA_COMICS_ADDRESS } from '@/contracts/QuivaComics'
 import { DUMMY_COMIC_DATA } from '@/components/utils/dummy-data'
 
 function Page() {
