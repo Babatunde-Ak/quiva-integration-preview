@@ -20,8 +20,8 @@ import { useState, useEffect } from 'react'
 interface SidebarProps {
   isMobileMenuOpen: boolean
   onMobileMenuClose: () => void
-  isCollapsed: boolean
-  onToggleCollapse: () => void
+  isCollapsed?: boolean
+  onToggleCollapse?: () => void
 }
 
 // Icon mapping for navigation items
