@@ -104,7 +104,7 @@ export const completeOnboarding = createAsyncThunk(
     'auth/completeOnboarding',
     async (onboardingData, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.post('/user/onboarding', onboardingData);
+            const response = await axiosInstance.post('/auth/user/onboarding', onboardingData);
             return response.data;
         } catch (error) {
             return rejectWithValue(
@@ -120,7 +120,7 @@ export const checkUsername = createAsyncThunk(
     'auth/checkUsername',
     async ({ username }, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.post('/user/check-username', { username });
+            const response = await axiosInstance.post('/auth/user/check-username', { username });
             return { ...response.data, checkedUsername: username };
         } catch (error) {
             return rejectWithValue(
@@ -137,7 +137,7 @@ export const updateUserProfile = createAsyncThunk(
     async (profileData, { rejectWithValue }) => {
         try {
             const userId = profileData.get('id');
-            const response = await axiosInstance.put(`/${userId}/profile`, profileData, {
+            const response = await axiosInstance.put(`/auth/${userId}/profile`, profileData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
@@ -157,7 +157,7 @@ export const uploadAvatar = createAsyncThunk(
     'auth/uploadAvatar',
     async (avatarData, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.post('/user/update-avatar', avatarData);
+            const response = await axiosInstance.post('/auth/user/update-avatar', avatarData);
             return response.data;
         } catch (error) {
             return rejectWithValue(

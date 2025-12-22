@@ -22,9 +22,12 @@ const hederaTestnet = {
   },
   
 } as const;
+
+const WALLET_CONNECT_PROJECT_ID = process.env.NEXT_PUBLIC_HASHGRAPH_PROJECT_ID || "ec1bf58ee8034b1747cb72a34b6652ae";
+
 const config = getDefaultConfig({
-  appName: "My RainbowKit App",
-  projectId: "f3d83563bb23a44e9e7a1fa7133c740a",
+  appName: "Quiva DApp",
+  projectId: WALLET_CONNECT_PROJECT_ID,
   chains: [ hederaTestnet  ],
   ssr: false, // If your dApp uses server side rendering (SSR)
 });

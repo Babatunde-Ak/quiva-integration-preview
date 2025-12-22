@@ -8,6 +8,7 @@ import {QuivaLogo} from '@/components/utils/function'
 import {useRouter} from 'next/navigation'
 import {FaStore, FaCog, FaSignOutAlt, FaArrowLeft} from 'react-icons/fa'
 import {RainbowConnect} from '@/components/button/RainbowConnect'
+import ComicConnect from '@/components/global/comic-library/ComicConnect'
 import { useAppSelector } from '@/redux/hook'
 
 export function ComicPadHeader({onMobileMenuToggle, isMobileMenuOpen}) {
@@ -188,7 +189,8 @@ export function ComicPadHeader({onMobileMenuToggle, isMobileMenuOpen}) {
                         </div>
 
                         {/* Avatar with Status */}
-                        <RainbowConnect/>
+                        {/* <RainbowConnect/> */}
+                        <ComicConnect />
 
                     </div>
                 </div>
@@ -273,7 +275,8 @@ export function ComicPadHeader({onMobileMenuToggle, isMobileMenuOpen}) {
                         </div>
 
                         {/* Avatar */}
-                        <RainbowConnect/>
+                        {/* <RainbowConnect/> */}
+                        <ComicConnect />
 
                     </div>
                 </div>
