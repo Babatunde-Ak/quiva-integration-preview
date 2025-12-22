@@ -15,8 +15,8 @@ import {
   clearPreviewComic 
 } from '@/redux/slices/comicSlice'
 import { Loader2 } from 'lucide-react'
-import { useComicPurchase } from '../../../hook/usePurchaseComic'
-import { useClaimFreeComic, useCheckComicClaim } from '@/hook/useClaimFreeComic'
+// import { useComicPurchase } from '../../../hook/usePurchaseComic'
+// import { useClaimFreeComic, useCheckComicClaim } from '@/hook/useClaimFreeComic'
 import { toast } from 'react-toastify'
 import { QUIVA_COMICS_ADDRESS } from '@/contracts/QuivaComics'
 import { DUMMY_COMIC_DATA } from '@/components/utils/dummy-data'
@@ -24,8 +24,23 @@ import { DUMMY_COMIC_DATA } from '@/components/utils/dummy-data'
 function Page() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const dispatch = useAppDispatch()
-  
+  const dispatch = useAppDispatch()\
+
+  const useClaimFreeComic = () =>{
+    return null;
+  }
+
+  const useCheckComicClaim = (tokenId: string | undefined, walletAddress: string | null) => {
+    return {
+      hasClaimed: false,
+      refetch: () => {}
+    };
+  }
+
+  const useComicPurchase = () => {
+    return null;
+  }
+
   // Comic state
   const { 
     currentComic, 
