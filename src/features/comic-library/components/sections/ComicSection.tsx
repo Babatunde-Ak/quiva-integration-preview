@@ -84,7 +84,7 @@ export function ComicSection({
       const cardWidths = getCardWidth()
       // Use mobile width for mobile screens
       const width = window.innerWidth < 640 ? cardWidths.mobile : 
-                   window.innerWidth < 1024 ? cardWidths.tablet : cardWidths.desktop
+                  window.innerWidth < 1024 ? cardWidths.tablet : cardWidths.desktop
       scrollContainerRef.current.scrollBy({
         left: -width * 1.5, // Scroll 1.5 cards on mobile for better UX
         behavior: 'smooth'
@@ -96,7 +96,7 @@ export function ComicSection({
     if (scrollContainerRef.current) {
       const cardWidths = getCardWidth()
       const width = window.innerWidth < 640 ? cardWidths.mobile : 
-                   window.innerWidth < 1024 ? cardWidths.tablet : cardWidths.desktop
+                  window.innerWidth < 1024 ? cardWidths.tablet : cardWidths.desktop
       scrollContainerRef.current.scrollBy({
         left: width * 1.5,
         behavior: 'smooth'

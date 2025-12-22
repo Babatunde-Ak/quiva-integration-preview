@@ -1,11 +1,14 @@
-'use client'
+"use client";
 
-import React from 'react'
-import {  User, Calendar, BookOpen, FileText, ChevronLeft, Loader2, Lock, CheckCircle, ShoppingCart } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { MainButton } from '@/components/button'
+import React, { useState } from "react";
+import { ChevronLeft, Lock } from "lucide-react";
+import Image from "next/image";
+import ResellModal from "@/components/modals/ResellModal";
+import { useRouter } from "next/navigation";
+import { ACTIVITY_DATA } from "@/components/utils/dummy-data";
+import MintComicModal from "@/features/comic-library/components/MintComicModal";
 
+// PROPS INTERFACE FOR BACKWARD COMPATIBILITY
 interface ComicIssue {
   id: string
   title: string
@@ -36,13 +39,16 @@ interface ComicDetailProps {
     publicationDate: string
   }
   otherIssues: ComicIssue[]
+  activeTab?: string
+  onTabChange?: (tab: string) => void
   onBack?: () => void
   onReadIssue?: () => void
+  onResell?: () => void
   onPreviewIssue?: () => void
   onEnlargeCover?: () => void
 }
 
-const ComicDetail = ({
+export default function ComicDetail({
   title,
   issueNumber,
   author,
@@ -56,326 +62,490 @@ const ComicDetail = ({
   hasNFTAccess = null,
   issueDetails,
   otherIssues,
+  activeTab = 'details',
+  onTabChange,
   onBack,
   onReadIssue,
+  onResell,
   onPreviewIssue,
   onEnlargeCover
-}: ComicDetailProps) => {
+}: ComicDetailProps) {
+  const [isResellOpen, setIsResellOpen] = useState(false);
+  const [localActiveTab, setLocalActiveTab] = useState(activeTab);
+  const [showMintPage, setShowMintPage] = useState(false);
+  const router = useRouter();
+
   
-  const formatPrice = (price: number | string): string => {
-    const numPrice = typeof price === 'string' ? parseFloat(price) : price
-    return numPrice.toFixed(3)
-  }
-  
-  const getReadButtonContent = () => {
-    // If it's a free comic, always allow reading
-    if (isFree || publishType === 'free') {
-      return (
-        <span className="flex items-center justify-center gap-2">
-          <BookOpen className="w-5 h-5" />
-          Read Issue
-        </span>
-      )
-    }
-    
-    // If verifying access
-    if (isVerifyingAccess) {
-      return (
-        <span className="flex items-center justify-center gap-2">
-          <Loader2 className="w-5 h-5 animate-spin" />
-          Verifying Access...
-        </span>
-      )
-    }
-    
-    // If user has access
-    if (hasNFTAccess === true) {
-      return (
-        <span className="flex items-center justify-center gap-2">
-          <CheckCircle className="w-5 h-5" />
-          Read Issue
-        </span>
-      )
-    }
-    
-    // If user doesn't have access
-    if (hasNFTAccess === false) {
-      return (
-        <span className="flex items-center justify-center gap-2 hover:bg-primary-400">
-          <ShoppingCart className="w-5 h-5 " />
-          Purchase to Read
-        </span>
-      )
-    }
-    
-    return 'Read Issue'
-  }
-  
-  const getReadButtonStyle = () => {
-    if (hasNFTAccess === true) {
-      return "bg-green-600 hover:bg-green-700"
-    }
-    if (hasNFTAccess === false) {
-      return "bg-secondary-200 hover:bg-primary-400"
-    }
-    return "bg-secondary-200 hover:bg-primary-400"
-  }
-  
-  const isReadButtonDisabled = isVerifyingAccess || (publishType === 'nft' && hasNFTAccess === null)
+  const images = {
+    cover: "/dev_images/Rectangle3051.png", 
+    avatar: "/dev_images/Rectangle3048.png", 
+    inosuke: "/dev_images/Image2.png",
+    cross: "/dev_images/Group427320759.png",
+    mj: "/dev_images/Grouup9.png",
+  };
 
-  const getAccessStatusInfo = () => {
-    if (publishType === 'free' || isFree) {
-      return (
-        <div className="bg-green-600/10 border border-green-600/50 rounded-xl p-4">
-          <p className="text-green-400 text-sm text-center">
-            🎉 This comic is free to read! Enjoy unlimited access.
-          </p>
-        </div>
-      )
+  // Use props for text content
+  const displayTitle = title || "Avatar -Book of Beginnings #1";
+  const displayAuthorName = author?.name || "Studio Kyra";
+  const displayDescription = description || "In a world torn between the elements, a young avatar rises to restore balance – not by choice, but by destiny. 'Book of Beginnings' marks the first chapter of the Avatar Chronicles, where every mint helps since the legend.";
+  const displayTags = tags?.length ? tags : ["Fantasy", "Adventure", "On-chain Epic"];
+
+  //  Start Read button
+  const handleReadClick = () => {
+    setShowMintPage(true);
+  };
+
+  //  back from mint page
+  const handleBackFromMint = () => {
+    setShowMintPage(false);
+  };
+
+  //  tab change
+  const handleTabChange = (tab: string) => {
+    setLocalActiveTab(tab);
+    onTabChange?.(tab);
+  };
+
+  // back button
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+    } else {
+      router.back();
     }
+  };
 
-    if (isVerifyingAccess) {
-      return (
-        <div className="bg-blue-600/10 border border-blue-600/50 rounded-xl p-4">
-          <p className="text-blue-400 text-sm text-center">
-            🔍 Checking your access permissions...
-          </p>
-        </div>
-      )
-    }
-
-    if (hasNFTAccess === true) {
-      return (
-        <div className="bg-green-600/10 border border-green-600/50 rounded-xl p-4">
-          <p className="text-green-400 text-sm text-center">
-            ✅ You own this NFT! Enjoy unlimited access to this comic.
-          </p>
-        </div>
-      )
-    }
-
-    if (hasNFTAccess === false) {
-      return (
-        <div className="bg-secondary-200/10 border border-secondary-200/50 rounded-xl p-4 space-y-2">
-          <p className="text-secondary-200 text-sm text-center">
-            🔒 This is a premium NFT comic. Purchase to unlock full access.
-          </p>
-          {price && (
-            <p className="text-secondary-300 text-xs text-center">
-              Price: {formatPrice(price)} HBAR
-            </p>
-          )}
-        </div>
-      )
-    }
-
-    return null
-  }
-
+  // SHOW MINT PAGE
   return (
-    <div className="min-h-screen bg-black-500 text-white p-4 md:p-6 lg:p-8">
-      {/* Header */}
-      <div className="flex items-center mb-6">
-        <Button 
-          variant="ghost" 
-          size="sm"
-          onClick={onBack}
-          className="text-white hover:bg-gray-800 p-2"
-        >
-          <ChevronLeft className="w-4 h-4 mr-2" />
-          Back
-        </Button>
-      </div>
-
-      <div className="max-w-7xl mx-auto">
-        {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-[0.5fr_1fr] gap-8 mb-12">
-          {/* Cover Image */}
-           <div className="relative">
-            <div className="w-full max-w-md mx-auto lg:mx-0 aspect-[3/4] rounded-tl-3xl rounded-br-3xl shadow-2xl overflow-hidden">
+    <>
+      {showMintPage ? (
+        // MINT COMIC MODAL 
+        <MintComicModal
+          title={displayTitle}
+          issueNumber={issueNumber || 1}
+          author={{
+            name: displayAuthorName,
+            avatar: images.avatar 
+          }}
+          coverImage={images.cover} 
+          description={displayDescription}
+          tags={displayTags}
+          price={price.toString() || "0.09 H"}
+          activeTab={localActiveTab}
+          onTabChange={handleTabChange}
+          onBack={handleBackFromMint}
+          comicId="c-8832"
+        />
+      ) : (
+        // COMIC DETAIL PAGE 
+        <div className="min-h-screen bg-[#0a0a0a] text-gray-200 font-sans selection:bg-orange-500 selection:text-white pb-20">
+          {/* HERO SECTION */}
+          <div className="relative w-full overflow-hidden mb-10">
+            <div className="absolute inset-0 z-0">
               <img
-                src={coverImage}
-                alt={`${title} Issue ${issueNumber}`}
-                className="w-full h-full object-cover"
+                src={images.cover} 
+                alt="Background Blur"
+                className="w-full h-full object-cover blur-2xl scale-110"
               />
+              <div className="absolute inset-0 bg-gradient-to-b opacity-90 from-[#0a0a0a]/60 via-[#0a0a0a]/90 to-[#0a0a0a]" />
             </div>
-            
-            {/* Status Badge */}
-            {(isFree || publishType === 'free') && (
-              <div className="absolute top-0 left-10 bg-green-600 text-white px-3 py-1 text-sm font-medium">
-                Free
-              </div>
-            )}
-            {publishType === 'nft' && !isFree && (
-              <div className="absolute top-0 left-10 bg-black-400 text-white px-3 py-1 text-sm font-medium">
-                NFT
-              </div>
-            )}
-            
-            {/* Action Buttons */}
-            <div className="flex gap-3 mt-6 justify-center lg:justify-start">
-              <Button 
-                onClick={onPreviewIssue}
-                variant="outline"
-                className="!text-white border-white bg-transparent rounded-full w-full hover:bg-white/10"
+
+            <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-12">
+              <button
+                onClick={handleBack}
+                className="flex items-center text-[#fff]/70 space-x-2 bg-[#000] backdrop-blur-md px-4 py-2 rounded-full border border-white/10 hover:bg-[#000]/70 transition-colors mb-8 text-sm font-medium"
               >
-                Preview Issue
-              </Button>
-              <Button 
-                onClick={onEnlargeCover}
-                variant="outline"
-                className="!text-white border-white bg-transparent rounded-full w-full hover:bg-white/10"
-              >
-                Enlarge Cover
-              </Button>
+                <ChevronLeft size={16} />
+                <span>Back to Collection</span>
+              </button>
+
+              <div className="flex flex-col md:flex-row gap-8 items-start md:items-end">
+                <div className="w-full md:w-[320px] shrink-0 group perspective">
+                  <div className="relative rounded-xl w-[279px] h-[356px] overflow-hidden shadow-2xl shadow-black/50 transition-transform duration-300 hover:scale-[1.02]">
+                    <img
+                      src={images.cover} 
+                      alt="Avatar Cover"
+                      className="w-[279px] h-[356px] object-cover border border-white/5"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex-1 pb-2 flex flex-col">
+                  <h1 className="text-3xl font-mono font-bold text-white mb-2 flex gap-2 items-center tracking-tight">
+                    <p>{displayTitle}</p>
+                    <span className="px-2 py-0.5 rounded-lg bg-[#000] border border-green-500/30 text-[#fff] text-xs font-bold flex items-center gap-1">
+                      Owned ✅
+                    </span>
+                  </h1>
+
+                  <div className="flex items-center space-x-3 mb-6">
+                    <div className="flex font-mono items-center space-x-2">
+                      <div className="w-8 h-8 rounded-sm bg-blue-600 overflow-hidden border border-white/10">
+                        <img
+                          src={images.avatar} 
+                          alt="creator"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <span className="flex flex-col text-sm text-white/60">
+                        <p className="leading-none text-[10px] tracking-wider">
+                          Creator
+                        </p>
+                        <strong className="text-white">{displayAuthorName}</strong>
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 mb-8">
+                    {displayTags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="px-3 font-mono py-1.5 rounded-lg bg-[#000] border border-white/5 text-xs text-white/70 font-medium hover:bg-[#000]/70 cursor-default transition-colors"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="flex gap-4 font-mono max-w-md">
+                    <button 
+                      onClick={handleReadClick}
+                      className="flex-1 bg-[#FAA31E] text-black font-bold py-2 px-1 rounded-full hover:brightness-110 transition-all shadow-lg shadow-orange-500/20"
+                    >
+                      Start Read
+                    </button>
+                    <button
+                      onClick={() => setIsResellOpen(true)}
+                      className="flex-1 bg-transparent border border-white text-white font-medium py-2 px-1 rounded-full hover:bg-white/5 transition-all"
+                    >
+                      Resell
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Comic Info */}
-          <div className="space-y-6">
-            {/* Tags */}
-            <div className="flex flex-wrap gap-2">
-              {tags.map((tag, index) => (
-                <Badge 
-                  key={index}
-                  className="bg-white/30 hover:bg-white/40 text-white rounded-full font-light p-2 px-3"
-                >
-                  {tag}
-                </Badge>
-              ))}
+          {/* MAIN CONTENT GRID */}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-4 relative z-20">
+            <div className="flex space-x-1 bg-[#151515] font-mono p-1 rounded-full w-fit mb-8 border border-white/5">
+              <button 
+                onClick={() => handleTabChange("details")}
+                className={`px-6 py-2 rounded-full text-sm transition-all ${
+                  localActiveTab === "details" 
+                    ? "bg-[#FAA31E] text-[#000] font-bold shadow-md" 
+                    : "text-white hover:text-white/70 font-medium"
+                }`}
+              >
+                Comic Details
+              </button>
+              <button 
+                onClick={() => handleTabChange("activity")}
+                className={`px-6 py-2 rounded-full text-sm transition-all ${
+                  localActiveTab === "activity" 
+                    ? "bg-[#FAA31E] text-[#000] font-bold shadow-md" 
+                    : "text-white hover:text-white/70 font-medium"
+                }`}
+              >
+                Activity
+              </button>
             </div>
 
-            {/* Title */}
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
-              {title}: Issue #{issueNumber}
-            </h1>
+            <div className="grid grid-cols-1 text-white/70 font-mono lg:grid-cols-12 gap-6">
+              <div className="lg:col-span-7 space-y-6">
+                {localActiveTab === "details" ? (
+                  <>
+                    <div className="bg-[#111] border border-white/5 rounded-2xl p-6 md:p-8">
+                      <h3 className="text-xl font-medium mb-4">About</h3>
+                      <p className="leading-relaxed text-sm md:text-base">
+                        {displayDescription}
+                      </p>
+                    </div>
 
-            {/* Read Button */}
-            <MainButton 
-              onClick={onReadIssue}
-              disabled={isReadButtonDisabled}
-              className={`transition-all duration-200 ${getReadButtonStyle()}`}
-            >
-              {getReadButtonContent()}
-            </MainButton>
-            
-            {/* Access Status Info */}
-            {getAccessStatusInfo()}
+                    <div className="bg-[#111] border text-white/70 font-mono border-white/5 rounded-2xl p-6 md:p-8">
+                      <h3 className="text-xl font-medium mb-6">Episode List</h3>
+                      <div className="space-y-4">
+                        {[
+                          { title: "The First Flame", status: "Open" },
+                          { title: "Whispers of the Wind", status: "Open" },
+                          { title: "Echoes Beneath the Earth", status: "Open" },
+                        ].map((ep, idx) => (
+                          <div
+                            key={idx}
+                            className="flex items-center justify-between group cursor-pointer"
+                          >
+                            <div className="flex items-center space-x-3 group-hover:text-orange-400 transition-colors">
+                              <span className="font-mono text-sm">
+                                Episode {idx + 1} :
+                              </span>
+                              <span className="font-medium">{ep.title}</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className="text-[10px] bg-[#1a1a1a] border border-white/10 px-1.5 py-0.5 rounded font-mono uppercase tracking-wider">
+                                {ep.status}
+                              </span>
+                              <Lock size={12} className="text-yellow-500" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
 
-            {/* Author */}
-            <div className="flex items-center gap-3">
-              <img
-                src={author.avatar}
-                alt={author.name}
-                className="w-10 h-10 rounded-full border border-dashed object-cover"
-              />
-              <div className='flex font-light text-sm gap-1'>
-                <p className="">By</p>
-                <p className="">{author.name}</p>
-              </div>
-            </div>
-
-            <hr className='border-white/10 my-16'/>
-
-            {/* About Section */}
-            <div>
-              <h2 className="text-xl font-light mb-3">About This Comic</h2>
-              <p className="text-white/30 leading-relaxed">
-                {description}
-              </p>
-            </div>
-            
-          </div>
-          
-        </div>
-
-        {/* Issue Details */}
-        <div>
-          <div className="grid grid-cols-1 lg:grid-cols-[0.5fr_1fr] gap-8 mb-12">
-            <div></div>
-            <div>
-              <h3 className="text-lg font-normal mb-4">Issue Details</h3>
-              <div className="grid grid-cols-2 gap-4 lg:gap-8 w-full">
-                <div className="flex items-center gap-3 bg-gray-400 py-4 px-8 rounded-2xl">
-                  <User className="w-5 h-5 text-secondary-200" />
-                  <div>
-                    <p className="text-white font-light text-xs">Creators</p>
-                    <p className="font-semibold">{issueDetails.creators}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 bg-gray-400 py-4 px-8 rounded-2xl">
-                  <BookOpen className="w-5 h-5 text-secondary-200" />
-                  <div>
-                    <p className="text-white font-light text-xs">Issue Length</p>
-                    <p className="font-semibold">{issueDetails.pages} pages</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-3 bg-gray-400 py-4 px-8 rounded-2xl">
-                  <FileText className="w-5 h-5 text-secondary-200" />
-                  <div>
-                    <p className="text-white font-light text-xs">Publisher</p>
-                    <p className="font-semibold">{issueDetails.publisher}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 bg-gray-400 py-4 px-8 rounded-2xl">
-                  <Calendar className="w-5 h-5 text-secondary-200" />
-                  <div>
-                    <p className="text-white font-light text-xs">Publication Date</p>
-                    <p className="font-semibold">{issueDetails.publicationDate}</p>
-                  </div>
-                </div>
-                
-                {/* Show price for NFT comics */}
-                {publishType === 'nft' && price && (
-                  <div className="flex items-center gap-3 bg-gray-400 py-4 px-8 rounded-2xl col-span-2">
-                    <ShoppingCart className="w-5 h-5 text-primary-400" />
-                    <div>
-                      <p className="text-white font-light text-xs">NFT Price</p>
-                      <p className="font-semibold">{formatPrice(price)} HBAR</p>
+                    <div className="bg-[#111] border text-white/70 font-mono border-white/5 rounded-2xl p-6 md:p-8">
+                      <h3 className="text-xl font-medium mb-4">About Creator</h3>
+                      <div className="flex items-center space-x-3 mb-4">
+                        <div className="w-8 h-8 rounded bg-blue-600 flex items-center justify-center overflow-hidden">
+                          <img
+                            src={images.avatar} 
+                            alt="creator"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <span className="font-bold text-white">{displayAuthorName}</span>
+                      </div>
+                      <p className="leading-relaxed text-sm">
+                        Studio Kyra is a visionary team of artists and storytellers
+                        dedicated to pushing the boundaries of digital art and
+                        interactive narratives.
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <div className="bg-[#111] border border-white/5 rounded-2xl p-6 md:p-8">
+                    <h3 className="text-xl font-medium mb-4">Live Activity</h3>
+                    <p className="text-white/60 text-sm mb-5">
+                      See who is minting, listing and trading this comic
+                    </p>
+                    
+                    <div className="overflow-x-auto md:overflow-visible">
+                      <table className="w-full min-w-[600px] md:min-w-0">
+                        <thead>
+                          <tr className="border-b border-white/10">
+                            <th className="text-left text-white/60 text-xs font-medium pb-3 px-2">Username</th>
+                            <th className="text-left text-white/60 text-xs font-medium pb-3 px-2">Event</th>
+                            <th className="text-left text-white/60 text-xs font-medium pb-3 px-2">Price</th>
+                            <th className="text-left text-white/60 text-xs font-medium pb-3 px-2">Edition</th>
+                            <th className="text-left text-white/60 text-xs font-medium pb-3 px-2">Time</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {ACTIVITY_DATA.map((activity, index) => (
+                            <tr key={index} className="border-b border-white/5 hover:bg-white/5">
+                              <td className="py-3 px-2">
+                                <span className="text-white text-sm font-medium">{activity.username}</span>
+                              </td>
+                              <td className="py-3 px-2">
+                                <span className="text-white text-sm font-medium">{activity.event}</span>
+                              </td>
+                              <td className="py-3 px-2">
+                                <span className="text-white text-sm font-medium flex items-center gap-1">
+                                  {activity.price}
+                                  <img 
+                                    src="/hbar.png" 
+                                    alt="HBAR" 
+                                    className="inline-block"
+                                  />
+                                </span>
+                              </td>
+                              <td className="py-3 px-2">
+                                <span className="text-white text-sm font-medium">{activity.edition}</span>
+                              </td>
+                              <td className="py-3 px-2">
+                                <span className="text-white/60 text-sm">{activity.time}</span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
                 )}
               </div>
-            </div>
-          </div>
-        </div>
 
-        <hr className='border-white/10 my-16'/>
-        
-        {/* Other Issues */}
-        <div>
-          <h2 className="text-2xl font-bold mb-6">Other Issues in this comic</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-            {otherIssues.map((issue) => (
-              <div key={issue.id} className="group cursor-pointer">
-                <div className="relative">
-                  <img
-                    src={issue.image}
-                    alt={issue.title}
-                    className="w-full aspect-[3/4] object-cover rounded-lg shadow-lg group-hover:shadow-xl transition-shadow duration-300"
-                  />
-                  {issue.isFree && (
-                    <div className="absolute top-0 left-5 bg-green-600 text-white px-2 py-1 text-sm">
-                      Free
+              <div className="lg:col-span-5 space-y-6">
+                <div className="bg-[#111] border text-white/70 font-mono border-white/5 rounded-2xl p-6 md:p-8">
+                  <h3 className="text-xl font-medium mb-6">Minting Details</h3>
+                  <div className="grid grid-cols-3 gap-6 mb-6 border-b border-white/5 pb-6">
+                    <div>
+                      <p className="text-xs mb-1">Mint Price</p>
+                      <p className="flex text-lg items-center font-bold text-white">
+                        <p>0.09</p>
+                        <span className="text-xs align-center opacity-70">
+                          <img src="/hbar.png" alt="HBAR" />
+                        </span>
+                      </p>
                     </div>
-                  )}
+                    <div>
+                      <p className="text-xs mb-1">Editions</p>
+                      <p className="text-lg font-bold text-white">1,000</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">Royalties</p>
+                      <p className="text-lg font-bold text-white">
+                        7% <span className="text-sm font-normal">to creator</span>
+                      </p>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs mb-1">Blockchain</p>
+                    <p className="text-lg font-bold text-white">Hedera</p>
+                  </div>
                 </div>
-                <div className="mt-2">
-                  <h3 className="font-semibold text-sm line-clamp-2 group-hover:text-secondary-200 transition-colors">
-                    {issue.title}
-                  </h3>
-                  <p className="text-gray-400 text-xs mt-1">{issue.date}</p>
+
+                <div className="bg-[#111] border text-white/70 font-mono border-white/5 rounded-2xl p-6 md:p-8">
+                  <h3 className="text-xl font-medium mb-6">Market Stats</h3>
+                  <div className="grid grid-cols-3 gap-y-8 gap-x-4">
+                    <div>
+                      <p className="text-xs mb-1">Floor Price</p>
+                      <div className="flex text-lg items-center font-bold text-white">
+                        <p>0.085</p>
+                        <span className="text-xs align-center opacity-70">
+                          <img src="/hbar.png" alt="HBAR" />
+                        </span>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs mb-1">Total Mints</p>
+                      <p className="text-lg font-bold text-white">721 / 1,000</p>
+                    </div>
+                    <div>
+                      <p className="text-xs mb-1">Volume</p>
+                      <div className="flex text-lg items-center font-bold text-white">
+                        <p>45.8</p>
+                        <span className="text-xs align-center opacity-70">
+                          <img src="/hbar.png" alt="HBAR" />
+                        </span>
+                      </div>
+                    </div>
+                    <div className="col-span-3">
+                      <p className="text-xs mb-1">Collectors</p>
+                      <p className="text-lg font-bold text-white">389</p>
+                    </div>
+                  </div>
                 </div>
               </div>
-            ))}
+            </div>
+
+            <div className="mt-16">
+              <h2 className="text-2xl font-bold text-white mb-6">
+                More from Adventure
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <RelatedCard
+                  title="Inosuke degen"
+                  creator="Estevao"
+                  price="4.89K"
+                  image={images.inosuke}
+                  avatar={images.avatar}
+                />
+                <RelatedCard
+                  title="The son is also the father"
+                  creator="Mia den"
+                  price="4.89K"
+                  image={images.cross}
+                  avatar={images.avatar}
+                />
+                <RelatedCard
+                  title="Spiderman: Mary Jane"
+                  creator="Mia den"
+                  price="4.89K"
+                  image={images.mj}
+                  avatar={images.avatar}
+                />
+                <RelatedCard
+                  title="Inosuke degen"
+                  creator="Estevao"
+                  price="4.89K"
+                  image={images.inosuke}
+                  avatar={images.avatar}
+                />
+                <RelatedCard
+                  title="The son is also the father"
+                  creator="Mia den"
+                  price="4.89K"
+                  image={images.cross}
+                  avatar={images.avatar}
+                />
+                <RelatedCard
+                  title="Spiderman: Mary Jane"
+                  creator="Mia den"
+                  price="4.89K"
+                  image={images.mj}
+                  avatar={images.avatar}
+                />
+              </div>
+            </div>
+          </div>
+
+          <ResellModal
+            isOpen={isResellOpen}
+            onClose={() => setIsResellOpen(false)}
+            comic={{
+              id: "c-8832",
+              title: displayTitle,
+              collection: "Avatar: The Last Airbender",
+              edition: 12,
+              totalEditions: 100,
+              imageUrl: images.cover, 
+            }}
+          />
+        </div>
+      )}
+    </>
+  );
+}
+
+// RelatedCard component 
+function RelatedCard({
+  title,
+  creator,
+  price,
+  image,
+  avatar,
+}: {
+  title: string;
+  creator: string;
+  price: string;
+  image: string;
+  avatar: string;
+}) {
+  return (
+    <div className="group bg-[#111] rounded-xl overflow-hidden border border-white/5 hover:border-white/20 transition-all hover:-translate-y-1 cursor-pointer">
+      <div className="aspect-video w-full overflow-hidden bg-gray-800 relative">
+        <img
+          src={image}
+          alt={title}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+      </div>
+      <div className="p-4">
+        <h4 className="font-bold text-white mb-3 truncate">{title}</h4>
+        <div className="flex items-end justify-between">
+          <div className="flex items-center space-x-2">
+            <div className="w-6 h-6 rounded bg-gray-700 overflow-hidden border border-white/10">
+              <img
+                src={avatar}
+                alt={creator}
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div>
+              <p className="text-[10px] text-[#fff]/70">Creator</p>
+              <p className="text-xs font-medium text-white">{creator}</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <p className="text-[10px] text-white/70">Mint Price</p>
+            <div className="flex text-sm font-bold text-white">
+              <p>{price}</p>
+              <span className="text-[10px] align-center">
+                <img src="/hbar.png" alt="HBAR" />
+              </span>
+            </div>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }
-
-export default ComicDetail;
-
-

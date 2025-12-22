@@ -1,12 +1,13 @@
 'use client'
 
 import { Footer } from '@/components/global/comic-library/Footer'
-import {Header} from '@/components/global/comic-library/Header'
-import {Sidebar} from '@/components/global/comic-library/Sidebar'
-import {useState} from 'react'
+import { Header } from '@/components/global/comic-library/Header'
+import { Sidebar } from '@/components/global/comic-library/Sidebar'
+import { useState } from 'react'
 
-export default function MainPage({children}) {
+export default function MainPage({ children }: { children: React.ReactNode }) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
 
     const toggleMobileMenu = () => {
         setIsMobileMenuOpen(prev => !prev)
@@ -14,6 +15,10 @@ export default function MainPage({children}) {
 
     const closeMobileMenu = () => {
         setIsMobileMenuOpen(false)
+    }
+
+    const handleSidebarToggle = () => {
+        setIsSidebarCollapsed(prev => !prev)
     }
 
     return (
@@ -27,44 +32,49 @@ export default function MainPage({children}) {
                 <Sidebar
                     isMobileMenuOpen={isMobileMenuOpen}
                     onMobileMenuClose={closeMobileMenu}
+                    isCollapsed={false} // Not used on mobile
+                    onToggleCollapse={() => {}} // Not used on mobile
                 />
 
                 <main
-                    className={`p-4 overflow-y-auto bg-black-500 w-full transition-all duration-300 ${isMobileMenuOpen
-                        ? 'blur-sm'
-                        : ''}`}
+                    className={`p-4 overflow-y-auto bg-black-500 w-full transition-all duration-300 ${
+                        isMobileMenuOpen ? 'blur-sm' : ''
+                    }`}
                 >
                     {children}
                 </main>
 
-                <Footer/>
+                <Footer />
             </div>
 
-            {/* Desktop Layout - FIXED: Improved grid structure */}
-            <div className="hidden lg:grid lg:grid-cols-[200px_1fr] xl:grid-cols-[250px_1fr] min-h-screen w-full">
-                {/* Sidebar Column */}
-                <div className="relative">
-                    <Sidebar isMobileMenuOpen={false} onMobileMenuClose={() => {}} />
-                </div>
+            {/* Desktop Layout */}
+            <div className="hidden lg:block w-full">
+                {/* Fixed Sidebar */}
+                <Sidebar 
+                    isMobileMenuOpen={false} 
+                    onMobileMenuClose={() => {}}
+                    isCollapsed={isSidebarCollapsed}
+                    onToggleCollapse={handleSidebarToggle}
+                />
 
-                {/* Main Content Column */}
-                <div className="flex flex-col min-h-screen w-full overflow-y-auto overflow-x-hidden">
-                    {/* Header - FIXED: Made sticky instead of relying on sidebar positioning */}
+                {/* Main Content Area - Responsive margin based on sidebar state */}
+                <div className={`${isSidebarCollapsed ? 'ml-16' : 'ml-64'} transition-all duration-300 ease-in-out flex flex-col min-h-screen`}>
+                    {/* Header */}
                     <div className="sticky top-0 z-30">
                         <Header onMobileMenuToggle={() => {}} isMobileMenuOpen={false} />
                     </div>
 
-                    {/* Main Content - FIXED: Allow horizontal overflow for sections */}
+                    {/* Main Content - No height restrictions, natural flow */}
                     <main className="flex-1 bg-black-500 w-full">
                         <div className="w-full">
-                            {/* Content wrapper with padding for most content */}
                             <div className="px-6 py-6">
                                 {children}
                             </div>
                         </div>
                     </main>
 
-                    <Footer/>
+                    {/* Footer */}
+                    <Footer />
                 </div>
             </div>
         </div>
