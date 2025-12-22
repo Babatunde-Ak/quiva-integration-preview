@@ -24,7 +24,7 @@ import { DUMMY_COMIC_DATA } from '@/components/utils/dummy-data'
 function Page() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const dispatch = useAppDispatch()\
+  const dispatch = useAppDispatch()
 
   const useClaimFreeComic = () =>{
     return null;
