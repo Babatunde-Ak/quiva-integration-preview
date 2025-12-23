@@ -3,7 +3,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { MoreHorizontal } from 'lucide-react'
-import { TooltipData } from '../types/analytics-types'
 
 interface ChartContainerProps {
   title: string
@@ -48,7 +47,7 @@ export function ChartContainer({
   )
 }
 
-interface CustomTooltipProps extends TooltipData {
+interface CustomTooltipProps {
   formatValue?: (value: number) => string
 }
 
@@ -57,7 +56,7 @@ export function CustomTooltip({
   payload, 
   label, 
   formatValue 
-}: CustomTooltipProps) {
+}: any & CustomTooltipProps) {
   if (!active || !payload || !payload.length) return null
 
   return (
@@ -85,7 +84,7 @@ export function CustomTooltip({
 }
 
 // Chart-specific tooltip components
-export function VolumeTooltip({ active, payload, label }: TooltipData) {
+export function VolumeTooltip({ active, payload, label }: any) {
   return (
     <CustomTooltip
       active={active}
@@ -96,7 +95,7 @@ export function VolumeTooltip({ active, payload, label }: TooltipData) {
   )
 }
 
-export function UserGrowthTooltip({ active, payload, label }: TooltipData) {
+export function UserGrowthTooltip({ active, payload, label }: any) {
   return (
     <CustomTooltip
       active={active}
@@ -107,7 +106,7 @@ export function UserGrowthTooltip({ active, payload, label }: TooltipData) {
   )
 }
 
-export function LaunchpadTooltip({ active, payload, label }: TooltipData) {
+export function LaunchpadTooltip({ active, payload, label }: any) {
   return (
     <CustomTooltip
       active={active}
@@ -118,7 +117,7 @@ export function LaunchpadTooltip({ active, payload, label }: TooltipData) {
   )
 }
 
-export function MarketShareTooltip({ active, payload }: TooltipData) {
+export function MarketShareTooltip({ active, payload }: any) {
   if (!active || !payload || !payload.length) return null
 
   const data = payload[0].payload
