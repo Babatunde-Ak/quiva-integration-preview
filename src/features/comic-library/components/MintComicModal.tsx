@@ -23,6 +23,11 @@ interface MintComicModalProps {
   onTabChange?: (tab: string) => void
   onBack?: () => void
   comicId?: string
+  isWalletConnected?: boolean
+  walletAddress?: string
+  onMintComic?: () => void
+  onAddToFavourite?: () => void
+  onConnectWallet?: () => void
 }
 
 const MintComicModal: React.FC<MintComicModalProps> = ({

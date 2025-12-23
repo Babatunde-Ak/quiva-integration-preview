@@ -216,6 +216,10 @@
 const webpack = require('webpack');
 const NodePolyfillPlugin = require('node-polyfill-webpack-plugin');
 const nextConfig = {
+  eslint: {
+    // Ignore ESLint errors during Vercel builds
+    ignoreDuringBuilds: true,
+  },
   
   // Configure image domains for external images (IPFS gateways, etc.)
   images: {

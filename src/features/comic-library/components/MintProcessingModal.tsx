@@ -5,11 +5,13 @@ import { motion } from 'framer-motion'
 import { Loader2 } from 'lucide-react'
 
 interface MintProcessingModalProps {
-  isOpen: boolean
+  isOpen: boolean,
+  transactionHash?: string
 }
 
 const MintProcessingModal: React.FC<MintProcessingModalProps> = ({
-  isOpen
+  isOpen,
+  transactionHash
 }) => {
   if (!isOpen) return null
 
