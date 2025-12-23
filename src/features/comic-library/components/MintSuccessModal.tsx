@@ -14,6 +14,7 @@ interface MintSuccessModalProps {
   editionNumber: string
   walletAddress: string
   comicId?: string
+  transactionHash?: string
 }
 
 const MintSuccessModal: React.FC<MintSuccessModalProps> = ({
@@ -22,6 +23,7 @@ const MintSuccessModal: React.FC<MintSuccessModalProps> = ({
   onViewComic,
   comicTitle,
   coverImage,
+  transactionHash,
   editionNumber = "#721",
   walletAddress = "0xA182...C3D4",
   comicId = "1"
