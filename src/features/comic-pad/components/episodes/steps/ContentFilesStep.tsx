@@ -8,7 +8,7 @@ import {
     Image as ImageIcon,
     X,
     ChevronLeft,
-    CloudUpload,
+    CloudUploadIcon,
     File as FileIcon,
     Archive,
     AlertCircle
@@ -538,7 +538,7 @@ const ContentFilesStepComponent : React.FC < ContentFilesStepProps > = ({
 
                 {/* Content Type Selection */}
                 {!data.contentType && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 max-w-2xl mx-auto">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 max-w-2xl mx-auto">
                         {/* PDF Upload */}
                         <div
                             className="bg-black-500 border border-black-50 rounded-lg p-6 text-center cursor-pointer hover:border-primary-500 transition-colors"
@@ -570,25 +570,6 @@ const ContentFilesStepComponent : React.FC < ContentFilesStepProps > = ({
                                 Upload Images
                             </Button>
                         </div>
-
-                        {/* Motion Upload */}
-                        <div
-                            className="bg-black-500 border border-black-50 rounded-lg p-6 text-center cursor-pointer hover:border-primary-500 transition-colors"
-                            // onClick={() => handleContentTypeSelect('images')}
-                            >
-                            <div className='mb-4 p-3 bg-black-200 rounded-full flex items-center justify-center mx-auto w-fit'>
-                                <img src={envelopeImg.src} alt="Folder" className="w-6 h-6 text-primary-500 mx-auto "/>
-                            </div>
-                            <h4 className="text-white mb-2 text-lg font-semibold">Motion Design Upload</h4>
-                            <p className="text-white/60 font-light mb-4">coming soon</p>
-                            <Button
-                                disabled={true}
-                                variant="outline"
-                                className="font-light border-primary-500 bg-transparent hover:text-primary-500 text-primary-500 hover:bg-primary-500/10 rounded-full">
-                                Upload Images
-                            </Button>
-                        </div>
-
                     </div>
                 )}
 
@@ -666,7 +647,7 @@ const ContentFilesStepComponent : React.FC < ContentFilesStepProps > = ({
                             onDragOver={handleDragOver}
                             onDrop={handleDrop}
                         >
-                            <CloudUpload className={`w-16 h-16 mx-auto mb-4 transition-colors ${
+                            <CloudUploadIcon className={`w-16 h-16 mx-auto mb-4 transition-colors ${
                                 isDragOver ? 'text-primary-400' : 'text-primary-500'
                             }`}/>
                             <p className="text-white mb-2">
@@ -692,31 +673,46 @@ const ContentFilesStepComponent : React.FC < ContentFilesStepProps > = ({
 
                 {/* Upload Progress */}
                 {(isUploading || isExtracting) && (
-                    <div className='bg-black rounded-xl border border-white/20 px-3 py-2 w-full max-w-2xl mx-auto mb-8'>
-                        <div className='flex items-center justify-between mb-3'>
-                            <div>
-                                <p className='text-white text-sm font-semibold'>
-                                    {processingStatus || (isExtracting ? 'Extracting zip file...' : 'Uploading...')}
-                                </p>
-                                <p className='text-white/80 text-sm'>
+                    <div className="border-2 border-dashed border-orange-200 bg-black-100 rounded-lg p-12 text-center mb-8">
+                        <div className="relative w-32 h-32 mx-auto mb-4">
+                            <svg className="transform -rotate-90 w-32 h-32">
+                                <circle
+                                    cx="64"
+                                    cy="64"
+                                    r="56"
+                                    stroke="currentColor"
+                                    strokeWidth="8"
+                                    fill="none"
+                                    className="text-[#FAFAFA]"
+                                />
+                                <circle
+                                    cx="64"
+                                    cy="64"
+                                    r="56"
+                                    stroke="currentColor"
+                                    strokeWidth="8"
+                                    fill="none"
+                                    strokeDasharray={2 * Math.PI * 56}
+                                    strokeDashoffset={2 * Math.PI * 56 * (1 - (isExtracting ? progress : uploadProgress) / 100)}
+                                    className="text-primary-500 transition-all duration-300"
+                                    strokeLinecap="round"
+                                />
+                            </svg>
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <span className="text-white text-2xl font-semibold">
                                     {Math.round(isExtracting ? progress : uploadProgress)}%
-                                </p>
+                                </span>
                             </div>
-
-                            <button
-                                onClick={handleCancel}
-                                className='p-1 rounded-full hover:bg-white/10 text-red-500'
-                            >
-                                <X size={20} />
-                            </button>
                         </div>
-
-                        <div className='h-3 rounded-full bg-white/10 overflow-hidden'>
-                            <div
-                                className='h-3 bg-primary-500 transition-all duration-300'
-                                style={{ width: `${isExtracting ? progress : uploadProgress}%` }}
-                            />
-                        </div>
+                        <p className="text-white mb-4">
+                            {processingStatus || (isExtracting ? 'Extracting zip file...' : 'Uploading...')}
+                        </p>
+                        <button
+                            onClick={handleCancel}
+                            className="px-4 py-2 border bg-white border-black-50 text-black-100 rounded-lg hover:bg-white/80 transition-colors"
+                        >
+                            Cancel
+                        </button>
                     </div>
                 )}
 
