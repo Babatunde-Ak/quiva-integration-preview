@@ -20,6 +20,7 @@ export const MainButton = ({
       onClick={onClick}
       type={type}
       title={title}
+      disabled={disabled}
       className={`bg-secondary-200 text-black-200 font-recursive text-sm rounded-full px-7 py-3 border-[3px] border-black-200 shadow-[2px_2px_0_0_black] transition-all duration-200 font-medium ${className} hover:scale-105`}
     >
       {children}
