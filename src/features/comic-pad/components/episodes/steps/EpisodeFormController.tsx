@@ -15,7 +15,7 @@ interface EpisodeFormData {
   collaborators: string[];
   
   // Content Files
-  contentType: 'pdf' | 'images' | 'motion' | null;
+  contentType: 'pdf' | 'images' | null;
   files: File[];
 }
 
