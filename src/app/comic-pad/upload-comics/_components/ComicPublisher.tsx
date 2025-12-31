@@ -14,7 +14,6 @@ import { useMintComic } from "@/hook/useMintComic";
 import { useComicInscription } from "@/hook/useComicInscription"
 import { useAccount } from "wagmi";
 import { useHederaWallet } from "@/providers/HashPackProvider";
-import { HashinalsWalletConnectSDK } from "@hashgraphonline/hashinal-wc";
 import {LedgerId, AccountId} from "@hashgraph/sdk"
 interface ExtractedFile {
 	name: string;

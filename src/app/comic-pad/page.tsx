@@ -1,65 +1,15 @@
 "use client";
-import React, { useEffect } from "react";
-import ComicPadlayout from "./_components/ComicPadlayout";
+import React from "react";
 import StartNewComicFast from "./_components/StartNewComicFast";
 import RecentFile from "./_components/RecentFile";
-import AppMenu from "@/components/global/AppMenu";
-import { useDisclosure } from "@heroui/react";
-import { UserProfileFlowModal } from "@/components/modals/UserProfile";
-import GeneralModal from "@/components/modals/GeneralModal";
-import { useAppDispatch, useAppSelector } from "@/redux/hook";
-import { creatorRegister } from "@/redux/slices/walletSlice";
 
 const page = () => {
-	const { user } = useAppSelector((state) => state.wallet);
-	const dispatch = useAppDispatch();
-
-	const {
-		isOpen: isUserProfileOpen,
-		onOpen: onOpenUserProfile,
-		onOpenChange: onOpenChangeUserProfile,
-		onClose: onCloseUserProfile,
-	} = useDisclosure();
-
-	useEffect(() => {
-		console.log(user);
-		// If user is not a creator or username is not set, assign role and open profile modal
-		if(user?.role.filter(role => role === 'creator').length === 0) {
-			dispatch(creatorRegister(user._id as string));
-		}
-		if (!user?.username) {
-			onOpenUserProfile();
-		}
-	}, []);
-
-	const handleProfileComplete = () => {
-		// Close the user profile modal
-		onCloseUserProfile();
-	};
-
 	return (
 		<>
-			<ComicPadlayout>
-				<div className='px-2 sm:px-10 w-full'>
-					<StartNewComicFast />
-					<RecentFile />
-				</div>
-				<AppMenu />
-			</ComicPadlayout>
-
-			{/* User Profile Flow Modal */}
-			<GeneralModal
-				isOpen={isUserProfileOpen}
-				onOpenChange={onOpenChangeUserProfile}
-				onClose={onCloseUserProfile}
-				backdrop='blur'
-				size='xl'
-			>
-				<UserProfileFlowModal
-					onClose={onCloseUserProfile}
-					onComplete={handleProfileComplete}
-				/>
-			</GeneralModal>
+			<div className='default-comicpad-padding'>
+				<StartNewComicFast />
+				{/* <RecentFile /> */}
+			</div>
 		</>
 	);
 };

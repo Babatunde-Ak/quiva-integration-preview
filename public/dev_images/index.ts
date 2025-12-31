@@ -57,6 +57,14 @@ import hbar from "./hbar.svg";
 import hbarIcon from "./hbar-icon.svg";
 import hashpack from "./hashpack.svg";
 import rainbow from "./rainbow.png";
+import robotIcon from "./robot-icon.svg";
+import paintIcon from "./paint-icon.svg";
+import bookIcon from "./book-icon.svg";
+import rocketIcon from "./rocket-icon.svg";
+import confettiIcon from "./confetti-icon.svg";
+import avatarAang from "./avatar-aang.png";
+import runningBoy from "./running-boy.png";
+import episodeBookIcon from "./episode-book.png";
 
 export {
 	canna,
@@ -118,4 +126,12 @@ export {
 	hbarIcon,
 	hashpack,
 	rainbow,
+	robotIcon,
+	paintIcon,
+	bookIcon,
+	rocketIcon,
+	confettiIcon,
+	avatarAang,
+	runningBoy,
+	episodeBookIcon
 };
