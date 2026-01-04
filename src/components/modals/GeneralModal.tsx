@@ -3,7 +3,7 @@ import { Modal, ModalContent, ModalProps } from "@heroui/react";
 
 type BackdropType = "transparent" | "blur" | "opaque";
 type ShadowSize = "sm" | "md" | "lg" | "none";
-type ModalSize = "sm" | "md" | "lg" | "xl" | "full";
+type ModalSize = "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl" | "5xl" | "full";
 type radiusSize = "sm" | "md" | "lg" | "none";
 
 interface GeneralModalProps {

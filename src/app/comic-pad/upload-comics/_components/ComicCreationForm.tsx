@@ -7,7 +7,7 @@ interface ExtractedFile {
 	name: string;
 	blob: Blob;
 	preview: string;
-	type?: 'image' | 'pdf-file' | 'zip-images';
+	type: 'image' | 'pdf-file' | 'zip-images';
 	originalFileName?: string;
 	fileSize?: number;
 	pageCount?: number;

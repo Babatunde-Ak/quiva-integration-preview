@@ -13,9 +13,14 @@ export function ComicPadSideNav({ isMobileMenuOpen, onMobileMenuClose }) {
   // Navigation items
   const navigationItems = [
     {
-      label: 'Home',
+      label: 'Quiva Studio',
       path: '/comic-pad',
       isActive: pathname === '/comic-pad'
+    },
+    {
+      label: 'Collections',
+      path: '/comic-pad/collections',
+      isActive: pathname === '/comic-pad/collections'
     },
     {
       label: 'My Comics', 

@@ -59,6 +59,8 @@ const config: Config = {
 					700: "#161616",
 					800: "#1C1C1C",
 					900: "#0B0B0B",
+					primary: "#000000",
+					background: "#313131",
 				},
 
 				bg: {
@@ -74,6 +76,7 @@ const config: Config = {
 					400: "#1E1E1E",
 					500: "#6F7181",
 					600: "#637592",
+					primary: "#64748B",
 				},
 				secondary: {
 					100: "#9747FF",
