@@ -28,7 +28,7 @@ export const RainbowConnect: React.FC<RainbowConnectProps> = ({
   const { disconnect } = useDisconnect();
   const dispatch = useAppDispatch();
 
-  const { isAuthenticated, error } = useAppSelector((state) => state.wallet);
+  const { isAuthenticated, error } = useAppSelector((state:any) => state.wallet);
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);

@@ -105,7 +105,7 @@ const CollectionEpisodesPage : React.FC < CollectionEpisodesPageProps > = ({
         } else {
             console.log('List to marketplace for episode:', episodeId);
             // Navigate to marketplace listing
-            router.push(`/collections/${collectionId}/episodes/${episodeId}/list-marketplace`);
+            router.push(`/comic-pad/listing`);
         }
     };
 

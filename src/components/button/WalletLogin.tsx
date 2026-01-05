@@ -11,7 +11,7 @@ export default function WalletLogin({ disabled }: { disabled: boolean }) {
   const dispatch = useAppDispatch();
   const {
     user: { isAuthenticated },
-  } = useAppSelector((state) => state.auth);
+  } = useAppSelector((state: any) => state.auth);
 
   const handleLogin = async () => {
     try {

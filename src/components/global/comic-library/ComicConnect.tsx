@@ -18,7 +18,7 @@ enum WalletType {
 }
 
 function ComicConnect() {
-  const { isAuthenticated } = useAppSelector((state) => state.wallet);
+  const { isAuthenticated } = useAppSelector((state: any) => state.wallet);
   const [isOpen, setIsOpen] = React.useState(false);
   const [connectedWallet, setConnectedWallet] = useState<WalletType>(WalletType.NONE);
 

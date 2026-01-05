@@ -28,7 +28,7 @@ import { popularFilters } from '@/features/comic-library/data/content';
 import { SortComicSection } from '@/features/comic-library/components/sections/SortComicSection';
 
 export default function MainPage() {
-  const { comics, isLoading } = useAppSelector((state) => state.comic)
+  const { comics, isLoading } = useAppSelector((state: any) => state.comic)
   const dispatch = useAppDispatch()
   
   useEffect(() => {
