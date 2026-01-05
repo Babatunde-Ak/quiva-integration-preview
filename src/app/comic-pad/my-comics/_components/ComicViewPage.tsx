@@ -15,7 +15,7 @@ interface ComicViewPageProps {
 const ComicViewPage = ({ id }: ComicViewPageProps) => {
 	const dispatch = useAppDispatch();
 	const router = useRouter();
-	const { currentComic, isLoading, isDeleting } = useAppSelector((state) => state.comic);
+	const { currentComic, isLoading, isDeleting } = useAppSelector((state: any) => state.comic);
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
 	// Fetch comic by ID on component mount

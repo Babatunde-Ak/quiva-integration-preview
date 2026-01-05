@@ -23,7 +23,7 @@ const containerVariants = {
 const MyComicList = () => {
 	const [activeTab, setActiveTab] = useState("All");
 	const dispatch = useAppDispatch();
-	const { userComics, isLoading } = useAppSelector((state) => state.comic);
+	const { userComics, isLoading } = useAppSelector((state: any) => state.comic);
 
 	// Fetch user comics on component mount
 	useEffect(() => {

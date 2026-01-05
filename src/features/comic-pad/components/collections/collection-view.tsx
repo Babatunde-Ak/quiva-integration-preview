@@ -3,24 +3,54 @@
 import React, { useState } from 'react'
 import CreateCollectionForm from '../modals/new-collection';
 import CollectionSuccess from '../modals/collection-success';
+import { useAppDispatch } from "@/redux/hook";
+import { createCollection } from '@/redux/slices/collectionSlice';
 
 interface CollectionViewProps {
-  onClose?: () => void; // Add this to handle closing the main modal
+  onClose?: () => void;
+}
+
+interface CreateCollectionPayload {
+  title: string;
+  description?: string;
+  bannerImage?: File;
+  genre?: string[];
+  collaborators?: any[];
+  creatorDetails?: any;
 }
 
 function CollectionView({ onClose }: CollectionViewProps) {
   const [showSuccess, setShowSuccess] = useState(false);
   const [collectionData, setCollectionData] = useState<any>(null);
-  
-  const handleSuccess = (formData: any) => {
+
+  const dispatch = useAppDispatch();
+
+  const handleSuccess = async (formData: any) => {
     console.log('Collection created successfully');
     console.log('Collection Data:', formData);
-    setShowSuccess(true);
+
+    const data: CreateCollectionPayload = {
+      title: formData.title,
+      description: formData.description,
+      bannerImage: formData.bannerImage,
+      genre: formData.genres,
+      collaborators: formData.collaborators,
+      creatorDetails: formData.creatorDetails
+    };
+
+    try {
+      // Cast to any to bypass TypeScript checking for JS slice
+      const result = await dispatch(createCollection(data as any)).unwrap();
+      console.log('Create Collection Result:', result);
+      setCollectionData(formData);
+      setShowSuccess(true);
+    } catch (error) {
+      console.error('Error creating collection:', error);
+    }
   };
 
   const handleCloseSuccess = () => {
     setShowSuccess(false);
-    // Optionally close the entire modal when success is completed
     if (onClose) {
       onClose();
     }
@@ -42,14 +72,12 @@ function CollectionView({ onClose }: CollectionViewProps) {
                 isOpen={showSuccess}
                 onClose={handleCloseSuccess}
                 onUploadEpisode={() => {
-                    // Handle upload episode
                     console.log('Upload episode clicked');
-                    handleCloseSuccess(); // Close modal after action
+                    handleCloseSuccess();
                 }}
                 onSkip={() => {
-                    // Handle skip
                     console.log('Skip clicked');
-                    handleCloseSuccess(); // Close modal after action
+                    handleCloseSuccess();
                 }}
                 collectionImage={collectionData?.bannerImage}
             />

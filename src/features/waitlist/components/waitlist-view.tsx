@@ -30,7 +30,7 @@ const initialValues = {
 };
 
 const Waitlist = () => {
-	const { waitlist: waitlistState } = useAppSelector((state) => state.general);
+	const { waitlist: waitlistState } = useAppSelector((state: any) => state.general);
 	const [showModal, setShowModal] = useState(false);
 
 	const handleSubmit = async (values: { email: string }, { resetForm, setSubmitting }: any) => {

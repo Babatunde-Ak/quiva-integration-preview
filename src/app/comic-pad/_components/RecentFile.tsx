@@ -10,7 +10,7 @@ import { Loader2 } from "lucide-react";
 const RecentFile = () => {
 	const [sortBy, setSortBy] = useState("");
 	const dispatch = useAppDispatch();
-	const { userComics, isLoading } = useAppSelector((state) => state.comic);
+	const { userComics, isLoading } = useAppSelector((state: any) => state.comic);
 
 	const options = [
 		{ key: "size", label: "Size" },
