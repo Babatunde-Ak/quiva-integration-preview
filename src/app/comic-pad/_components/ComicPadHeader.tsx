@@ -1,19 +1,19 @@
 'use client'
 
-import {Bell, Menu, X, ChevronDown} from 'lucide-react'
+import {Bell, Menu, X} from 'lucide-react'
 import {Button} from '@/components/ui/button'
 import {Badge} from '@/components/ui/badge'
 import {useState, useEffect, useRef} from 'react'
 import {QuivaLogo} from '@/components/utils/function'
 import {useRouter} from 'next/navigation'
-import {FaStore, FaCog, FaSignOutAlt, FaArrowLeft} from 'react-icons/fa'
-import {RainbowConnect} from '@/components/button/RainbowConnect'
+import {FaArrowLeft} from 'react-icons/fa'
 import ComicConnect from '@/components/global/comic-library/ComicConnect'
 import { useAppSelector } from '@/redux/hook'
+import { RootState } from '@/redux/store'
 
 export function ComicPadHeader({onMobileMenuToggle, isMobileMenuOpen}) {
     const router = useRouter()
-    const {user} = useAppSelector((state) => state.wallet)
+    const {user} = useAppSelector((state: any) => state.wallet)
     const [notifications,
         setNotifications] = useState([
         {
