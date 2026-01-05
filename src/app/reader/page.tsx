@@ -35,7 +35,7 @@ const ComicReaderViewer = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const { currentComic, isLoading } = useAppSelector((state) => state.comic);
+  const { currentComic, isLoading } = useAppSelector((state: any) => state.comic);
 
   const comicId = searchParams.get('id');
 

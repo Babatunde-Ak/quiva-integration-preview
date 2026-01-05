@@ -47,7 +47,7 @@ function Page() {
     previewComic, 
     isLoading, 
     isPreviewing 
-  } = useAppSelector((state) => state.comic)
+  } = useAppSelector((state: any) => state.comic)
   
   // Local state
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)

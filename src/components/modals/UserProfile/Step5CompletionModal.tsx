@@ -35,7 +35,7 @@ const Step5CompletionModal = ({
 	currentStep = 5,
 	initialData = {},
 }: Props) => {
-	const { profile } = useAppSelector((state) => state.auth);
+	const { profile } = useAppSelector((state: any) => state.auth);
 	const [username, setUsername] = useState(profile?.data?.displayName || "");
 	const [profilePreview, setProfilePreview] = useState<string | null>(
 		profile?.data?.avatar || null,
@@ -56,8 +56,8 @@ const Step5CompletionModal = ({
 	const bannerFileInputRef = useRef<HTMLInputElement>(null);
 	const router = useRouter();
 
-	const { user } = useAppSelector((state) => state.wallet);
-	const { updateProfile } = useAppSelector((state) => state.auth);
+	const { user } = useAppSelector((state: any) => state.wallet);
+	const { updateProfile } = useAppSelector((state: any) => state.auth);
 	const isLoading = updateProfile?.isLoading || false;
 	const error = updateProfile?.error || null;
 	const success = updateProfile?.success || false;

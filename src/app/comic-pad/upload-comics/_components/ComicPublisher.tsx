@@ -84,7 +84,7 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 	});
 	
 	const dispatch = useAppDispatch();
-	const {user} = useAppSelector((state) => state.wallet);
+	const {user} = useAppSelector((state:any) => state.wallet);
 	// const { isConnected } = useAccount();
 	const { 
 		account,

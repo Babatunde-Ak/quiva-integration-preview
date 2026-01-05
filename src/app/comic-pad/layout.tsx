@@ -11,7 +11,7 @@ import { useAppDispatch, useAppSelector } from "@/redux/hook";
 import { creatorRegister } from "@/redux/slices/walletSlice";
 
 const layout = ({children}) => {
-    const { user } = useAppSelector((state) => state.wallet);
+    const { user } = useAppSelector((state:any) => state.wallet);
     const dispatch = useAppDispatch();
 
     const {

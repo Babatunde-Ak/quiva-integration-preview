@@ -39,7 +39,7 @@ const WhitePaperModal = ({ onClose, modalPage, setModalPage, onLoginSuccess }: W
 		sendOtp: { isLoading: isSendingOtp, error: sendOtpError, success: sendOtpSuccess, email: sentEmail },
 		verifyOtp: { isLoading: isVerifyingOtp, error: verifyOtpError, success: verifyOtpSuccess },
 		user: { isAuthenticated }
-	} = useAppSelector((state) => state.auth);
+	} = useAppSelector((state: any) => state.auth);
 
 	// Form validation
 	const LoginValues: LoginFormValues = {
