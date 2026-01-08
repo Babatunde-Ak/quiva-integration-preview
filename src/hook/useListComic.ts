@@ -3,13 +3,13 @@ import { ContractExecuteTransaction, Client, ContractFunctionParameters, Account
 // import { HashinalsWalletConnectSDK } from "@hashgraphonline/hashinal-wc";
 
 interface UseListNFTProps {
+  accountId: string;
   network?: "testnet" | "mainnet";
   marketplaceId: string; // Deployed marketplace contract ID
-  projectId: string; // Hashgraph project ID
   signer: any; // Signer object from connected wallet
 }
 
-export function useListComic({ network = "testnet", marketplaceId= "0.0.7348494",signer}: UseListNFTProps) {
+export function useListComic({ accountId, network = "testnet", marketplaceId= "0.0.7348494",signer}: UseListNFTProps) {
   const [status, setStatus] = useState<"idle" | "listing" | "done" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
   const [txId, setTxId] = useState<string | null>(null);

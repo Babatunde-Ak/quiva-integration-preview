@@ -99,6 +99,7 @@ function EpisodeForm({ onClose, collectionId }: EpisodeFormProps) {
           onSubmit={handleSuccess}
           onSaveDraft={handleSaveDraft}
           isLoading={isLoading}
+          collectionId={collectionId}
         />  
       )}
       

@@ -4,7 +4,10 @@ import React, { useState, useCallback } from 'react';
 import EpisodeDetailsStepComponent from './EpisodeDetailsStep';
 import ContentFilesStepComponent from './ContentFilesStep';
 import PreviewPublishStep from './PreviewPublishStep';
-
+import { useMintComic } from '@/hook/useMintComic'; // Adjust path as needed
+import { useHederaWallet } from '@/providers/HashPackProvider';
+import { useAppSelector } from '@/redux/hook';
+import axios from 'axios';
 interface EpisodeFormData {
   // Episode Details
   title: string;
@@ -23,12 +26,16 @@ interface EpisodeFormControllerProps {
   onSubmit: (data: EpisodeFormData) => void;
   onSaveDraft: (data: EpisodeFormData) => void;
   isLoading?: boolean;
+  collectionId?: string;
 }
+
+// Example async function to get metadacid from your backend
 
 const EpisodeFormController: React.FC<EpisodeFormControllerProps> = ({
   onSubmit,
   onSaveDraft,
-  isLoading = false
+  isLoading: externalLoading = false,
+  collectionId
 }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<EpisodeFormData>({
@@ -41,6 +48,27 @@ const EpisodeFormController: React.FC<EpisodeFormControllerProps> = ({
     contentType: null,
     files: []
   });
+
+  const { 
+      account,
+      isConnected, 
+      connector,
+      signer,
+      connectWallet 
+    } = useHederaWallet();
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const {user} = useAppSelector((state:any) => state.wallet);
+  // const {  account } = useAccount();
+  
+
+  const { createComicNFT } = useMintComic({
+    accountId:  account || user?.walletAddress || '',
+    signer: signer,
+    network: "testnet"
+  }
+  ); // Adjust to your hook's API
 
   // Update form data
   const updateFormData = useCallback((updates: Partial<EpisodeFormData>) => {
@@ -72,8 +100,39 @@ const EpisodeFormController: React.FC<EpisodeFormControllerProps> = ({
     onSaveDraft(formData);
   }, [formData, onSaveDraft]);
 
-  const handlePublish = useCallback(() => {
-    onSubmit(formData);
+  const handlePublish = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const token = localStorage.getItem('token');
+        const response = await axios.post(`http://localhost:5000/api/comics/full/${collectionId}`,
+              formData,
+              {
+                headers: {
+                  'Content-Type': 'multipart/form-data',
+                  Authorization: `Bearer ${token}`,
+                },
+
+              }
+            );
+        const createdComic = response.data.data.comic;
+       const metadataCid = createdComic.nftMetadataCid;
+       const dbComicId = createdComic._id;
+      console.log("🆔 Created comic in DB with ID:", dbComicId);
+     console.log("📝 Created comic with metadata CID:", metadataCid);
+      console.log("📄 Full response data:", response.data);
+      console.log("📄 Full created comic data:", createdComic);
+
+      // 2. Mint the episode NFT using the hook
+      // await createComicNFT({ ...formData, episodeNumber: Number(formData.episodeNumber) }, collectionId);
+
+      // 3. Call onSubmit to finalize (or show success UI)
+      onSubmit(formData);
+    } catch (err: any) {
+      setError(err.message || 'Failed to publish episode');
+    } finally {
+      setIsLoading(false);
+    }
   }, [formData, onSubmit]);
 
   // Render current step
@@ -123,7 +182,7 @@ const EpisodeFormController: React.FC<EpisodeFormControllerProps> = ({
             onPublish={handlePublish}
             onPrev={handlePrev}
             onSaveDraft={handleSaveDraft}
-            isLoading={isLoading}
+            isLoading={isLoading || externalLoading}
           />
         );
 
@@ -134,6 +193,11 @@ const EpisodeFormController: React.FC<EpisodeFormControllerProps> = ({
 
   return (
     <div className="w-full h-full bg-black-500">
+      {error && (
+        <div className="bg-red-600 text-white p-2 mb-2 rounded">
+          {error}
+        </div>
+      )}
       {renderCurrentStep()}
     </div>
   );

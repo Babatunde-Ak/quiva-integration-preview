@@ -1,189 +1,3 @@
-// import { useRef, useState } from "react";
-// import { inscribeWithSigner, retrieveInscription } from "@hashgraphonline/standards-sdk";
-// import { Buffer } from "buffer";
-
-// interface UseComicInscriptionProps {
-//   accountId: string;
-//   signer: any;
-//   network?: "testnet" | "mainnet";
-// }
-
-// interface InscriptionFormData {
-//   zipFile?: File;
-//   pdfFile?: File;
-//   description?: string;
-// }
-
-// export function useComicInscription({
-//   accountId,
-//   signer,
-//   network = "testnet",
-// }: UseComicInscriptionProps) {
-//   const [status, setStatus] = useState<"idle" | "inscribing" | "done" | "error">("idle");
-//   const [progress, setProgress] = useState<number>(0);
-//   const [error, setError] = useState<string | null>(null);
-//   const [result, setResult] = useState<any>(null);
-//   const [statusText, setStatusText] = useState<string>("");
-//   const inscriptionCompleted = useRef(false);
-//   const lastValidProgress = useRef(0);
-
-//   const createInscription = async (formData: InscriptionFormData) => {
-//     try {
-//       if (!signer || typeof signer.sign !== "function") {
-//         throw new Error("No valid signer. Please connect your wallet.");
-//       }
-
-//       if (!formData.zipFile && !formData.pdfFile) {
-//         throw new Error("No ZIP or PDF file provided for inscription.");
-//       }
-
-//       setStatus("inscribing");
-//       setProgress(0);
-
-//       const fileToInscribe = formData.zipFile || formData.pdfFile!;
-//       const arrayBuffer = await fileToInscribe.arrayBuffer();
-
-//       // const progressCallback = (data: any) => {
-//       //   console.log(`[${data.step || "unknown"}] ${data.message || ""} - ${data.progressPercent || 0}%`);
-
-//       //   if (inscriptionCompleted.current) {
-//       //     setProgress(100);
-//       //     return;
-//       //   }
-
-//       //   if (data.step === "completed" || data.progressPercent >= 100) {
-//       //     inscriptionCompleted.current = true;
-//       //     lastValidProgress.current = 100;
-//       //     setProgress(100);
-//       //     setStatusText("Inscription completed");
-//       //     return;
-//       //   }
-
-//       //   if (data.step === "failed") {
-//       //     setError(data.message || "Inscription failed");
-//       //     setStatus("error");
-//       //     return;
-//       //   }
-
-//       //   const currentProgress = data.progressPercent || 0;
-//       //   if (currentProgress > lastValidProgress.current) {
-//       //     lastValidProgress.current = currentProgress;
-//       //     setProgress(currentProgress);
-//       //   }
-//       // };
-
-//       // ✳️ Perform inscription
-//       const inscriptionResult = await inscribeWithSigner(
-//         {
-//           type: "buffer",
-//           buffer: Buffer.from(arrayBuffer),
-//           fileName: fileToInscribe.name,
-//           mimeType: fileToInscribe.type || "application/zip",
-//         },
-//         signer,
-//         {
-//           mode: "hashinal-collection",
-//           waitForConfirmation: true,
-//           waitMaxAttempts: 50,
-//           waitIntervalMs: 8000,
-//           chunkSize: 1024 * 256,
-//           network,
-//           // progressCallback,
-//              progressCallback: (data: any) => {
-//             const pct = Math.min(data.progressPercent || 0, 95);
-//             setProgress(pct);
-//             setStatusText(data.message || "Inscribing...");
-//           },
-//         }
-//       );
-
-//       // const transactionId = inscriptionResult?.inscription?.transactionId;
-//       // if (!transactionId) throw new Error("Failed to get inscription transaction ID");
-
-//       // console.log("🧾 Transaction ID:", transactionId);
-//          const transactionId = (() => {
-//         // Prefer explicit inscription.transactionId
-//         const insTx = inscriptionResult?.inscription?.transactionId;
-//         if (insTx) return insTx;
-//         console.log('Inscription result:', insTx);
-//         // If result is a plain string, treat it as the transactionId
-//         if (typeof inscriptionResult?.result === "string") return inscriptionResult!.result;
-//         console.log('Inscription result object:', inscriptionResult?.result);
-//         // If result is an object that contains transactionId, use it
-//         if (inscriptionResult?.result && typeof inscriptionResult.result === "object") {
-//           if ("transactionId" in inscriptionResult.result) {
-//             return (inscriptionResult.result as any).transactionId;
-//             console.log('Found transactionId in result:', (inscriptionResult.result as any).transactionId);
-//           }
-//           // Some implementations may nest transactionId under result.transaction
-//           if ("transaction" in inscriptionResult.result && (inscriptionResult.result as any).transaction?.transactionId) {
-//             return (inscriptionResult.result as any).transaction.transactionId;
-//           }
-//         }
-//         return undefined;
-//       })();
-
-// if (!transactionId) {
-//   throw new Error("Failed to get inscription transaction ID");
-// }
-
-//       //🧠 Retrieve final details
-//     //  const retrieved = await retrieveInscription(transactionId, { network });
-//     //   console.log("📦 Retrieved Inscription:", retrieved);
-
-//     //   // Extract topic IDs for metadataUploads
-//     //   const metadataTopicIds =
-//     //     retrieved?.metadataUploads[0]?.map((m: any) => m.topicId) || [];
-
-//     //   const topicId = inscriptionResult?.inscription?.topic_id;
-//     //   console.log("✅ Inscription Topic ID:", topicId);
-//     //   console.log("🧩 Metadata Topic IDs:", metadataTopicIds);
-//     // ✅ Try both API-like and SDK-like responses
-
-//     // ✅ Step: Retrieve full inscription result directly from the Hashinals API
-// // const API_BASE = `http://v2-api.tier.bot/api/inscriptions/retrieve-inscription?id=${transactionId}&network=${network}``
-
-// const response = await fetch(`http://v2-api.tier.bot/api/inscriptions/retrieve-inscription?id=${transactionId}&network=${network}`);
-// if (!response.ok) {
-//   throw new Error(`Failed to retrieve inscription: ${response.statusText}`);
-// }
-//  console.log("Response retrieve", response);
-// const retrieved = await response.json();
-
-// // ✅ Extract metadata topic IDs
-// const metadataTopicIds: string[] =
-//   retrieved?.files?.metadataUploads?.map((m: any) => m.topicId) || [];
-
-// console.log("🧩 Metadata Topic IDs:", metadataTopicIds);
-
-// // Optionally log all files if you want visibility
-// console.log("📁 Inscription Files:", retrieved?.files);
-
-
-//       const inscriptionData = {
-//         jobId: inscriptionResult?.inscription?.jobId,
-//         transactionId,
-//         // topicId,
-//         metadataTopicIds,
-//         result: retrieved,
-//       };
-
-//       setResult(inscriptionData);
-//       setStatus("done");
-//       setProgress(100);
-
-//       return inscriptionData;
-//     } catch (err: any) {
-//       console.error("❌ Inscription error:", err);
-//       setError(err.message || "Unexpected error during inscription.");
-//       setStatus("error");
-//       throw err;
-//     }
-//   };
-
-//   return { createInscription, status, progress, result, error, statusText };
-// }
-
 
 import { useRef, useState } from "react";
 import { inscribeWithSigner, retrieveInscription } from "@hashgraphonline/standards-sdk";
@@ -204,14 +18,29 @@ interface InscriptionFormData {
   description?: string;
 }
 
+// interface ComicData {
+//   title: string;
+//   description: string;
+//   genre: string[];
+//   tags: string[];
+//   ageRating: string;
+//   coverImage: File | null;
+//   pages: any[];
+// }
+interface ComicPageFile extends File {
+  customType?: string; // 'zip-images' | 'pdf-file' | undefined
+  // Add any other custom properties if needed
+}
+
 interface ComicData {
-  title: string;
-  description: string;
-  genre: string[];
-  tags: string[];
-  ageRating: string;
-  coverImage: File | null;
-  pages: any[];
+   title: string,
+    episodeNumber: string,
+    summary: string,
+    maturityRating: string,
+    bannerImage: File | null,
+    collaborators: string[],
+    contentType: 'pdf' | 'images' | null,
+    files: ComicPageFile[]
 }
 
 interface MonetizationData {
@@ -226,6 +55,7 @@ export function useComicInscription({
   accountId,
   signer,
   network = "testnet",
+  // collectionId
 }: UseComicInscriptionProps) {
   const [status, setStatus] = useState<"idle" | "inscribing" | "done" | "error">("idle");
   const [progress, setProgress] = useState<number>(0);
@@ -236,7 +66,7 @@ export function useComicInscription({
   const inscriptionCompleted = useRef(false);
   const lastValidProgress = useRef(0);
 
-  const createInscription = async (comicData: ComicData,  monetizationData: MonetizationData ) => {
+  const createInscription = async (comicData: ComicData, collectionId: string ) => {
     try {
       if (!signer || typeof signer.sign !== "function") {
         throw new Error("No valid signer. Please connect your wallet.");
@@ -245,108 +75,103 @@ export function useComicInscription({
       const formData = new FormData();
 
       // Add cover image if exists
-      if (comicData.coverImage) {
-        if (comicData.coverImage instanceof File) {
-          formData.append('coverImage', comicData.coverImage);
+      if (comicData.bannerImage) {
+        if (comicData.bannerImage instanceof File) {
+          formData.append('coverImage', comicData.bannerImage);
         } else {
           const coverFile = new File(
-            [comicData.coverImage],
+            [comicData.bannerImage],
             'cover.jpg',
-            { type: (comicData.coverImage as Blob).type || 'image/jpeg' }
+            { type: (comicData.bannerImage as Blob).type || 'image/jpeg' }
           );
           formData.append('coverImage', coverFile);
         }
       }
 
       // Add page files (images, ZIP, or PDF)
-      comicData.pages.forEach((page, index) => {
-        if (page.blob) {
-          const fileName = page.name || `page-${index + 1}.jpg`;
-          
-          // Determine the correct mime type based on page type
-          let mimeType = page.blob.type || 'image/jpeg';
-          if (page.type === 'zip-images') {
-            mimeType = 'application/zip';
-          } else if (page.type === 'pdf-file') {
-            mimeType = 'application/pdf';
-          }
-          
-          // Create the file with proper type
-          const file = page.blob instanceof File 
-            ? page.blob 
-            : new File([page.blob], fileName, { type: mimeType });
-          
-          // Use appropriate field name based on file type
-          // Backend expects 'pages' for all file types (images, ZIP, PDF)
-          if (page.type === 'zip-images') {
-            formData.append('pages', file);  // Changed from 'zipFile' to 'pages'
-          } else if (page.type === 'pdf-file') {
-            formData.append('pages', file);  // Changed from 'pdfFile' to 'pages'
-          } else {
-            formData.append('pages', file);
-          }
-          
-          console.log(`📎 Added ${page.type || 'image'} file:`, fileName, 'Size:', file.size, 'Type:', file.type);
+      comicData.files.forEach((page, index) => {
+        // page is a File (or ComicPageFile), so we use it directly
+        const fileName = page.name || `page-${index + 1}.jpg`;
+
+        // Determine the correct mime type based on page.customType if present
+        let mimeType = page.type || 'image/jpeg';
+        if ((page as ComicPageFile).customType === 'zip-images') {
+          mimeType = 'application/zip';
+        } else if ((page as ComicPageFile).customType === 'pdf-file') {
+          mimeType = 'application/pdf';
         }
-      }); 
+
+        // If the file's type doesn't match the expected mimeType, create a new File object
+        let file: File;
+        if ((page as ComicPageFile).customType && page.type !== mimeType) {
+          file = new File([page], fileName, { type: mimeType });
+        } else {
+          file = page;
+        }
+
+        // Append to formData
+        formData.append('pages', file);
+
+        console.log(`📎 Added ${(page as ComicPageFile).customType || 'image'} file:`, fileName, 'Size:', file.size, 'Type:', file.type);
+      });
 
       // Append individual fields as expected by the backend (matching curl format)
       formData.append('title', comicData.title);
-      formData.append('description', comicData.description);
-      formData.append('genre', Array.isArray(comicData.genre) ? comicData.genre.join(',') : comicData.genre);
-      formData.append('tags', Array.isArray(comicData.tags) ? comicData.tags.join(',') : comicData.tags);
-      formData.append('publishType', monetizationData.mintAsNFT ? 'nft' : monetizationData.publishType);
+      // formData.append('description', comicData.description);
+      // formData.append('genre', Array.isArray(comicData.genre) ? comicData.genre.join(',') : comicData.genre);
+      // formData.append('tags', Array.isArray(comicData.tags) ? comicData.tags.join(',') : comicData.tags);
+      // formData.append('publishType', monetizationData.mintAsNFT ? 'nft' : monetizationData.publishType);
       formData.append('status', 'draft');
 
       // Add NFT details if minting
-      if (monetizationData.mintAsNFT) {
-        const nftDetails = {
-          mintStatus: 'pending',
-          price: monetizationData.nftPrice || 0,
-          maxSupply: monetizationData.nftCopies || 100,
-          currentSupply: 0,
-          royaltyPercentage: 10, // Default 10% royalty
-        };
-        formData.append('nftDetails', JSON.stringify(nftDetails));
-      }
+      // if (monetizationData.mintAsNFT) {
+      //   const nftDetails = {
+      //     mintStatus: 'pending',
+      //     price: monetizationData.nftPrice || 0,
+      //     maxSupply: monetizationData.nftCopies || 100,
+      //     currentSupply: 0,
+      //     royaltyPercentage: 10, // Default 10% royalty
+      //   };
+      //   formData.append('nftDetails', JSON.stringify(nftDetails));
+      // }
 
       // Debug: Log what we're sending
       console.log("📤 Sending to /api/comics/full:", {
         title: comicData.title,
-        description: comicData.description,
-        genre: comicData.genre,
-        tags: comicData.tags,
+        // description: comicData.description,
+        // genre: comicData.genre,
+        // tags: comicData.tags,
         hasPages: formData.getAll('pages').length,
-        hasCoverImage: formData.has('coverImage'),
+        hasCoverImage: formData.has('bannerImage'),
         formDataEntries: Array.from(formData.keys()),
       });
 
       const token = localStorage.getItem('token');
       
-      const response = await axios.post("http://localhost:5000/api/comics/full",
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-            Authorization: `Bearer ${token}`,
-          },
-          onUploadProgress: (progressEvent) => {
-            if (progressEvent.total) {
-              const progress = Math.round((progressEvent.loaded * 70) / progressEvent.total);
-              setUploadProgress(30 + progress);
-            }
-          },
-        }
-      );
-      
-      setUploadProgress(100);
-      const createdComic = response.data.data.comic;
-      const metadataCid = createdComic.nftMetadataCid;
-      const dbComicId = createdComic._id;
-      console.log("🆔 Created comic in DB with ID:", dbComicId);
-      console.log("📝 Created comic with metadata CID:", metadataCid);
-      console.log("📄 Full response data:", response.data);
-      console.log("📄 Full created comic data:", createdComic);
+    //  const response = await axios.post(`http://localhost:5000/api/comics/full/695d614caa9e11757e40d535`,
+    //     formData,
+    //     {
+    //       headers: {
+    //         'Content-Type': 'multipart/form-data',
+    //         Authorization: `Bearer ${token}`,
+    //       },
+    //       onUploadProgress: (progressEvent) => {
+    //         if (progressEvent.total) {
+    //           const progress = Math.round((progressEvent.loaded * 70) / progressEvent.total);
+    //           setUploadProgress(30 + progress);
+    //         }
+    //       },
+    //     }
+    //   );
+
+      // setUploadProgress(100);
+      // const createdComic = response.data.data.comic;
+      // const metadataCid = createdComic.nftMetadataCid;
+      // const dbComicId = createdComic._id;
+      // console.log("🆔 Created comic in DB with ID:", dbComicId);
+      // console.log("📝 Created comic with metadata CID:", metadataCid);
+      // console.log("📄 Full response data:", response.data);
+      // console.log("📄 Full created comic data:", createdComic);
       
       // Reset state
       setStatus("inscribing");
@@ -499,7 +324,7 @@ export function useComicInscription({
         jobId: inscriptionResult?.inscription?.jobId,
         transactionId,
         topicId: inscriptionResult?.inscription?.topic_id,
-        // metadataTopicIds,
+        dbComicId,
         result: retrieved || inscriptionResult,
         name: inscriptionResult?.inscription?.name || retrieved?.name,
       };
