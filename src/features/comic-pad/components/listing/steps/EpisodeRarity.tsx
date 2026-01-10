@@ -3,6 +3,8 @@
 import React, {useState} from 'react';
 import {ChevronLeft, Crown, Circle, Infinity} from 'lucide-react';
 import { MainButton } from '@/components/button';
+import { crownIcon, sportsMedal } from '../../../../../../public/dev_images';
+import Image from 'next/image';
 
 interface RarityOption {
     id : 'legendary' | 'epic' | 'common';
@@ -35,7 +37,7 @@ const EpisodeRarity : React.FC < EpisodeRarityProps > = ({
         {
             id: 'legendary',
             name: 'Legendary',
-            icon: <Crown className="w-8 h-8"/>,
+            icon: <Image src={crownIcon} alt="legendary" className="w-8 h-8 object-cover"/>,
             supply: 'Supply 1 — 5,000',
             color: 'text-yellow-400',
             bgColor: 'bg-gradient-to-b from-yellow-500/20 to-yellow-600/10',
@@ -44,7 +46,7 @@ const EpisodeRarity : React.FC < EpisodeRarityProps > = ({
         }, {
             id: 'epic',
             name: 'Epic',
-            icon: <Circle className="w-8 h-8 fill-current"/>,
+            icon: <Image src={sportsMedal} alt="legendary" className="w-8 h-8 object-cover"/>,
             supply: 'Supply 1 — 8,000',
             color: 'text-purple-400',
             bgColor: 'bg-gradient-to-b from-purple-500/20 to-purple-600/10',
@@ -53,9 +55,9 @@ const EpisodeRarity : React.FC < EpisodeRarityProps > = ({
         }, {
             id: 'common',
             name: 'Common',
-            icon: <Circle className="w-8 h-8 fill-current"/>,
+            icon: <Image src={sportsMedal} alt="legendary" className="w-8 h-8 object-cover"/>,
             supply: 'Infinite',
-            color: 'text-gray-400',
+            color: 'text-white/80',
             bgColor: 'bg-gradient-to-b from-gray-500/20 to-gray-600/10',
             borderColor: 'border-gray-500/30',
             iconColor: 'text-gray-500'
@@ -67,12 +69,11 @@ const EpisodeRarity : React.FC < EpisodeRarityProps > = ({
     };
 
     const handleContinue = () => {
-        onContinue
-            ?.(selectedRarity);
+        onContinue(selectedRarity);
     };
 
     return (
-        <div className="min-h-screen bg-black text-white font-recursive flex flex-col">
+        <div className="min-h-screen bg-black-100 text-white font-recursive flex flex-col">
             {/* Header */}
             <div className="flex items-center p-6">
                 <button
@@ -90,14 +91,14 @@ const EpisodeRarity : React.FC < EpisodeRarityProps > = ({
                     <h1 className="text-4xl font-bold text-white mb-4">
                         {episodeTitle}
                     </h1>
-                    <p className="text-gray-400 text-lg font-light max-w-md">
+                    <p className="text-white/50 text-lg font-light max-w-md">
                         Carefully choose the Rarity details for this episode.
                     </p>
                 </div>
 
                 {/* Rarity Type Section */}
                 <div className="w-full max-w-4xl mb-12">
-                    <h2 className="text-white text-xl font-semibold mb-8 text-center">
+                    <h2 className="text-white text-xl mb-4">
                         Rarity Type
                     </h2>
 
@@ -110,14 +111,14 @@ const EpisodeRarity : React.FC < EpisodeRarityProps > = ({
                                 ? 'transform scale-105'
                                 : ''}`}>
                                 {/* Selection Checkbox */}
-                                <div className="absolute -top-2 -right-2 z-10">
+                                <div className="absolute top-4 right-4 z-10">
                                     <div
                                         className={`w-6 h-6 rounded border-2 transition-all duration-200 ${selectedRarity === option.id
                                         ? 'bg-primary-500 border-primary-500'
                                         : 'border-gray-500 bg-transparent'}`}>
                                         {selectedRarity === option.id && (
                                             <svg
-                                                className="w-full h-full text-white"
+                                                className="w-full h-full text-black-100"
                                                 viewBox="0 0 20 20"
                                                 fill="currentColor">
                                                 <path
@@ -133,13 +134,13 @@ const EpisodeRarity : React.FC < EpisodeRarityProps > = ({
                                 <div
                                     className={` relative overflow-hidden rounded-2xl border-2 transition-all duration-300 ${selectedRarity === option.id
                                     ? `${option.borderColor} ${option.bgColor}`
-                                    : 'border-gray-700/50 bg-gray-900/30'} hover:border-gray-500/70 backdrop-blur-sm `}>
+                                    : 'border-black-50 bg-black-100'} hover:border-black-50/70 backdrop-blur-sm `}>
                                     <div className="p-8 text-center">
                                         {/* Icon */}
                                         <div
                                             className={` inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 transition-colors duration-300 ${selectedRarity === option.id
                                             ? `${option.bgColor} ${option.iconColor}`
-                                            : 'bg-gray-800 text-gray-500'} `}>
+                                            : 'bg-black-50 text-gray-500'} `}>
                                             {option.icon}
                                         </div>
 
@@ -147,12 +148,12 @@ const EpisodeRarity : React.FC < EpisodeRarityProps > = ({
                                         <h3
                                             className={` text-xl font-bold mb-2 transition-colors duration-300 ${selectedRarity === option.id
                                             ? option.color
-                                            : 'text-gray-400'} `}>
+                                            : 'text-white/80'} `}>
                                             {option.name}
                                         </h3>
 
                                         {/* Supply */}
-                                        <p className="text-gray-500 text-sm font-medium">
+                                        <p className="text-gray-500 text-sm">
                                             {option.supply}
                                         </p>
                                     </div>
@@ -168,11 +169,11 @@ const EpisodeRarity : React.FC < EpisodeRarityProps > = ({
 
                 {/* Info Section */}
                 <div
-                    className="w-full max-w-2xl bg-gray-900/50 rounded-xl p-6 backdrop-blur-sm border border-gray-700/50">
-                    <h3 className="text-white font-semibold text-lg mb-3">
+                    className="w-full max-w-2xl bg-black-100 rounded-xl p-6 backdrop-blur-sm border border-black-50">
+                    <h3 className="text-white text-lg mb-3">
                         What does Rarity Mean?
                     </h3>
-                    <p className="text-gray-400 text-sm leading-relaxed">
+                    <p className="text-white/60 text-sm leading-relaxed">
                         Rarity defines the total supply for this episode. Each rarity level set a fixed
                         number of supply that can be minted. Once the supply is reached, no more copies
                         can be created.
@@ -181,15 +182,15 @@ const EpisodeRarity : React.FC < EpisodeRarityProps > = ({
             </div>
 
             {/* Action Buttons */}
-            <div className="max-w-md mx-auto flex gap-4">
+            <div className="w-full max-w-4xl  mx-auto flex justify-center gap-4">
                 <button
                     onClick={onCancel}
-                    className="flex-1 py-4 px-6 border-2 border-white/20 text-white rounded-full font-semibold text-lg hover:border-white/40 hover:bg-white/5 transition-all duration-200">
+                    className="w-full flex-1 py-4 px-6 border-2 border-white/30 text-white rounded-full text-lg hover:border-white/80 hover:bg-white/5 transition-all duration-200">
                     Cancel
                 </button>
                 <MainButton
                     onClick={handleContinue}
-                    className="flex-1 py-4 px-6 bg-primary-500 text-black rounded-full font-semibold text-lg hover:bg-primary-400 transform hover:scale-105 transition-all duration-200 shadow-2xl shadow-primary-500/25">
+                    className="w-full flex-1 py-4 px-6 bg-primary-500 text-black rounded-full !text-lg hover:bg-primary-400 transform hover:scale-105 transition-all duration-200 shadow-2xl shadow-primary-500/25">
                     Continue
                 </MainButton>
             </div>
