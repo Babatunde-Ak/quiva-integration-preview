@@ -11,7 +11,7 @@ import { hbar } from '../../../../../public/dev_images';
 
 interface Episode {
     id : string;
-    title : string;
+    title? : string;
     thumbnail : string;
     description?: string;
     publishDate?: string;
@@ -41,6 +41,9 @@ const EpisodesList : React.FC < EpisodesListProps > = ({
 }) => {
     const router = useRouter();
     const params = useParams();
+
+    console.log(params.id);
+
     const [searchTerm,
         setSearchTerm] = useState('');
     const [selectedEpisodes,
@@ -61,9 +64,10 @@ const EpisodesList : React.FC < EpisodesListProps > = ({
             onUploadEpisode();
         } else {
             router.push(`/collections/${params
-                ?.id}/upload-episode`);
+                ?.id}`);
         }
     };
+
 
     const handleSelectEpisode = (episodeId : string, checked : boolean) => {
         const newSelection = checked

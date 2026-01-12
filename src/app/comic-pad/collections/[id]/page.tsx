@@ -1,23 +1,66 @@
 'use client';
 
-import React from 'react';
-import {useRouter} from 'next/navigation';
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import CollectionEpisodesPage from '@/features/comic-pad/components/episodes/episode-page';
-import {dummyCollections} from '@/features/comic-pad/mock-data/data';
+import { dummyCollections } from '@/features/comic-pad/mock-data/data';
 import EpisodeForm from '@/features/comic-pad/components/episodes/episode-form';
 import GeneralModal from '@/components/modals/GeneralModal';
+import { useAppDispatch } from '@/redux/hook';
+import { getCollectionById } from '@/redux/slices/collectionSlice';
+import { MappedCollection } from '@/features/comic-pad/utils/utils';
 
-// For App Router (Next.js 13+)
 interface PageProps {
-    params : {
+    params: {
         id: string;
     };
 }
 
-export default function CollectionEpisodesRoute({params} : PageProps) {
+export default function CollectionEpisodesRoute({ params }: PageProps) {
     const router = useRouter();
-
+    const dispatch = useAppDispatch();
+    
+    const [collection, setCollection] = useState<MappedCollection | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [isOpenUploadModal, setIsOpenUploadModal] = React.useState(false);
+
+    useEffect(() => {
+        const fetchCollection = async () => {
+            try {
+                setIsLoading(true);
+                const result = await dispatch(getCollectionById({id:params.id})).unwrap();
+                
+                // Extract collection from the nested response structure
+                const apiCollection = result?.data?.collection || result?.data || result;
+                
+                // Map API response to the expected format
+                // You may need to adjust this mapping based on your actual API response
+                const mappedCollection: MappedCollection = {
+                    id: apiCollection.id || apiCollection._id,
+                    title: apiCollection.title || apiCollection.name,
+                    description: apiCollection.description,
+                    coverImage: apiCollection.coverImage || apiCollection.cover_image || apiCollection.image,
+                    episodes: apiCollection.episodes || [],
+                    totalEpisodes: apiCollection.totalEpisodes || (apiCollection.episodes ? apiCollection.episodes.length : 0),
+                    // Add other fields as needed based on your MappedCollection type
+                };
+                
+                console.log('Fetched Collection:', mappedCollection);
+                setCollection(mappedCollection);
+                setError(null);
+            } catch (error) {
+                console.error('Error fetching collection:', error);
+                setError('Failed to load collection');
+                // Fallback to mock data on error
+                setCollection(null);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchCollection();
+    }, [dispatch, params.id]);
 
     const handleGoBack = () => {
         router.push('/collections');
@@ -33,15 +76,38 @@ export default function CollectionEpisodesRoute({params} : PageProps) {
 
     const onOpenChangeUploadModal = (open: boolean) => {
         setIsOpenUploadModal(open);
+    };
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <p>Loading collection...</p>
+            </div>
+        );
+    }
+
+    if (error && !collection) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen">
+                <p className="text-red-500 mb-4">{error}</p>
+                <button 
+                    onClick={handleGoBack}
+                    className="px-4 py-2 bg-blue-500 text-white rounded"
+                >
+                    Go Back to Collections
+                </button>
+            </div>
+        );
     }
 
     return (
         <>
             <CollectionEpisodesPage
-            collection={dummyCollections[3]}
-            onGoBack={handleGoBack}
-            onUploadEpisode={handleUploadEpisode}
-            onCreateEpisode={handleCreateEpisode}/>
+                collection={collection}
+                onGoBack={handleGoBack}
+                onUploadEpisode={handleUploadEpisode}
+                onCreateEpisode={handleCreateEpisode}
+            />
 
             {/* Upload Modal */}
             <GeneralModal
@@ -52,7 +118,7 @@ export default function CollectionEpisodesRoute({params} : PageProps) {
                 modalContentClass='bg-black-500 max-h-screen lg:!m-16'
             >
                 <div className="w-full h-screen !p-4 lg:!p-8 overflow-y-auto font-recursive">
-                    <EpisodeForm />
+                    <EpisodeForm collectionId={params.id} onClose={() => setIsOpenUploadModal(false)} />
                 </div>
             </GeneralModal>
         </>
