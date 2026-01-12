@@ -2,6 +2,7 @@
 
 import React from 'react';
 import {ChevronLeft} from 'lucide-react';
+import { MainButton } from '@/components/button';
 
 interface ReviewDetailsProps {
     episodeData?: {
@@ -47,6 +48,8 @@ const ReviewDetails : React.FC < ReviewDetailsProps > = ({
         }
     };
 
+    
+
     return (
         <div className="min-h-screen bg-black text-white font-recursive flex flex-col">
             {/* Header */}
@@ -67,7 +70,7 @@ const ReviewDetails : React.FC < ReviewDetailsProps > = ({
                     <h1 className="text-3xl font-bold text-white mb-4">
                         Review Details
                     </h1>
-                    <p className="text-gray-400 text-base font-light">
+                    <p className="text-white/50 text-base font-light">
                         Confirm all details before publishing to blockchain.
                     </p>
                 </div>
@@ -75,10 +78,10 @@ const ReviewDetails : React.FC < ReviewDetailsProps > = ({
                 {/* Episode Preview */}
                 <div className="w-full mb-8">
                     <div
-                        className="relative bg-gray-900/30 rounded-2xl p-6 border border-gray-700/30">
+                        className="relative p-6">
                         {/* Episode Image */}
                         <div
-                            className="w-full aspect-square rounded-xl overflow-hidden mb-6 bg-gray-800">
+                            className="w-full aspect-square rounded-xl p-4 overflow-hidden mb-6 bg-black-100 border border-black-50">
                             <img
                                 src={episodeData.image}
                                 alt={episodeData.title}
@@ -89,33 +92,33 @@ const ReviewDetails : React.FC < ReviewDetailsProps > = ({
                         <div className="space-y-4">
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <p className="text-gray-400 text-sm mb-1">Episode & Rarity</p>
+                                    <p className="text-white/40text-sm mb-1">Episode & Rarity</p>
                                     <p className="text-white font-semibold">{episodeData.title}</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-gray-400 text-sm mb-1">Starfall — {episodeData.rarity.name}</p>
+                                    <p className="text-white/40text-sm mb-1">Starfall — {episodeData.rarity.name}</p>
                                     <p className="text-white font-semibold">{episodeData.supply}</p>
                                 </div>
                             </div>
 
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <p className="text-gray-400 text-sm mb-1">Supply</p>
+                                    <p className="text-white/40text-sm mb-1">Supply</p>
                                     <p className="text-white font-semibold">{episodeData.supply}</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-gray-400 text-sm mb-1">Price</p>
+                                    <p className="text-white/40text-sm mb-1">Price</p>
                                     <p className="text-white font-semibold">{episodeData.price}</p>
                                 </div>
                             </div>
 
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <p className="text-gray-400 text-sm mb-1">Price</p>
+                                    <p className="text-white/40text-sm mb-1">Price</p>
                                     <p className="text-white font-semibold">{episodeData.price}</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-gray-400 text-sm mb-1">Royalty</p>
+                                    <p className="text-white/40text-sm mb-1">Royalty</p>
                                     <p className="text-white font-semibold">{episodeData.royalty}</p>
                                 </div>
                             </div>
@@ -125,38 +128,31 @@ const ReviewDetails : React.FC < ReviewDetailsProps > = ({
 
                 {/* Warning Notice */}
                 <div className="w-full mb-8">
-                    <div className="bg-red-900/20 border border-red-500/30 rounded-xl p-4">
-                        <p className="text-red-400 text-sm font-medium mb-2">Please note this</p>
+                    <div className="border border-black-50 rounded-xl p-4">
+                        <p className="text-white text-sm font-medium mb-2">Please read this</p>
                         <p className="text-red-400/80 text-xs leading-relaxed">
-                            After you proceed with this listing minting, you acknowledge that all details
-                            cannot be changed.
+                            ⚠️ You are about to List this Episode to the Quiva Marketplace. Once published on Hedera, this action cannot be undone.
                         </p>
                     </div>
                 </div>
 
-                {/* Additional Info */}
-                <div className="w-full text-center">
-                    <p className="text-gray-500 text-xs mb-1">Estimated Gas Fee</p>
-                    <p className="text-gray-400 text-sm">~0.5 HBAR</p>
-                </div>
+                
             </div>
 
             {/* Action Buttons */}
-            <div
-                className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black via-black/95 to-transparent">
-                <div className="max-w-md mx-auto flex gap-4">
-                    <button
-                        onClick={onBack}
-                        className="flex-1 py-4 px-6 border-2 border-white/20 text-white rounded-full font-semibold text-lg hover:border-white/40 hover:bg-white/5 transition-all duration-200">
-                        Back
-                    </button>
-                    <button
-                        onClick={onList}
-                        className="flex-1 py-4 px-6 bg-primary-500 text-black rounded-full font-semibold text-lg hover:bg-primary-400 transform hover:scale-105 transition-all duration-200 shadow-2xl shadow-primary-500/25">
-                        List
-                    </button>
-                </div>
+            <div className="w-full max-w-4xl  mx-auto flex justify-center gap-4">
+                <button
+                    onClick={onBack}
+                    className="w-full flex-1 py-4 px-6 border-2 border-white/30 text-white rounded-full text-lg hover:border-white/80 hover:bg-white/5 transition-all duration-200">
+                    Back
+                </button>
+                <MainButton
+                    onClick={onList}
+                    className="w-full flex-1 py-4 px-6 text-black rounded-full !text-lg transform hover:scale-105 transition-all duration-200 shadow-2xl shadow-primary-500/25">
+                    Next
+                </MainButton>
             </div>
+            
         </div>
     );
 };

@@ -15,8 +15,6 @@ import {
   clearPreviewComic 
 } from '@/redux/slices/comicSlice'
 import { Loader2 } from 'lucide-react'
-// import { useComicPurchase } from '../../../hook/usePurchaseComic'
-// import { useClaimFreeComic, useCheckComicClaim } from '@/hook/useClaimFreeComic'
 import { toast } from 'react-toastify'
 import { QUIVA_COMICS_ABI as QUIVA_COMICS_ADDRESS } from '@/contracts/QuivaComics'
 import { DUMMY_COMIC_DATA } from '@/components/utils/dummy-data'
@@ -25,17 +23,6 @@ function Page() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const dispatch = useAppDispatch()
-
-  const useClaimFreeComic = () =>{
-    return null;
-  }
-
-  const useCheckComicClaim = (tokenId: string | undefined, walletAddress: string | null) => {
-    return {
-      hasClaimed: false,
-      refetch: () => {}
-    };
-  }
 
   const useComicPurchase = () => {
     return null;
@@ -53,10 +40,18 @@ function Page() {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
   const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false)
   const [isClaimModalOpen, setIsClaimModalOpen] = useState(false)
-  const [showMintPage, setShowMintPage] = useState(false) // NEW: Controls which page to show
+  const [showMintPage, setShowMintPage] = useState(false)
   const [hasNFTAccess, setHasNFTAccess] = useState<boolean | null>(null)
   const [useDummyData, setUseDummyData] = useState(false)
   const [activeTab, setActiveTab] = useState('details')
+  
+  // Claim-related state (replacing the hook)
+  const [hasClaimed, setHasClaimed] = useState(false)
+  const [isClaiming, setIsClaiming] = useState(false)
+  const [claimSuccess, setClaimSuccess] = useState(false)
+  const [claimError, setClaimError] = useState<Error | null>(null)
+  const [claimProgress, setClaimProgress] = useState(0)
+  const [claimHash, setClaimHash] = useState<string | null>(null)
   
   // Getting comic ID from URL query params
   const id = searchParams.get('id')
@@ -74,17 +69,6 @@ function Page() {
     walletStatus = { isConnected: false, address: null },
     setComicId = () => {}
   } = purchaseHookResult ?? {}
-
-  // Initialize claiming hook
-  const {
-    claimFreeComic,
-    isClaiming,
-    claimError,
-    claimSuccess,
-    claimProgress,
-    transactionHash: claimHash,
-    resetClaimState,
-  } = useClaimFreeComic()
   
   // Fetch comic data
   useEffect(() => {
@@ -147,11 +131,6 @@ function Page() {
     }
   }, [currentComic, useDummyData])
 
-  const { hasClaimed, refetch: refetchClaimStatus } = useCheckComicClaim(
-    transformedComic?.tokenId,
-    walletStatus.address
-  )
-
   // Auto-use dummy data
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -184,7 +163,7 @@ function Page() {
   useEffect(() => {
     if (claimSuccess && claimHash) {
       setHasNFTAccess(true)
-      refetchClaimStatus()
+      setHasClaimed(true)
       
       setTimeout(() => {
         setIsClaimModalOpen(false)
@@ -196,7 +175,64 @@ function Page() {
         }
       }, 2000)
     }
-  }, [claimSuccess, claimHash, id, router, resetClaimState, refetchClaimStatus])
+  }, [claimSuccess, claimHash, id, router])
+
+  // Reset claim state function
+  const resetClaimState = () => {
+    setIsClaiming(false)
+    setClaimSuccess(false)
+    setClaimError(null)
+    setClaimProgress(0)
+    setClaimHash(null)
+  }
+
+  // Handle free comic claim
+  const handleClaimFreeComic = async () => {
+    if (!transformedComic || !id) {
+      toast.error('Comic data not available')
+      return
+    }
+
+    if (!walletStatus.isConnected) {
+      toast.error('Please connect your wallet first')
+      return
+    }
+
+    if (hasClaimed) {
+      toast.info('You have already claimed this comic')
+      return
+    }
+
+    try {
+      setIsClaiming(true)
+      setClaimError(null)
+      setClaimProgress(0)
+
+      // Simulate claim process
+      setClaimProgress(25)
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
+      setClaimProgress(50)
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
+      setClaimProgress(75)
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
+      setClaimProgress(100)
+      
+      // Simulate transaction hash
+      const dummyHash = `0x${Math.random().toString(16).substring(2, 66)}`
+      setClaimHash(dummyHash)
+      setClaimSuccess(true)
+      
+    } catch (error: any) {
+      console.error('Claim error:', error)
+      setClaimError(error.message || 'Failed to claim comic')
+      toast.error(error.message || 'Failed to claim comic')
+    } finally {
+      setIsClaiming(false)
+    }
+  }
 
   // Event handlers
   const handlePreview = () => {
@@ -204,28 +240,6 @@ function Page() {
     setIsPreviewOpen(true)
     if (!useDummyData) {
       dispatch(getComicPreview({id: id} as any))
-    }
-  }
-
-  const handleClaimComic = async () => {
-    if (!walletStatus.isConnected) {
-      toast.error('Please connect your wallet to claim this comic')
-      return
-    }
-
-    if (!transformedComic?.tokenId || !id) {
-      toast.error('Invalid comic data')
-      return
-    }
-
-    try {
-      await claimFreeComic({
-        tokenId: transformedComic.tokenId,
-        comicId: id,
-      })
-    } catch (error) {
-      console.error('Error claiming comic:', error)
-      toast.error('Failed to claim comic. Please try again.')
     }
   }
 
@@ -424,8 +438,11 @@ function Page() {
 
           <ClaimModal
             isOpen={isClaimModalOpen}
-            onClose={() => setIsClaimModalOpen(false)}
-            onClaim={handleClaimComic}
+            onClose={() => {
+              setIsClaimModalOpen(false)
+              resetClaimState()
+            }}
+            onClaim={handleClaimFreeComic}
             comicTitle={transformedComic.title}
             isClaiming={isClaiming}
             claimSuccess={claimSuccess}
