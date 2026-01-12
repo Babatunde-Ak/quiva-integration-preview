@@ -66,87 +66,87 @@ export function useComicInscription({
   const inscriptionCompleted = useRef(false);
   const lastValidProgress = useRef(0);
 
-  const createInscription = async (comicData: ComicData, collectionId: string ) => {
+  const createInscription = async (metadataCid: string, dbComicId: string) => {
     try {
       if (!signer || typeof signer.sign !== "function") {
         throw new Error("No valid signer. Please connect your wallet.");
       }
 
-      const formData = new FormData();
+      // const formData = new FormData();
 
-      // Add cover image if exists
-      if (comicData.bannerImage) {
-        if (comicData.bannerImage instanceof File) {
-          formData.append('coverImage', comicData.bannerImage);
-        } else {
-          const coverFile = new File(
-            [comicData.bannerImage],
-            'cover.jpg',
-            { type: (comicData.bannerImage as Blob).type || 'image/jpeg' }
-          );
-          formData.append('coverImage', coverFile);
-        }
-      }
-
-      // Add page files (images, ZIP, or PDF)
-      comicData.files.forEach((page, index) => {
-        // page is a File (or ComicPageFile), so we use it directly
-        const fileName = page.name || `page-${index + 1}.jpg`;
-
-        // Determine the correct mime type based on page.customType if present
-        let mimeType = page.type || 'image/jpeg';
-        if ((page as ComicPageFile).customType === 'zip-images') {
-          mimeType = 'application/zip';
-        } else if ((page as ComicPageFile).customType === 'pdf-file') {
-          mimeType = 'application/pdf';
-        }
-
-        // If the file's type doesn't match the expected mimeType, create a new File object
-        let file: File;
-        if ((page as ComicPageFile).customType && page.type !== mimeType) {
-          file = new File([page], fileName, { type: mimeType });
-        } else {
-          file = page;
-        }
-
-        // Append to formData
-        formData.append('pages', file);
-
-        console.log(`📎 Added ${(page as ComicPageFile).customType || 'image'} file:`, fileName, 'Size:', file.size, 'Type:', file.type);
-      });
-
-      // Append individual fields as expected by the backend (matching curl format)
-      formData.append('title', comicData.title);
-      // formData.append('description', comicData.description);
-      // formData.append('genre', Array.isArray(comicData.genre) ? comicData.genre.join(',') : comicData.genre);
-      // formData.append('tags', Array.isArray(comicData.tags) ? comicData.tags.join(',') : comicData.tags);
-      // formData.append('publishType', monetizationData.mintAsNFT ? 'nft' : monetizationData.publishType);
-      formData.append('status', 'draft');
-
-      // Add NFT details if minting
-      // if (monetizationData.mintAsNFT) {
-      //   const nftDetails = {
-      //     mintStatus: 'pending',
-      //     price: monetizationData.nftPrice || 0,
-      //     maxSupply: monetizationData.nftCopies || 100,
-      //     currentSupply: 0,
-      //     royaltyPercentage: 10, // Default 10% royalty
-      //   };
-      //   formData.append('nftDetails', JSON.stringify(nftDetails));
+      // // Add cover image if exists
+      // if (comicData.bannerImage) {
+      //   if (comicData.bannerImage instanceof File) {
+      //     formData.append('coverImage', comicData.bannerImage);
+      //   } else {
+      //     const coverFile = new File(
+      //       [comicData.bannerImage],
+      //       'cover.jpg',
+      //       { type: (comicData.bannerImage as Blob).type || 'image/jpeg' }
+      //     );
+      //     formData.append('coverImage', coverFile);
+      //   }
       // }
 
-      // Debug: Log what we're sending
-      console.log("📤 Sending to /api/comics/full:", {
-        title: comicData.title,
-        // description: comicData.description,
-        // genre: comicData.genre,
-        // tags: comicData.tags,
-        hasPages: formData.getAll('pages').length,
-        hasCoverImage: formData.has('bannerImage'),
-        formDataEntries: Array.from(formData.keys()),
-      });
+      // // Add page files (images, ZIP, or PDF)
+      // comicData.files.forEach((page, index) => {
+      //   // page is a File (or ComicPageFile), so we use it directly
+      //   const fileName = page.name || `page-${index + 1}.jpg`;
 
-      const token = localStorage.getItem('token');
+      //   // Determine the correct mime type based on page.customType if present
+      //   let mimeType = page.type || 'image/jpeg';
+      //   if ((page as ComicPageFile).customType === 'zip-images') {
+      //     mimeType = 'application/zip';
+      //   } else if ((page as ComicPageFile).customType === 'pdf-file') {
+      //     mimeType = 'application/pdf';
+      //   }
+
+      //   // If the file's type doesn't match the expected mimeType, create a new File object
+      //   let file: File;
+      //   if ((page as ComicPageFile).customType && page.type !== mimeType) {
+      //     file = new File([page], fileName, { type: mimeType });
+      //   } else {
+      //     file = page;
+      //   }
+
+      //   // Append to formData
+      //   formData.append('pages', file);
+
+      //   console.log(`📎 Added ${(page as ComicPageFile).customType || 'image'} file:`, fileName, 'Size:', file.size, 'Type:', file.type);
+      // });
+
+      // // Append individual fields as expected by the backend (matching curl format)
+      // formData.append('title', comicData.title);
+      // // formData.append('description', comicData.description);
+      // // formData.append('genre', Array.isArray(comicData.genre) ? comicData.genre.join(',') : comicData.genre);
+      // // formData.append('tags', Array.isArray(comicData.tags) ? comicData.tags.join(',') : comicData.tags);
+      // // formData.append('publishType', monetizationData.mintAsNFT ? 'nft' : monetizationData.publishType);
+      // formData.append('status', 'draft');
+
+      // // Add NFT details if minting
+      // // if (monetizationData.mintAsNFT) {
+      // //   const nftDetails = {
+      // //     mintStatus: 'pending',
+      // //     price: monetizationData.nftPrice || 0,
+      // //     maxSupply: monetizationData.nftCopies || 100,
+      // //     currentSupply: 0,
+      // //     royaltyPercentage: 10, // Default 10% royalty
+      // //   };
+      // //   formData.append('nftDetails', JSON.stringify(nftDetails));
+      // // }
+
+      // // Debug: Log what we're sending
+      // console.log("📤 Sending to /api/comics/full:", {
+      //   title: comicData.title,
+      //   // description: comicData.description,
+      //   // genre: comicData.genre,
+      //   // tags: comicData.tags,
+      //   hasPages: formData.getAll('pages').length,
+      //   hasCoverImage: formData.has('bannerImage'),
+      //   formDataEntries: Array.from(formData.keys()),
+      // });
+
+      // const token = localStorage.getItem('token');
       
     //  const response = await axios.post(`http://localhost:5000/api/comics/full/695d614caa9e11757e40d535`,
     //     formData,

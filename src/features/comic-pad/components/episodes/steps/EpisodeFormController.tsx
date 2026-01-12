@@ -8,6 +8,7 @@ import { useMintComic } from '@/hook/useMintComic'; // Adjust path as needed
 import { useHederaWallet } from '@/providers/HashPackProvider';
 import { useAppSelector } from '@/redux/hook';
 import axios from 'axios';
+// import { file } from 'jszip';
 interface EpisodeFormData {
   // Episode Details
   title: string;
@@ -18,6 +19,7 @@ interface EpisodeFormData {
   collaborators: string[];
   genre: string[];
   contentType: 'pdf' | 'images' | null;
+  pages: File[];
   pages: File[];
 }
 
