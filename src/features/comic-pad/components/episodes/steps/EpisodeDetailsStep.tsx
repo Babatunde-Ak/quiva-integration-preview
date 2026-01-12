@@ -5,9 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import { Upload, X } from 'lucide-react';
 import { IconToggleSwitch } from '@/components/switch/Switch';
 import { MainButton } from '@/components/button';
+import { genres } from '@/features/comic-pad/mock-data/data';
 
 interface EpisodeDetailsData {
   title: string;
@@ -16,6 +18,7 @@ interface EpisodeDetailsData {
   maturityRating: string;
   bannerImage: File | null;
   collaborators: string[];
+  genre?: string[];
 }
 
 interface EpisodeDetailsStepProps {
@@ -58,9 +61,18 @@ const EpisodeDetailsStepComponent: React.FC<EpisodeDetailsStepProps> = ({
     }
   };
 
+  const handleGenreToggle = (genreId: string) => {
+    const currentGenres = data.genre || [];
+    onUpdate({
+      genre: currentGenres.includes(genreId)
+        ? currentGenres.filter(id => id !== genreId)
+        : [...currentGenres, genreId]
+    });
+  };
+
   return (
     <div className="w-full h-full p-6 overflow-y-auto">
-      <div className=" mx-auto">
+      <div className="mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-white mb-2">Create New Episode</h1>
@@ -75,7 +87,7 @@ const EpisodeDetailsStepComponent: React.FC<EpisodeDetailsStepProps> = ({
           </div>
         </div>
 
-        <form className="grid lg:grid-cols-2 gap-8">
+        <div className="grid lg:grid-cols-2 gap-8">
           {/* Episode Details Section */}
           <div className="space-y-6">
             <h3 className="font-light text-white">Episode details</h3>
@@ -102,8 +114,30 @@ const EpisodeDetailsStepComponent: React.FC<EpisodeDetailsStepProps> = ({
                 className="bg-black-500 border-black-50 text-white placeholder-white/40 focus:border-primary-500 min-h-[120px] resize-none"
               />
 
+              {/* Genre Selection */}
+              <div className="space-y-4">
+                <p className="text-white">
+                  Choose at least one genre so readers can find your episode.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {genres.map((genre) => (
+                    <Badge
+                      key={genre.id}
+                      variant={(data.genre || []).includes(genre.id) ? "default" : "outline"}
+                      className={`cursor-pointer transition-colors ${
+                        (data.genre || []).includes(genre.id)
+                          ? 'bg-white hover:bg-white text-black-100 border-white'
+                          : 'bg-transparent border-white/60 text-white/30 hover:border-white/50'
+                      } rounded-full px-3 py-2 font-normal`}
+                      onClick={() => handleGenreToggle(genre.id)}
+                    >
+                      {genre.name}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
               {/* Maturity Rating */}
-              
               <div className="space-y-2">
                 <h3 className="font-light text-white">
                     Maturity Rating
@@ -224,7 +258,7 @@ const EpisodeDetailsStepComponent: React.FC<EpisodeDetailsStepProps> = ({
               className="hidden"
             />
           </div>
-        </form>
+        </div>
 
         {/* Action Buttons */}
         <div className="space-y-4 pt-8 max-w-2xl mx-auto">

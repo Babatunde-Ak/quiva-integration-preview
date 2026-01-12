@@ -12,7 +12,7 @@ interface EpisodeFormData {
   bannerImage: File | null;
   collaborators: string[];
   contentType: 'pdf' | 'images' | 'motion' | null;
-  files: File[];
+  pages: File[];
 }
 
 interface EpisodeFormProps {
@@ -61,7 +61,7 @@ function EpisodeForm({ onClose, collectionId }: EpisodeFormProps) {
       localStorage.setItem(`episode_draft_${collectionId}`, JSON.stringify({
         ...data,
         bannerImage: null, // Can't serialize File objects
-        files: [] // Can't serialize File objects
+        pages: [] // Can't serialize File objects
       }));
       
       // Show success message
