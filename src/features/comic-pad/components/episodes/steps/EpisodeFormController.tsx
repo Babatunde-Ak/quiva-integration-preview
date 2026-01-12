@@ -63,12 +63,12 @@ const EpisodeFormController: React.FC<EpisodeFormControllerProps> = ({
   // const {  account } = useAccount();
   
 
-  const { createComicNFT } = useMintComic({
-    accountId:  account || user?.walletAddress || '',
-    signer: signer,
-    network: "testnet"
-  }
-  ); // Adjust to your hook's API
+  // const { createComicNFT } = useMintComic({
+  //   accountId:  account || user?.walletAddress || '',
+  //   signer: signer,
+  //   network: "testnet"
+  // }
+  // ); // Adjust to your hook's API
 
   // Update form data
   const updateFormData = useCallback((updates: Partial<EpisodeFormData>) => {
@@ -104,24 +104,27 @@ const EpisodeFormController: React.FC<EpisodeFormControllerProps> = ({
     setIsLoading(true);
     setError(null);
     try {
+      if (!collectionId) {
+        throw new Error('Collection ID is required to create an episode.');
+      }
       const token = localStorage.getItem('token');
-        const response = await axios.post(`http://localhost:5000/api/comics/full/${collectionId}`,
-              formData,
-              {
-                headers: {
-                  'Content-Type': 'multipart/form-data',
-                  Authorization: `Bearer ${token}`,
-                },
-
-              }
-            );
-        const createdComic = response.data.data.comic;
-       const metadataCid = createdComic.nftMetadataCid;
-       const dbComicId = createdComic._id;
-      console.log("🆔 Created comic in DB with ID:", dbComicId);
-     console.log("📝 Created comic with metadata CID:", metadataCid);
-      console.log("📄 Full response data:", response.data);
-      console.log("📄 Full created comic data:", createdComic);
+      const response = await axios.post(
+        `http://localhost:5000/api/comics/full/${collectionId}`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const createdComic = response.data.data.comic;
+      const metadataCid = createdComic.nftMetadataCid;
+      const dbComicId = createdComic._id;
+      console.log('🆔 Created comic in DB with ID:', dbComicId);
+      console.log('📝 Created comic with metadata CID:', metadataCid);
+      console.log('📄 Full response data:', response.data);
+      console.log('📄 Full created comic data:', createdComic);
 
       // 2. Mint the episode NFT using the hook
       // await createComicNFT({ ...formData, episodeNumber: Number(formData.episodeNumber) }, collectionId);
@@ -133,7 +136,7 @@ const EpisodeFormController: React.FC<EpisodeFormControllerProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [formData, onSubmit]);
+  }, [formData, onSubmit, collectionId]);
 
   // Render current step
   const renderCurrentStep = () => {
