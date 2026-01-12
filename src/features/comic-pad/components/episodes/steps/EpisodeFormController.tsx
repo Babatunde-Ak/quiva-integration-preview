@@ -8,6 +8,7 @@ import { useMintComic } from '@/hook/useMintComic'; // Adjust path as needed
 import { useHederaWallet } from '@/providers/HashPackProvider';
 import { useAppSelector } from '@/redux/hook';
 import axios from 'axios';
+// import { file } from 'jszip';
 interface EpisodeFormData {
   // Episode Details
   title: string;
@@ -19,7 +20,7 @@ interface EpisodeFormData {
   
   // Content Files
   contentType: 'pdf' | 'images' | null;
-  files: File[];
+  pages: File[];
 }
 
 interface EpisodeFormControllerProps {
@@ -46,7 +47,7 @@ const EpisodeFormController: React.FC<EpisodeFormControllerProps> = ({
     bannerImage: null,
     collaborators: [],
     contentType: null,
-    files: []
+    pages: []
   });
 
   const { 
@@ -78,7 +79,7 @@ const EpisodeFormController: React.FC<EpisodeFormControllerProps> = ({
   // Step validation
 //   const isStep1Valid = formData.title.trim() && formData.episodeNumber.trim() && formData.maturityRating.trim() && formData.bannerImage;
     const isStep1Valid = true;
-  const isStep2Valid = formData.contentType && formData.files.length > 0;
+  const isStep2Valid = formData.contentType && formData.pages.length > 0;
   const isStep3Valid = true; // Preview step is always valid
 
   // Navigation handlers
@@ -107,10 +108,20 @@ const EpisodeFormController: React.FC<EpisodeFormControllerProps> = ({
       if (!collectionId) {
         throw new Error('Collection ID is required to create an episode.');
       }
+      console.log("Publishing episode with data:", formData);
       const token = localStorage.getItem('token');
       const response = await axios.post(
         `http://localhost:5000/api/comics/full/${collectionId}`,
-        formData,
+        {
+          title: formData.title,
+          summary: formData.summary,
+          episodeNumber: formData.episodeNumber,
+          maturityRating: formData.maturityRating,
+          bannerImage: formData.bannerImage,
+          collaborators: formData.collaborators,
+          pages: formData.pages
+
+        },
         {
           headers: {
             'Content-Type': 'multipart/form-data',
@@ -136,7 +147,7 @@ const EpisodeFormController: React.FC<EpisodeFormControllerProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [formData, onSubmit, collectionId]);
+  }, [formData, onSubmit]);
 
   // Render current step
   const renderCurrentStep = () => {
@@ -164,7 +175,7 @@ const EpisodeFormController: React.FC<EpisodeFormControllerProps> = ({
           <ContentFilesStepComponent
             data={{
               contentType: formData.contentType,
-              files: formData.files
+              pages: formData.pages
             }}
             onUpdate={updateFormData}
             onNext={handleNext}

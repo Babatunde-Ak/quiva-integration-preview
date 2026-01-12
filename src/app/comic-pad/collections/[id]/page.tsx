@@ -63,7 +63,7 @@ export default function CollectionEpisodesRoute({ params }: PageProps) {
     }, [dispatch, params.id]);
 
     const handleGoBack = () => {
-        router.push('/collections');
+        router.push('/comic-pad/collections');
     };
 
     const handleUploadEpisode = () => {
