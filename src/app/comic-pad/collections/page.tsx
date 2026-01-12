@@ -2,66 +2,10 @@
 
 import PublishedCollections from '@/features/comic-pad/components/collections/collection-page'
 import { mockCollections } from '@/features/comic-pad/mock-data/data'
+import { ApiCollection, mapApiCollectionsToMockFormat, MappedCollection } from '@/features/comic-pad/utils/utils';
 import { useAppDispatch } from '@/redux/hook';
-import { getAllCollections } from '@/redux/slices/collectionSlice';
+import { getUserCollections } from '@/redux/slices/collectionSlice';
 import React, { useEffect, useState } from 'react'
-
-// Type definitions
-interface Creator {
-  _id: string;
-  walletAddress: string;
-  avatar?: string;
-  username?: string;
-}
-
-interface Comic {
-  _id: string;
-  title: string;
-  coverImage: string;
-  totalPages: number;
-}
-
-interface ApiCollection {
-  _id: string;
-  title: string;
-  description: string;
-  genre: string[];
-  bannerImage: string;
-  bannerCid: string;
-  isDeleted: boolean;
-  creatorId: Creator;
-  comic: Comic[];
-  createdAt: string;
-  updatedAt: string;
-  __v: number;
-}
-
-interface MappedCollection {
-  id: string;
-  title: string;
-  description: string;
-  coverImage: string;
-  episodes: Array<{
-    id: string;
-    thumbnail: string;
-  }>;
-  totalEpisodes: number;
-}
-
-// Mapping function
-const mapApiCollectionsToMockFormat = (apiCollections: ApiCollection[]): MappedCollection[] => {
-  return apiCollections.map(collection => ({
-    id: collection._id,
-    title: collection.title,
-    description: collection.description,
-    coverImage: collection.bannerImage,
-    episodes: collection.comic.map(comic => ({
-      id: comic._id,
-      thumbnail: comic.coverImage
-    })),
-    totalEpisodes: collection.comic.length
-  }));
-};
 
 function Page() {
     const dispatch = useAppDispatch();
@@ -73,10 +17,7 @@ function Page() {
         const fetchCollections = async () => {
             try {
                 setIsLoading(true);
-                // @ts-ignore
-                const result = await dispatch(getAllCollections()).unwrap();
-                console.log('Fetched Collections:', result);
-                
+                const result = await dispatch(getUserCollections()).unwrap();                
                 // Extract collections from the nested response structure
                 const apiCollections = result?.data?.collections || result?.data?.data || result?.data || [];
                 

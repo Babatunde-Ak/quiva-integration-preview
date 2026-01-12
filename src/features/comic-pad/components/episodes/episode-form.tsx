@@ -40,7 +40,7 @@ function EpisodeForm({ onClose, collectionId }: EpisodeFormProps) {
       // });
       
       // Simulate loading delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // await new Promise(resolve => setTimeout(resolve, 2000));
       
       setShowSuccess(true);
       console.log('Episode created successfully');
