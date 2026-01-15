@@ -2,19 +2,22 @@
 
 import React, {useState} from 'react';
 import {ChevronLeft, Crown} from 'lucide-react';
+import { HiOutlineBackward } from 'react-icons/hi2';
+import { MainButton } from '@/components/button';
 
 interface ListingDetailsProps {
     selectedRarity?: {
         name: string;
         type: 'legendary' | 'epic' | 'common';
         supply: string;
+        icon: React.ReactNode;
     };
     onBack?: () => void;
     onNext?: (data : ListingDetailsData) => void;
 }
 
 interface ListingDetailsData {
-    sales : string;
+    supply : string;
     price : string;
     royalty : string;
 }
@@ -23,13 +26,14 @@ const ListingDetails : React.FC < ListingDetailsProps > = ({
     selectedRarity = {
         name: 'Legendary',
         type: 'legendary',
-        supply: 'Supply 1 — 5,000'
+        supply: 'Supply 1 — 5,000',
+        icon: <Crown size={24} className="text-yellow-500"/>
     },
     onBack,
     onNext
 }) => {
     const [formData,
-        setFormData] = useState < ListingDetailsData > ({sales: '', price: '', royalty: ''});
+        setFormData] = useState < ListingDetailsData > ({supply: '', price: '', royalty: ''});
 
     const handleInputChange = (field : keyof ListingDetailsData, value : string) => {
         setFormData(prev => ({
@@ -43,7 +47,7 @@ const ListingDetails : React.FC < ListingDetailsProps > = ({
             ?.(formData);
     };
 
-    const isValid = formData.sales && formData.price && formData.royalty;
+    const isValid = formData.supply && formData.price && formData.royalty;
 
     return (
         <div className="min-h-screen bg-black text-white font-recursive flex flex-col">
@@ -65,39 +69,35 @@ const ListingDetails : React.FC < ListingDetailsProps > = ({
                     <h1 className="text-3xl font-bold text-white mb-4">
                         Listing Details
                     </h1>
-                    <p className="text-gray-400 text-base font-light">
+                    <p className="text-white/50 text-base font-light">
                         Set the pricing parameters for this episode.
                     </p>
                 </div>
 
                 {/* Selected Rarity Display */}
-                <div className="w-full mb-8">
+                <div className="w-full mb-2">
                     <div
-                        className="flex items-center gap-3 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
+                        className="flex items-center gap-3">
                         <div
-                            className="flex items-center justify-center w-10 h-10 rounded-full bg-yellow-500/20">
-                            <Crown className="w-5 h-5 text-yellow-500"/>
+                            className={`flex items-center justify-center w-10 h-10 rounded-full ${selectedRarity.type === 'legendary' ? 'bg-yellow-500/20' : selectedRarity.type === 'epic' ? 'bg-purple-500/20' : 'bg-gray-500/20'}`}>
+                            {selectedRarity.icon}
                         </div>
                         <div>
-                            <p className="text-yellow-400 font-semibold">{selectedRarity.name}</p>
-                            <p className="text-gray-400 text-sm">{selectedRarity.supply}</p>
+                            <p className="text-white font-semibold">{selectedRarity.name}</p>
                         </div>
                     </div>
                 </div>
 
                 {/* Form Fields */}
                 <div className="w-full space-y-6">
-                    {/* Sales */}
+                    {/* Supply */}
                     <div>
-                        <label className="block text-white font-medium mb-3">
-                            Sales
-                        </label>
                         <input
                             type="text"
-                            placeholder="Set maximum sales count e.g., 100"
-                            value={formData.sales}
-                            onChange={(e) => handleInputChange('sales', e.target.value)}
-                            className="w-full px-4 py-4 bg-gray-900/50 border border-gray-700/50 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-primary-500/50 focus:bg-gray-900/70 transition-all duration-200"/>
+                            placeholder="Enter total supply (e.g.0 - 5,000)"
+                            value={formData.supply}
+                            onChange={(e) => handleInputChange('supply', e.target.value)}
+                            className="w-full px-4 py-4 bg-black-100 border border-black-50 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-primary-500/50 focus:bg-black-100 transition-all duration-200"/>
                     </div>
 
                     {/* Price */}
@@ -110,7 +110,7 @@ const ListingDetails : React.FC < ListingDetailsProps > = ({
                             placeholder="Enter price per NFT e.g., 10"
                             value={formData.price}
                             onChange={(e) => handleInputChange('price', e.target.value)}
-                            className="w-full px-4 py-4 bg-gray-900/50 border border-gray-700/50 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-primary-500/50 focus:bg-gray-900/70 transition-all duration-200"/>
+                            className="w-full px-4 py-4 bg-black-100 border border-black-50 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-primary-500/50 focus:bg-black-100 transition-all duration-200"/>
                     </div>
 
                     {/* Royalty */}
@@ -123,27 +123,23 @@ const ListingDetails : React.FC < ListingDetailsProps > = ({
                             placeholder="Set percentage you receive e.g., 10%"
                             value={formData.royalty}
                             onChange={(e) => handleInputChange('royalty', e.target.value)}
-                            className="w-full px-4 py-4 bg-gray-900/50 border border-gray-700/50 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-primary-500/50 focus:bg-gray-900/70 transition-all duration-200"/>
+                            className="w-full px-4 py-4 bg-black-100 border border-black-50 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-primary-500/50 focus:bg-black-100 transition-all duration-200"/>
                     </div>
                 </div>
             </div>
 
             {/* Action Buttons */}
-            <div
-                className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black via-black/95 to-transparent">
-                <div className="max-w-md mx-auto flex gap-4">
-                    <button
-                        onClick={onBack}
-                        className="flex-1 py-4 px-6 border-2 border-white/20 text-white rounded-full font-semibold text-lg hover:border-white/40 hover:bg-white/5 transition-all duration-200">
-                        Back
-                    </button>
-                    <button
-                        onClick={handleNext}
-                        disabled={!isValid}
-                        className="flex-1 py-4 px-6 bg-primary-500 text-black rounded-full font-semibold text-lg hover:bg-primary-400 transform hover:scale-105 transition-all duration-200 shadow-2xl shadow-primary-500/25 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
-                        Next
-                    </button>
-                </div>
+            <div className="w-full max-w-4xl  mx-auto flex justify-center gap-4">
+                <button
+                    onClick={onBack}
+                    className="w-full flex-1 py-4 px-6 border-2 border-white/30 text-white rounded-full text-lg hover:border-white/80 hover:bg-white/5 transition-all duration-200">
+                    Back
+                </button>
+                <MainButton
+                    onClick={handleNext}
+                    className="w-full flex-1 py-4 px-6 text-black rounded-full !text-lg transform hover:scale-105 transition-all duration-200 shadow-2xl shadow-primary-500/25">
+                    Next
+                </MainButton>
             </div>
         </div>
     );
