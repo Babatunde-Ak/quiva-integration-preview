@@ -64,7 +64,7 @@ const ReviewDetails : React.FC < ReviewDetailsProps > = ({
 
             {/* Main Content */}
             <div
-                className="flex-1 flex flex-col items-center justify-center px-6 pb-24 max-w-md mx-auto w-full">
+                className="flex-1 flex flex-col items-center justify-center px-6 pb-24 max-w-3xl mx-auto w-full">
                 {/* Title Section */}
                 <div className="text-center mb-12">
                     <h1 className="text-3xl font-bold text-white mb-4">
@@ -83,7 +83,7 @@ const ReviewDetails : React.FC < ReviewDetailsProps > = ({
                         <div
                             className="w-full aspect-square rounded-xl p-4 overflow-hidden mb-6 bg-black-100 border border-black-50">
                             <img
-                                src={episodeData.image}
+                                src={episodeData?.image || 'https://cdn.marvel.com/content/1x/asm2025001_dimeo.jpg'}
                                 alt={episodeData.title}
                                 className="w-full h-full object-cover"/>
                         </div>
@@ -92,47 +92,82 @@ const ReviewDetails : React.FC < ReviewDetailsProps > = ({
                         <div className="space-y-4">
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <p className="text-white/40text-sm mb-1">Episode & Rarity</p>
-                                    <p className="text-white font-semibold">{episodeData.title}</p>
+                                    <p className="text-white mb-1">Episode & Rarity</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-white/40text-sm mb-1">Starfall — {episodeData.rarity.name}</p>
-                                    <p className="text-white font-semibold">{episodeData.supply}</p>
+                                    <p className="text-white/40 font-light">{episodeData.title}</p>
                                 </div>
                             </div>
 
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <p className="text-white/40text-sm mb-1">Supply</p>
-                                    <p className="text-white font-semibold">{episodeData.supply}</p>
+                                    <p className="text-white mb-1">Supply</p>
+                                    
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-white/40text-sm mb-1">Price</p>
-                                    <p className="text-white font-semibold">{episodeData.price}</p>
+                                    <p className="text-white/40 font-light">{episodeData.supply}</p>
+                                    
                                 </div>
                             </div>
 
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <p className="text-white/40text-sm mb-1">Price</p>
-                                    <p className="text-white font-semibold">{episodeData.price}</p>
+                                    <p className="text-white mb-1">Price</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-white/40text-sm mb-1">Royalty</p>
-                                    <p className="text-white font-semibold">{episodeData.royalty}</p>
+                                    <p className="text-white/40 font-light">{episodeData.price}</p>
                                 </div>
                             </div>
+
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <p className="text-white mb-1">Royalty</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-white/40 font-light">{episodeData.royalty}</p>
+                                </div>
+                            </div>
+
                         </div>
                     </div>
                 </div>
 
                 {/* Warning Notice */}
                 <div className="w-full mb-8">
-                    <div className="border border-black-50 rounded-xl p-4">
-                        <p className="text-white text-sm font-medium mb-2">Please read this</p>
-                        <p className="text-red-400/80 text-xs leading-relaxed">
-                            ⚠️ You are about to List this Episode to the Quiva Marketplace. Once published on Hedera, this action cannot be undone.
-                        </p>
+                    <div className="bg-blacl-100 border border-black-50 rounded-xl p-6">
+                        <div className="flex items-start gap-3 mb-4">
+                            <span className="text-2xl">⚠️</span>
+                            <div>
+                                <p className="text-white text-base font-semibold mb-2">Please read this</p>
+                                <p className="text-red-400 text-sm leading-relaxed">
+                                    You are about to List this Episode to the Quiva Marketplace. Once published on Hedera, this action cannot be undone.
+                                </p>
+                            </div>
+                        </div>
+                        
+                        {/* Checkboxes */}
+                        <div className="space-y-3 mt-4 pl-4">
+                            <label className="flex items-start gap-3 cursor-pointer group">
+                                <input 
+                                    type="checkbox" 
+                                    className="mt-0.5 w-4 h-4 rounded border-zinc-600 bg-transparent checked:bg-primary-500 checked:border-primary-500 cursor-pointer"
+                                />
+                                <span className="text-white/70 font-light text-sm group-hover:text-white/90 transition-colors">
+                                    I understand this action is irreversible
+                                </span>
+                            </label>
+                            
+                            <label className="flex items-start gap-3 cursor-pointer group">
+                                <input 
+                                    type="checkbox" 
+                                    className="mt-0.5 w-4 h-4 rounded border-zinc-600 bg-transparent checked:bg-primary-500 checked:border-primary-500 cursor-pointer"
+                                />
+                                <span className="text-white/70 font-light text-sm group-hover:text-white/90 transition-colors">
+                                    By clicking on "Mint" you agree to Quiva's{' '}
+                                    <span className="text-yellow-400">terms of service</span>
+                                </span>
+                            </label>
+                        </div>
                     </div>
                 </div>
 

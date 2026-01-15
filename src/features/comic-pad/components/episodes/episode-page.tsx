@@ -96,7 +96,7 @@ const CollectionEpisodesPage : React.FC < CollectionEpisodesPageProps > = ({
         } else {
             console.log('Create drop for episode:', episodeId);
             // Navigate to create drop page
-            router.push(`/collections/${collectionId}/episodes/${episodeId}/create-drop`);
+            router.push(`/collections/${collectionId}/drops`);
         }
     };
 
