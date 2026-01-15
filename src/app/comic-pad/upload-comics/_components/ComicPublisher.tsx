@@ -441,32 +441,32 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 				// Full NFT minting flow (inscription + NFT creation)
 				setPublishingStep('Creating Comic NFT...');
 				console.log("🪙 Minting comic as NFT...");
-				
-				result = await createComicNFT({
-					name: comicData.title,
-					creator: account || user?.walletAddress || '',
-					description: comicData.description,
-					genres: comicData.genre,
-					copiesOfComic: monetizationData.nftCopies || 100,
-					ageRating: comicData.ageRating,
-					coverUri: coverUri,
-					coverFile: comicData.coverImage || undefined,
-					zipFile: zipFile,
-					pdfFile: pdfFileForInscription,
-					pageFiles: imageFilesForInscription.length > 0 ? imageFilesForInscription : undefined,
-					sourceType: zipFile ? 'zip-images' : (pdfFileForInscription ? 'pdf-file' : 'image'),
-					priceHbar: monetizationData.publishType === "paid" && monetizationData.nftPrice 
-						? monetizationData.nftPrice 
-						: 0,
-				});
+				return;
+				// result = await createComicNFT({
+				// 	name: comicData.title,
+				// 	creator: account || user?.walletAddress || '',
+				// 	description: comicData.description,
+				// 	genres: comicData.genre,
+				// 	copiesOfComic: monetizationData.nftCopies || 100,
+				// 	ageRating: comicData.ageRating,
+				// 	coverUri: coverUri,
+				// 	coverFile: comicData.coverImage || undefined,
+				// 	zipFile: zipFile,
+				// 	pdfFile: pdfFileForInscription,
+				// 	pageFiles: imageFilesForInscription.length > 0 ? imageFilesForInscription : undefined,
+				// 	sourceType: zipFile ? 'zip-images' : (pdfFileForInscription ? 'pdf-file' : 'image'),
+				// 	priceHbar: monetizationData.publishType === "paid" && monetizationData.nftPrice 
+				// 		? monetizationData.nftPrice 
+				// 		: 0,
+				// });
 				
 
 				// const moreCopies = await mintAdditionalCopies(result.tokenId, monetizationData.nftCopies, result.metadataTopicIds)  // Assuming result contains tokenId)
 
-				console.log('🎉 Comic NFT created successfully:', result);
-				console.log('🪙 Token ID:', result?.tokenId);
-				console.log('📝 Serial:', result?.serial);
-				console.log('MetadaTopicIds:', result.metadataTopicIds);
+				// console.log('🎉 Comic NFT created successfully:', result);
+				// console.log('🪙 Token ID:', result?.tokenId);
+				// console.log('📝 Serial:', result?.serial);
+				// console.log('MetadaTopicIds:', result.metadataTopicIds);
 				// console.log('🔷 Additional copies minted successfully:', moreCopies);
 				
 			} else {
@@ -475,11 +475,13 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 				console.log("📝 Inscribing comic (no NFT)...");
 				
 				// Pass comicData and monetizationData to createInscription
-				result = await createInscription(comicData, monetizationData);
+				// result = await createInscription(comicData, monetizationData);
 
-				console.log('🎉 Comic inscribed successfully:', result);
-				console.log('📝 Topic ID:', result?.topic_id);
-				console.log('🔗 Transaction ID:', result?.transactionId);
+				// console.log('🎉 Comic inscribed successfully:', result);
+				// console.log('📝 Topic ID:', result?.topic_id);
+				// console.log('🔗 Transaction ID:', result?.transactionId);
+
+				return;
 			}
 
 			// Check if operation was successful
