@@ -60,7 +60,7 @@ interface MintResult {
   serial: number[];
   transactionId: string;
   inscriptionTopicId?: string;
-  // metadataTopicIds?: string[];
+  
 }
 
 export function useMintComic({

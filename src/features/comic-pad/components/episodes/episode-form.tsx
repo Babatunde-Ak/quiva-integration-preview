@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import EpisodeFormController from './steps/EpisodeFormController';
 import EpisodeSuccess from './episode-success';
+import axios from 'axios';
 
 interface EpisodeFormData {
   title: string;
@@ -12,7 +13,7 @@ interface EpisodeFormData {
   bannerImage: File | null;
   collaborators: string[];
   contentType: 'pdf' | 'images' | 'motion' | null;
-  files: File[];
+  pages: File[];
 }
 
 interface EpisodeFormProps {
@@ -29,9 +30,32 @@ function EpisodeForm({ onClose, collectionId }: EpisodeFormProps) {
     setIsLoading(true);
     setEpisodeData(data);
     
-    try {
-      // Simulate API call to create episode
+     try {
+    //   // Simulate API call to create episode
       console.log('Creating episode:', data);
+        
+    //         if (!collectionId) {
+    //           throw new Error('Collection ID is required to create an episode.');
+    //         }
+    //         const token = localStorage.getItem('token');
+    //         const response = await axios.post(
+    //           `http://localhost:5000/api/comics/full/${collectionId}`,
+    //           episodeData,
+    //           {
+    //             headers: {
+    //               'Content-Type': 'multipart/form-data',
+    //               Authorization: `Bearer ${token}`,
+    //             },
+    //           }
+    //         );
+    //         const createdComic = response.data.data.comic;
+    //         const metadataCid = createdComic.nftMetadataCid;
+    //         const dbComicId = createdComic._id;
+    //         console.log('🆔 Created comic in DB with ID:', dbComicId);
+    //         console.log('📝 Created comic with metadata CID:', metadataCid);
+    //         console.log('📄 Full response data:', response.data);
+    //         console.log('📄 Full created comic data:', createdComic);
+      
       
       // In a real app, you'd make an API call here:
       // const response = await fetch(`/api/collections/${collectionId}/episodes`, {
@@ -40,7 +64,7 @@ function EpisodeForm({ onClose, collectionId }: EpisodeFormProps) {
       // });
       
       // Simulate loading delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // await new Promise(resolve => setTimeout(resolve, 2000));
       
       setShowSuccess(true);
       console.log('Episode created successfully');
@@ -61,7 +85,7 @@ function EpisodeForm({ onClose, collectionId }: EpisodeFormProps) {
       localStorage.setItem(`episode_draft_${collectionId}`, JSON.stringify({
         ...data,
         bannerImage: null, // Can't serialize File objects
-        files: [] // Can't serialize File objects
+        pages: [] // Can't serialize File objects
       }));
       
       // Show success message

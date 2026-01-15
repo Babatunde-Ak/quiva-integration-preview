@@ -27,9 +27,6 @@ const PreviewPublishStep: React.FC<PreviewPublishStepProps> = ({
   isLoading
 }) => {
 
-   const handlePublish = () => {
-    
-   }
   return (
     <div className="w-full h-full p-6 overflow-y-auto">
       <div className="max-w-6xl mx-auto">

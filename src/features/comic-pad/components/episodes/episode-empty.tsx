@@ -42,7 +42,7 @@ const EpisodesEmpty : React.FC < EpisodesEmptyProps > = ({
             onUploadEpisode();
         } else {
             // Navigate to upload episode page with collection ID
-            router.push(`/collections/${id}/upload-episode`);
+            router.push(`/comic-pad/collections/${id}/upload-episode`);
         }
     };
 
@@ -51,7 +51,7 @@ const EpisodesEmpty : React.FC < EpisodesEmptyProps > = ({
             onCreateEpisode();
         } else {
             // Navigate to create episode page with collection ID
-            router.push(`/collections/${id}/create-episode`);
+            router.push(`/comic-pad/collections/${id}/upload-episode`);
         }
     };
 

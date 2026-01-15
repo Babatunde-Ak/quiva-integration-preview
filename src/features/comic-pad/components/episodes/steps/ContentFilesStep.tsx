@@ -31,9 +31,14 @@ interface ContentFilesData {
     files : File[];
 }
 
+interface ContentPagesData {
+    contentType : 'pdf' | 'images' | null;
+    pages : File[];
+}
+
 interface ContentFilesStepProps {
     data : ContentFilesData;
-    onUpdate : (data : Partial < ContentFilesData >) => void;
+    onUpdate : (data : Partial < ContentPagesData >) => void;
     onNext : () => void;
     onPrev : () => void;
     onSaveDraft : () => void;
@@ -393,7 +398,7 @@ const ContentFilesStepComponent : React.FC < ContentFilesStepProps > = ({
         }, 200);
 
         // Update with all processed files
-        onUpdate({contentType: type, files: [...data.files, ...processedFiles]});
+        onUpdate({contentType: type, pages: [...data.files, ...processedFiles]});
     };
 
     const handleContentTypeSelect = (type : 'pdf' | 'images') => {
@@ -412,7 +417,7 @@ const ContentFilesStepComponent : React.FC < ContentFilesStepProps > = ({
 
     const handleRemoveFile = (indexToRemove: number) => {
         const updatedFiles = data.files.filter((_, index) => index !== indexToRemove);
-        onUpdate({ files: updatedFiles });
+        onUpdate({ pages: updatedFiles });
         
         // If no files left, reset content type
         if (updatedFiles.length === 0) {

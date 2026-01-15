@@ -8,6 +8,7 @@ import { useMintComic } from '@/hook/useMintComic'; // Adjust path as needed
 import { useHederaWallet } from '@/providers/HashPackProvider';
 import { useAppSelector } from '@/redux/hook';
 import axios from 'axios';
+// import { file } from 'jszip';
 interface EpisodeFormData {
   // Episode Details
   title: string;
@@ -16,10 +17,9 @@ interface EpisodeFormData {
   maturityRating: string;
   bannerImage: File | null;
   collaborators: string[];
-  
-  // Content Files
+  genre: string[];
   contentType: 'pdf' | 'images' | null;
-  files: File[];
+  pages: File[];
 }
 
 interface EpisodeFormControllerProps {
@@ -46,7 +46,8 @@ const EpisodeFormController: React.FC<EpisodeFormControllerProps> = ({
     bannerImage: null,
     collaborators: [],
     contentType: null,
-    files: []
+    pages: [],
+    genre: []
   });
 
   const { 
@@ -67,18 +68,18 @@ const EpisodeFormController: React.FC<EpisodeFormControllerProps> = ({
     accountId:  account || user?.walletAddress || '',
     signer: signer,
     network: "testnet"
-  }
-  ); // Adjust to your hook's API
+  }); // Adjust to your hook's API
 
   // Update form data
   const updateFormData = useCallback((updates: Partial<EpisodeFormData>) => {
+    console.log("Updating form data:", updates);
     setFormData(prev => ({ ...prev, ...updates }));
   }, []);
 
   // Step validation
-//   const isStep1Valid = formData.title.trim() && formData.episodeNumber.trim() && formData.maturityRating.trim() && formData.bannerImage;
-    const isStep1Valid = true;
-  const isStep2Valid = formData.contentType && formData.files.length > 0;
+  //   const isStep1Valid = formData.title.trim() && formData.episodeNumber.trim() && formData.maturityRating.trim() && formData.bannerImage;
+  const isStep1Valid = true;
+  const isStep2Valid = formData.contentType && formData.pages.length > 0;
   const isStep3Valid = true; // Preview step is always valid
 
   // Navigation handlers
@@ -103,23 +104,40 @@ const EpisodeFormController: React.FC<EpisodeFormControllerProps> = ({
   const handlePublish = useCallback(async () => {
     setIsLoading(true);
     setError(null);
+    console.log("Publishing episode with data:", formData);
+
+    const formDataToSend = new FormData();
+    formDataToSend.append('title', formData.title);
+    formDataToSend.append('episodeNumber', formData.episodeNumber);
+    formDataToSend.append('summary', formData.summary);
+    formDataToSend.append('maturityRating', formData.maturityRating);
+    formDataToSend.append('genre', JSON.stringify(formData.genre));
+    if (formData.bannerImage) {
+      formDataToSend.append('bannerImage', formData.bannerImage);
+    }
+    formDataToSend.append('collaborators', JSON.stringify(formData.collaborators));
+    formDataToSend.append('contentType', formData.contentType || '');
+    formData.pages.forEach((file, index) => {
+      formDataToSend.append('pages', file);
+    });
+
     try {
       const token = localStorage.getItem('token');
-        const response = await axios.post(`http://localhost:5000/api/comics/full/${collectionId}`,
-              formData,
-              {
-                headers: {
-                  'Content-Type': 'multipart/form-data',
-                  Authorization: `Bearer ${token}`,
-                },
+      const response = await axios.post(`http://localhost:5000/api/comics/full/${collectionId}`,
+            formDataToSend,
+            {
+              headers: {
+                'Content-Type': 'multipart/form-data',
+                Authorization: `Bearer ${token}`,
+              },
 
-              }
-            );
-        const createdComic = response.data.data.comic;
-       const metadataCid = createdComic.nftMetadataCid;
-       const dbComicId = createdComic._id;
+            }
+          );
+      const createdComic = response.data.data.comic;
+      const metadataCid = createdComic.nftMetadataCid;
+      const dbComicId = createdComic._id;
       console.log("🆔 Created comic in DB with ID:", dbComicId);
-     console.log("📝 Created comic with metadata CID:", metadataCid);
+      console.log("📝 Created comic with metadata CID:", metadataCid);
       console.log("📄 Full response data:", response.data);
       console.log("📄 Full created comic data:", createdComic);
 
@@ -147,7 +165,8 @@ const EpisodeFormController: React.FC<EpisodeFormControllerProps> = ({
               summary: formData.summary,
               maturityRating: formData.maturityRating,
               bannerImage: formData.bannerImage,
-              collaborators: formData.collaborators
+              collaborators: formData.collaborators,
+              genre: formData.genre
             }}
             onUpdate={updateFormData}
             onNext={handleNext}
@@ -161,7 +180,7 @@ const EpisodeFormController: React.FC<EpisodeFormControllerProps> = ({
           <ContentFilesStepComponent
             data={{
               contentType: formData.contentType,
-              files: formData.files
+              files: formData.pages
             }}
             onUpdate={updateFormData}
             onNext={handleNext}

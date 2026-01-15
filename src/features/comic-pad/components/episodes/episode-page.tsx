@@ -4,6 +4,7 @@ import React, {useState, useEffect} from 'react';
 import {useParams, useRouter} from 'next/navigation';
 import EpisodesEmpty from './episode-empty';
 import EpisodesList from './episode-list';
+import { MappedCollection } from '../../utils/utils';
 
 interface Episode {
     id : string;
@@ -24,7 +25,7 @@ interface Collection {
 
 interface CollectionEpisodesPageProps {
     // Optional props for when data is passed from parent
-    collection?: Collection;
+    collection?: MappedCollection;
     onGoBack?: () => void;
     onUploadEpisode?: () => void;
     onCreateEpisode?: () => void;
@@ -46,7 +47,7 @@ const CollectionEpisodesPage : React.FC < CollectionEpisodesPageProps > = ({
     const router = useRouter();
     const collectionId = params?.id as string;
 
-    const [collection, setCollection] = useState < Collection | null > (propCollection || null);
+    const [collection, setCollection] = useState < MappedCollection | null > (propCollection || null);
     const [isLoading, setIsLoading] = useState(!propCollection);
     const [error, setError] = useState < string | null > (null);
     const [selectedEpisodes, setSelectedEpisodes] = useState<string[]>([]);
@@ -95,7 +96,7 @@ const CollectionEpisodesPage : React.FC < CollectionEpisodesPageProps > = ({
         } else {
             console.log('Create drop for episode:', episodeId);
             // Navigate to create drop page
-            router.push(`/collections/${collectionId}/episodes/${episodeId}/create-drop`);
+            router.push(`/collections/${collectionId}/drops`);
         }
     };
 
