@@ -17,8 +17,7 @@ const initialState = {
 // Async thunks Create a collection
 export const createCollection = createAsyncThunk("collections/create", async(payload, {rejectWithValue}) => {
     try {
-        console.log("Creating collection with payload:", payload);
-        
+                
         const formData = new FormData();
         formData.append("title", payload.title);
         if (payload.description) {

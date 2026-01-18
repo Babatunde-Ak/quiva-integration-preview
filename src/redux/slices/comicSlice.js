@@ -51,7 +51,7 @@ export const createFullComic = createAsyncThunk(
     try {
       console.log(payload)
 
-      const response = await axiosInstance.post("/comics/full", payload, {
+      const response = await axiosInstance.post(`/comics/full/${payload.collectionId}`, payload, {
         headers: {
           "Content-Type": "multipart/form-data",
         },

@@ -31,7 +31,7 @@ function Page() {
                 console.error('Error fetching collections:', error);
                 setError('Failed to load collections');
                 // Fallback to mock data on error
-                setCollections(mockCollections);
+                setCollections(null);
             } finally {
                 setIsLoading(false);
             }

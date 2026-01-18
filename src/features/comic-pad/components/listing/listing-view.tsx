@@ -14,7 +14,7 @@ import {useListComic} from '@/hook/useListComic';
 import {useMintComic} from '@/hook/useMintComic';
 import {useAppSelector} from '@/redux/hook';
 import {useHederaWallet} from '@/providers/HashPackProvider';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 
 interface ListViewProps {
     episodeTitle?: string;
@@ -53,9 +53,12 @@ const ListView : React.FC < ListViewProps > = ({
     fullMetadataURI,
     royaltyRecipient,
     onComplete,
-    onCancel
+    onCancel,
 }) => {
     const router = useRouter();
+    const params = useParams();
+    const episodeId = params.episode
+
     const [currentStep,
         setCurrentStep] = useState < FlowStep > ('rarity');
     const [flowData,

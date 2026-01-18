@@ -16,6 +16,10 @@ interface Collection {
     episodes: {
         id: string;
         thumbnail: string;
+        maturityRating : string;
+        title : string;
+        totalPages : number;
+        summary : string;
     }[];
     totalEpisodes: number;
 }

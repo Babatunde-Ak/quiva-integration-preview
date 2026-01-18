@@ -9,7 +9,9 @@ export interface Creator {
 export interface Comic {
     _id : string;
     title : string;
-    coverImage : string;
+    bannerImage : string;
+    maturityRating : string;
+    summary : string;
     totalPages : number;
 }
 export interface ApiCollection {
@@ -35,6 +37,10 @@ export interface MappedCollection {
     episodes : Array < {
         id: string;
         thumbnail: string;
+        maturityRating : string;
+        title : string;
+        totalPages : number;
+        summary : string;
     } >;
     totalEpisodes : number;
 }
@@ -48,7 +54,14 @@ export const mapApiCollectionsToMockFormat = (apiCollections : ApiCollection[]) 
         coverImage: collection.bannerImage,
         episodes: collection
             .comic
-            .map(comic => ({id: comic._id, thumbnail: comic.coverImage})),
+            .map(comic => ({
+                id: comic._id, 
+                thumbnail: comic.bannerImage,
+                maturityRating: comic.maturityRating,
+                title: comic.title,
+                totalPages: comic.totalPages,
+                summary: comic.summary
+            })),
         totalEpisodes: collection.comic.length
     }));
 };
