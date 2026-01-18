@@ -9,6 +9,7 @@ import GeneralModal from '@/components/modals/GeneralModal';
 import { useAppDispatch } from '@/redux/hook';
 import { getCollectionById } from '@/redux/slices/collectionSlice';
 import { MappedCollection } from '@/features/comic-pad/utils/utils';
+import { MainButton } from '@/components/button';
 
 interface PageProps {
     params: {
@@ -89,13 +90,13 @@ export default function CollectionEpisodesRoute({ params }: PageProps) {
     if (error && !collection) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen">
-                <p className="text-red-500 mb-4">{error}</p>
-                <button 
+                <p className="text-primary-500 text-lg mb-4">{error}</p>
+                <MainButton 
                     onClick={handleGoBack}
-                    className="px-4 py-2 bg-blue-500 text-white rounded"
+                    className=""
                 >
                     Go Back to Collections
-                </button>
+                </MainButton>
             </div>
         );
     }
