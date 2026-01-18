@@ -41,7 +41,7 @@ const layout = ({children}) => {
         <>
             <ComicPadlayout>
                 {children}
-                <AppMenu />
+                {/* <AppMenu /> */}
             </ComicPadlayout>
 
             {/* User Profile Flow Modal */}

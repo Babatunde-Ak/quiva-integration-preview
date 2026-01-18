@@ -169,7 +169,7 @@ const EpisodeRarity : React.FC < EpisodeRarityProps > = ({
 
                 {/* Info Section */}
                 <div
-                    className="w-full max-w-2xl bg-black-100 rounded-xl p-6 backdrop-blur-sm border border-black-50">
+                    className="w-full max-w-4xl bg-black-100 rounded-xl p-6 backdrop-blur-sm border border-black-50">
                     <h3 className="text-white text-lg mb-3">
                         What does Rarity Mean?
                     </h3>
