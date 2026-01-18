@@ -3,12 +3,11 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import CollectionEpisodesPage from '@/features/comic-pad/components/episodes/episode-page';
-import { dummyCollections } from '@/features/comic-pad/mock-data/data';
+import { dummyCollections, genres } from '@/features/comic-pad/mock-data/data';
 import EpisodeForm from '@/features/comic-pad/components/episodes/episode-form';
 import GeneralModal from '@/components/modals/GeneralModal';
 import { useAppDispatch } from '@/redux/hook';
 import { getCollectionById } from '@/redux/slices/collectionSlice';
-import { MappedCollection } from '@/features/comic-pad/utils/utils';
 import { MainButton } from '@/components/button';
 
 interface PageProps {
@@ -21,7 +20,7 @@ export default function CollectionEpisodesRoute({ params }: PageProps) {
     const router = useRouter();
     const dispatch = useAppDispatch();
     
-    const [collection, setCollection] = useState<MappedCollection | null>(null);
+    const [collection, setCollection] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isOpenUploadModal, setIsOpenUploadModal] = React.useState(false);
@@ -32,19 +31,17 @@ export default function CollectionEpisodesRoute({ params }: PageProps) {
                 setIsLoading(true);
                 const result = await dispatch(getCollectionById({id:params.id})).unwrap();
                 
-                // Extract collection from the nested response structure
                 const apiCollection = result?.data?.collection || result?.data || result;
                 
-                // Map API response to the expected format
-                // You may need to adjust this mapping based on your actual API response
-                const mappedCollection: MappedCollection = {
+                const mappedCollection = {
                     id: apiCollection.id || apiCollection._id,
-                    title: apiCollection.title || apiCollection.name,
+                    title: apiCollection.title,
                     description: apiCollection.description,
-                    coverImage: apiCollection.coverImage || apiCollection.cover_image || apiCollection.image,
-                    episodes: apiCollection.episodes || [],
+                    coverImage: apiCollection.bannerImage,
+                    episodes: apiCollection.comic || [],
                     totalEpisodes: apiCollection.totalEpisodes || (apiCollection.episodes ? apiCollection.episodes.length : 0),
-                    // Add other fields as needed based on your MappedCollection type
+                    genre: apiCollection.genre || [],
+                    creator: apiCollection.creatorId || {},
                 };
                 
                 console.log('Fetched Collection:', mappedCollection);

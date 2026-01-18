@@ -10,12 +10,15 @@ import {ChevronLeft, Search, MoreVertical} from 'lucide-react';
 import { hbar } from '../../../../../public/dev_images';
 
 interface Episode {
-    id : string;
+    _id : string;
     title? : string;
     thumbnail : string;
     description?: string;
     publishDate?: string;
     isPublished?: boolean;
+    bannerImage?: string;
+    summary?: string;
+    maturityRating?: string;
 }
 
 interface EpisodesListProps {
@@ -41,9 +44,7 @@ const EpisodesList : React.FC < EpisodesListProps > = ({
 }) => {
     const router = useRouter();
     const params = useParams();
-
-    console.log(params.id);
-
+    
     const [searchTerm,
         setSearchTerm] = useState('');
     const [selectedEpisodes,
@@ -84,14 +85,14 @@ const EpisodesList : React.FC < EpisodesListProps > = ({
 
     const handleSelectAll = (checked : boolean) => {
         const newSelection = checked
-            ? filteredEpisodes.map(ep => ep.id)
+            ? filteredEpisodes.map(ep => ep._id)
             : [];
         setSelectedEpisodes(newSelection);
         onSelectEpisodes
             ?.(newSelection);
     };
 
-    const isAllSelected = filteredEpisodes.length > 0 && filteredEpisodes.every(ep => selectedEpisodes.includes(ep.id));
+    const isAllSelected = filteredEpisodes.length > 0 && filteredEpisodes.every(ep => selectedEpisodes.includes(ep._id));
 
     return (
         <div className="min-h-screen bg-transparent text-white p-6">
@@ -172,13 +173,13 @@ const EpisodesList : React.FC < EpisodesListProps > = ({
                                 <div className="divide-y divide-black-50">
                                     {filteredEpisodes.map((episode) => (
                                         <div
-                                            key={episode.id}
+                                            key={episode._id}
                                             className="grid grid-cols-12 gap-4 p-4 hover:bg-black-300/50 transition-colors">
                                             {/* Checkbox */}
                                             <div className="col-span-1 flex items-center">
                                                 <Checkbox
-                                                    checked={selectedEpisodes.includes(episode.id)}
-                                                    onCheckedChange={(checked) => handleSelectEpisode(episode.id, checked as boolean)}
+                                                    checked={selectedEpisodes.includes(episode._id)}
+                                                    onCheckedChange={(checked) => handleSelectEpisode(episode._id, checked as boolean)}
                                                     className="border-white/20"/>
                                             </div>
 
@@ -186,7 +187,7 @@ const EpisodesList : React.FC < EpisodesListProps > = ({
                                             <div className="col-span-8 lg:col-span-9 flex items-center gap-4">
                                                 <div className="relative flex-shrink-0">
                                                     <img
-                                                        src={episode.thumbnail}
+                                                        src={episode.bannerImage || episode.thumbnail}
                                                         alt={episode.title}
                                                         className="w-12 h-16 object-cover rounded"/> {/* Episode indicator */}
                                                     <div
@@ -196,8 +197,8 @@ const EpisodesList : React.FC < EpisodesListProps > = ({
                                                 </div>
                                                 <div>
                                                     <h3 className="text-white font-medium">{episode.title}</h3>
-                                                    {episode.description && (
-                                                        <p className="text-white/60 text-sm mt-1">{episode.description}</p>
+                                                    {episode.summary && (
+                                                        <p className="text-white/60 text-sm mt-1">{episode.summary}</p>
                                                     )}
                                                 </div>
                                             </div>
@@ -218,20 +219,20 @@ const EpisodesList : React.FC < EpisodesListProps > = ({
                                                             className="bg-black-400 border-black-50 text-center text-white hover:text-white shadow-primary-500/30 shadow-lg gap-8 ">
                                                             <DropdownMenuItem
                                                                 onClick={() => onCreateDrop
-                                                                ?.(episode.id)}
-                                                                className="hover:bg-white/10 focus:bg-white/10 border-b border-black-50 mb-2 py-1 text-center">
+                                                                ?.(episode._id)}
+                                                                className="hover:text-white hover:bg-white/10 focus:bg-white/10 border-b border-black-50 mb-2 py-1 text-center">
                                                                 Create Drop
                                                             </DropdownMenuItem>
                                                             <DropdownMenuItem
                                                                 onClick={() => onListToMarketplace
-                                                                ?.(episode.id)}
-                                                                className="hover:bg-white/10 focus:bg-white/10 border-b border-black-50 mb-2 py-1 text-center">
+                                                                ?.(episode._id)}
+                                                                className="hover:text-white hover:bg-white/10 focus:bg-white/10 border-b border-black-50 mb-2 py-1 text-center">
                                                                 List to Marketplace
                                                             </DropdownMenuItem>
                                                             <DropdownMenuItem
                                                                 onClick={() => onViewEpisodeDetails
-                                                                ?.(episode.id)}
-                                                                className="hover:bg-white/10 focus:bg-white/10 mb-2 py-1 text-center">
+                                                                ?.(episode._id)}
+                                                                className="hover:text-white hover:bg-white/10 focus:bg-white/10 mb-2 py-1 text-center">
                                                                 Episode details
                                                             </DropdownMenuItem>
                                                         </DropdownMenuContent>

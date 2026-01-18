@@ -39,7 +39,7 @@ export const createComic = createAsyncThunk(
       });
       return response.data;
     } catch (error) {
-        throw error.response || "Failed to create comic"
+      throw error.response || "Failed to create comic";
     }
   }
 );
@@ -49,16 +49,20 @@ export const createFullComic = createAsyncThunk(
   "comics/createFull",
   async (payload, { rejectWithValue }) => {
     try {
-      console.log(payload)
+      console.log(payload);
 
-      const response = await axiosInstance.post("/comics/full", payload, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      const response = await axiosInstance.post(
+        `/comics/full/${payload.collectionId}`,
+        payload,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
       return response.data;
     } catch (error) {
-        throw error.response || "Failed to create full comic"
+      throw error.response || "Failed to create full comic";
     }
   }
 );
@@ -71,10 +75,7 @@ export const getAllComics = createAsyncThunk(
       const response = await axiosInstance.get("/comics/all");
       return response.data;
     } catch (error) {
-      return rejectWithValue(
-        error.response ||
-          "Failed to fetch comics"
-      );
+      return rejectWithValue(error.response || "Failed to fetch comics");
     }
   }
 );
@@ -88,8 +89,7 @@ export const getUserComics = createAsyncThunk(
       return response.data;
     } catch (error) {
       return rejectWithValue(
-        error.response ||
-          "Failed to fetch user comics"
+        error.response || "Failed to fetch user comics"
       );
     }
   }
@@ -98,15 +98,12 @@ export const getUserComics = createAsyncThunk(
 // Get comic by ID
 export const getComicById = createAsyncThunk(
   "comics/getById",
-  async ({id}, { rejectWithValue }) => {
+  async ({ id }, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.get(`/comics/${id}`);
       return response.data;
     } catch (error) {
-      return rejectWithValue(
-        error.response ||
-          "Failed to fetch comic"
-      );
+      return rejectWithValue(error.response || "Failed to fetch comic");
     }
   }
 );
@@ -114,15 +111,32 @@ export const getComicById = createAsyncThunk(
 // Get comic preview
 export const getComicPreview = createAsyncThunk(
   "comics/preview",
-  async ({id}, { rejectWithValue }) => {
+  async ({ id }, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.get(`/comics/preview/${id}`);
       return response.data;
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message ||
-        error.response ||
-        "Failed to fetch comic preview"
+          error.response ||
+          "Failed to fetch comic preview"
+      );
+    }
+  }
+);
+
+// Get paid comic (must have paid to access)
+export const getPaidComic = createAsyncThunk(
+  "comics/getPaid",
+  async ({ id }, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get(`/comics/paid/${id}`);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message ||
+          error.response ||
+          "Failed to fetch paid comic"
       );
     }
   }
@@ -136,10 +150,7 @@ export const updateComic = createAsyncThunk(
       const response = await axiosInstance.put(`/comics/${id}`, payload);
       return response.data;
     } catch (error) {
-      return rejectWithValue(
-        error.response ||
-          "Failed to update comic"
-      );
+      return rejectWithValue(error.response || "Failed to update comic");
     }
   }
 );
@@ -164,8 +175,33 @@ export const updateComicCover = createAsyncThunk(
       return response.data;
     } catch (error) {
       return rejectWithValue(
-        error.response ||
-          "Failed to update comic cover"
+        error.response || "Failed to update comic cover"
+      );
+    }
+  }
+);
+
+export const updateComicToken = createAsyncThunk(
+  "comics/updateToken",
+  async ({ comicId, tokenId, serial, transactionId, metadataTopicIds }, { rejectWithValue }) => {
+    try {
+      const payload = {
+        tokenId,
+        serial,
+        transactionId,
+        metadataTopicIds: metadataTopicIds || [],
+      };
+
+      const response = await axiosInstance.put(
+        `/comics/token/${comicId}`,
+        payload        
+      );
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message ||
+          error.response ||
+          "Failed to update comic token information"
       );
     }
   }
@@ -174,15 +210,12 @@ export const updateComicCover = createAsyncThunk(
 // Delete comic
 export const deleteComic = createAsyncThunk(
   "comics/delete",
-  async ({id}, { rejectWithValue }) => {
+  async ({ id }, { rejectWithValue }) => {
     try {
-      await axiosInstance.delete(`/api/comics/${id}`);
+      await axiosInstance.delete(`/comics/${id}`);
       return id;
     } catch (error) {
-      return rejectWithValue(
-        error.response ||
-          "Failed to delete comic"
-      );
+      return rejectWithValue(error.response || "Failed to delete comic");
     }
   }
 );
@@ -300,6 +333,21 @@ const comicSlice = createSlice({
         state.error = action.payload || "Failed to fetch comic preview";
       });
 
+    // Get Paid Comic
+    builder
+      .addCase(getPaidComic.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(getPaidComic.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.currentComic = action.payload.data.comic;
+      })
+      .addCase(getPaidComic.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload || "Failed to fetch paid comic";
+      });
+
     // Update Comic
     builder
       .addCase(updateComic.pending, (state) => {
@@ -336,6 +384,43 @@ const comicSlice = createSlice({
         state.error = action.payload || "Failed to update comic cover";
       });
 
+    // Update Comic Token
+    builder
+      .addCase(updateComicToken.pending, (state) => {
+        state.isUpdating = true;
+        state.error = null;
+      })
+      .addCase(updateComicToken.fulfilled, (state, action) => {
+        state.isUpdating = false;
+        // Update current comic if it's the one being updated
+        if (state.currentComic?._id === action.payload.data?.comic?._id) {
+          state.currentComic = action.payload.data.comic;
+        }
+        // Update in comics list if exists
+        if (state.comics && Array.isArray(state.comics)) {
+          const index = state.comics.findIndex(
+            (comic) => comic._id === action.payload.data?.comic?._id
+          );
+          if (index !== -1) {
+            state.comics[index] = action.payload.data.comic;
+          }
+        }
+        // Update in user comics if exists
+        if (state.userComics && Array.isArray(state.userComics)) {
+          const index = state.userComics.findIndex(
+            (comic) => comic._id === action.payload.data?.comic?._id
+          );
+          if (index !== -1) {
+            state.userComics[index] = action.payload.data.comic;
+          }
+        }
+        state.successMessage = "Comic token information updated successfully";
+      })
+      .addCase(updateComicToken.rejected, (state, action) => {
+        state.isUpdating = false;
+        state.error = action.payload || "Failed to update comic token";
+      });
+
     // Delete Comic
     builder
       .addCase(deleteComic.pending, (state) => {
@@ -344,7 +429,20 @@ const comicSlice = createSlice({
       })
       .addCase(deleteComic.fulfilled, (state, action) => {
         state.isDeleting = false;
-        if (state.currentComic?.id === action.payload) {
+        // Remove from comics list
+        if (state.comics && Array.isArray(state.comics)) {
+          state.comics = state.comics.filter(
+            (comic) => comic._id !== action.payload
+          );
+        }
+        // Remove from user comics
+        if (state.userComics && Array.isArray(state.userComics)) {
+          state.userComics = state.userComics.filter(
+            (comic) => comic._id !== action.payload
+          );
+        }
+        // Clear current comic if it's the deleted one
+        if (state.currentComic?._id === action.payload) {
           state.currentComic = null;
         }
         state.successMessage = "Comic deleted successfully";
