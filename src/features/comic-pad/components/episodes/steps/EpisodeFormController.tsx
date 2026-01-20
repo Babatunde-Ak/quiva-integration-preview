@@ -20,7 +20,6 @@ interface EpisodeFormData {
   genre: string[];
   contentType: 'pdf' | 'images' | null;
   pages: File[];
-
 }
 
 interface EpisodeFormControllerProps {
