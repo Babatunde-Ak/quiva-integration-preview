@@ -1,6 +1,6 @@
 'use client';
 
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import EpisodeRarity from './steps/EpisodeRarity';
 import ListingDetails from './steps/ListingDetails';
 import ReviewDetails from './steps/ReviewDetails';
@@ -11,14 +11,15 @@ type FlowStep = 'rarity' | 'listing' | 'review' | 'success';
 
 import { useListComic } from '@/hook/useListComic';
 import { useMintComic } from '@/hook/useMintComic';
+import { useParams } from "next/navigation";
 
 interface ListViewProps {
     episodeTitle?: string;
     episodeImage?: string;
     tokenId: string;
-    serial: number;
+    serials: number[];
     topicId?: string;
-    previewURI?: string;
+    // previewURI?: string;
     fullMetadataURI?: string;
     royaltyRecipient: string;
     onComplete?: () => void;
@@ -39,12 +40,12 @@ interface FlowData {
 }
 
 const ListView : React.FC < ListViewProps > = ({
-    episodeTitle = "Galatin Ep 1",
+    episodeTitle ="Elipsis #2",
     episodeImage = "/api/placeholder/200/200",
     tokenId,
-    serial,
+    serials,
     topicId,
-    previewURI,
+    // previewURI,
     fullMetadataURI,
     royaltyRecipient,
     onComplete,
@@ -52,6 +53,10 @@ const ListView : React.FC < ListViewProps > = ({
 }) => {
     const [currentStep, setCurrentStep] = useState<FlowStep>('rarity');
     const [flowData, setFlowData] = useState<FlowData>({ rarity: null, listing: null });
+    const params = useParams();
+    const [metadataCid, setMetadataCid] = useState<string>('');
+    const [comicId, setComicId] = useState<string>('');
+    // const [formData, setFormData] = useState<any>({});
 
       const { 
           account,
@@ -68,12 +73,37 @@ const ListView : React.FC < ListViewProps > = ({
             signer: signer,
         });
 
+        
     const { listComic, status, error } = useListComic({
         accountId:  account || user?.walletAddress || '',
         network: "testnet",
-        marketplaceId: "0.0.7348494",
+        marketplaceId: "0.0.7676271",
         signer: signer,
     });
+
+
+
+useEffect(() => {
+  // params is an object, not a URLSearchParams instance
+  const cid = (params as any)?.metadataCid || "";
+  console.log("cid", cid);
+  const id = (params as any)?.comicId || "";
+   console.log("id", id);
+  const formDataToSend = params ? (params as any)?.formData || {} : {};
+   console.log("formaData", formDataToSend);
+  if (cid && id && formDataToSend) {
+    setMetadataCid(cid);
+    setComicId(id);
+    // setFormData(formDataToSend);
+  } else {
+    const stored = JSON.parse(localStorage.getItem("latestComic") || "{}");
+    console.log("stored data:", stored);
+    setMetadataCid(stored.metadataCid || "");
+    setComicId(stored.dbComicId || "");
+    // setFormData(stored.formData || {});
+  }
+}, [params]);
+
 
     const rarityOptions = {
         legendary: {
@@ -120,29 +150,70 @@ const ListView : React.FC < ListViewProps > = ({
                         bannerImage: null,
                         collaborators: [],
                         contentType: null,
-                         files: []
+                         pages: []
                     }; // Replace with actual form data object from the Episode creation flow
-                    const metadataCid = ""; // This is needed to be passed from the episode creation flow
-                    const dbComicId = ""; // This is needed to be passed from the episode creation flow
+                    // const metadataCidValue = metadataCid; // This is needed to be passed from the episode creation flow
+                    // const dbComicId = comicId; // This is needed to be passed from the episode creation flow
+                    const metadataCidValue ="bafkreieqoitwahwu64mj7a6vyj7pzpdbuje4ytoat3fbefcnrjjarlnk3a" ; // This is needed to be passed from the episode creation flow
+                    const dbComicId = "69674cdf530a986996ffeaea"; 
+                    console.log("flowData:", flowData);
+                    console.log("flowdata supply", flowData.rarity?.supply)
+                //    const mintResult =  await createComicNFT(formData, metadataCidValue, dbComicId, 10);
 
-                   let mintData =  await createComicNFT(formData, metadataCid, dbComicId, flowData.rarity?.supply);
+                    // mintData = {
+                    //     tokenId: tokenId,
+                    //     serial: [serial],
+                    //     transactionId: mintData.transactionId || ""
+                    // }
+                    // ✅ Use the tokenId and serial from the mint result, not from props
+    // const nftTokenId = mintResult.tokenId;  // Adjust based on actual return structure
+    // let nftSerials: number[] = [];
+    // if (Array.isArray(mintResult.serials)) {
+    //     nftSerials = mintResult.serials;
+    // } else if (typeof mintResult.serials === 'number') {
+    //     nftSerials = [mintResult.serials];
+    // }
 
-                    mintData = {
-                        tokenId: tokenId,
-                        serial: [serial],
-                        transactionId: mintData.transactionId || ""
-                    }
+    // if (!nftTokenId || nftSerials.length === 0) {
+    //     console.error("Missing tokenId or serials from mint result");
+    //     return;
+    // }
+
 
                     if (!flowData.listing) return;
                     try {
-                        await listComic({
-                            tokenAddress: mintData.tokenId,
-                            serial: mintData.serial[0],
-                            price: Number(flowData.listing.price),
+                        // await listComic({
+                        //     tokenAddress: nftTokenId,
+                        //     serials: nftSerials,
+                        //     pricePerNFT: parseFloat("10"),
+                        //     royaltyRecipient: user?.walletAddress || '',
+                        //     royaltyBps: parseFloat("1000"), // assuming royalty is percent
+                        //     paymentToken: '0x0000000000000000000000000000000000000000', // HBAR
+                        //     // previewURI:  episodeImage,
+                        //     fullMetadataURI: `https://gateway.pinata.cloud/ipfs/${metadataCid}`,
+                        // });
+ 
+
+
+
+
+// In your listing-vie
+     const priceValue = parseFloat("10");
+    
+    // 🔥 ADD THIS CONVERSION:
+    const priceInTinybars = Math.floor(priceValue * 100_000_000);
+    
+    console.log("Price entered:", priceValue, "HBAR");
+    console.log("Price in tinybars:", priceInTinybars);
+
+                         await listComic({
+                            tokenAddress:"0.0.7659745",
+                            serials: [1,2,3,4,5,6,7,8,9,10],
+                            pricePerNFT: priceInTinybars,
                             royaltyRecipient: user?.walletAddress || '',
-                            royaltyBps: Number(flowData.listing.royalty) * 100, // assuming royalty is percent
+                            royaltyBps: parseFloat("1000"), // assuming royalty is percent
                             paymentToken: '0x0000000000000000000000000000000000000000', // HBAR
-                            previewURI: formData.bannerImage,
+                            // previewURI:  episodeImage,
                             fullMetadataURI: `https://gateway.pinata.cloud/ipfs/${metadataCid}`,
                         });
 
