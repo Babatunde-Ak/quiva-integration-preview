@@ -7,6 +7,7 @@ import MarketStats from './_components/MarketStats';
 import TabNavigation from './_components/TabNavigation';
 import ComicsView from './_components/ComicsView';
 import HoldersView from './_components/HoldersView';
+import OffersView from './_components/OffersView';
 
 const Marketplace = () => {
   const [activeTab, setActiveTab] = useState('Comics');
@@ -32,7 +33,7 @@ const Marketplace = () => {
   return (
     <div className="min-h-screen bg-[#111111] text-white font-sans font-mono selection:bg-orange-500 selection:text-white pb-20 overflow-x-hidden">
       <style>{styles}</style>
-      
+
       <HeroSection />
 
       <div className="max-w-7xl mx-auto px-4">
@@ -48,9 +49,10 @@ const Marketplace = () => {
         <div className="bg-[#151515] font-mono rounded-3xl p-6 md:p-8 animate-fade-in-up delay-300 min-h-[600px] border border-[#242424]">
           {activeTab === 'Comics' && <ComicsView />}
           {activeTab === 'Holders' && <HoldersView />}
+          {activeTab === 'Offers' && <OffersView />}
           
           {/* Placeholder for other tabs */}
-          {!['Comics', 'Holders'].includes(activeTab) && (
+          {!['Comics', 'Holders', 'Offers'].includes(activeTab) && (
             <div className="flex items-center justify-center h-64 text-gray-500">
               {activeTab} content coming soon...
             </div>

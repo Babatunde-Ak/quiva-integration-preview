@@ -29,10 +29,10 @@ const HoldersView = () => {
         <table className="w-full min-w-[700px] border-collapse">
           <thead>
             <tr className="border-b border-[#242424]">
-              <th className="text-left py-4 text-sm font-medium text-gray-500 pl-2">Wallet</th>
-              <th className="text-left py-4 text-sm font-medium text-gray-500">Item Owned</th>
-              <th className="text-left py-4 text-sm font-medium text-gray-500">Percentage Held</th>
-              <th className="text-right py-4 text-sm font-medium text-gray-500 pr-2">Est. Value</th>
+              <th className="text-left py-4 text-sm font-medium text-white pl-2">Wallet</th>
+              <th className="text-left py-4 text-sm font-medium text-white">Item Owned</th>
+              <th className="text-left py-4 text-sm font-medium text-white">Percentage Held</th>
+              <th className="text-right py-4 text-sm font-medium text-white pr-2">Est. Value</th>
             </tr>
           </thead>
           <tbody>
