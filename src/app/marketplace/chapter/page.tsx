@@ -8,6 +8,7 @@ import TabNavigation from './_components/TabNavigation';
 import ComicsView from './_components/ComicsView';
 import HoldersView from './_components/HoldersView';
 import OffersView from './_components/OffersView';
+import ActivityView from './_components/ActivityView';
 
 const Marketplace = () => {
   const [activeTab, setActiveTab] = useState('Comics');
@@ -50,9 +51,10 @@ const Marketplace = () => {
           {activeTab === 'Comics' && <ComicsView />}
           {activeTab === 'Holders' && <HoldersView />}
           {activeTab === 'Offers' && <OffersView />}
+          {activeTab === 'Activity' && <ActivityView />}
           
           {/* Placeholder for other tabs */}
-          {!['Comics', 'Holders', 'Offers'].includes(activeTab) && (
+          {!['Comics', 'Holders', 'Offers', 'Activity'].includes(activeTab) && (
             <div className="flex items-center justify-center h-64 text-gray-500">
               {activeTab} content coming soon...
             </div>
