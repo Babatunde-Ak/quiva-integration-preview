@@ -9,6 +9,7 @@ import ComicsView from './_components/ComicsView';
 import HoldersView from './_components/HoldersView';
 import OffersView from './_components/OffersView';
 import ActivityView from './_components/ActivityView';
+import CollectionsView from './_components/CollectionsView';
 
 const Marketplace = () => {
   const [activeTab, setActiveTab] = useState('Comics');
@@ -52,9 +53,10 @@ const Marketplace = () => {
           {activeTab === 'Holders' && <HoldersView />}
           {activeTab === 'Offers' && <OffersView />}
           {activeTab === 'Activity' && <ActivityView />}
+          {activeTab === 'Collections' && <CollectionsView />}
           
           {/* Placeholder for other tabs */}
-          {!['Comics', 'Holders', 'Offers', 'Activity'].includes(activeTab) && (
+          {!['Comics', 'Holders', 'Offers', 'Activity', 'Collections'].includes(activeTab) && (
             <div className="flex items-center justify-center h-64 text-gray-500">
               {activeTab} content coming soon...
             </div>
