@@ -11,6 +11,7 @@ import OffersView from './_components/OffersView';
 import ActivityView from './_components/ActivityView';
 import CollectionsView from './_components/CollectionsView';
 import AboutView from './_components/AboutView';
+import ReleaseView from './_components/ReleaseView';
 
 const Marketplace = () => {
   const [activeTab, setActiveTab] = useState('Comics');
@@ -51,18 +52,13 @@ const Marketplace = () => {
         {/* Dynamic Content Area */}
         <div className="bg-[#151515] font-mono rounded-3xl p-6 md:p-8 animate-fade-in-up delay-300 min-h-[600px] border border-[#242424]">
           {activeTab === 'Comics' && <ComicsView />}
+          {activeTab === 'Release' && <ReleaseView />}
           {activeTab === 'Holders' && <HoldersView />}
           {activeTab === 'Offers' && <OffersView />}
           {activeTab === 'Activity' && <ActivityView />}
           {activeTab === 'Collections' && <CollectionsView />}
           {activeTab === 'About' && <AboutView />}
           
-          {/* Placeholder for other tabs */}
-          {activeTab === 'Release' && (
-            <div className="flex items-center justify-center h-64 text-gray-500">
-              {activeTab} content coming soon...
-            </div>
-          )}
         </div>
       </div>
     </div>
