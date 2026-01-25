@@ -5,6 +5,11 @@ import {Rocket, Sparkles} from 'lucide-react';
 
 interface ListingSuccessModalProps {
     episodeTitle?: string;
+     nftInfo?: {
+        tokenId: string;
+        serialNumber: number;
+        transactionId: string;
+    };
     onBackToCollection?: () => void;
     onViewListing?: () => void;
     isOpen?: boolean;
@@ -14,6 +19,7 @@ const ListingSuccessModal : React.FC < ListingSuccessModalProps > = ({
     episodeTitle = "Galatin Ep 1",
     onBackToCollection,
     onViewListing,
+     nftInfo,
     isOpen = true
 }) => {
     if (!isOpen) 

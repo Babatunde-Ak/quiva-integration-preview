@@ -20,6 +20,9 @@ import { Loader2 } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { QUIVA_COMICS_ABI as QUIVA_COMICS_ADDRESS } from '@/contracts/QuivaComics'
 import { DUMMY_COMIC_DATA } from '@/components/utils/dummy-data'
+import { useNFTMarketplace } from '@/hook/useMarkeplace';
+import { useHederaWallet } from '@/providers/HashPackProvider'
+//import {useNFTMarketplace} from '../../../hook/useMarkeplace';
 
 function Page() {
   const searchParams = useSearchParams()
@@ -97,6 +100,33 @@ function Page() {
       dispatch(clearPreviewComic())
     };
   }, [id, dispatch])
+
+
+    const { 
+          account,
+          isConnected, 
+          // connector,
+          provider,
+          signer,
+          connectWallet 
+      } = useHederaWallet();
+  
+      const { user } = useAppSelector((state:any) => state.wallet);
+      
+      const { 
+          listNFT,
+          createCollection,
+          mintNFTs, 
+          status, 
+          error 
+      } = useNFTMarketplace({
+          accountId: account || user?.walletAddress || '',
+          network: "testnet",
+          marketplaceContractId: "0.0.7726588", // Your deployed marketplace contract
+          signer: signer,
+          //provider: provider,
+      });
+  
 
   // Set comicId in the purchase hook
   useEffect(() => {
@@ -246,48 +276,52 @@ function Page() {
   }
 
   // Handle minting from MintComicModal
-  const handleMintComic = async () => {
-    if (!transformedComic || !id) {
-      toast.error('Comic data not available')
-      return
-    }
+  // const handleMintComic = async () => {
+  //   if (!transformedComic || !id) {
+  //     toast.error('Comic data not available')
+  //     return
+  //   }
 
-    if (!walletStatus.isConnected) {
-      toast.error('Please connect your wallet first')
-      return
-    }
+  //   if (!walletStatus.isConnected) {
+  //     toast.error('Please connect your wallet first')
+  //     return
+  //   }
 
-    try {
-      if (useDummyData) {
-        // Simulate minting for demo
-        toast.success('Demo mint successful! Redirecting to reader...', { autoClose: 3000 })
-        setTimeout(() => {
-          setShowMintPage(false)
-          router.push(`/reader?id=${id}`)
-        }, 1500)
-        return
-      }
+  //   try {
+  //     if (useDummyData) {
+  //       // Simulate minting for demo
+  //       toast.success('Demo mint successful! Redirecting to reader...', { autoClose: 3000 })
+  //       setTimeout(() => {
+  //         setShowMintPage(false)
+  //         router.push(`/reader?id=${id}`)
+  //       }, 1500)
+  //       return
+  //     }
       
-      if (!transformedComic.tokenId) {
-        toast.error('NFT token ID not available')
-        return
-      }
+  //     if (!transformedComic.tokenId) {
+  //       toast.error('NFT token ID not available')
+  //       return
+  //     }
 
-      const result = await purchaseComic({
-        nftAddress: QUIVA_COMICS_ADDRESS,
-        tokenId: BigInt(transformedComic.tokenId),
-        amount: BigInt(1),
-      });
+  //     const result = await purchaseComic({
+  //       nftAddress: QUIVA_COMICS_ADDRESS,
+  //       tokenId: BigInt(transformedComic.tokenId),
+  //       amount: BigInt(1),
+  //     });
 
-      console.log('Mint initiated:', result);
-      return result;
+  //     console.log('Mint initiated:', result);
+  //     return result;
 
-    } catch (error: any) {
-      console.error('Mint error:', error);
-      toast.error(error.message || 'Failed to mint comic');
-    }
+  //   } catch (error: any) {
+  //     console.error('Mint error:', error);
+  //     toast.error(error.message || 'Failed to mint comic');
+  //   }
+  // };
+const handleMintComic = async () => {
+  
+
+  
   };
-
   const handleBack = () => {
     if (showMintPage) {
       setShowMintPage(false)
