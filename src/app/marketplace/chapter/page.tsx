@@ -35,7 +35,7 @@ const Marketplace = () => {
   `;
 
   return (
-    <div className="min-h-screen bg-[#111111] text-white font-sans font-mono selection:bg-orange-500 selection:text-white pb-20 overflow-x-hidden">
+    <div className="min-h-screen bg-[#111111] text-white font-recursive selection:bg-orange-500 selection:text-white pb-20 overflow-x-hidden">
       <style>{styles}</style>
 
       <HeroSection />

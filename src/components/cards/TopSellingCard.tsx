@@ -44,7 +44,7 @@ export function CollectionCard({
             whileTap={{
                 scale: 0.98
             }} 
-            onClick={() => router.push(`/marketplace/detail?id=${id}`)}
+            onClick={() => router.push(`/marketplace/chapter?id=${id}`)}
         >
             {/* Rank Number */}
             <div className="flex-shrink-0">
