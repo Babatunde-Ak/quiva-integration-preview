@@ -391,14 +391,16 @@ const ListView : React.FC < ListViewProps > = ({
     const { 
         listNFT,
         createCollection,
-        mintNFTs, 
+        createComicNFT,
+        batchListNFTs,
         status, 
         error 
     } = useNFTMarketplace({
         accountId: account || user?.walletAddress || '',
         network: "testnet",
-        marketplaceContractId: "0.0.7726588", // Your deployed marketplace contract
-        signer: signer,
+       // marketplaceContractId: "0.0.7726588", // Your deployed marketplace contract
+       marketplaceContractId:"0.0.7750266",
+       signer: signer,
         //provider: provider,
     });
 
@@ -494,21 +496,25 @@ const ListView : React.FC < ListViewProps > = ({
 
             // Step 2: Prepare metadata URIs
             console.log("📦 Preparing metadata...");
-        const comicMetadataCid = metadataCid || 'bafkreieqoitwahwu64mj7a6vyj7pzpdbuje4ytoat3fbefcnrjjarlnk3a'; // Fallback CID
-            const metadataURI = comicMetadataCid 
-                ? `https://gateway.pinata.cloud/ipfs/${comicMetadataCid}`
-                : `ipfs://bafkreieqoitwahwu64mj7a6vyj7pzpdbuje4ytoat3fbefcnrjjarlnk3a`; // Fallback
-            
+       // const comicMetadataCid = 'bafkreieqoitwahwu64mj7a6vyj7pzpdbuje4ytoat3fbefcnrjjarlnk3a'; // Fallback CID
+            // const metadataURI = comicMetadataCid 
+            //     ? `https://gateway.pinata.cloud/ipfs/${comicMetadataCid}`
+            //     : `ipfs://bafkreieqoitwahwu64mj7a6vyj7pzpdbuje4ytoat3fbefcnrjjarlnk3a`; // Fallback
+            const metadataURI ="bafkreiatw24wireql2dj74wylfbls3vxo5j2woqmnbzrotu62g5qvipluu";
+            console.log("✅ Metadata URI prepared:", metadataURI);
+            const dbComicId = "69786c446a14dd56c6121d78"
             // For this example, minting 1 NFT. You can adjust for batch minting
             const numberOfCopies = parseInt(flowData.listing.sales) || 1;
-            const metadataURIs = Array(numberOfCopies).fill(metadataURI);
+            // const metadataURIs = Array(numberOfCopies).fill(metadataURI);
 
             // Step 3: Mint NFTs
             console.log(`🎨 Minting ${numberOfCopies} NFT(s)...`);
             
-            const mintResult = await mintNFTs({
+            const mintResult = await createComicNFT({
                 tokenId: nftTokenId,
-                metadataURIs: metadataURIs,
+                metadata: metadataURI,
+                copies: numberOfCopies,
+                dbComicId: dbComicId
             });
 
             console.log("✅ NFTs minted:", mintResult);
@@ -531,9 +537,14 @@ const ListView : React.FC < ListViewProps > = ({
             const priceInHbar = parseFloat(flowData.listing.price);
             
             const listingPromises = mintedData.serials.map(async (serial) => {
-                return await listNFT({
+                // return await listNFT({
+                //     tokenId: nftTokenId,
+                //     serialNumber: serial,
+                //     priceInHbar: priceInHbar,
+                // });
+                return await batchListNFTs({
                     tokenId: nftTokenId,
-                    serialNumber: serial,
+                    serialNumbers: [serial],
                     priceInHbar: priceInHbar,
                 });
             });
@@ -554,12 +565,12 @@ const ListView : React.FC < ListViewProps > = ({
                 },
                 minted: mintedData,
                 listings: listingResults.map((result, index) => ({
-                    listingId: result.listingId,
+                    listingIds: result.listingIds,
                     serial: mintedData.serials[index],
                     price: priceInHbar,
                 })),
                 metadata: {
-                    cid: comicMetadataCid,
+                    cid: metadataCid,
                     comicId: comicId,
                 },
             };

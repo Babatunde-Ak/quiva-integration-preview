@@ -79,15 +79,15 @@ function Page() {
   } = purchaseHookResult ?? {}
 
   // Initialize claiming hook
-  const {
-    claimFreeComic,
-    isClaiming,
-    claimError,
-    claimSuccess,
-    claimProgress,
-    transactionHash: claimHash,
-    resetClaimState,
-  } = useClaimFreeComic()
+  // const {
+  //   claimFreeComic,
+  //   isClaiming,
+  //   claimError,
+  //   claimSuccess,
+  //   claimProgress,
+  //   transactionHash: claimHash,
+  //   resetClaimState,
+  // } = useClaimFreeComic()
   
   // Fetch comic data
   useEffect(() => {
@@ -117,12 +117,14 @@ function Page() {
           listNFT,
           createCollection,
           mintNFTs, 
+          purchaseNFT,
           status, 
           error 
       } = useNFTMarketplace({
           accountId: account || user?.walletAddress || '',
           network: "testnet",
-          marketplaceContractId: "0.0.7726588", // Your deployed marketplace contract
+          // marketplaceContractId: "0.0.7726588", 
+          marketplaceContractId: "0.0.7750266",           // Your deployed marketplace contract
           signer: signer,
           //provider: provider,
       });
@@ -211,22 +213,22 @@ function Page() {
   }, [purchaseSuccess, id, router, resetPurchase])
 
   // Handle claim success
-  useEffect(() => {
-    if (claimSuccess && claimHash) {
-      setHasNFTAccess(true)
-      refetchClaimStatus()
+  // useEffect(() => {
+  //   if (claimSuccess && claimHash) {
+  //     setHasNFTAccess(true)
+  //     refetchClaimStatus()
       
-      setTimeout(() => {
-        setIsClaimModalOpen(false)
-        resetClaimState()
+  //     setTimeout(() => {
+  //       setIsClaimModalOpen(false)
+  //       resetClaimState()
         
-        if (id) {
-          toast.success('Comic claimed! Enjoy reading! 🎉', { autoClose: 2000 })
-          router.push(`/reader?id=${id}`)
-        }
-      }, 2000)
-    }
-  }, [claimSuccess, claimHash, id, router, resetClaimState, refetchClaimStatus])
+  //       if (id) {
+  //         toast.success('Comic claimed! Enjoy reading! 🎉', { autoClose: 2000 })
+  //         router.push(`/reader?id=${id}`)
+  //       }
+  //     }, 2000)
+  //   }
+  // }, [claimSuccess, claimHash, id, router, resetClaimState, refetchClaimStatus])
 
   // Event handlers
   const handlePreview = () => {
@@ -248,15 +250,15 @@ function Page() {
       return
     }
 
-    try {
-      await claimFreeComic({
-        tokenId: transformedComic.tokenId,
-        comicId: id,
-      })
-    } catch (error) {
-      console.error('Error claiming comic:', error)
-      toast.error('Failed to claim comic. Please try again.')
-    }
+    // try {
+    //   await claimFreeComic({
+    //     tokenId: transformedComic.tokenId,
+    //     comicId: id,
+    //   })
+    // } catch (error) {
+    //   console.error('Error claiming comic:', error)
+    //   toast.error('Failed to claim comic. Please try again.')
+    // }
   }
 
   const handleClosePurchaseModal = () => {
@@ -318,7 +320,8 @@ function Page() {
   //   }
   // };
 const handleMintComic = async () => {
-  
+
+   //await purchaseNFT({ listingId: 7, priceInHbar: 20 })
 
   
   };
@@ -456,7 +459,7 @@ const handleMintComic = async () => {
             />
           )}
 
-          <ClaimModal
+          {/* <ClaimModal
             isOpen={isClaimModalOpen}
             onClose={() => setIsClaimModalOpen(false)}
             onClaim={handleClaimComic}
@@ -466,7 +469,7 @@ const handleMintComic = async () => {
             claimError={claimError}
             claimProgress={claimProgress}
             transactionHash={claimHash}
-          />
+          /> */}
         </>
       )}
     </>

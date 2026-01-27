@@ -4,6 +4,9 @@ import React from 'react'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
 import { LOCAL_IMAGE } from '@/components/utils/dummy-data'
+import { useNFTMarketplace } from '@/hook/useMarkeplace';
+import { useHederaWallet } from '@/providers/HashPackProvider'
+import { useAppSelector } from '@/redux/hook'
 
 interface MintConfirmationModalProps {
   isOpen: boolean
@@ -27,6 +30,48 @@ const MintConfirmationModal: React.FC<MintConfirmationModalProps> = ({
   walletAddress = "0xA182...C3D4"
 }) => {
   if (!isOpen) return null
+
+  
+      const { 
+            account,
+            isConnected, 
+            // connector,
+            provider,
+            signer,
+            connectWallet 
+        } = useHederaWallet();
+    
+        const { user } = useAppSelector((state:any) => state.wallet);
+        
+        const { 
+            listNFT,
+            createCollection,
+            mintNFTs, 
+            purchaseNFT,
+            status, 
+            error 
+        } = useNFTMarketplace({
+            accountId: account || user?.walletAddress || '',
+            network: "testnet",
+            marketplaceContractId: "0.0.7750266", // Your deployed marketplace contract
+            signer: signer,
+           
+        });
+    
+
+  const handleMintComic = async () => {
+
+    try {
+       await purchaseNFT({ listingId: 0, priceInHbar: 30 })
+       console.log('Minting successful');
+   } catch (error) {
+        console.error('Minting failed:', error);
+    
+   }
+ 
+
+  
+  };
 
   // fallback image if coverImage is invalid
   const imageSrc = coverImage && coverImage !== '' ? coverImage : LOCAL_IMAGE
@@ -122,7 +167,8 @@ const MintConfirmationModal: React.FC<MintConfirmationModalProps> = ({
           {/* Action Buttons */}
           <div className="flex gap-3">
             <button
-              onClick={onConfirm}
+              // onClick={onConfirm}
+              onClick={handleMintComic}
               className="flex-1 bg-yellow-600 hover:bg-yellow-700 text-black font-medium py-3 rounded-xl transition-colors"
             >
               Confirm

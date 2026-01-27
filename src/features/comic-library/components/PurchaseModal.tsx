@@ -71,6 +71,10 @@ const PurchaseNFTModal: React.FC<PurchaseNFTModalProps> = ({
     }
   }
 
+  const handleBuy = async () => {
+    
+  }
+
   // Success Modal
   if (purchaseSuccess) {
     return (

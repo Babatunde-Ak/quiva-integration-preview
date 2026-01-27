@@ -1,615 +1,5 @@
-// import { useState } from "react";
-// import {
-//   ContractExecuteTransaction,
-//   Client,
-//   ContractFunctionParameters,
-//   AccountId,
-//   TokenId,
-//   TransactionId,
-//   ContractCallQuery,
-//   Hbar,
-// } from "@hashgraph/sdk";
 
-// interface UseNFTMarketplaceProps {
-//   accountId: string;
-//   network?: "testnet" | "mainnet";
-//   marketplaceContractId: string;
-//   signer: any;
-// }
-
-// interface Collection {
-//   creator: string;
-//   name: string;
-//   symbol: string;
-//   maxSupply: string;
-//   currentSupply: string;
-// }
-
-// interface Listing {
-//   tokenAddress: string;
-//   serialNumber: string;
-//   seller: string;
-//   price: string;
-//   isActive: boolean;
-// }
-
-// export function useNFTMarketplace({
-//   accountId,
-//   network = "testnet",
-//   marketplaceContractId,
-//   signer,
-// }: UseNFTMarketplaceProps) {
-//   const [status, setStatus] = useState<"idle" | "processing" | "done" | "error">("idle");
-//   const [error, setError] = useState<string | null>(null);
-//   const [txId, setTxId] = useState<string | null>(null);
-
-//   // Helper to execute transaction with wallet signer
-//   const executeWithSigner = async (transaction: any) => {
-//     console.log("📝 Signing transaction with wallet...");
-    
-//     // Sign the transaction
-//     const signedTx = await signer.signTransaction(transaction);
-//     console.log("✅ Transaction signed");
-    
-//     // Different wallets have different methods to execute
-//     // Try the most common patterns
-    
-//     // Pattern 1: Signer has call method (some wallets)
-//     if (typeof signer.call === 'function') {
-//       console.log("Using signer.call() method");
-//       return await signer.call(signedTx);
-//     }
-    
-//     // Pattern 2: Signer has executeTransaction method (HashConnect)
-//     if (typeof signer.executeTransaction === 'function') {
-//       console.log("Using signer.executeTransaction() method");
-//       return await signer.executeTransaction(signedTx);
-//     }
-    
-//     // Pattern 3: Use client with transaction provider (most common)
-//     console.log("Using client.execute() method");
-//     const client = Client.forName(network);
-    
-//     // The signed transaction already has all the signatures
-//     // We just need to submit it to the network
-//     const provider = signer.getProvider ? signer.getProvider() : null;
-//     if (provider) {
-//       const txResponse = await provider.execute(signedTx);
-//       return txResponse;
-//     }
-    
-//     // Pattern 4: Direct execution (fallback)
-//     // This might fail if client doesn't have operator set
-//     try {
-//       return await signedTx.execute(client);
-//     } catch (err: any) {
-//       console.error("Standard execution failed, trying alternative method");
-      
-//       // Last resort: try to execute with the signer's internal client
-//       if (signer._client) {
-//         return await signedTx.execute(signer._client);
-//       }
-      
-//       throw new Error("Unable to execute transaction. Please check wallet connection.");
-//     }
-//   };
-
-//   // ========================================
-//   // 1. CREATE COLLECTION
-//   // ========================================
-//   const createCollection = async ({
-//     name,
-//     symbol,
-//     memo,
-//     maxSupply,
-//     autoRenewPeriod = 7000000,
-//   }: {
-//     name: string;
-//     symbol: string;
-//     memo: string;
-//     maxSupply: number;
-//     autoRenewPeriod?: number;
-//   }) => {
-//     try {
-//       setStatus("processing");
-//       setError(null);
-//       console.log("🎨 Creating NFT collection:", { name, symbol, maxSupply });
-
-//       const contractExecTx = new ContractExecuteTransaction()
-//         .setContractId(marketplaceContractId)
-//         .setTransactionId(TransactionId.generate(AccountId.fromString(accountId)))
-//         .setGas(4000000)
-//         .setPayableAmount(new Hbar(50))
-//         .setFunction(
-//           "createCollection",
-//           new ContractFunctionParameters()
-//             .addString(name)
-//             .addString(symbol)
-//             .addString(memo)
-//             .addInt64(maxSupply)
-//             .addInt64(autoRenewPeriod)
-//         );
-
-//       const txResponse = await executeWithSigner(contractExecTx);
-//       const txIdStr = txResponse.transactionId.toString();
-//       console.log("📤 Transaction submitted:", txIdStr);
-
-//       // Get receipt
-//       const client = Client.forName(network);
-//       const receipt = await txResponse.getReceipt(client);
-//       console.log("✅ Collection created successfully");
-
-//       // Get the token address from the transaction record
-//       const record = await txResponse.getRecord(client);
-
-//       const tokenEvmAddress = record.contractFunctionResult?.getAddress(0);
-//       const tokenId = tokenEvmAddress 
-//         ? AccountId.fromSolidityAddress(tokenEvmAddress).toString()
-//         : null;
-
-//       console.log("🎉 New Token ID:", tokenId);
-
-//       setTxId(txIdStr);
-//       setStatus("done");
-
-//       return {
-//         transactionId: txIdStr,
-//         status: receipt.status.toString(),
-//         tokenId,
-//         tokenEvmAddress,
-//       };
-//     } catch (err: any) {
-//       console.error("❌ Collection creation failed:", err);
-//       setError(err.message || "Collection creation failed");
-//       setStatus("error");
-//       throw err;
-//     }
-//   };
-
-//   // ========================================
-//   // 2. MINT NFTs
-//   // ========================================
-//   const mintNFTs = async ({
-//     tokenId,
-//     metadataURIs,
-//   }: {
-//     tokenId: string;
-//     metadataURIs: string[];
-//   }) => {
-//     try {
-//       setStatus("processing");
-//       setError(null);
-//       console.log("🎨 Minting NFTs:", { tokenId, count: metadataURIs.length });
-
-//       const tokenEvmAddress = TokenId.fromString(tokenId).toSolidityAddress();
-//       const metadataBytes = metadataURIs.map(uri => Buffer.from(uri));
-
-//       const contractExecTx = new ContractExecuteTransaction()
-//         .setContractId(marketplaceContractId)
-//         .setTransactionId(TransactionId.generate(AccountId.fromString(accountId)))
-//         .setGas(4000000)
-//         .setMaxTransactionFee(new Hbar(20))
-//         .setFunction(
-//           "mintNFTs",
-//           new ContractFunctionParameters()
-//             .addAddress(tokenEvmAddress)
-//             .addBytesArray(metadataBytes)
-//         );
-
-//       const txResponse = await executeWithSigner(contractExecTx);
-//       const txIdStr = txResponse.transactionId.toString();
-//       console.log("📤 Transaction submitted:", txIdStr);
-
-//       const client = Client.forName(network);
-//       const receipt = txResponse.getReceipt 
-//         ? await txResponse.getReceipt(client)
-//         : await client.getReceiptQuery().setTransactionId(txResponse.transactionId).execute(client);
-      
-//       console.log("✅ NFTs minted successfully");
-
-//       const record = txResponse.getRecord
-//         ? await txResponse.getRecord(client)
-//         : await client.getRecordQuery().setTransactionId(txResponse.transactionId).execute(client);
-      
-//       const serials: number[] = [];
-//       for (let i = 0; i < metadataURIs.length; i++) {
-//         try {
-//           const serial = record.contractFunctionResult?.getInt64(i);
-//           if (serial) serials.push(Number(serial));
-//         } catch {
-//           break;
-//         }
-//       }
-
-//       console.log("🎉 Minted serials:", serials);
-
-//       setTxId(txIdStr);
-//       setStatus("done");
-
-//       return {
-//         transactionId: txIdStr,
-//         status: receipt.status.toString(),
-//         serials,
-//       };
-//     } catch (err: any) {
-//       console.error("❌ Minting failed:", err);
-//       setError(err.message || "Minting failed");
-//       setStatus("error");
-//       throw err;
-//     }
-//   };
-
-//   // ========================================
-//   // 3. LIST NFT FOR SALE
-//   // ========================================
-//   const listNFT = async ({
-//     tokenId,
-//     serialNumber,
-//     priceInHbar,
-//   }: {
-//     tokenId: string;
-//     serialNumber: number;
-//     priceInHbar: number;
-//   }) => {
-//     try {
-//       setStatus("processing");
-//       setError(null);
-//       console.log("📝 Listing NFT:", { tokenId, serialNumber, priceInHbar });
-
-//       const tokenEvmAddress = TokenId.fromString(tokenId).toSolidityAddress();
-//       const priceInTinybars = Hbar.from(priceInHbar).toTinybars().toString();
-
-//       const contractExecTx = new ContractExecuteTransaction()
-//         .setContractId(marketplaceContractId)
-//         .setTransactionId(TransactionId.generate(AccountId.fromString(accountId)))
-//         .setGas(1500000)
-//         .setFunction(
-//           "listNFT",
-//           new ContractFunctionParameters()
-//             .addAddress(tokenEvmAddress)
-//             .addInt64(serialNumber)
-//             .addUint256(priceInTinybars)
-//         );
-
-//       const txResponse = await executeWithSigner(contractExecTx);
-//       const txIdStr = txResponse.transactionId.toString();
-//       console.log("📤 Transaction submitted:", txIdStr);
-
-//       const client = Client.forName(network);
-//       const receipt = txResponse.getReceipt
-//         ? await txResponse.getReceipt(client)
-//         : await client.getReceiptQuery().setTransactionId(txResponse.transactionId).execute(client);
-      
-//       console.log("✅ NFT listed successfully");
-
-//       const record = txResponse.getRecord
-//         ? await txResponse.getRecord(client)
-//         : await client.getRecordQuery().setTransactionId(txResponse.transactionId).execute(client);
-      
-//       const listingId = record.contractFunctionResult?.getUint256(0);
-
-//       console.log("🎉 Listing ID:", listingId?.toString());
-
-//       setTxId(txIdStr);
-//       setStatus("done");
-
-//       return {
-//         transactionId: txIdStr,
-//         status: receipt.status.toString(),
-//         listingId: listingId?.toString(),
-//       };
-//     } catch (err: any) {
-//       console.error("❌ Listing failed:", err);
-//       setError(err.message || "Listing failed");
-//       setStatus("error");
-//       throw err;
-//     }
-//   };
-
-//   // ========================================
-//   // 4. PURCHASE NFT
-//   // ========================================
-//   const purchaseNFT = async ({
-//     listingId,
-//     priceInHbar,
-//   }: {
-//     listingId: number | string;
-//     priceInHbar: number;
-//   }) => {
-//     try {
-//       setStatus("processing");
-//       setError(null);
-//       console.log("🛒 Purchasing NFT:", { listingId, priceInHbar });
-
-//       const contractExecTx = new ContractExecuteTransaction()
-//         .setContractId(marketplaceContractId)
-//         .setTransactionId(TransactionId.generate(AccountId.fromString(accountId)))
-//         .setGas(4000000)
-//         .setPayableAmount(new Hbar(priceInHbar))
-//         .setFunction(
-//           "purchaseNFT",
-//           new ContractFunctionParameters()
-//             .addUint256(typeof listingId === "string" ? parseInt(listingId) : listingId)
-//         );
-
-//       const txResponse = await executeWithSigner(contractExecTx);
-//       const txIdStr = txResponse.transactionId.toString();
-//       console.log("📤 Transaction submitted:", txIdStr);
-
-//       const client = Client.forName(network);
-//       const receipt = txResponse.getReceipt
-//         ? await txResponse.getReceipt(client)
-//         : await client.getReceiptQuery().setTransactionId(txResponse.transactionId).execute(client);
-      
-//       console.log("✅ NFT purchased successfully");
-
-//       setTxId(txIdStr);
-//       setStatus("done");
-
-//       return {
-//         transactionId: txIdStr,
-//         status: receipt.status.toString(),
-//       };
-//     } catch (err: any) {
-//       console.error("❌ Purchase failed:", err);
-//       setError(err.message || "Purchase failed");
-//       setStatus("error");
-//       throw err;
-//     }
-//   };
-
-//   // ========================================
-//   // 5. CANCEL LISTING
-//   // ========================================
-//   const cancelListing = async ({
-//     listingId,
-//   }: {
-//     listingId: number | string;
-//   }) => {
-//     try {
-//       setStatus("processing");
-//       setError(null);
-//       console.log("❌ Cancelling listing:", listingId);
-
-//       const contractExecTx = new ContractExecuteTransaction()
-//         .setContractId(marketplaceContractId)
-//         .setTransactionId(TransactionId.generate(AccountId.fromString(accountId)))
-//         .setGas(1000000)
-//         .setFunction(
-//           "cancelListing",
-//           new ContractFunctionParameters()
-//             .addUint256(typeof listingId === "string" ? parseInt(listingId) : listingId)
-//         );
-
-//       const txResponse = await executeWithSigner(contractExecTx);
-//       const txIdStr = txResponse.transactionId.toString();
-//       console.log("📤 Transaction submitted:", txIdStr);
-
-//       const client = Client.forName(network);
-//       const receipt = txResponse.getReceipt
-//         ? await txResponse.getReceipt(client)
-//         : await client.getReceiptQuery().setTransactionId(txResponse.transactionId).execute(client);
-      
-//       console.log("✅ Listing cancelled");
-
-//       setTxId(txIdStr);
-//       setStatus("done");
-
-//       return {
-//         transactionId: txIdStr,
-//         status: receipt.status.toString(),
-//       };
-//     } catch (err: any) {
-//       console.error("❌ Cancellation failed:", err);
-//       setError(err.message || "Cancellation failed");
-//       setStatus("error");
-//       throw err;
-//     }
-//   };
-
-//   // ========================================
-//   // 6. GET COLLECTION INFO
-//   // ========================================
-//   const getCollectionInfo = async (tokenId: string): Promise<Collection> => {
-//     try {
-//       console.log("📖 Fetching collection info:", tokenId);
-
-//       const tokenEvmAddress = TokenId.fromString(tokenId).toSolidityAddress();
-//       const client = Client.forName(network);
-
-//       const query = new ContractCallQuery()
-//         .setContractId(marketplaceContractId)
-//         .setGas(100000)
-//         .setFunction(
-//           "getCollection",
-//           new ContractFunctionParameters().addAddress(tokenEvmAddress)
-//         );
-
-//       const result = await query.execute(client);
-
-//       const collection: Collection = {
-//         creator: result.getAddress(0),
-//         name: result.getString(1),
-//         symbol: result.getString(2),
-//         maxSupply: result.getInt64(3).toString(),
-//         currentSupply: result.getInt64(4).toString(),
-//       };
-
-//       console.log("✅ Collection info:", collection);
-//       return collection;
-//     } catch (err: any) {
-//       console.error("❌ Failed to fetch collection:", err);
-//       throw err;
-//     }
-//   };
-
-//   // ========================================
-//   // 7. GET LISTING INFO
-//   // ========================================
-//   const getListingInfo = async (listingId: number | string): Promise<Listing> => {
-//     try {
-//       console.log("📖 Fetching listing info:", listingId);
-
-//       const client = Client.forName(network);
-
-//       const query = new ContractCallQuery()
-//         .setContractId(marketplaceContractId)
-//         .setGas(100000)
-//         .setFunction(
-//           "getListing",
-//           new ContractFunctionParameters().addUint256(typeof listingId === "string" ? parseInt(listingId) : listingId)
-//         );
-
-//       const result = await query.execute(client);
-
-//       const listing: Listing = {
-//         tokenAddress: result.getAddress(0),
-//         serialNumber: result.getInt64(1).toString(),
-//         seller: result.getAddress(2),
-//         price: result.getUint256(3).toString(),
-//         isActive: result.getBool(4),
-//       };
-
-//       console.log("✅ Listing info:", listing);
-//       return listing;
-//     } catch (err: any) {
-//       console.error("❌ Failed to fetch listing:", err);
-//       throw err;
-//     }
-//   };
-
-//   // ========================================
-//   // 8. GET MARKETPLACE FEE
-//   // ========================================
-//   const getMarketplaceFee = async (): Promise<number> => {
-//     try {
-//       console.log("📖 Fetching marketplace fee...");
-
-//       const client = Client.forName(network);
-
-//       const query = new ContractCallQuery()
-//         .setContractId(marketplaceContractId)
-//         .setGas(100000)
-//         .setFunction("marketplaceFeePercent");
-
-//       const result = await query.execute(client);
-//       const feePercent = Number(result.getUint256(0));
-
-//       console.log("✅ Marketplace fee:", feePercent / 100, "%");
-//       return feePercent;
-//     } catch (err: any) {
-//       console.error("❌ Failed to fetch fee:", err);
-//       throw err;
-//     }
-//   };
-
-//   // ========================================
-//   // 9. UPDATE MARKETPLACE FEE (Owner only)
-//   // ========================================
-//   const updateMarketplaceFee = async (newFeePercent: number) => {
-//     try {
-//       setStatus("processing");
-//       setError(null);
-//       console.log("⚙️ Updating marketplace fee:", newFeePercent / 100, "%");
-
-//       const contractExecTx = new ContractExecuteTransaction()
-//         .setContractId(marketplaceContractId)
-//         .setTransactionId(TransactionId.generate(AccountId.fromString(accountId)))
-//         .setGas(1000000)
-//         .setFunction(
-//           "updateMarketplaceFee",
-//           new ContractFunctionParameters().addUint256(newFeePercent)
-//         );
-
-//       const txResponse = await executeWithSigner(contractExecTx);
-//       const txIdStr = txResponse.transactionId.toString();
-
-//       const client = Client.forName(network);
-//       const receipt = txResponse.getReceipt
-//         ? await txResponse.getReceipt(client)
-//         : await client.getReceiptQuery().setTransactionId(txResponse.transactionId).execute(client);
-      
-//       console.log("✅ Marketplace fee updated");
-
-//       setTxId(txIdStr);
-//       setStatus("done");
-
-//       return {
-//         transactionId: txIdStr,
-//         status: receipt.status.toString(),
-//       };
-//     } catch (err: any) {
-//       console.error("❌ Fee update failed:", err);
-//       setError(err.message || "Fee update failed");
-//       setStatus("error");
-//       throw err;
-//     }
-//   };
-
-//   // ========================================
-//   // 10. WITHDRAW FEES (Owner only)
-//   // ========================================
-//   const withdrawFees = async () => {
-//     try {
-//       setStatus("processing");
-//       setError(null);
-//       console.log("💰 Withdrawing marketplace fees...");
-
-//       const contractExecTx = new ContractExecuteTransaction()
-//         .setContractId(marketplaceContractId)
-//         .setTransactionId(TransactionId.generate(AccountId.fromString(accountId)))
-//         .setGas(1000000)
-//         .setFunction("withdrawFees");
-
-//       const txResponse = await executeWithSigner(contractExecTx);
-//       const txIdStr = txResponse.transactionId.toString();
-
-//       const client = Client.forName(network);
-//       const receipt = txResponse.getReceipt
-//         ? await txResponse.getReceipt(client)
-//         : await client.getReceiptQuery().setTransactionId(txResponse.transactionId).execute(client);
-      
-//       console.log("✅ Fees withdrawn");
-
-//       setTxId(txIdStr);
-//       setStatus("done");
-
-//       return {
-//         transactionId: txIdStr,
-//         status: receipt.status.toString(),
-//       };
-//     } catch (err: any) {
-//       console.error("❌ Withdrawal failed:", err);
-//       setError(err.message || "Withdrawal failed");
-//       setStatus("error");
-//       throw err;
-//     }
-//   };
-
-//   return {
-//     // Actions
-//     createCollection,
-//     mintNFTs,
-//     listNFT,
-//     purchaseNFT,
-//     cancelListing,
-//     updateMarketplaceFee,
-//     withdrawFees,
-    
-//     // Queries
-//     getCollectionInfo,
-//     getListingInfo,
-//     getMarketplaceFee,
-    
-//     // State
-//     status,
-//     error,
-//     txId,
-//   };
-// }
-
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ContractExecuteTransaction,
   Client,
@@ -621,6 +11,7 @@ import {
   Hbar,
   HbarUnit,
 } from "@hashgraph/sdk";
+import { useComicInscription } from "./useComicInscription";
 
 interface UseNFTMarketplaceProps {
   accountId: string;
@@ -645,6 +36,12 @@ interface Listing {
   isActive: boolean;
 }
 
+interface MintResult {
+  transactionId: string;
+  status: string;
+  serials: number[];
+}
+
 export function useNFTMarketplace({
   accountId,
   network = "testnet",
@@ -654,74 +51,42 @@ export function useNFTMarketplace({
   const [status, setStatus] = useState<"idle" | "processing" | "done" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
   const [txId, setTxId] = useState<string | null>(null);
+  const [mintStatus, setMintStatus] = useState<"idle" | "inscribing" | "minting" | "done" | "error">("idle");
+  const [mintProgress, setMintProgress] = useState<number>(0);
+  const [mintError, setMintError] = useState<string | null>(null);
+  const [mintResult, setMintResult] = useState<MintResult | null>(null);
+  const [mintStatusText, setMintStatusText] = useState<string>("");
 
-  // Helper to execute transaction with wallet signer
-  // const executeWithSigner = async (transaction: any) => {
-  //   console.log("📝 Signing transaction with wallet...");
-    
-  //   // Sign the transaction
-  //   const signedTx = await signer.signTransaction(transaction);
-  //   console.log("✅ Transaction signed");
-    
-  //   // Different wallets have different methods to execute
-  //   // Try the most common patterns
-    
-  //   // Pattern 1: Signer has call method (some wallets)
-  //   if (typeof signer.call === 'function') {
-  //     console.log("Using signer.call() method");
-  //     return await signer.call(signedTx);
-  //   }
-    
-  //   // Pattern 2: Signer has executeTransaction method (HashConnect)
-  //   if (typeof signer.executeTransaction === 'function') {
-  //     console.log("Using signer.executeTransaction() method");
-  //     return await signer.executeTransaction(signedTx);
-  //   }
-    
-  //   // Pattern 3: Use client with transaction provider (most common)
-  //   console.log("Using client.execute() method");
-  //   const client = Client.forName(network);
-    
-  //   // The signed transaction already has all the signatures
-  //   // We just need to submit it to the network
-  //   const provider = signer.getProvider ? signer.getProvider() : null;
-  //   if (provider) {
-  //     const txResponse = await provider.execute(signedTx);
-  //     return txResponse;
-  //   }
-    
-  //   // Pattern 4: Direct execution (fallback)
-  //   // This might fail if client doesn't have operator set
-  //   try {
-  //     return await signedTx.execute(client);
-  //   } catch (err: any) {
-  //     console.error("Standard execution failed, trying alternative method");
-      
-  //     // Last resort: try to execute with the signer's internal client
-  //     if (signer._client) {
-  //       return await signedTx.execute(signer._client);
-  //     }
-      
-  //     throw new Error("Unable to execute transaction. Please check wallet connection.");
-  //   }
-  // };
-    // Helper to execute transaction with wallet signer
+  const {
+    createInscription,
+    status: inscriptionStatus,
+    progress: inscriptionProgress,
+    result: inscriptionResult,
+    error: inscriptionError,
+    statusText: inscriptionStatusText,
+    reset: resetInscription,
+  } = useComicInscription({ accountId, signer, network });
+
+  useEffect(() => {
+    if (inscriptionStatus === "inscribing") {
+      setMintStatus("inscribing");
+      setMintProgress(inscriptionProgress * 0.5);
+      setMintStatusText(inscriptionStatusText || "Inscribing comic...");
+    } else if (inscriptionStatus === "error") {
+      setMintStatus("error");
+      setMintError(inscriptionError || "Inscription failed");
+    }
+  }, [inscriptionStatus, inscriptionProgress, inscriptionError, inscriptionStatusText]);
+
   const executeWithSigner = async (transaction: any) => {
-    console.log("📝 Signing and executing transaction with wallet...");
-    
-    // For HashPack and most Hedera wallets, we need to:
-    // 1. Sign the transaction
-    // 2. Execute it using the wallet's provider/client
+    console.log("🔐 Signing and executing transaction with wallet...");
     
     try {
-      // Sign with wallet
       const signedTx = await signer.signTransaction(transaction);
       console.log("✅ Transaction signed");
       
-      // Get or create a client
       let client: Client;
       
-      // Try to get client from signer first
       if (signer._client) {
         console.log("Using signer's internal client");
         client = signer._client;
@@ -733,7 +98,6 @@ export function useNFTMarketplace({
         client = Client.forName(network);
       }
       
-      // Execute the signed transaction
       console.log("Executing signed transaction...");
       const txResponse = await signedTx.execute(client);
       
@@ -742,6 +106,27 @@ export function useNFTMarketplace({
       console.error("Transaction execution error:", err);
       throw err;
     }
+  };
+
+  const formatTxIdForMirror = (txIdStr: string) => {
+    return txIdStr
+      .replace("@", "-")
+      .replace(/\./g, (match, offset, string) => {
+        const dotCount = string.slice(0, offset + 1).split('.').length - 1;
+        return dotCount <= 2 ? "." : "-";
+      });
+  };
+
+  const getMirrorNodeUrl = () => {
+    return network === "testnet" 
+      ? "https://testnet.mirrornode.hedera.com" 
+      : "https://mainnet.mirrornode.hedera.com";
+  };
+
+  const getClient = () => {
+    if (signer._client) return signer._client;
+    if (signer.client) return signer.client;
+    return Client.forName(network);
   };
 
   // ========================================
@@ -769,7 +154,7 @@ export function useNFTMarketplace({
         .setContractId(marketplaceContractId)
         .setTransactionId(TransactionId.generate(AccountId.fromString(accountId)))
         .setGas(4000000)
-        .setPayableAmount(new Hbar(10))
+        .setPayableAmount(new Hbar(20))
         .setFunction(
           "createCollection",
           new ContractFunctionParameters()
@@ -784,49 +169,22 @@ export function useNFTMarketplace({
       const txIdStr = txResponse.transactionId.toString();
       console.log("📤 Transaction submitted:", txIdStr);
 
-      // Get receipt
-      // const client = Client.forName(network);
-       let client: Client;
-      if (signer._client) {
-        client = signer._client;
-      } else if (signer.client) {
-        client = signer.client;
-      } else {
-        client = Client.forName(network);
-      }
+      const client = getClient();
       const receipt = await txResponse.getReceipt(client);
       console.log("✅ Collection created successfully");
 
-      // // Get the token address from the transaction record
-      // const record = await txResponse.getRecord();
-
-      // const tokenEvmAddress = record.contractFunctionResult?.getAddress(0);
-      // const tokenId = tokenEvmAddress 
-        // ? TokenId.fromString(tokenEvmAddress).toEvmAddress()
-        // : null;
-
-        
-    // Use Mirror Node to get the contract result instead of getRecord()
-    // Wait for mirror node propagation
-    await new Promise(resolve => setTimeout(resolve, 5000));
-    const txIdFormatted = txIdStr
-  .replace("@", "-")
-  .replace(/\./g, (match, offset, string) => {
-    // Keep the first two dots (shard.realm.num), replace the third with hyphen
-    const dotCount = string.slice(0, offset + 1).split('.').length - 1;
-    return dotCount <= 2 ? "." : "-";
-  });
-    
-    // const txIdFormatted = txIdStr.replace("@", "-").replace(".", "-");
-    const mirrorResponse = await fetch(
-      `https://testnet.mirrornode.hedera.com/api/v1/contracts/results/${txIdFormatted}`
-    );
-    const mirrorData = await mirrorResponse.json();
-    console.log("Mirror Node data:", mirrorData);
-    
-    const tokenEvmAddress = mirrorData?.call_result 
-      ? "0x" + mirrorData.call_result.slice(-40) 
-      : null;
+      await new Promise(resolve => setTimeout(resolve, 5000));
+      
+      const txIdFormatted = formatTxIdForMirror(txIdStr);
+      const mirrorResponse = await fetch(
+        `${getMirrorNodeUrl()}/api/v1/contracts/results/${txIdFormatted}`
+      );
+      const mirrorData = await mirrorResponse.json();
+      console.log("Mirror Node data:", mirrorData);
+      
+      const tokenEvmAddress = mirrorData?.call_result 
+        ? "0x" + mirrorData.call_result.slice(-40) 
+        : null;
       const tokenId = tokenEvmAddress;
 
       console.log("🎉 New Token ID:", tokenId);
@@ -849,344 +207,272 @@ export function useNFTMarketplace({
   };
 
   // ========================================
-  // 2. MINT NFTs
+  // 2. MINT NFTs (Batch)
   // ========================================
-  // const mintNFTs = async ({
-  //   tokenId,
-  //   metadataURIs,
-  // }: {
-  //   tokenId: string;
-  //   metadataURIs: string[];
-  // }) => {
-  //   try {
-  //     setStatus("processing");
-  //     setError(null);
-  //     console.log("🎨 Minting NFTs:", { tokenId, count: metadataURIs.length });
-
-  //     const tokenEvmAddress = TokenId.fromString(tokenId).toEvmAddress();
-  //     const metadataBytes = metadataURIs.map(uri => Buffer.from(uri));
-
-  //     const contractExecTx = new ContractExecuteTransaction()
-  //       .setContractId(marketplaceContractId)
-  //       .setTransactionId(TransactionId.generate(AccountId.fromString(accountId)))
-  //       .setGas(4000000)
-  //       .setMaxTransactionFee(new Hbar(20))
-  //       .setFunction(
-  //         "mintNFTs",
-  //         new ContractFunctionParameters()
-  //           .addAddress(tokenEvmAddress)
-  //           .addBytesArray(metadataBytes)
-  //       );
-
-  //     const txResponse = await executeWithSigner(contractExecTx);
-  //     const txIdStr = txResponse.transactionId.toString();
-  //     console.log("📤 Transaction submitted:", txIdStr);
-
-  //     // const client = Client.forName(network);
-  //      let client: Client;
-  //     if (signer._client) {
-  //       client = signer._client;
-  //     } else if (signer.client) {
-  //       client = signer.client;
-  //     } else {
-  //       client = Client.forName(network);
-  //     }
-  //     const receipt = await txResponse.getReceipt(client);
-  //     console.log("✅ NFTs minted successfully");
-
-  //     const record = await txResponse.getRecord(client);
+  const mintNFTs = async ({
+    tokenId,
+    inscriptionData,
+    copies
+  }: {
+    tokenId: string;
+    inscriptionData: any;
+    copies: number;
+  }) => {
+    try {
+      setStatus("processing");
+      setError(null);
+      setMintStatus("minting");
+      console.log("🎨 Minting NFTs:", { tokenId, count: copies });
       
-  //     const serials: number[] = [];
-  //     for (let i = 0; i < metadataURIs.length; i++) {
-  //       try {
-  //         const serial = record.contractFunctionResult?.getInt64(i);
-  //         if (serial) serials.push(Number(serial));
-  //       } catch {
-  //         break;
-  //       }
-  //     }
-
-  //     console.log("🎉 Minted serials:", serials);
-
-  //     setTxId(txIdStr);
-  //     setStatus("done");
-
-  //     return {
-  //       transactionId: txIdStr,
-  //       status: receipt.status.toString(),
-  //       serials,
-  //     };
-  //   } catch (err: any) {
-  //     console.error("❌ Minting failed:", err);
-  //     setError(err.message || "Minting failed");
-  //     setStatus("error");
-  //     throw err;
-  //   }
-  // };
-
-const mintNFTs = async ({
-  tokenId,
-  metadataURIs,
-}: {
-  tokenId: string;
-  metadataURIs: string[];
-}) => {
-  try {
-    setStatus("processing");
-    setError(null);
-    console.log("🎨 Minting NFTs:", { tokenId, count: metadataURIs.length });
-
-    //const tokenEvmAddress = TokenId.fromString(tokenId).toEvmAddress();
-    const metadataBytes = metadataURIs.map(uri => Buffer.from(uri));
-
-    const contractExecTx = new ContractExecuteTransaction()
-      .setContractId(marketplaceContractId)
-      .setTransactionId(TransactionId.generate(AccountId.fromString(accountId)))
-      .setGas(4000000)
-      .setMaxTransactionFee(new Hbar(20))
-      .setFunction(
-        "mintNFTs",
-        new ContractFunctionParameters()
-          .addAddress(tokenId)
-          .addBytesArray(metadataBytes)
-      );
-
-    const txResponse = await executeWithSigner(contractExecTx);
-    const txIdStr = txResponse.transactionId.toString();
-    console.log("📤 Transaction submitted:", txIdStr);
-
-    let client: Client;
-    if (signer._client) {
-      client = signer._client;
-    } else if (signer.client) {
-      client = signer.client;
-    } else {
-      client = Client.forName(network);
-    }
-    const receipt = await txResponse.getReceipt(client);
-    console.log("✅ NFTs minted successfully");
-
-    // Use Mirror Node to get the contract result instead of getRecord()
-    await new Promise(resolve => setTimeout(resolve, 5000));
-    
-    // const txIdFormatted = txIdStr.replace("@", "-").replace(".", "-");
-     const txIdFormatted = txIdStr
-  .replace("@", "-")
-  .replace(/\./g, (match, offset, string) => {
-    // Keep the first two dots (shard.realm.num), replace the third with hyphen
-    const dotCount = string.slice(0, offset + 1).split('.').length - 1;
-    return dotCount <= 2 ? "." : "-";
-  });
-
-    const baseUrl = network === "testnet" 
-      ? "https://testnet.mirrornode.hedera.com" 
-      : "https://mainnet.mirrornode.hedera.com";
-    
-    const mirrorResponse = await fetch(
-      `${baseUrl}/api/v1/contracts/results/${txIdFormatted}`
-    );
-    const mirrorData = await mirrorResponse.json();
-    console.log("Mirror Node data:", mirrorData);
-    
-    // Decode serial numbers from call_result
-    const serials: number[] = [];
-    if (mirrorData?.call_result) {
-      // The result is ABI-encoded int64 array
-      // Each int64 is 32 bytes (256 bits) in ABI encoding
-      const result = mirrorData.call_result.slice(2); // Remove '0x'
+      const metadataHRL = `hcs://1/${inscriptionData.topicId}`;
+      console.log("📄 Metadata HRL:", metadataHRL);
       
-      // Skip the first 64 chars (offset pointer) and next 64 chars (array length)
-      const arrayLengthHex = result.slice(64, 128);
-      const arrayLength = parseInt(arrayLengthHex, 16);
-      
-      for (let i = 0; i < arrayLength; i++) {
-        const start = 128 + (i * 64);
-        const serialHex = result.slice(start, start + 64);
-        const serial = parseInt(serialHex, 16);
-        if (serial > 0) serials.push(serial);
+      const BATCH_SIZE = 10;
+      let allSerials: number[] = [];
+      let txIdStr = "";
+      let receipt: any;
+
+      setMintStatusText(`Minting ${copies} Copies...`);
+
+      for (let batchStart = 0; batchStart < copies; batchStart += BATCH_SIZE) {
+        const batchEnd = Math.min(batchStart + BATCH_SIZE, copies);
+        const batchCount = batchEnd - batchStart;
+        
+        console.log(`📦 Minting batch: NFTs ${batchStart + 1}-${batchEnd} (${batchCount} NFTs)`);
+        
+        const metadataBuffers = Array(batchCount).fill(
+          Buffer.from(metadataHRL || "")
+        );
+
+        try {
+          const contractExecTx = new ContractExecuteTransaction()
+            .setContractId(marketplaceContractId)
+            .setTransactionId(TransactionId.generate(AccountId.fromString(accountId)))
+            .setGas(4000000)
+            .setMaxTransactionFee(new Hbar(20))
+            .setFunction(
+              "mintNFTs",
+              new ContractFunctionParameters()
+                .addAddress(tokenId)
+                .addBytesArray(metadataBuffers)
+            );
+
+          const txResponse = await executeWithSigner(contractExecTx);
+          txIdStr = txResponse.transactionId.toString();
+          console.log("📤 Transaction submitted:", txIdStr);
+          setTxId(txIdStr);
+
+          const client = getClient();
+          receipt = await txResponse.getReceipt(client);
+          console.log("✅ NFTs minted successfully", receipt);
+
+          await new Promise(resolve => setTimeout(resolve, 5000));
+          
+          const txIdFormatted = formatTxIdForMirror(txIdStr);
+          const mirrorResponse = await fetch(
+            `${getMirrorNodeUrl()}/api/v1/contracts/results/${txIdFormatted}`
+          );
+          const mirrorData = await mirrorResponse.json();
+          console.log("Mirror Node data:", mirrorData);
+          
+          const serials: number[] = [];
+          if (mirrorData?.call_result) {
+            const result = mirrorData.call_result.slice(2);
+            const arrayLengthHex = result.slice(64, 128);
+            const arrayLength = parseInt(arrayLengthHex, 16);
+            
+            for (let i = 0; i < arrayLength; i++) {
+              const start = 128 + (i * 64);
+              const serialHex = result.slice(start, start + 64);
+              const serial = parseInt(serialHex, 16);
+              if (serial > 0) serials.push(serial);
+            }
+          
+            allSerials = allSerials.concat(serials);
+            console.log("🎉 Minted serials:", serials);
+          }
+
+          setMintProgress(50 + ((batchEnd / copies) * 50));
+          setMintStatusText(`Minted ${batchEnd} of ${copies} NFTs...`);
+        } catch (batchError: any) {
+          console.error(`❌ Error minting batch ${Math.ceil((batchStart + 1) / BATCH_SIZE)}:`, batchError);
+          throw new Error(`Failed to mint batch ${Math.ceil((batchStart + 1) / BATCH_SIZE)}: ${batchError.message}`);
+        }
+        
+        if (batchEnd < copies) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
       }
+    
+      setStatus("done");
+      setMintStatus("done");
+      setMintProgress(100);
+
+      return {
+        transactionId: txIdStr,
+        status: receipt.status.toString(),
+        serials: allSerials,
+      };
+    } catch (err: any) {
+      console.error("❌ Minting failed:", err);
+      setError(err.message || "Minting failed");
+      setMintError(err.message || "Minting failed");
+      setStatus("error");
+      setMintStatus("error");
+      throw err;
     }
-
-    console.log("🎉 Minted serials:", serials);
-
-    setTxId(txIdStr);
-    setStatus("done");
-
-    return {
-      transactionId: txIdStr,
-      status: receipt.status.toString(),
-      serials,
-    };
-  } catch (err: any) {
-    console.error("❌ Minting failed:", err);
-    setError(err.message || "Minting failed");
-    setStatus("error");
-    throw err;
-  }
-};
-
-
+  };
 
   // ========================================
-  // 3. LIST NFT FOR SALE
+  // 3. LIST SINGLE NFT
   // ========================================
-  // const listNFT = async ({
-  //   tokenId,
-  //   serialNumber,
-  //   priceInHbar,
-  // }: {
-  //   tokenId: string;
-  //   serialNumber: number;
-  //   priceInHbar: number;
-  // }) => {
-  //   try {
-  //     setStatus("processing");
-  //     setError(null);
-  //     console.log("📝 Listing NFT:", { tokenId, serialNumber, priceInHbar });
-
-  //     const tokenEvmAddress = TokenId.fromString(tokenId).toEvmAddress();
-  //     const priceInTinybars = Hbar.from(priceInHbar, HbarUnit.Hbar).toTinybars();
-
-  //     const contractExecTx = new ContractExecuteTransaction()
-  //       .setContractId(marketplaceContractId)
-  //       .setTransactionId(TransactionId.generate(AccountId.fromString(accountId)))
-  //       .setGas(15000000)
-  //       .setFunction(
-  //         "listNFT",
-  //         new ContractFunctionParameters()
-  //           .addAddress(tokenEvmAddress)
-  //           .addInt64(serialNumber)
-  //           .addUint256(priceInTinybars)
-  //       );
-
-  //     const txResponse = await executeWithSigner(contractExecTx);
-  //     const txIdStr = txResponse.transactionId.toString();
-  //     console.log("📤 Transaction submitted:", txIdStr);
-
-  //     // const client = Client.forName(network);
-  //      let client: Client;
-  //     if (signer._client) {
-  //       client = signer._client;
-  //     } else if (signer.client) {
-  //       client = signer.client;
-  //     } else {
-  //       client = Client.forName(network);
-  //     }
-  //     const receipt = await txResponse.getReceipt(client);
-  //     console.log("✅ NFT listed successfully");
-
-  //     const record = await txResponse.getRecord(client);
-      
-  //     const listingId = record.contractFunctionResult?.getUint256(0);
-
-  //     console.log("🎉 Listing ID:", listingId?.toString());
-
-  //     setTxId(txIdStr);
-  //     setStatus("done");
-
-  //     return {
-  //       transactionId: txIdStr,
-  //       status: receipt.status.toString(),
-  //       listingId: listingId?.toString(),
-  //     };
-  //   } catch (err: any) {
-  //     console.error("❌ Listing failed:", err);
-  //     setError(err.message || "Listing failed");
-  //     setStatus("error");
-  //     throw err;
-  //   }
-  // };
-
   const listNFT = async ({
-  tokenId,
-  serialNumber,
-  priceInHbar,
-}: {
-  tokenId: string;
-  serialNumber: number;
-  priceInHbar: number;
-}) => {
-  try {
-    setStatus("processing");
-    setError(null);
-    console.log("📝 Listing NFT:", { tokenId, serialNumber, priceInHbar });
+    tokenId,
+    serialNumber,
+    priceInHbar,
+  }: {
+    tokenId: string;
+    serialNumber: number;
+    priceInHbar: number;
+  }) => {
+    try {
+      setStatus("processing");
+      setError(null);
+      console.log("📝 Listing NFT:", { tokenId, serialNumber, priceInHbar });
 
-    // const tokenEvmAddress = TokenId.fromString(tokenId).toEvmAddress();
-    const priceInTinybars = Hbar.from(priceInHbar, HbarUnit.Hbar).toTinybars();
+      const priceInTinybars = Hbar.from(priceInHbar, HbarUnit.Hbar).toTinybars();
+      
+      const contractExecTx = new ContractExecuteTransaction()
+        .setContractId(marketplaceContractId)
+        .setTransactionId(TransactionId.generate(AccountId.fromString(accountId)))
+        .setGas(1500000)
+        .setFunction(
+          "listNFT",
+          new ContractFunctionParameters()
+            .addAddress(tokenId)
+            .addInt64(serialNumber)
+            .addUint256(priceInTinybars)
+        );
 
-    const contractExecTx = new ContractExecuteTransaction()
-      .setContractId(marketplaceContractId)
-      .setTransactionId(TransactionId.generate(AccountId.fromString(accountId)))
-      .setGas(15000000)
-      .setFunction(
-        "listNFT",
-        new ContractFunctionParameters()
-          .addAddress(tokenId)
-          .addInt64(serialNumber)
-          .addUint256(priceInTinybars)
+      const txResponse = await executeWithSigner(contractExecTx);
+      const txIdStr = txResponse.transactionId.toString();
+      console.log("📤 Transaction submitted:", txIdStr);
+
+      const client = getClient();
+      const receipt = await txResponse.getReceipt(client);
+      console.log("✅ NFT listed successfully");
+
+      await new Promise(resolve => setTimeout(resolve, 5000));
+      
+      const txIdFormatted = formatTxIdForMirror(txIdStr);
+      const mirrorResponse = await fetch(
+        `${getMirrorNodeUrl()}/api/v1/contracts/results/${txIdFormatted}`
       );
+      const mirrorData = await mirrorResponse.json();
+      
+      let listingId: string | undefined;
+      if (mirrorData?.call_result) {
+        const result = mirrorData.call_result.slice(2);
+        listingId = BigInt("0x" + result).toString();
+      }
 
-    const txResponse = await executeWithSigner(contractExecTx);
-    const txIdStr = txResponse.transactionId.toString();
-    console.log("📤 Transaction submitted:", txIdStr);
+      console.log("🎉 Listing ID:", listingId);
 
-    let client: Client;
-    if (signer._client) {
-      client = signer._client;
-    } else if (signer.client) {
-      client = signer.client;
-    } else {
-      client = Client.forName(network);
+      setTxId(txIdStr);
+      setStatus("done");
+
+      return {
+        transactionId: txIdStr,
+        status: receipt.status.toString(),
+        listingId,
+      };
+    } catch (err: any) {
+      console.error("❌ Listing failed:", err);
+      setError(err.message || "Listing failed");
+      setStatus("error");
+      throw err;
     }
-    const receipt = await txResponse.getReceipt(client);
-    console.log("✅ NFT listed successfully");
+  };
 
-    // Use Mirror Node to get the contract result instead of getRecord()
-    await new Promise(resolve => setTimeout(resolve, 5000));
-    
-    //const txIdFormatted = txIdStr.replace("@", "-").replace(".", "-");
-     const txIdFormatted = txIdStr
-  .replace("@", "-")
-  .replace(/\./g, (match, offset, string) => {
-    // Keep the first two dots (shard.realm.num), replace the third with hyphen
-    const dotCount = string.slice(0, offset + 1).split('.').length - 1;
-    return dotCount <= 2 ? "." : "-";
-  });
-    const baseUrl = network === "mainnet" 
-      ? "https://mainnet.mirrornode.hedera.com" 
-      : "https://testnet.mirrornode.hedera.com";
-    
-    const mirrorResponse = await fetch(
-      `${baseUrl}/api/v1/contracts/results/${txIdFormatted}`
-    );
-    const mirrorData = await mirrorResponse.json();
-    console.log("Mirror Node data:", mirrorData);
-    
-    // Decode listingId (uint256) from call_result
-    let listingId: string | undefined;
-    if (mirrorData?.call_result) {
-      // The result is a single uint256 (32 bytes = 64 hex chars)
-      const result = mirrorData.call_result.slice(2); // Remove '0x'
-      listingId = BigInt("0x" + result).toString();
+  // ========================================
+  // 3B. BATCH LIST NFTs (NEW)
+  // ========================================
+  const batchListNFTs = async ({
+    tokenId,
+    serialNumbers,
+    priceInHbar,
+  }: {
+    tokenId: string;
+    serialNumbers: number[];
+    priceInHbar: number;
+  }) => {
+    try {
+      setStatus("processing");
+      setError(null);
+      console.log("📝 Batch listing NFTs:", { tokenId, count: serialNumbers.length, priceInHbar });
+
+      const priceInTinybars = Hbar.from(priceInHbar, HbarUnit.Hbar).toTinybars();
+      const prices = Array(serialNumbers.length).fill(priceInTinybars);
+      
+      const contractExecTx = new ContractExecuteTransaction()
+        .setContractId(marketplaceContractId)
+        .setTransactionId(TransactionId.generate(AccountId.fromString(accountId)))
+        .setGas(1500000 + (serialNumbers.length * 100000)) // Scale gas with number of listings
+        .setFunction(
+          "batchListNFTs",
+          new ContractFunctionParameters()
+            .addAddress(tokenId)
+            .addInt64Array(serialNumbers)
+            .addUint256Array(prices)
+        );
+
+      const txResponse = await executeWithSigner(contractExecTx);
+      const txIdStr = txResponse.transactionId.toString();
+      console.log("📤 Transaction submitted:", txIdStr);
+
+      const client = getClient();
+      const receipt = await txResponse.getReceipt(client);
+      console.log("✅ NFTs listed successfully");
+
+      await new Promise(resolve => setTimeout(resolve, 5000));
+      
+      const txIdFormatted = formatTxIdForMirror(txIdStr);
+      const mirrorResponse = await fetch(
+        `${getMirrorNodeUrl()}/api/v1/contracts/results/${txIdFormatted}`
+      );
+      const mirrorData = await mirrorResponse.json();
+      
+      const listingIds: string[] = [];
+      if (mirrorData?.call_result) {
+        const result = mirrorData.call_result.slice(2);
+        const arrayLengthHex = result.slice(64, 128);
+        const arrayLength = parseInt(arrayLengthHex, 16);
+        
+        for (let i = 0; i < arrayLength; i++) {
+          const start = 128 + (i * 64);
+          const listingIdHex = result.slice(start, start + 64);
+          const listingId = BigInt("0x" + listingIdHex).toString();
+          listingIds.push(listingId);
+        }
+      }
+
+      console.log("🎉 Listing IDs:", listingIds);
+
+      setTxId(txIdStr);
+      setStatus("done");
+
+      return {
+        transactionId: txIdStr,
+        status: receipt.status.toString(),
+        listingIds,
+      };
+    } catch (err: any) {
+      console.error("❌ Batch listing failed:", err);
+      setError(err.message || "Batch listing failed");
+      setStatus("error");
+      throw err;
     }
-
-    console.log("🎉 Listing ID:", listingId);
-
-    setTxId(txIdStr);
-    setStatus("done");
-
-    return {
-      transactionId: txIdStr,
-      status: receipt.status.toString(),
-      listingId,
-    };
-  } catch (err: any) {
-    console.error("❌ Listing failed:", err);
-    setError(err.message || "Listing failed");
-    setStatus("error");
-    throw err;
-  }
-};
+  };
 
   // ========================================
   // 4. PURCHASE NFT
@@ -1218,7 +504,7 @@ const mintNFTs = async ({
       const txIdStr = txResponse.transactionId.toString();
       console.log("📤 Transaction submitted:", txIdStr);
 
-      const client = Client.forName(network);
+      const client = getClient();
       const receipt = await txResponse.getReceipt(client);
       console.log("✅ NFT purchased successfully");
 
@@ -1264,7 +550,7 @@ const mintNFTs = async ({
       const txIdStr = txResponse.transactionId.toString();
       console.log("📤 Transaction submitted:", txIdStr);
 
-      const client = Client.forName(network);
+      const client = getClient();
       const receipt = await txResponse.getReceipt(client);
       console.log("✅ Listing cancelled");
 
@@ -1284,183 +570,145 @@ const mintNFTs = async ({
   };
 
   // ========================================
-  // 6. GET COLLECTION INFO
+  // CREATE COMIC NFT (with inscription)
   // ========================================
+  const createComicNFT = async ({
+    metadata,
+    dbComicId,
+    tokenId,
+    copies
+  }: {
+    metadata: string;
+    dbComicId: string;
+    tokenId: string;
+    copies: number;
+  }) => {
+    try {
+      setMintStatus("inscribing");
+      setMintError(null);
+      console.log("🎨 Creating comic NFT...");
+      
+      const inscriptionResult = await createInscription(metadata, dbComicId);
+      console.log("✅ Inscription created:", inscriptionResult);
+      
+      setMintStatus("minting");
+      const mintResult = await mintNFTs({
+        tokenId: tokenId,
+        inscriptionData: inscriptionResult,
+        copies: copies
+      });
+      
+      console.log("✅ NFT(s) minted:", mintResult);
+      setMintStatus("done");
+      setMintResult(mintResult);
+      return mintResult;
+    } catch (err: any) {
+      console.error("❌ Creating comic NFT failed:", err);
+      setMintError(err.message || "Creating comic NFT failed");
+      setMintStatus("error");
+      throw err;
+    }
+  };
+
+  // Query functions remain the same...
   const getCollectionInfo = async (tokenId: string): Promise<Collection> => {
-    try {
-      console.log("📖 Fetching collection info:", tokenId);
+    console.log("📖 Fetching collection info:", tokenId);
+    const tokenEvmAddress = TokenId.fromString(tokenId).toSolidityAddress();
+    const client = Client.forName(network);
 
-      const tokenEvmAddress = TokenId.fromString(tokenId).toSolidityAddress();
-      const client = Client.forName(network);
+    const query = new ContractCallQuery()
+      .setContractId(marketplaceContractId)
+      .setGas(100000)
+      .setFunction("getCollection", new ContractFunctionParameters().addAddress(tokenEvmAddress));
 
-      const query = new ContractCallQuery()
-        .setContractId(marketplaceContractId)
-        .setGas(100000)
-        .setFunction(
-          "getCollection",
-          new ContractFunctionParameters().addAddress(tokenEvmAddress)
-        );
-
-      const result = await query.execute(client);
-
-      const collection: Collection = {
-        creator: result.getAddress(0),
-        name: result.getString(1),
-        symbol: result.getString(2),
-        maxSupply: result.getInt64(3).toString(),
-        currentSupply: result.getInt64(4).toString(),
-      };
-
-      console.log("✅ Collection info:", collection);
-      return collection;
-    } catch (err: any) {
-      console.error("❌ Failed to fetch collection:", err);
-      throw err;
-    }
+    const result = await query.execute(client);
+    return {
+      creator: result.getAddress(0),
+      name: result.getString(1),
+      symbol: result.getString(2),
+      maxSupply: result.getInt64(3).toString(),
+      currentSupply: result.getInt64(4).toString(),
+    };
   };
 
-  // ========================================
-  // 7. GET LISTING INFO
-  // ========================================
   const getListingInfo = async (listingId: number | string): Promise<Listing> => {
-    try {
-      console.log("📖 Fetching listing info:", listingId);
+    console.log("📖 Fetching listing info:", listingId);
+    const client = Client.forName(network);
 
-      const client = Client.forName(network);
+    const query = new ContractCallQuery()
+      .setContractId(marketplaceContractId)
+      .setGas(100000)
+      .setFunction("getListing", 
+        new ContractFunctionParameters().addUint256(typeof listingId === "string" ? parseInt(listingId) : listingId)
+      );
 
-      const query = new ContractCallQuery()
-        .setContractId(marketplaceContractId)
-        .setGas(100000)
-        .setFunction(
-          "getListing",
-          new ContractFunctionParameters().addUint256(typeof listingId === "string" ? parseInt(listingId) : listingId)
-        );
-
-      const result = await query.execute(client);
-
-      const listing: Listing = {
-        tokenAddress: result.getAddress(0),
-        serialNumber: result.getInt64(1).toString(),
-        seller: result.getAddress(2),
-        price: result.getUint256(3).toString(),
-        isActive: result.getBool(4),
-      };
-
-      console.log("✅ Listing info:", listing);
-      return listing;
-    } catch (err: any) {
-      console.error("❌ Failed to fetch listing:", err);
-      throw err;
-    }
+    const result = await query.execute(client);
+    return {
+      tokenAddress: result.getAddress(0),
+      serialNumber: result.getInt64(1).toString(),
+      seller: result.getAddress(2),
+      price: result.getUint256(3).toString(),
+      isActive: result.getBool(4),
+    };
   };
 
-  // ========================================
-  // 8. GET MARKETPLACE FEE
-  // ========================================
   const getMarketplaceFee = async (): Promise<number> => {
-    try {
-      console.log("📖 Fetching marketplace fee...");
+    const client = Client.forName(network);
+    const query = new ContractCallQuery()
+      .setContractId(marketplaceContractId)
+      .setGas(100000)
+      .setFunction("marketplaceFeePercent");
 
-      const client = Client.forName(network);
-
-      const query = new ContractCallQuery()
-        .setContractId(marketplaceContractId)
-        .setGas(100000)
-        .setFunction("marketplaceFeePercent");
-
-      const result = await query.execute(client);
-      const feePercent = Number(result.getUint256(0));
-
-      console.log("✅ Marketplace fee:", feePercent / 100, "%");
-      return feePercent;
-    } catch (err: any) {
-      console.error("❌ Failed to fetch fee:", err);
-      throw err;
-    }
+    const result = await query.execute(client);
+    return Number(result.getUint256(0));
   };
 
-  // ========================================
-  // 9. UPDATE MARKETPLACE FEE (Owner only)
-  // ========================================
+  // Owner functions
   const updateMarketplaceFee = async (newFeePercent: number) => {
-    try {
-      setStatus("processing");
-      setError(null);
-      console.log("⚙️ Updating marketplace fee:", newFeePercent / 100, "%");
+    setStatus("processing");
+    setError(null);
 
-      const contractExecTx = new ContractExecuteTransaction()
-        .setContractId(marketplaceContractId)
-        .setTransactionId(TransactionId.generate(AccountId.fromString(accountId)))
-        .setGas(1000000)
-        .setFunction(
-          "updateMarketplaceFee",
-          new ContractFunctionParameters().addUint256(newFeePercent)
-        );
+    const contractExecTx = new ContractExecuteTransaction()
+      .setContractId(marketplaceContractId)
+      .setTransactionId(TransactionId.generate(AccountId.fromString(accountId)))
+      .setGas(1000000)
+      .setFunction("updateMarketplaceFee", new ContractFunctionParameters().addUint256(newFeePercent));
 
-      const txResponse = await executeWithSigner(contractExecTx);
-      const txIdStr = txResponse.transactionId.toString();
+    const txResponse = await executeWithSigner(contractExecTx);
+    const receipt = await txResponse.getReceipt(getClient());
 
-      const client = Client.forName(network);
-      const receipt = await txResponse.getReceipt(client);
-      console.log("✅ Marketplace fee updated");
+    setTxId(txResponse.transactionId.toString());
+    setStatus("done");
 
-      setTxId(txIdStr);
-      setStatus("done");
-
-      return {
-        transactionId: txIdStr,
-        status: receipt.status.toString(),
-      };
-    } catch (err: any) {
-      console.error("❌ Fee update failed:", err);
-      setError(err.message || "Fee update failed");
-      setStatus("error");
-      throw err;
-    }
+    return { transactionId: txResponse.transactionId.toString(), status: receipt.status.toString() };
   };
 
-  // ========================================
-  // 10. WITHDRAW FEES (Owner only)
-  // ========================================
   const withdrawFees = async () => {
-    try {
-      setStatus("processing");
-      setError(null);
-      console.log("💰 Withdrawing marketplace fees...");
+    setStatus("processing");
+    setError(null);
 
-      const contractExecTx = new ContractExecuteTransaction()
-        .setContractId(marketplaceContractId)
-        .setTransactionId(TransactionId.generate(AccountId.fromString(accountId)))
-        .setGas(1000000)
-        .setFunction("withdrawFees");
+    const contractExecTx = new ContractExecuteTransaction()
+      .setContractId(marketplaceContractId)
+      .setTransactionId(TransactionId.generate(AccountId.fromString(accountId)))
+      .setGas(1000000)
+      .setFunction("withdrawFees");
 
-      const txResponse = await executeWithSigner(contractExecTx);
-      const txIdStr = txResponse.transactionId.toString();
+    const txResponse = await executeWithSigner(contractExecTx);
+    const receipt = await txResponse.getReceipt(getClient());
 
-      const client = Client.forName(network);
-      const receipt = await txResponse.getReceipt(client);
-      console.log("✅ Fees withdrawn");
+    setTxId(txResponse.transactionId.toString());
+    setStatus("done");
 
-      setTxId(txIdStr);
-      setStatus("done");
-
-      return {
-        transactionId: txIdStr,
-        status: receipt.status.toString(),
-      };
-    } catch (err: any) {
-      console.error("❌ Withdrawal failed:", err);
-      setError(err.message || "Withdrawal failed");
-      setStatus("error");
-      throw err;
-    }
+    return { transactionId: txResponse.transactionId.toString(), status: receipt.status.toString() };
   };
 
   return {
     // Actions
     createCollection,
+    createComicNFT,
     mintNFTs,
     listNFT,
+    batchListNFTs, // NEW
     purchaseNFT,
     cancelListing,
     updateMarketplaceFee,
@@ -1475,5 +723,10 @@ const mintNFTs = async ({
     status,
     error,
     txId,
+    mintStatus,
+    mintProgress,
+    mintError,
+    mintResult,
+    mintStatusText,
   };
 }
