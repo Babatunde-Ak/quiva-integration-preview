@@ -228,57 +228,86 @@ export const FeaturesComics = [
     }
   ]
 
-
 export const heroComics: HeroComicData[] = [
-    {
-      id: '1',
-      title: 'My DARLING',
-      description: 'A heartfelt story of love, sacrifice, and redemption. Follow the journey of Aya, a quiet girl whose life is transformed when she meets a mysterious protector sent to guard her from the shadows of her past. In a world torn between light and darkness, their bond is tested by trials of faith, loyalty, and purpose.',
-      tags: ['Faith', 'Romance', 'Adventure', 'Supernatural'],
-      image: 'https://i.ebayimg.com/images/g/b6oAAOSwez5l-jYm/s-l1200.jpg',
-      buttonText: 'View'
-    },
-    {
-      id: '2',
-      title: 'Shadow Realm',
-      description: 'Enter a mystical world where ancient powers collide with modern reality. When darkness threatens to consume everything, only the chosen few can stand against the eternal night.',
-      tags: ['Fantasy', 'Action', 'Mystery'],
-      image: 'https://cdn.marvel.com/content/1x/asm2025001_dimeo.jpg',
-      buttonText: 'Read Now'
-    },
-    {
-      id: '3',
-      title: 'Neon Chronicles',
-      description: 'In a cyberpunk future where technology and humanity merge, follow the adventures of rebels fighting against corporate tyranny in the neon-lit streets of Neo Tokyo.',
-      tags: ['Cyberpunk', 'Sci-Fi', 'Action'],
-      image: 'https://images.unsplash.com/photo-1569003339405-ea396a5a8a90?w=300&h=400&fit=crop',
-      buttonText: 'Explore'
-    },
-    {
-      id: '4',
-      title: 'My DARLING',
-      description: 'A heartfelt story of love, sacrifice, and redemption. Follow the journey of Aya, a quiet girl whose life is transformed when she meets a mysterious protector sent to guard her from the shadows of her past. In a world torn between light and darkness, their bond is tested by trials of faith, loyalty, and purpose.',
-      tags: ['Faith', 'Romance', 'Adventure', 'Supernatural'],
-      image: 'https://i.ebayimg.com/images/g/b6oAAOSwez5l-jYm/s-l1200.jpg',
-      buttonText: 'View'
-    },
-    {
-      id: '5',
-      title: 'Shadow Realm',
-      description: 'Enter a mystical world where ancient powers collide with modern reality. When darkness threatens to consume everything, only the chosen few can stand against the eternal night.',
-      tags: ['Fantasy', 'Action', 'Mystery'],
-      image: 'https://cdn.marvel.com/content/1x/asm2025001_dimeo.jpg',
-      buttonText: 'Read Now'
-    },
-    {
-      id: '6',
-      title: 'Neon Chronicles',
-      description: 'In a cyberpunk future where technology and humanity merge, follow the adventures of rebels fighting against corporate tyranny in the neon-lit streets of Neo Tokyo.',
-      tags: ['Cyberpunk', 'Sci-Fi', 'Action'],
-      image: 'https://images.unsplash.com/photo-1569003339405-ea396a5a8a90?w=300&h=400&fit=crop',
-      buttonText: 'Explore'
-    }
-  ]
+  {
+    id: '1',
+    title: 'Avatar- the Last Air Bender',
+    studio: 'Studio Kyra',
+    description: 'In a world torn between the elements, a young avatar rises to restore balance - or be broken by destiny. "Book of Beginnings" marks the first chapter of the Avatar Chronicles, where every hint helps since the plot.',
+    tags: ['NEW'],
+    totalIssues: 6012,
+    floorPrice: 0.013,
+    price: 9.989,
+    status: 'LIVE',
+    image: 'https://i.ebayimg.com/images/g/b6oAAOSwez5l-jYm/s-l1200.jpg',
+    buttonText: 'Mint Comic'
+  },
+  {
+    id: '2',
+    title: 'The Amazing Spider-Man',
+    studio: 'Marvel Comics',
+    description: 'When a radioactive spider bite gives teenager Peter Parker incredible powers, he must learn that with great power comes great responsibility. Follow the web-slinger through his greatest adventures.',
+    tags: ['FEATURED'],
+    totalIssues: 8234,
+    floorPrice: 0.024,
+    price: 12.456,
+    status: 'LIVE',
+    image: 'https://cdn.marvel.com/content/1x/asm2025001_dimeo.jpg',
+    buttonText: 'Mint Comic'
+  },
+  {
+    id: '3',
+    title: 'Neon Chronicles',
+    studio: 'CyberPunk Studios',
+    description: 'In a cyberpunk future where technology and humanity merge, follow the adventures of rebels fighting against corporate tyranny in the neon-lit streets of Neo Tokyo. The revolution begins now.',
+    tags: ['TRENDING'],
+    totalIssues: 4567,
+    floorPrice: 0.018,
+    price: 8.923,
+    status: 'LIVE',
+    image: 'https://images.unsplash.com/photo-1569003339405-ea396a5a8a90?w=300&h=400&fit=crop',
+    buttonText: 'Mint Comic'
+  },
+  {
+    id: '4',
+    title: 'Avatar- the Last Air Bender',
+    studio: 'Studio Kyra',
+    description: 'In a world torn between the elements, a young avatar rises to restore balance - or be broken by destiny. "Book of Beginnings" marks the first chapter of the Avatar Chronicles, where every hint helps since the plot.',
+    tags: ['NEW'],
+    totalIssues: 6012,
+    floorPrice: 0.013,
+    price: 9.989,
+    status: 'LIVE',
+    image: 'https://i.ebayimg.com/images/g/b6oAAOSwez5l-jYm/s-l1200.jpg',
+    buttonText: 'Mint Comic'
+  },
+  {
+    id: '5',
+    title: 'The Amazing Spider-Man',
+    studio: 'Marvel Comics',
+    description: 'When a radioactive spider bite gives teenager Peter Parker incredible powers, he must learn that with great power comes great responsibility. Follow the web-slinger through his greatest adventures.',
+    tags: ['FEATURED'],
+    totalIssues: 8234,
+    floorPrice: 0.024,
+    price: 12.456,
+    status: 'LIVE',
+    image: 'https://cdn.marvel.com/content/1x/asm2025001_dimeo.jpg',
+    buttonText: 'Mint Comic'
+  },
+  {
+    id: '6',
+    title: 'Neon Chronicles',
+    studio: 'CyberPunk Studios',
+    description: 'In a cyberpunk future where technology and humanity merge, follow the adventures of rebels fighting against corporate tyranny in the neon-lit streets of Neo Tokyo. The revolution begins now.',
+    tags: ['TRENDING'],
+    totalIssues: 4567,
+    floorPrice: 0.018,
+    price: 8.923,
+    status: 'LIVE',
+    image: 'https://images.unsplash.com/photo-1569003339405-ea396a5a8a90?w=300&h=400&fit=crop',
+    buttonText: 'Mint Comic'
+  }
+]
 
 export const sampleComics = [
   {
