@@ -15,8 +15,6 @@ import {
   clearPreviewComic 
 } from '@/redux/slices/comicSlice'
 import { Loader2 } from 'lucide-react'
-// import { useComicPurchase } from '../../../hook/usePurchaseComic'
-// import { useClaimFreeComic, useCheckComicClaim } from '@/hook/useClaimFreeComic'
 import { toast } from 'react-toastify'
 import { QUIVA_COMICS_ABI as QUIVA_COMICS_ADDRESS } from '@/contracts/QuivaComics'
 import { DUMMY_COMIC_DATA } from '@/components/utils/dummy-data'
@@ -28,17 +26,6 @@ function Page() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const dispatch = useAppDispatch()
-
-  const useClaimFreeComic = () =>{
-    return null;
-  }
-
-  const useCheckComicClaim = (tokenId: string | undefined, walletAddress: string | null) => {
-    return {
-      hasClaimed: false,
-      refetch: () => {}
-    };
-  }
 
   const useComicPurchase = () => {
     return null;
@@ -56,10 +43,18 @@ function Page() {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
   const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false)
   const [isClaimModalOpen, setIsClaimModalOpen] = useState(false)
-  const [showMintPage, setShowMintPage] = useState(false) // NEW: Controls which page to show
+  const [showMintPage, setShowMintPage] = useState(false)
   const [hasNFTAccess, setHasNFTAccess] = useState<boolean | null>(null)
   const [useDummyData, setUseDummyData] = useState(false)
   const [activeTab, setActiveTab] = useState('details')
+  
+  // Claim-related state (replacing the hook)
+  const [hasClaimed, setHasClaimed] = useState(false)
+  const [isClaiming, setIsClaiming] = useState(false)
+  const [claimSuccess, setClaimSuccess] = useState(false)
+  const [claimError, setClaimError] = useState<Error | null>(null)
+  const [claimProgress, setClaimProgress] = useState(0)
+  const [claimHash, setClaimHash] = useState<string | null>(null)
   
   // Getting comic ID from URL query params
   const id = searchParams.get('id')
@@ -178,11 +173,6 @@ function Page() {
       otherIssues: []
     }
   }, [currentComic, useDummyData])
-
-  const { hasClaimed, refetch: refetchClaimStatus } = useCheckComicClaim(
-    transformedComic?.tokenId,
-    walletStatus.address
-  )
 
   // Auto-use dummy data
   useEffect(() => {
@@ -461,8 +451,11 @@ const handleMintComic = async () => {
 
           {/* <ClaimModal
             isOpen={isClaimModalOpen}
-            onClose={() => setIsClaimModalOpen(false)}
-            onClaim={handleClaimComic}
+            onClose={() => {
+              setIsClaimModalOpen(false)
+              resetClaimState()
+            }}
+            onClaim={handleClaimFreeComic}
             comicTitle={transformedComic.title}
             isClaiming={isClaiming}
             claimSuccess={claimSuccess}

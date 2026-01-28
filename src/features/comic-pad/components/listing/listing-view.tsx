@@ -318,12 +318,19 @@ import EpisodeRarity from './steps/EpisodeRarity';
 import ListingDetails from './steps/ListingDetails';
 import ReviewDetails from './steps/ReviewDetails';
 import ListingSuccessModal from './steps/ListingSuccessModal';
-import { useHederaWallet } from '@/providers/HashPackProvider';
-import { useAppSelector } from '@/redux/hook';
+import Image from 'next/image';
+import {crownIcon, sportsMedal} from '../../../../../public/dev_images';
+
 import { useNFTMarketplace } from '@/hook/useMarkeplace';
 import { useParams } from "next/navigation";
 
 type FlowStep = 'rarity' | 'listing' | 'review' | 'success';
+
+import {useListComic} from '@/hook/useListComic';
+import {useMintComic} from '@/hook/useMintComic';
+import {useAppSelector} from '@/redux/hook';
+import {useHederaWallet} from '@/providers/HashPackProvider';
+import { useParams, useRouter } from 'next/navigation';
 
 interface ListViewProps {
     episodeTitle?: string;
@@ -343,6 +350,7 @@ interface FlowData {
         type: 'legendary' | 'epic' | 'common';
         supply: string;
         maxSupply: number; // Added for actual supply number
+        icon: React.ReactNode;
     } | null;
     listing : {
         sales: string;
@@ -366,10 +374,16 @@ const ListView : React.FC < ListViewProps > = ({
     fullMetadataURI,
     royaltyRecipient,
     onComplete,
-    onCancel
+    onCancel,
 }) => {
-    const [currentStep, setCurrentStep] = useState<FlowStep>('rarity');
-    const [flowData, setFlowData] = useState<FlowData>({ rarity: null, listing: null });
+    const router = useRouter();
+    const params = useParams();
+    const episodeId = params.episode
+
+    const [currentStep,
+        setCurrentStep] = useState < FlowStep > ('rarity');
+    const [flowData,
+        setFlowData] = useState < FlowData > ({rarity: null, listing: null});
     const [isProcessing, setIsProcessing] = useState(false);
     const params = useParams();
     const [metadataCid, setMetadataCid] = useState<string>('');
@@ -426,19 +440,22 @@ const ListView : React.FC < ListViewProps > = ({
             name: 'Legendary',
             type: 'legendary' as const,
             supply: 'Supply 1 – 5,000',
-            maxSupply: 5000
+            maxSupply: 5000,
+                icon: <Image src={crownIcon} alt="legendary" className="w-6 h-6 object-cover"/>
         },
         epic: {
             name: 'Epic',
             type: 'epic' as const,
             supply: 'Supply 1 – 8,000',
-            maxSupply: 8000
+            maxSupply: 8000,
+                    icon: <Image src={sportsMedal} alt="epic" className="w-6 h-6 object-cover"/>
         },
         common: {
             name: 'Common',
             type: 'common' as const,
             supply: 'Infinite',
-            maxSupply: 1000000 // Large number for "infinite"
+            maxSupply: 1000000 // Large number for "infinite",
+                        icon: <Image src={sportsMedal} alt="common" className="w-6 h-6 object-cover"/>
         }
     };
 
@@ -689,4 +706,4 @@ const ListView : React.FC < ListViewProps > = ({
     );
 };
 
-export default ListView;
+            export default ListView;

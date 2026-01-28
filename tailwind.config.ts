@@ -34,7 +34,7 @@ const config: Config = {
 					"linear-gradient(180deg, #1C1C1C 0%, #0F0F0F 100%)",
 			},
 			colors: {
-				// Add your custom colors here
+				// Add your custom colors heres
 				primary: {
 					100: "#E57226",
 					200: "#1d421d",

@@ -120,6 +120,7 @@ const EpisodeFormController: React.FC<EpisodeFormControllerProps> = ({
     formData.pages.forEach((file, index) => {
       formDataToSend.append('pages', file);
     });
+    formDataToSend.append('collectionId', collectionId || '');
 
     try {
       const token = localStorage.getItem('token');

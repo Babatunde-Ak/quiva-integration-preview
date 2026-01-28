@@ -15,6 +15,8 @@ import { createComicMetadata } from "../lib/hashinal-helper";
 import { HederaMirrorNode } from "@hashgraphonline/standards-sdk";
    import { Logger } from '@hashgraphonline/standards-sdk';
 import axios from "axios";
+import { useAppDispatch } from "@/redux/hook";
+import { updateComicToken } from "@/redux/slices/comicSlice";
 
 // interface ComicFormData {
 //   name: string;
@@ -71,6 +73,9 @@ export function useMintComic({
   const [mintError, setMintError] = useState<string | null>(null);
   const [mintResult, setMintResult] = useState<MintResult | null>(null);
   const [mintStatusText, setMintStatusText] = useState<string>("");
+
+  const dispatch = useAppDispatch();
+
 
   // Use the inscription hook
   const {
@@ -308,25 +313,42 @@ console.log('Public key:', publicKey.toString());
     }
   };
 
-  //  async function updateComicWithMintData(mintData: MintResult, comicId: string) {
-  //   const token = localStorage.getItem('token');
-  //   const response = await axios.put(`http://localhost:5000/api/comics/token/${comicId}`,
-  //           {
-  //             tokenId: mintData.tokenId,
-  //             serial: mintData.serial,
-  //             transactionId: mintData.transactionId,
-  //             inscriptionTopicId: mintData.inscriptionTopicId,
-  //           },
-  //           {
-  //             headers: {
-  //               'Content-Type': 'multipart/form-data',
-  //               Authorization: `Bearer ${token}`,
-  //             },
+
+  async function updateComicWithMintData(mintData: MintResult, comicId: string) {
+    const token = localStorage.getItem('token');
+    try {
+      // @ts-ignore
+      const response = await dispatch(updateComicToken({ 
+        comicId, 
+        tokenId: mintData.tokenId, 
+        serial: String(mintData.serial[0] || 1),
+        transactionId: mintData.transactionId, 
+        metadataTopicIds: mintData.inscriptionTopicId ? [mintData.inscriptionTopicId] : [] 
+      })).unwrap();
+
+      return response.data;
+    } catch (error) {
+      console.error("❌ Error updating comic with mint data:", error);
+      throw error;
+    }
+
+    // const response = await axios.put(`http://localhost:5000/api/comics/token/${comicId}`,
+    //         {
+    //           tokenId: mintData.tokenId,
+    //           serial: mintData.serial,
+    //           transactionId: mintData.transactionId,
+    //           inscriptionTopicId: mintData.inscriptionTopicId,
+    //         },
+    //         {
+    //           headers: {
+    //             'Content-Type': 'multipart/form-data',
+    //             Authorization: `Bearer ${token}`,
+    //           },
             
-  //           }
-  //         );
-  //     return response.data;
-  //  }
+    //         }
+    //       );
+      // return response.data;
+  }
   /**
    * Reset all states
    */

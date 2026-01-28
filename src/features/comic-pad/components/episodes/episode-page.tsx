@@ -4,7 +4,9 @@ import React, {useState, useEffect} from 'react';
 import {useParams, useRouter} from 'next/navigation';
 import EpisodesEmpty from './episode-empty';
 import EpisodesList from './episode-list';
-import { MappedCollection } from '../../utils/utils';
+import { mapApiCollectionsToMockFormat, MappedCollection } from '../../utils/utils';
+import { getCollectionById } from '@/redux/slices/collectionSlice';
+import { useAppDispatch } from '@/redux/hook';
 
 interface Episode {
     id : string;
@@ -25,7 +27,7 @@ interface Collection {
 
 interface CollectionEpisodesPageProps {
     // Optional props for when data is passed from parent
-    collection?: MappedCollection;
+    collection?: any;
     onGoBack?: () => void;
     onUploadEpisode?: () => void;
     onCreateEpisode?: () => void;
@@ -47,37 +49,30 @@ const CollectionEpisodesPage : React.FC < CollectionEpisodesPageProps > = ({
     const router = useRouter();
     const collectionId = params?.id as string;
 
-    const [collection, setCollection] = useState < MappedCollection | null > (propCollection || null);
+    const [collection, setCollection] = useState <any> (propCollection || null);
     const [isLoading, setIsLoading] = useState(!propCollection);
-    const [error, setError] = useState < string | null > (null);
+    const [error, setError] = useState <string | null> (null);
     const [selectedEpisodes, setSelectedEpisodes] = useState<string[]>([]);
 
-    // Fetch collection data if not provided as prop
-    useEffect(() => {
-        if (!propCollection && collectionId) {
-            fetchCollection(collectionId);
-        }
-    }, [collectionId, propCollection]);
+    console.log('CollectionEpisodesPage Props:', collection);
 
-    const fetchCollection = async(id : string) => {
+    const dispatch = useAppDispatch();
+
+    const fetchCollection = async () => {
         try {
             setIsLoading(true);
+            const result = await dispatch(getCollectionById({id: collectionId})).unwrap();                
+            // Extract collections from the nested response structure
+            const apiCollection = result?.data?.collections || result?.data?.data || result?.data || [];
+                        
+            console.log('Mapped Collections:', apiCollection);
+            setCollection(apiCollection);
             setError(null);
-
-            // Replace this with your actual API call
-            const response = await fetch(`/api/collections/${id}`);
-
-            if (!response.ok) {
-                throw new Error('Failed to fetch collection');
-            }
-
-            const data = await response.json();
-            setCollection(data);
-        } catch (err) {
-            setError(err instanceof Error
-                ? err.message
-                : 'An error occurred');
-            console.error('Error fetching collection:', err);
+        } catch (error) {
+            console.error('Error fetching collections:', error);
+            setError('Failed to load collections');
+            // Fallback to mock data on error
+            setCollection(null);
         } finally {
             setIsLoading(false);
         }
@@ -96,7 +91,7 @@ const CollectionEpisodesPage : React.FC < CollectionEpisodesPageProps > = ({
         } else {
             console.log('Create drop for episode:', episodeId);
             // Navigate to create drop page
-            router.push(`/collections/${collectionId}/episodes/${episodeId}/create-drop`);
+            router.push(`/comic-pad/collections/${collectionId}/${episodeId}/drops`);
         }
     };
 
@@ -106,7 +101,7 @@ const CollectionEpisodesPage : React.FC < CollectionEpisodesPageProps > = ({
         } else {
             console.log('List to marketplace for episode:', episodeId);
             // Navigate to marketplace listing
-            router.push(`/comic-pad/listing`);
+            router.push(`/comic-pad/collections/${collectionId}/${episodeId}/listing`);
         }
     };
 
@@ -116,7 +111,7 @@ const CollectionEpisodesPage : React.FC < CollectionEpisodesPageProps > = ({
         } else {
             console.log('View details for episode:', episodeId);
             // Navigate to episode details
-            router.push(`/collections/${collectionId}/episodes/${episodeId}/details`);
+            router.push(`/comic-pad/collections/${collectionId}/${episodeId}`);
         }
     };
 
@@ -142,7 +137,7 @@ const CollectionEpisodesPage : React.FC < CollectionEpisodesPageProps > = ({
                 <div className="text-center">
                     <p className="text-red-400 mb-4">Error: {error}</p>
                     <button
-                        onClick={() => fetchCollection(collectionId)}
+                        onClick={() => fetchCollection()}
                         className="bg-primary-500 text-white px-6 py-2 rounded-lg hover:bg-primary-600">
                         Retry
                     </button>

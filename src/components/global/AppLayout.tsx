@@ -1,7 +1,11 @@
+'use client';
+
 import React, { ReactNode } from "react";
 import Header from "./Header";
 import Footer from "./Footer";
 import ScrollToTopBottom from "../button/ScrollToTopBottom";
+import { redirect } from 'next/navigation';
+
 
 interface AppLayoutProps {
 	children: ReactNode;
@@ -10,6 +14,8 @@ interface AppLayoutProps {
 }
 
 const AppLayout = ({ children, bgClassName, className }: AppLayoutProps) => {
+	redirect('/marketplace');
+
 	return (
 		<>
 		

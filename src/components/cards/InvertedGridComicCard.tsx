@@ -77,7 +77,7 @@ export function InertedGridComicCard({
             whileTap={{
             scale: 0.98
         }}
-            onClick={() => router.push(`/marketplace/detail?id=${id}`)}>
+            onClick={() => router.push(`/marketplace/chapter?id=${id}`)}>
             
 
             {/* Content Section */}

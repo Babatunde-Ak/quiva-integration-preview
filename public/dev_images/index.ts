@@ -65,6 +65,8 @@ import confettiIcon from "./confetti-icon.svg";
 import avatarAang from "./avatar-aang.png";
 import runningBoy from "./running-boy.png";
 import episodeBookIcon from "./episode-book.png";
+import crownIcon from "./crown.svg";
+import sportsMedal from "./sports_medal.svg";
 
 export {
 	canna,
@@ -133,5 +135,7 @@ export {
 	confettiIcon,
 	avatarAang,
 	runningBoy,
-	episodeBookIcon
+	episodeBookIcon,
+	crownIcon,
+	sportsMedal
 };
