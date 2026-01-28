@@ -97,7 +97,8 @@ const ListView : React.FC < ListViewProps > = ({
         accountId: account || user?.walletAddress || '',
         network: "testnet",
        // marketplaceContractId: "0.0.7726588", // Your deployed marketplace contract
-       marketplaceContractId:"0.0.7750266",
+    //    marketplaceContractId:"0.0.7750266",
+       marketplaceContractId:"0.0.7774217",
        signer: signer,
         //provider: provider,
     });

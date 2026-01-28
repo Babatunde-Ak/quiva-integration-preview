@@ -395,7 +395,7 @@ export function useNFTMarketplace({
   };
 
   // ========================================
-  // 3B. BATCH LIST NFTs (NEW)
+  // 3B. BATCH LIST NFTs
   // ========================================
   const batchListNFTs = async ({
     tokenId,
@@ -613,7 +613,7 @@ export function useNFTMarketplace({
   // Query functions remain the same...
   const getCollectionInfo = async (tokenId: string): Promise<Collection> => {
     console.log("📖 Fetching collection info:", tokenId);
-    const tokenEvmAddress = TokenId.fromString(tokenId).toSolidityAddress();
+    const tokenEvmAddress = TokenId.fromString(tokenId).toEvmAddress();
     const client = Client.forName(network);
 
     const query = new ContractCallQuery()
@@ -629,6 +629,138 @@ export function useNFTMarketplace({
       maxSupply: result.getInt64(3).toString(),
       currentSupply: result.getInt64(4).toString(),
     };
+  };
+
+
+
+  const depositComicNFT = async ({
+    tokenId,
+    serialNumber
+  }: {
+    tokenId: string,
+    serialNumber: number,
+  }) => {
+    try {
+      setStatus("processing");
+      setError(null);
+      console.log("📥 Depositing Comic NFT:", { tokenId, serialNumber })
+
+       const contractExecTx = new ContractExecuteTransaction()
+        .setContractId(marketplaceContractId)
+        .setTransactionId(TransactionId.generate(AccountId.fromString(accountId)))
+        .setGas(1000000)
+        .setFunction(
+          "depositNFTForResale",
+          new ContractFunctionParameters()
+            .addAddress(tokenId)
+            .addInt64(serialNumber)
+        );
+
+      const txResponse = await executeWithSigner(contractExecTx);
+      const txIdStr = txResponse.transactionId.toString();
+      console.log("📤 Transaction submitted:", txIdStr);
+
+      const client = getClient();
+      const receipt = await txResponse.getReceipt(client);
+      console.log("✅ Listing cancelled");
+
+      setTxId(txIdStr);
+      setStatus("done");
+
+      return {
+        transactionId: txIdStr,
+        status: receipt.status.toString(),
+      };
+    } catch (err: any) {
+      console.error("❌ Deposit failed:", err);
+      setError(err.message || "Deposit failed");
+      setStatus("error");
+      throw err;
+    }
+  };
+
+  const resaleNFTListing = async ({ tokenId, serialNumber, price }: { tokenId: string; serialNumber: number; price: number }) => {
+    try {
+      setStatus("processing");
+      setError(null);
+      console.log("🔄 Reselling Single Comic NFT:");
+       const contractExecTx = new ContractExecuteTransaction()
+        .setContractId(marketplaceContractId)
+        .setTransactionId(TransactionId.generate(AccountId.fromString(accountId)))
+        .setGas(1000000)
+        .setFunction(
+          "listNFTForResale",
+          new ContractFunctionParameters()
+            .addAddress(tokenId)
+            .addInt64(serialNumber)
+            .addUint256(price)
+        );
+
+      const txResponse = await executeWithSigner(contractExecTx);
+      const txIdStr = txResponse.transactionId.toString();
+      console.log("📤 Transaction submitted:", txIdStr);
+
+      const client = getClient();
+      const receipt = await txResponse.getReceipt(client);
+      console.log("✅ Listing cancelled");
+
+      setTxId(txIdStr);
+      setStatus("done");
+
+      return {
+        transactionId: txIdStr,
+        status: receipt.status.toString(),
+      };
+
+    } catch (err: any) {
+      console.error("❌ Resale failed:", err);
+      setError(err.message || "Resale failed");
+      setStatus("error");
+      throw err;
+    }
+  };
+
+    const batchResaleNFTListing = async ({ tokenId, serialNumber, price }:
+    { tokenId: string; serialNumber: number[]; price: number[] }
+    ) => {
+    try {
+      setStatus("processing");
+      setError(null);
+      console.log("🔄 Reselling Single Comic NFT:");
+       const contractExecTx = new ContractExecuteTransaction()
+        .setContractId(marketplaceContractId)
+        .setTransactionId(TransactionId.generate(AccountId.fromString(accountId)))
+        .setGas(1000000)
+        .setFunction(
+          "batchListNFTsForResale",
+          new ContractFunctionParameters()
+            .addAddress(tokenId)
+            .addInt64Array(serialNumber)
+            .addUint256Array(price)
+        );
+
+      const txResponse = await executeWithSigner(contractExecTx);
+      const txIdStr = txResponse.transactionId.toString();
+      console.log("📤 Transaction submitted:", txIdStr);
+
+      const client = getClient();
+      const receipt = await txResponse.getReceipt(client);
+      console.log("✅ Listing cancelled");
+
+      setTxId(txIdStr);
+      setStatus("done");
+
+      return {
+        transactionId: txIdStr,
+        status: receipt.status.toString(),
+      };
+
+    } catch (err: any) {
+      console.error("❌ Resale failed:", err);
+      setError(err.message || "Resale failed");
+      setStatus("error");
+      throw err;
+    }
   };
 
   const getListingInfo = async (listingId: number | string): Promise<Listing> => {
@@ -710,6 +842,8 @@ export function useNFTMarketplace({
     listNFT,
     batchListNFTs, // NEW
     purchaseNFT,
+    resaleNFTListing,
+    batchResaleNFTListing,
     cancelListing,
     updateMarketplaceFee,
     withdrawFees,
@@ -718,6 +852,7 @@ export function useNFTMarketplace({
     getCollectionInfo,
     getListingInfo,
     getMarketplaceFee,
+    depositComicNFT,
     
     // State
     status,

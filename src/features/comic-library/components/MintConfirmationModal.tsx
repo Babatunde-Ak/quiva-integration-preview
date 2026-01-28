@@ -53,7 +53,8 @@ const MintConfirmationModal: React.FC<MintConfirmationModalProps> = ({
         } = useNFTMarketplace({
             accountId: account || user?.walletAddress || '',
             network: "testnet",
-            marketplaceContractId: "0.0.7750266", // Your deployed marketplace contract
+            // marketplaceContractId: "0.0.7750266", // Your deployed marketplace contract
+           marketplaceContractId:"0.0.7774217",
             signer: signer,
            
         });
