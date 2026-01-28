@@ -321,7 +321,7 @@ console.log('Public key:', publicKey.toString());
       const response = await dispatch(updateComicToken({ 
         comicId, 
         tokenId: mintData.tokenId, 
-        serial: String(mintData.serial[0] || 1),
+        serial: String(mintData.serials[0] || 1),
         transactionId: mintData.transactionId, 
         metadataTopicIds: mintData.inscriptionTopicId ? [mintData.inscriptionTopicId] : [] 
       })).unwrap();
