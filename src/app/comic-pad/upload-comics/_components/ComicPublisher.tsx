@@ -965,7 +965,7 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 									<p className='text-green-400 font-semibold text-sm mb-1'>Comic NFT Created Successfully!</p>
 									<div className='text-green-300 text-sm space-y-1'>
 										{mintResult.tokenId && <p>Token ID: {mintResult.tokenId}</p>}
-										{mintResult.serial && <p>Serial #: {mintResult.serial}</p>}
+										{mintResult.serials && <p>Serial #: {mintResult.serials}</p>}
 										{mintResult.transactionId && <p>Transaction: {mintResult.transactionId}</p>}
 										{mintResult.inscriptionTopicId && <p>Inscription Topic: {mintResult.inscriptionTopicId}</p>}
 									</div>

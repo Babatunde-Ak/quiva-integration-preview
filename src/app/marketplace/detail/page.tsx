@@ -18,6 +18,9 @@ import { Loader2 } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { QUIVA_COMICS_ABI as QUIVA_COMICS_ADDRESS } from '@/contracts/QuivaComics'
 import { DUMMY_COMIC_DATA } from '@/components/utils/dummy-data'
+import { useNFTMarketplace } from '@/hook/useMarkeplace';
+import { useHederaWallet } from '@/providers/HashPackProvider'
+//import {useNFTMarketplace} from '../../../hook/useMarkeplace';
 
 function Page() {
   const searchParams = useSearchParams()
@@ -69,6 +72,17 @@ function Page() {
     walletStatus = { isConnected: false, address: null },
     setComicId = () => {}
   } = purchaseHookResult ?? {}
+
+  // Initialize claiming hook
+  // const {
+  //   claimFreeComic,
+  //   isClaiming,
+  //   claimError,
+  //   claimSuccess,
+  //   claimProgress,
+  //   transactionHash: claimHash,
+  //   resetClaimState,
+  // } = useClaimFreeComic()
   
   // Fetch comic data
   useEffect(() => {
@@ -81,6 +95,35 @@ function Page() {
       dispatch(clearPreviewComic())
     };
   }, [id, dispatch])
+
+
+    const { 
+          account,
+          isConnected, 
+          // connector,
+          provider,
+          signer,
+          connectWallet 
+      } = useHederaWallet();
+  
+      const { user } = useAppSelector((state:any) => state.wallet);
+      
+      const { 
+          listNFT,
+          createCollection,
+          mintNFTs, 
+          purchaseNFT,
+          status, 
+          error 
+      } = useNFTMarketplace({
+          accountId: account || user?.walletAddress || '',
+          network: "testnet",
+          // marketplaceContractId: "0.0.7726588", 
+          marketplaceContractId: "0.0.7750266",           // Your deployed marketplace contract
+          signer: signer,
+          //provider: provider,
+      });
+  
 
   // Set comicId in the purchase hook
   useEffect(() => {
@@ -160,79 +203,22 @@ function Page() {
   }, [purchaseSuccess, id, router, resetPurchase])
 
   // Handle claim success
-  useEffect(() => {
-    if (claimSuccess && claimHash) {
-      setHasNFTAccess(true)
-      setHasClaimed(true)
+  // useEffect(() => {
+  //   if (claimSuccess && claimHash) {
+  //     setHasNFTAccess(true)
+  //     refetchClaimStatus()
       
-      setTimeout(() => {
-        setIsClaimModalOpen(false)
-        resetClaimState()
+  //     setTimeout(() => {
+  //       setIsClaimModalOpen(false)
+  //       resetClaimState()
         
-        if (id) {
-          toast.success('Comic claimed! Enjoy reading! 🎉', { autoClose: 2000 })
-          router.push(`/reader?id=${id}`)
-        }
-      }, 2000)
-    }
-  }, [claimSuccess, claimHash, id, router])
-
-  // Reset claim state function
-  const resetClaimState = () => {
-    setIsClaiming(false)
-    setClaimSuccess(false)
-    setClaimError(null)
-    setClaimProgress(0)
-    setClaimHash(null)
-  }
-
-  // Handle free comic claim
-  const handleClaimFreeComic = async () => {
-    if (!transformedComic || !id) {
-      toast.error('Comic data not available')
-      return
-    }
-
-    if (!walletStatus.isConnected) {
-      toast.error('Please connect your wallet first')
-      return
-    }
-
-    if (hasClaimed) {
-      toast.info('You have already claimed this comic')
-      return
-    }
-
-    try {
-      setIsClaiming(true)
-      setClaimError(null)
-      setClaimProgress(0)
-
-      // Simulate claim process
-      setClaimProgress(25)
-      await new Promise(resolve => setTimeout(resolve, 500))
-      
-      setClaimProgress(50)
-      await new Promise(resolve => setTimeout(resolve, 500))
-      
-      setClaimProgress(75)
-      await new Promise(resolve => setTimeout(resolve, 500))
-      
-      setClaimProgress(100)
-      
-      // Simulate transaction hash
-      const dummyHash = `0x${Math.random().toString(16).substring(2, 66)}`
-      setClaimHash(dummyHash)
-      setClaimSuccess(true)
-      
-    } catch (error: any) {
-      console.error('Claim error:', error)
-      setClaimError(error.message || 'Failed to claim comic')
-      toast.error(error.message || 'Failed to claim comic')
-    } finally {
-      setIsClaiming(false)
-    }
-  }
+  //       if (id) {
+  //         toast.success('Comic claimed! Enjoy reading! 🎉', { autoClose: 2000 })
+  //         router.push(`/reader?id=${id}`)
+  //       }
+  //     }, 2000)
+  //   }
+  // }, [claimSuccess, claimHash, id, router, resetClaimState, refetchClaimStatus])
 
   // Event handlers
   const handlePreview = () => {
@@ -241,6 +227,28 @@ function Page() {
     if (!useDummyData) {
       dispatch(getComicPreview({id: id} as any))
     }
+  }
+
+  const handleClaimComic = async () => {
+    if (!walletStatus.isConnected) {
+      toast.error('Please connect your wallet to claim this comic')
+      return
+    }
+
+    if (!transformedComic?.tokenId || !id) {
+      toast.error('Invalid comic data')
+      return
+    }
+
+    // try {
+    //   await claimFreeComic({
+    //     tokenId: transformedComic.tokenId,
+    //     comicId: id,
+    //   })
+    // } catch (error) {
+    //   console.error('Error claiming comic:', error)
+    //   toast.error('Failed to claim comic. Please try again.')
+    // }
   }
 
   const handleClosePurchaseModal = () => {
@@ -260,48 +268,53 @@ function Page() {
   }
 
   // Handle minting from MintComicModal
-  const handleMintComic = async () => {
-    if (!transformedComic || !id) {
-      toast.error('Comic data not available')
-      return
-    }
+  // const handleMintComic = async () => {
+  //   if (!transformedComic || !id) {
+  //     toast.error('Comic data not available')
+  //     return
+  //   }
 
-    if (!walletStatus.isConnected) {
-      toast.error('Please connect your wallet first')
-      return
-    }
+  //   if (!walletStatus.isConnected) {
+  //     toast.error('Please connect your wallet first')
+  //     return
+  //   }
 
-    try {
-      if (useDummyData) {
-        // Simulate minting for demo
-        toast.success('Demo mint successful! Redirecting to reader...', { autoClose: 3000 })
-        setTimeout(() => {
-          setShowMintPage(false)
-          router.push(`/reader?id=${id}`)
-        }, 1500)
-        return
-      }
+  //   try {
+  //     if (useDummyData) {
+  //       // Simulate minting for demo
+  //       toast.success('Demo mint successful! Redirecting to reader...', { autoClose: 3000 })
+  //       setTimeout(() => {
+  //         setShowMintPage(false)
+  //         router.push(`/reader?id=${id}`)
+  //       }, 1500)
+  //       return
+  //     }
       
-      if (!transformedComic.tokenId) {
-        toast.error('NFT token ID not available')
-        return
-      }
+  //     if (!transformedComic.tokenId) {
+  //       toast.error('NFT token ID not available')
+  //       return
+  //     }
 
-      const result = await purchaseComic({
-        nftAddress: QUIVA_COMICS_ADDRESS,
-        tokenId: BigInt(transformedComic.tokenId),
-        amount: BigInt(1),
-      });
+  //     const result = await purchaseComic({
+  //       nftAddress: QUIVA_COMICS_ADDRESS,
+  //       tokenId: BigInt(transformedComic.tokenId),
+  //       amount: BigInt(1),
+  //     });
 
-      console.log('Mint initiated:', result);
-      return result;
+  //     console.log('Mint initiated:', result);
+  //     return result;
 
-    } catch (error: any) {
-      console.error('Mint error:', error);
-      toast.error(error.message || 'Failed to mint comic');
-    }
+  //   } catch (error: any) {
+  //     console.error('Mint error:', error);
+  //     toast.error(error.message || 'Failed to mint comic');
+  //   }
+  // };
+const handleMintComic = async () => {
+
+   //await purchaseNFT({ listingId: 7, priceInHbar: 20 })
+
+  
   };
-
   const handleBack = () => {
     if (showMintPage) {
       setShowMintPage(false)
@@ -436,7 +449,7 @@ function Page() {
             />
           )}
 
-          <ClaimModal
+          {/* <ClaimModal
             isOpen={isClaimModalOpen}
             onClose={() => {
               setIsClaimModalOpen(false)
@@ -449,7 +462,7 @@ function Page() {
             claimError={claimError}
             claimProgress={claimProgress}
             transactionHash={claimHash}
-          />
+          /> */}
         </>
       )}
     </>

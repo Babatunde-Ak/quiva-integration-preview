@@ -142,6 +142,17 @@ const EpisodeFormController: React.FC<EpisodeFormControllerProps> = ({
       console.log("📄 Full response data:", response.data);
       console.log("📄 Full created comic data:", createdComic);
 
+       localStorage.setItem(
+      "latestComic",
+      JSON.stringify({
+        metadataCid: metadataCid,
+        dbComicId: dbComicId,
+        formData: formDataToSend, // keep the full form details too (title, description, etc.)
+      })
+    );
+
+    console.log("✅ Comic metadata saved locally:", { metadataCid, dbComicId });
+
       // 2. Mint the episode NFT using the hook
       // await createComicNFT({ ...formData, episodeNumber: Number(formData.episodeNumber) }, collectionId);
 
