@@ -13,9 +13,10 @@ type FlowStep = 'rarity' | 'listing' | 'review' | 'success';
 
 import {useListComic} from '@/hook/useListComic';
 import {useMintComic} from '@/hook/useMintComic';
-import {useAppSelector} from '@/redux/hook';
+import {useAppDispatch, useAppSelector} from '@/redux/hook';
 import {useHederaWallet} from '@/providers/HashPackProvider';
 import { useParams, useRouter } from 'next/navigation';
+import { getComicById } from '@/redux/slices/comicSlice';
 
 interface ListViewProps {
     episodeTitle?: string;
@@ -63,7 +64,7 @@ const ListView : React.FC < ListViewProps > = ({
 }) => {
     const router = useRouter();
     const params = useParams();
-    const episodeId = params.episode
+    const episodeId = params.episode;
 
     const [currentStep,
         setCurrentStep] = useState < FlowStep > ('rarity');
@@ -74,6 +75,25 @@ const ListView : React.FC < ListViewProps > = ({
     const [comicId, setComicId] = useState<string>('');
     const [collectionTokenId, setCollectionTokenId] = useState<string>(''); // Store created collection
     const [mintedNFTs, setMintedNFTs] = useState<MintResult | null>(null); // Store minted NFT info
+    const [episodeData, setEpisodeData] = useState<any>(null);
+
+    const dispatch = useAppDispatch();
+
+    const {loading, error: comicError} = useAppSelector((state:any) => state.comic);
+
+    useEffect(() => {
+        // Fetch episode data based on episodeId
+        function fetchEpisode() {  
+            dispatch(getComicById({id: episodeId} as any)).then((res:any) => {
+                if (res.payload) {
+                    setEpisodeData(res.payload?.data?.comic);
+                    console.log("Episode data loaded:", res.payload?.data?.comic);
+                }
+            });
+        }
+
+        fetchEpisode();
+    },[])
 
     const { 
         account,
@@ -103,20 +123,20 @@ const ListView : React.FC < ListViewProps > = ({
     });
 
     // Load metadata and comic ID from params or localStorage
-    useEffect(() => {
-        const cid = (params as any)?.metadataCid || "";
-        const id = (params as any)?.comicId || "";
+    // useEffect(() => {
+    //     const cid = (params as any)?.metadataCid || "";
+    //     const id = (params as any)?.comicId || "";
         
-        if (cid && id) {
-            setMetadataCid(cid);
-            setComicId(id);
-        } else {
-            const stored = JSON.parse(localStorage.getItem("latestComic") || "{}");
-            console.log("Stored data:", stored);
-            setMetadataCid(stored.metadataCid || "");
-            setComicId(stored.dbComicId || "");
-        }
-    }, [params]);
+    //     if (cid && id) {
+    //         setMetadataCid(cid);
+    //         setComicId(id);
+    //     } else {
+    //         const stored = JSON.parse(localStorage.getItem("latestComic") || "{}");
+    //         console.log("Stored data:", stored);
+    //         setMetadataCid(stored.metadataCid || "");
+    //         setComicId(stored.dbComicId || "");
+    //     }
+    // }, [params]);
 
     // Rarity configuration with actual supply numbers
     const rarityOptions = {
@@ -178,8 +198,8 @@ const ListView : React.FC < ListViewProps > = ({
                 console.log("📝 Creating NFT collection...");
                 
                 const createCollectionResult = await createCollection({
-                    name: `${episodeTitle} Collection` || "Comic Collection",
-                    symbol: flowData.rarity.type.toUpperCase().substring(0, 4) || "COMM", // e.g., "LEGE", "EPIC", "COMM"
+                    name: `${episodeData.title} Collection` || "Comic Collection",
+                    symbol: flowData.rarity.type.toUpperCase().substring(0, 4) || "QUIVACOMM", // e.g., "LEGE", "EPIC", "COMM"
                     memo: `${flowData.rarity.name} rarity comic collection` || "Comic Collection",
                     maxSupply: flowData.rarity.maxSupply,
                     autoRenewPeriod: 7000000, // ~81 days
@@ -201,9 +221,9 @@ const ListView : React.FC < ListViewProps > = ({
             // const metadataURI = comicMetadataCid 
             //     ? `https://gateway.pinata.cloud/ipfs/${comicMetadataCid}`
             //     : `ipfs://bafkreieqoitwahwu64mj7a6vyj7pzpdbuje4ytoat3fbefcnrjjarlnk3a`; // Fallback
-            const metadataURI ="bafkreiatw24wireql2dj74wylfbls3vxo5j2woqmnbzrotu62g5qvipluu";
+            const metadataURI =episodeData?.nftMetadataCid;
             console.log("✅ Metadata URI prepared:", metadataURI);
-            const dbComicId = "69786c446a14dd56c6121d78"
+            const dbComicId = episodeData?._id || '';
             // For this example, minting 1 NFT. You can adjust for batch minting
             const numberOfCopies = parseInt(flowData.listing.sales) || 1;
             // const metadataURIs = Array(numberOfCopies).fill(metadataURI);
@@ -261,7 +281,7 @@ const ListView : React.FC < ListViewProps > = ({
             const completeInfo = {
                 collection: {
                     tokenId: nftTokenId,
-                    name: `${episodeTitle} Collection`,
+                    name: `${episodeData.title} Collection`,
                     symbol: flowData.rarity.type.toUpperCase().substring(0, 4),
                 },
                 minted: mintedData,
@@ -272,7 +292,7 @@ const ListView : React.FC < ListViewProps > = ({
                 })),
                 metadata: {
                     cid: metadataCid,
-                    comicId: comicId,
+                    comicId: episodeData?._id || '',
                 },
             };
 
@@ -323,6 +343,24 @@ const ListView : React.FC < ListViewProps > = ({
 
     return (
         <div className="relative">
+            {/* Data Loading Overlay */}
+            {loading && !episodeData && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-8 max-w-md">
+                        <div className="text-center">
+                            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                            <h3 className="text-xl font-bold mb-2">Loading...</h3>
+                            <p className="text-gray-600">
+                                Retrieving episode details, please wait...
+                            </p>
+                            {comicError && (
+                                <p className="text-red-600 text-sm mt-2">{error}</p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Loading Overlay */}
             {isProcessing && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
