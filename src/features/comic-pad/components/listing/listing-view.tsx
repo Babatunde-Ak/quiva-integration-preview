@@ -104,9 +104,10 @@ const ListView : React.FC < ListViewProps > = ({
     });
 
     // Load metadata and comic ID from params or localStorage
-    useEffect(() => {
-        const cid = (params as any)?.metadataCid || "";
-        const id = (params as any)?.comicId || "";
+    // useEffect(() => {
+        const metadatcid = (params as any)?.metadataCid || "";
+        console.log("Metadata CID from params:", metadatcid);
+        const metadatcid = (params as any)?.comicId || "";
         
         if (cid && id) {
             setMetadataCid(cid);
@@ -117,7 +118,7 @@ const ListView : React.FC < ListViewProps > = ({
             setMetadataCid(stored.metadataCid || "");
             setComicId(stored.dbComicId || "");
         }
-    }, [params]);
+    // }, [params]);
 
     // Rarity configuration with actual supply numbers
     const rarityOptions = {
@@ -180,7 +181,7 @@ const ListView : React.FC < ListViewProps > = ({
                 
                 const createCollectionResult = await createCollection({
                     name: `${episodeTitle} Collection` || "Comic Collection",
-                    symbol: flowData.rarity.type.toUpperCase().substring(0, 4) || "COMM", // e.g., "LEGE", "EPIC", "COMM"
+                    symbol: flowData.rarity.type.toUpperCase().substring(0, 4) || "QuivaCoMM", // e.g., "LEGE", "EPIC", "COMM"
                     memo: `${flowData.rarity.name} rarity comic collection` || "Comic Collection",
                     maxSupply: flowData.rarity.maxSupply,
                     autoRenewPeriod: 7000000, // ~81 days
