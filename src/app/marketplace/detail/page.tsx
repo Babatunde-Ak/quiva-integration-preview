@@ -16,7 +16,6 @@ import {
 } from '@/redux/slices/comicSlice'
 import { Loader2 } from 'lucide-react'
 import { toast } from 'react-toastify'
-import { QUIVA_COMICS_ABI as QUIVA_COMICS_ADDRESS } from '@/contracts/QuivaComics'
 import { DUMMY_COMIC_DATA } from '@/components/utils/dummy-data'
 import { useHederaWallet } from '@/providers/HashPackProvider'
 
@@ -40,19 +39,10 @@ function Page() {
   // Local state
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
   const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false)
-  const [isClaimModalOpen, setIsClaimModalOpen] = useState(false)
   const [showMintPage, setShowMintPage] = useState(false)
   const [hasNFTAccess, setHasNFTAccess] = useState<boolean | null>(null)
   const [useDummyData, setUseDummyData] = useState(false)
   const [activeTab, setActiveTab] = useState('details')
-  
-  // Claim-related state (replacing the hook)
-  const [hasClaimed, setHasClaimed] = useState(false)
-  const [isClaiming, setIsClaiming] = useState(false)
-  const [claimSuccess, setClaimSuccess] = useState(false)
-  const [claimError, setClaimError] = useState<Error | null>(null)
-  const [claimProgress, setClaimProgress] = useState(0)
-  const [claimHash, setClaimHash] = useState<string | null>(null)
   
   // Getting comic ID from URL query params
   const id = searchParams.get('id')
@@ -70,17 +60,6 @@ function Page() {
     walletStatus = { isConnected: false, address: null },
     setComicId = () => {}
   } = purchaseHookResult ?? {}
-
-  // Initialize claiming hook
-  // const {
-  //   claimFreeComic,
-  //   isClaiming,
-  //   claimError,
-  //   claimSuccess,
-  //   claimProgress,
-  //   transactionHash: claimHash,
-  //   resetClaimState,
-  // } = useClaimFreeComic()
   
   // Fetch comic data
   useEffect(() => {
@@ -93,18 +72,8 @@ function Page() {
       dispatch(clearPreviewComic())
     };
   }, [id, dispatch])
-
-
-    const { 
-          account,
-          isConnected, 
-          // connector,
-          provider,
-          signer,
-          connectWallet 
-      } = useHederaWallet();
   
-      const { user } = useAppSelector((state:any) => state.wallet);
+  const { user } = useAppSelector((state:any) => state.wallet);
   
 
   // Set comicId in the purchase hook

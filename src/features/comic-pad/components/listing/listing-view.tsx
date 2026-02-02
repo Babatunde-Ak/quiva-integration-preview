@@ -31,7 +31,6 @@ import { useComicInscription } from '@/hook/useComicInscription';
 interface ListViewProps {
     episodeTitle?: string;
     episodeImage?: string;
-    onComplete?: () => void;
     onCancel?: () => void;
 }
 
@@ -92,7 +91,6 @@ const RARITY_OPTIONS: Record<string, RarityOption> = {
 const ListView: React.FC<ListViewProps> = ({
     episodeTitle = "Great Manga #2",
     episodeImage = "/api/placeholder/200/200",
-    onComplete,
     onCancel,
 }) => {
     const router = useRouter();
@@ -274,7 +272,7 @@ const ListView: React.FC<ListViewProps> = ({
 
     // Navigation handlers
     const handleSuccessComplete = () => {
-        onComplete?.();
+        router.push('/marketplace');
     };
 
     const handleBackFromListing = () => setCurrentStep('rarity');
