@@ -19,7 +19,7 @@ const ListingSuccessModal: React.FC<ListingSuccessModalProps> = ({
     episodeTitle = "Galatin Ep 1",
     onBackToCollection,
     onViewListing,
-     nftInfo,
+    nftInfo,
     isOpen = true
 }) => {
     if (!isOpen) 

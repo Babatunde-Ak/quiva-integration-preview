@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 
 // Components
 import EpisodeRarity from './steps/EpisodeRarity';
@@ -25,6 +25,8 @@ type FlowStep = 'rarity' | 'listing' | 'review' | 'success';
 
 import {useMintComic} from '@/hook/useMintComic';
 import useComicPlatform from '@/hook/useMarkeplace';
+import { useComicInscription } from '@/hook/useComicInscription';
+
 
 interface ListViewProps {
     episodeTitle?: string;
@@ -93,6 +95,7 @@ const ListView: React.FC<ListViewProps> = ({
     onComplete,
     onCancel,
 }) => {
+    const router = useRouter();
     const params = useParams();
     const dispatch = useAppDispatch();
     const episodeId = params.episode as string;
@@ -122,8 +125,8 @@ const ListView: React.FC<ListViewProps> = ({
     });
 
     const {
-        createComicNFT
-    } = useMintComic({
+        createInscription
+    } = useComicInscription({
         accountId: account || user?.walletAddress || '',
         network: "testnet",
         signer: signer,
@@ -184,9 +187,14 @@ const ListView: React.FC<ListViewProps> = ({
             const metadataURI = episodeData?.nftMetadataCid;
             const dbComicId = episodeData?._id || '';
 
+            const inscriptionResult = await createInscription(metadataURI, dbComicId);
+            console.log("✅ Inscription completed:", inscriptionResult);
+            const topicId = inscriptionResult.topicId || '';
+            console.log("🎉 Inscription Topic ID:", topicId);
+
             console.log(`🎨 Minting ${numberOfCopies} NFT(s)...`);
-            // const metadataHRL = `hcs://1/${topicId}`;
-            const metadataHRL = `https://gateway.pinata.cloud/ipfs/${metadataURI}`;
+            const metadataHRL = `hcs://1/${topicId}`;
+            // const metadataHRL = `https://gateway.pinata.cloud/ipfs/${metadataURI}`;
             console.log("Metadata HRL for minting:", metadataHRL);
             
             const mintAndListResult = await createDirectListing({
@@ -211,6 +219,7 @@ const ListView: React.FC<ListViewProps> = ({
 
             setMintedNFTs(mintedData);
 
+            console.log("💾 Saving minted NFT data locally...", mintedData);
             // Save to localStorage for recovery
             localStorage.setItem('lastMintedNFT', JSON.stringify(mintedData));
 
@@ -243,7 +252,11 @@ const ListView: React.FC<ListViewProps> = ({
             const updateResult = await dispatch(updateComicToken({
                 comicId: episodeId,
                 tokenId: nftTokenId,
-                listingIds: mintedData.listingIds || [],
+                listingId: mintedData.listingIds[0] || '',
+                price: priceInHbar,
+                serial: mintedData?.serials[0] || 0,
+                transactionId: mintedData.transactionId || '',
+                metadataTopicIds: topicId
             } as any));
 
             console.log("✅ Backend updated:", updateResult);
@@ -329,7 +342,9 @@ const ListView: React.FC<ListViewProps> = ({
             {currentStep === 'success' && mintedNFTs && (
                 <ListingSuccessModal
                     episodeTitle={episodeData?.title || episodeTitle}
-                    onBackToCollection={handleSuccessComplete}
+                    onBackToCollection={() => {
+                        router.back();
+                    }}
                     onViewListing={handleSuccessComplete}
                     isOpen={true}
                     nftInfo={{

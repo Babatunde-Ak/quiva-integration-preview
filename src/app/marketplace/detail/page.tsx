@@ -18,9 +18,7 @@ import { Loader2 } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { QUIVA_COMICS_ABI as QUIVA_COMICS_ADDRESS } from '@/contracts/QuivaComics'
 import { DUMMY_COMIC_DATA } from '@/components/utils/dummy-data'
-import { useNFTMarketplace } from '@/hook/useMarkeplace';
 import { useHederaWallet } from '@/providers/HashPackProvider'
-//import {useNFTMarketplace} from '../../../hook/useMarkeplace';
 
 function Page() {
   const searchParams = useSearchParams()
@@ -107,22 +105,6 @@ function Page() {
       } = useHederaWallet();
   
       const { user } = useAppSelector((state:any) => state.wallet);
-      
-      const { 
-          listNFT,
-          createCollection,
-          mintNFTs, 
-          purchaseNFT,
-          status, 
-          error 
-      } = useNFTMarketplace({
-          accountId: account || user?.walletAddress || '',
-          network: "testnet",
-          // marketplaceContractId: "0.0.7726588", 
-          marketplaceContractId: "0.0.7750266",           // Your deployed marketplace contract
-          signer: signer,
-          //provider: provider,
-      });
   
 
   // Set comicId in the purchase hook
