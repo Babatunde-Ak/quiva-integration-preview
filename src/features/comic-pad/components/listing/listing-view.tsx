@@ -11,7 +11,6 @@ import ReviewDetails from './steps/ReviewDetails';
 import ListingSuccessModal from './steps/ListingSuccessModal';
 
 // Hooks
-import { useNFTMarketplace } from '@/hook/useMarkeplace';
 import { useAppDispatch, useAppSelector } from '@/redux/hook';
 import { useHederaWallet } from '@/providers/HashPackProvider';
 
@@ -24,13 +23,8 @@ import { crownIcon, sportsMedal } from '../../../../../public/dev_images';
 // Types
 type FlowStep = 'rarity' | 'listing' | 'review' | 'success';
 
-import {useListComic} from '@/hook/useListComic';
 import {useMintComic} from '@/hook/useMintComic';
-import {useAppSelector} from '@/redux/hook';
-import {useHederaWallet} from '@/providers/HashPackProvider';
-import { useParams, useRouter } from 'next/navigation';
 import useComicPlatform from '@/hook/useMarkeplace';
-import { useComicInscription } from '@/hook/useComicInscription';
 
 interface ListViewProps {
     episodeTitle?: string;
@@ -67,8 +61,6 @@ interface MintResult {
 }
 
 // Constants
-const MARKETPLACE_CONTRACT_ID = "0.0.7750266";
-const NETWORK = "testnet";
 const AUTO_RENEW_PERIOD = 7000000; // ~81 days
 
 const RARITY_OPTIONS: Record<string, RarityOption> = {
@@ -119,23 +111,6 @@ const ListView: React.FC<ListViewProps> = ({
     const { account, signer } = useHederaWallet();
 
     const { user } = useAppSelector((state:any) => state.wallet);
-    
-    // const { 
-    //     listNFT,
-    //     createCollection,
-    //     createComicNFT,
-    //     batchListNFTs,
-    //     status, 
-    //     error 
-    // } = useNFTMarketplace({
-    //     accountId: account || user?.walletAddress || '',
-    //     network: "testnet",
-    //    // marketplaceContractId: "0.0.7726588", // Your deployed marketplace contract
-    // //    marketplaceContractId:"0.0.7750266",
-    //    marketplaceContractId:"0.0.7774217",
-    //    signer: signer,
-    //     //provider: provider,
-    // });
 
     const {
         createComicCollection,
@@ -145,56 +120,14 @@ const ListView: React.FC<ListViewProps> = ({
         network: "testnet",
         signer: signer,
     });
+
     const {
-    createComicNFT
+        createComicNFT
     } = useMintComic({
-    accountId: account || user?.walletAddress || '',
-    network: "testnet",
-    signer: signer,
-    })
-
-    // const {
-    //      createInscription 
-
-    // } = useComicInscription({
-    //     accountId: account || user?.walletAddress || '',
-    //     network: "testnet",
-    //     signer: signer,
-    // });
-
-   
-
-    // Rarity configuration with actual supply numbers
-    const rarityOptions = {
-        legendary: {
-            name: 'Legendary',
-            type: 'legendary' as const,
-            supply: 'Supply 1 – 5,000',
-            maxSupply: 5000,
-                icon: <Image src={crownIcon} alt="legendary" className="w-6 h-6 object-cover"/>
-        },
-        epic: {
-            name: 'Epic',
-            type: 'epic' as const,
-            supply: 'Supply 1 – 8,000',
-            maxSupply: 8000,
-                    icon: <Image src={sportsMedal} alt="epic" className="w-6 h-6 object-cover"/>
-        },
-        common: {
-            name: 'Common',
-            type: 'common' as const,
-            supply: 'Infinite',
-            maxSupply: 1000000, // Large number for "infinite",
-            icon: <Image src={sportsMedal} alt="common" className="w-6 h-6 object-cover"/>
-        }
-    };
-
-    const handleRaritySelect = (selectedRarity : string) => {
-        const rarity = rarityOptions[selectedRarity as keyof typeof rarityOptions];
-        setFlowData(prev => ({
-            ...prev,
-            rarity
-        }));
+        accountId: account || user?.walletAddress || '',
+        network: "testnet",
+        signer: signer,
+    });
 
     // Fetch episode data on mount
     useEffect(() => {
@@ -236,12 +169,11 @@ const ListView: React.FC<ListViewProps> = ({
 
             // Step 1: Create Collection
             console.log("📝 Creating NFT collection...");
-            const createCollectionResult = await createCollection({
-                name: `${episodeData.title} Collection`,
+            const createCollectionResult = await createComicCollection({
+                episodeId: episodeId,
+                name: `${episodeData?.title || 'Unknown'} Collection`,
                 symbol: flowData.rarity.type.toUpperCase().substring(0, 4),
-                memo: `${flowData.rarity.name} rarity comic collection`,
                 maxSupply: flowData.rarity.maxSupply,
-                autoRenewPeriod: AUTO_RENEW_PERIOD,
             });
 
             console.log("✅ Collection created:", createCollectionResult);
@@ -257,21 +189,16 @@ const ListView: React.FC<ListViewProps> = ({
             const metadataHRL = `https://gateway.pinata.cloud/ipfs/${metadataURI}`;
             console.log("Metadata HRL for minting:", metadataHRL);
             
-            // const mintResult = await createComicNFT({
-            //     tokenId: nftTokenId,
-            //     metadata: metadataURI,
-            //     copies: numberOfCopies,
-            //     dbComicId: dbComicId
-            // });
             const mintAndListResult = await createDirectListing({
-                 episodeId: dbComicId,
-                 quantity: 10,
-                 pricePerNFT: parseFloat(flowData.listing.price),
-                 metadata: metadataHRL
-                //  metadata: metadataHRL,
-            })
+                episodeId: dbComicId,
+                quantity: 10,
+                pricePerNFT: parseFloat(flowData.listing.price),
+                metadata: metadataHRL
+            });
 
-             console.log("✅ NFTs minted:", mintAndListResult);
+            const serials: number[] = [];
+
+            console.log("✅ NFTs minted:", mintAndListResult);
 
             const mintedData: MintResult = {
                 tokenId: nftTokenId,
@@ -282,43 +209,21 @@ const ListView: React.FC<ListViewProps> = ({
 
             };
 
-         setMintedNFTs(mintedData);
+            setMintedNFTs(mintedData);
 
-            // // Save to localStorage for recovery
+            // Save to localStorage for recovery
             localStorage.setItem('lastMintedNFT', JSON.stringify(mintedData));
 
             // Step 4: List each NFT for sale
             console.log("💰 Minted and Listed NFTs on marketplace Successfully");
             
-            // const priceInHbar = parseFloat(flowData.listing.price);
-            
-            // const listingPromises = mintedData.serials.map(async (serial) => {
-            //     // return await listNFT({
-            //     //     tokenId: nftTokenId,
-            //     //     serialNumber: serial,
-            //     //     priceInHbar: priceInHbar,
-            //     // });
-            //     return await batchListNFTs({
-            //         tokenId: nftTokenId,
-            //         serialNumbers: [serial],
-            //         priceInHbar: priceInHbar,
-            //     });
-            // });
-
-            // const listingResults = await Promise.all(listingPromises);
-            
-            // console.log("✅ All NFTs listed:", listingResults);
-
-            // Step 5: Update backend (if you have one)
-            // await updateBackendListing(mintedData.tokenId, mintedData.serials, flowData.listing.price);
-
             const priceInHbar = parseFloat(flowData.listing.price);
 
-            // // Save complete info to localStorage
+            // Save complete info to localStorage
             const completeInfo = {
                 collection: {
                     tokenId: nftTokenId,
-                    name: `${episodeTitle} Collection`,
+                    name: `${episodeData?.title || episodeTitle} Collection`,
                     symbol: flowData.rarity.type.toUpperCase().substring(0, 4),
                 },
                 minted: mintedData,
@@ -328,10 +233,18 @@ const ListView: React.FC<ListViewProps> = ({
                     price: priceInHbar,
                 })),
                 metadata: {
-                    cid: metadataCid,
-                    comicId: comicId,
+                    cid: metadataURI,
+                    comicId: episodeId,
                 },
             };
+
+            // Step 5: Update backend with token ID and listing info
+            console.log("🔄 Updating backend with NFT details...");
+            const updateResult = await dispatch(updateComicToken({
+                comicId: episodeId,
+                tokenId: nftTokenId,
+                listingIds: mintedData.listingIds || [],
+            } as any));
 
             console.log("✅ Backend updated:", updateResult);
             console.log("✅ Complete NFT creation and listing successful!");
@@ -379,10 +292,8 @@ const ListView: React.FC<ListViewProps> = ({
             {/* Processing Overlay */}
             {isProcessing && (
                 <LoadingOverlay 
-                    message={status === 'processing' 
-                        ? 'Creating your NFT collection and listing...' 
-                        : 'Please wait...'}
-                    error={error}
+                    message="Creating your NFT collection and listing..." 
+                    error={comicError}
                 />
             )}
 
