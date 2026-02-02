@@ -4,7 +4,7 @@ interface ApiComic {
     _id : string
     title : string
     description : string
-    coverImage : string
+    bannerImage : string
     genre : string[]
     tags : string[]
     totalPages : number
@@ -32,7 +32,7 @@ export function transformApiComicToComic(apiComic : ApiComic) : Comic {
         id: apiComic._id,
         title: apiComic.title,
         description: apiComic.description,
-        image: apiComic.coverImage,
+        image: apiComic.bannerImage,
         subtitle: apiComic
             .genre
             .join(', '),
