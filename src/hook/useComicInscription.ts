@@ -71,107 +71,6 @@ export function useComicInscription({
       if (!signer || typeof signer.sign !== "function") {
         throw new Error("No valid signer. Please connect your wallet.");
       }
-
-      // const formData = new FormData();
-
-      // // Add cover image if exists
-      // if (comicData.bannerImage) {
-      //   if (comicData.bannerImage instanceof File) {
-      //     formData.append('coverImage', comicData.bannerImage);
-      //   } else {
-      //     const coverFile = new File(
-      //       [comicData.bannerImage],
-      //       'cover.jpg',
-      //       { type: (comicData.bannerImage as Blob).type || 'image/jpeg' }
-      //     );
-      //     formData.append('coverImage', coverFile);
-      //   }
-      // }
-
-      // // Add page files (images, ZIP, or PDF)
-      // comicData.files.forEach((page, index) => {
-      //   // page is a File (or ComicPageFile), so we use it directly
-      //   const fileName = page.name || `page-${index + 1}.jpg`;
-
-      //   // Determine the correct mime type based on page.customType if present
-      //   let mimeType = page.type || 'image/jpeg';
-      //   if ((page as ComicPageFile).customType === 'zip-images') {
-      //     mimeType = 'application/zip';
-      //   } else if ((page as ComicPageFile).customType === 'pdf-file') {
-      //     mimeType = 'application/pdf';
-      //   }
-
-      //   // If the file's type doesn't match the expected mimeType, create a new File object
-      //   let file: File;
-      //   if ((page as ComicPageFile).customType && page.type !== mimeType) {
-      //     file = new File([page], fileName, { type: mimeType });
-      //   } else {
-      //     file = page;
-      //   }
-
-      //   // Append to formData
-      //   formData.append('pages', file);
-
-      //   console.log(`📎 Added ${(page as ComicPageFile).customType || 'image'} file:`, fileName, 'Size:', file.size, 'Type:', file.type);
-      // });
-
-      // // Append individual fields as expected by the backend (matching curl format)
-      // formData.append('title', comicData.title);
-      // // formData.append('description', comicData.description);
-      // // formData.append('genre', Array.isArray(comicData.genre) ? comicData.genre.join(',') : comicData.genre);
-      // // formData.append('tags', Array.isArray(comicData.tags) ? comicData.tags.join(',') : comicData.tags);
-      // // formData.append('publishType', monetizationData.mintAsNFT ? 'nft' : monetizationData.publishType);
-      // formData.append('status', 'draft');
-
-      // // Add NFT details if minting
-      // // if (monetizationData.mintAsNFT) {
-      // //   const nftDetails = {
-      // //     mintStatus: 'pending',
-      // //     price: monetizationData.nftPrice || 0,
-      // //     maxSupply: monetizationData.nftCopies || 100,
-      // //     currentSupply: 0,
-      // //     royaltyPercentage: 10, // Default 10% royalty
-      // //   };
-      // //   formData.append('nftDetails', JSON.stringify(nftDetails));
-      // // }
-
-      // // Debug: Log what we're sending
-      // console.log("📤 Sending to /api/comics/full:", {
-      //   title: comicData.title,
-      //   // description: comicData.description,
-      //   // genre: comicData.genre,
-      //   // tags: comicData.tags,
-      //   hasPages: formData.getAll('pages').length,
-      //   hasCoverImage: formData.has('bannerImage'),
-      //   formDataEntries: Array.from(formData.keys()),
-      // });
-
-      // const token = localStorage.getItem('token');
-      
-    //  const response = await axios.post(`http://localhost:5000/api/comics/full/695d614caa9e11757e40d535`,
-    //     formData,
-    //     {
-    //       headers: {
-    //         'Content-Type': 'multipart/form-data',
-    //         Authorization: `Bearer ${token}`,
-    //       },
-    //       onUploadProgress: (progressEvent) => {
-    //         if (progressEvent.total) {
-    //           const progress = Math.round((progressEvent.loaded * 70) / progressEvent.total);
-    //           setUploadProgress(30 + progress);
-    //         }
-    //       },
-    //     }
-    //   );
-
-      // setUploadProgress(100);
-      // const createdComic = response.data.data.comic;
-      // const metadataCid = createdComic.nftMetadataCid;
-      // const dbComicId = createdComic._id;
-      // console.log("🆔 Created comic in DB with ID:", dbComicId);
-      // console.log("📝 Created comic with metadata CID:", metadataCid);
-      // console.log("📄 Full response data:", response.data);
-      // console.log("📄 Full created comic data:", createdComic);
       
       // Reset state
       setStatus("inscribing");
@@ -180,42 +79,11 @@ export function useComicInscription({
       inscriptionCompleted.current = false;
       lastValidProgress.current = 0;
 
-      // const cidMetadata = {
-      //   standard: "HIP412",
-      //   version: "1.0.0",
-      //   metadata_cid: `https://gateway.pinata.cloud/ipfs/${metadataCid}`,
-      //   storage: "ipfs",
-      //   description: "HIP412 metadata stored on IPFS",
-      // };
+      
       const cidMetadata = `https://gateway.pinata.cloud/ipfs/${metadataCid}`
 
-      // ✨ Perform inscription
-      // const inscriptionResult = await inscribeWithSigner(
-      //   {
-      //     type: "buffer",
-      //     buffer: Buffer.from(JSON.stringify(cidMetadata), "utf-8"),
-      //     fileName: `metadata-${Date.now()}.json`,
-      //     mimeType: "application/json",
-      //     // fileName: fileToInscribe.name,
-      //     // mimeType: fileToInscribe.type || "application/zip",
-      //   },
-      //   signer,
-      //   {
-      //     mode: "hashinal-collection",
-      //     metadata: cidMetadata,
-      //     waitForConfirmation: true,
-      //     waitMaxAttempts: 50,
-      //     waitIntervalMs: 8000,
-      //     chunkSize: 1024 * 256,
-      //     network,
-      //     progressCallback: (data: any) => {
-      //       console.log("Progress update:", data);
-      //       const pct = Math.min(data.progressPercent || 0, 95);
-      //       setProgress(pct);
-      //       setStatusText(data.message || "Inscribing...");
-      //     },
-      //   }
-      // );
+     
+      console.log("🚀 Starting inscription with metadata CID:", cidMetadata);
        const inscriptionResult = await inscribeWithSigner(
         {
           type: "url",
@@ -223,8 +91,6 @@ export function useComicInscription({
         },
         signer,
         {
-          // mode: "hashinal-collection",
-          // jsonFileURL: cidMetadata,
          
           waitForConfirmation: true,
            metadata: {
@@ -303,16 +169,7 @@ export function useComicInscription({
           console.log("📊 Retrieved via API:", retrieved);
           console.log("name of Com.name:", retrieved?.name);
 }
-        //   if (retrieved?.files?.metadataUploads) {
-        //     metadataTopicIds = retrieved.files.metadataUploads
-        //       .map((m: any) => m?.topicId)
-        //       .filter(Boolean);
-        //   } else if (retrieved?.metadataUploads) {
-        //     metadataTopicIds = retrieved.metadataUploads
-        //       .map((m: any) => m?.topicId)
-        //       .filter(Boolean);
-        //   }
-        // }
+        
       } catch (apiError) {
         console.error("API retrieve also failed:", apiError);
       }

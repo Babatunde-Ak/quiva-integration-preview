@@ -880,15 +880,21 @@ import {
   Hbar,
   HbarUnit,
 } from "@hashgraph/sdk";
+import { useComicInscription } from "./useComicInscription";
 
 // ============================================
 // CONTRACT ADDRESSES (Update after deployment)
 // ============================================
+// const CONTRACTS = {
+//   COMIC_CORE: "0.0.7797069",       
+//   COMIC_SALES: "0.0.7797100",      
+//   COMIC_MARKETPLACE: "0.0.7797111" 
+// };
 const CONTRACTS = {
-  COMIC_CORE: "0.0.7797069",       
-  COMIC_SALES: "0.0.7797100",      
-  COMIC_MARKETPLACE: "0.0.7797111" 
-};
+  COMIC_CORE: "0.0.7806656",
+  COMIC_SALES: "0.0.7806676",
+  COMIC_MARKETPLACE: "0.0.7806693"
+}
 
 interface UseComicPlatformProps {
   accountId: string;
@@ -951,6 +957,17 @@ export function useComicPlatform({
       : "https://mainnet.mirrornode.hedera.com";
   };
 
+   const {
+      createInscription,
+      status: inscriptionStatus,
+      progress: inscriptionProgress,
+      result: inscriptionResult,
+      error: inscriptionError,
+      statusText: inscriptionStatusText,
+      reset: resetInscription,
+    } = useComicInscription({ accountId, signer, network });
+  
+
   // ============================================
   // CREATOR FUNCTIONS
   // ============================================
@@ -978,8 +995,8 @@ export function useComicPlatform({
       const tx = new ContractExecuteTransaction()
         .setContractId(CONTRACTS.COMIC_CORE)
         .setTransactionId(TransactionId.generate(AccountId.fromString(accountId)))
-        .setGas(4000000)
-        .setPayableAmount(new Hbar(20)) // For NFT token creation
+        .setGas(15000000)
+        .setPayableAmount(new Hbar(30)) // For NFT token creation
         .setFunction(
           "createComicCollection",
           new ContractFunctionParameters()
@@ -994,14 +1011,30 @@ export function useComicPlatform({
       const response = await executeWithSigner(tx);
       const txIdStr = response.transactionId.toString();
       const receipt = await response.getReceipt(getClient());
-
       console.log("✅ Collection created!");
+       await new Promise(resolve => setTimeout(resolve, 5000));
+      
+      const txIdFormatted = formatTxIdForMirror(txIdStr);
+      const mirrorResponse = await fetch(
+        `${getMirrorNodeUrl()}/api/v1/contracts/results/${txIdFormatted}`
+      );
+      const mirrorData = await mirrorResponse.json();
+      console.log("Mirror Node data:", mirrorData);
+      
+      const tokenEvmAddress = mirrorData?.call_result 
+        ? "0x" + mirrorData.call_result.slice(-40) 
+        : null;
+      const tokenId = tokenEvmAddress;
+
+      console.log("🎉 New Token ID:", tokenId);
+
       setTxId(txIdStr);
       setStatus("done");
 
       return {
         transactionId: txIdStr,
         status: receipt.status.toString(),
+        tokenId
       };
     } catch (err: any) {
       console.error("❌ Collection creation failed:", err);
@@ -1032,10 +1065,30 @@ export function useComicPlatform({
     try {
       setStatus("processing");
       setError(null);
+      // console.log("💼 Starting Inscription process...");
+      // const inscriptionResult = await createInscription(metadata, episodeId);
+      // console.log("✅ Inscription created:", inscriptionResult);
+      console.log("🏪 Proceeding to create direct listing:", { episodeId, quantity, pricePerNFT });
       console.log("🏪 Creating direct listing:", { episodeId, quantity, pricePerNFT });
 
       const priceInTinybars = Hbar.from(pricePerNFT, HbarUnit.Hbar).toTinybars();
-
+        // const topicId = inscriptionResult.topicId || '';
+        // console.log("🎉 Inscription Topic ID:", topicId);
+        // const metadataHRL = `hcs://1/${topicId}`;
+          // console.log("Metadata HRL:", metadataHRL);
+      //  const BATCH_SIZE = 10;
+      // let allSerials: number[] = [];
+      // let mintedCount = 0;
+      // for (let batchStart = 0; batchStart < quantity; batchStart += BATCH_SIZE) {
+      //         const batchEnd = Math.min(batchStart + BATCH_SIZE, quantity);
+      //         const batchCount = batchEnd - batchStart;
+              
+      //         console.log(`📦 Minting batch: NFTs ${batchStart + 1}-${batchEnd} (${batchCount} NFTs)`);
+              
+              // Create metadata buffers for this batch only
+              // const metadataBuffers = Array(batchCount).fill(
+              //   Buffer.from(metadata || "")
+              // );
       const tx = new ContractExecuteTransaction()
         .setContractId(CONTRACTS.COMIC_SALES)
         .setTransactionId(TransactionId.generate(AccountId.fromString(accountId)))
@@ -1046,7 +1099,8 @@ export function useComicPlatform({
             .addString(episodeId)
             .addUint256(quantity)
             .addUint256(priceInTinybars)
-            .addBytes(Buffer.from(metadata))
+             .addBytes(Buffer.from(metadata))
+              //.addBytesArray(metadataBuffers)
         );
 
       const response = await executeWithSigner(tx);
@@ -1054,9 +1108,11 @@ export function useComicPlatform({
       const receipt = await response.getReceipt(getClient());
 
       console.log("✅ Direct listing created!");
+      
+
       setTxId(txIdStr);
       setStatus("done");
-
+      
       // Get listing ID from mirror node (optional)
       await new Promise(resolve => setTimeout(resolve, 5000));
       const txIdFormatted = formatTxIdForMirror(txIdStr);
@@ -1064,17 +1120,21 @@ export function useComicPlatform({
         `${getMirrorNodeUrl()}/api/v1/contracts/results/${txIdFormatted}`
       );
       const mirrorData = await mirrorResponse.json();
+      console.log("Mirror Node data:", mirrorData);
       
       let listingId: string | undefined;
       if (mirrorData?.call_result) {
         listingId = BigInt("0x" + mirrorData.call_result.slice(2)).toString();
       }
+    
 
       return {
         transactionId: txIdStr,
         status: receipt.status.toString(),
         listingId,
       };
+       // metadataHRL
+      // };
     } catch (err: any) {
       console.error("❌ Direct listing failed:", err);
       setError(err.message);
@@ -1105,12 +1165,13 @@ export function useComicPlatform({
       const tx = new ContractExecuteTransaction()
         .setContractId(CONTRACTS.COMIC_SALES)
         .setTransactionId(TransactionId.generate(AccountId.fromString(accountId)))
-        .setGas(4000000 + (quantity * 500000))
+        // .setGas(2000000)
+        .setGas(5000000 + (quantity * 500000))
         .setPayableAmount(new Hbar(totalPrice, HbarUnit.Hbar))
         .setFunction(
           "purchaseFromListing",
           new ContractFunctionParameters()
-            .addUint256(listingId)
+            .addUint256(typeof listingId === "string" ? parseInt(listingId) : listingId)
             .addUint256(quantity)
         );
 
@@ -1417,11 +1478,29 @@ export function useComicPlatform({
       if (mirrorData?.call_result) {
         listingId = BigInt("0x" + mirrorData.call_result.slice(2)).toString();
       }
-
+      
+          const serials: number[] = [];
+          let allSerials: number[] = [];
+          if (mirrorData?.call_result) {
+            const result = mirrorData.call_result.slice(2);
+            const arrayLengthHex = result.slice(64, 128);
+            const arrayLength = parseInt(arrayLengthHex, 16);
+            
+            for (let i = 0; i < arrayLength; i++) {
+              const start = 128 + (i * 64);
+              const serialHex = result.slice(start, start + 64);
+              const serial = parseInt(serialHex, 16);
+              if (serial > 0) serials.push(serial);
+            }
+          
+            allSerials = allSerials.concat(serials);
+            console.log("🎉 Minted serials:", serials);
+          }
       return {
         transactionId: txIdStr,
         status: receipt.status.toString(),
         listingId,
+        serials: allSerials
       };
     } catch (err: any) {
       console.error("❌ List for resale failed:", err);
