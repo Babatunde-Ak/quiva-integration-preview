@@ -24,6 +24,14 @@ import { crownIcon, sportsMedal } from '../../../../../public/dev_images';
 // Types
 type FlowStep = 'rarity' | 'listing' | 'review' | 'success';
 
+import {useListComic} from '@/hook/useListComic';
+import {useMintComic} from '@/hook/useMintComic';
+import {useAppSelector} from '@/redux/hook';
+import {useHederaWallet} from '@/providers/HashPackProvider';
+import { useParams, useRouter } from 'next/navigation';
+import useComicPlatform from '@/hook/useMarkeplace';
+import { useComicInscription } from '@/hook/useComicInscription';
+
 interface ListViewProps {
     episodeTitle?: string;
     episodeImage?: string;
@@ -54,6 +62,8 @@ interface MintResult {
     tokenId: string;
     serials: number[];
     transactionId: string;
+    listingIds?: string[];
+    status: string;
 }
 
 // Constants
@@ -86,7 +96,7 @@ const RARITY_OPTIONS: Record<string, RarityOption> = {
 };
 
 const ListView: React.FC<ListViewProps> = ({
-    episodeTitle = "Elipsis #2",
+    episodeTitle = "Great Manga #2",
     episodeImage = "/api/placeholder/200/200",
     onComplete,
     onCancel,
@@ -104,24 +114,87 @@ const ListView: React.FC<ListViewProps> = ({
 
     // Redux state
     const { loading, error: comicError } = useAppSelector((state: any) => state.comic);
-    const { user } = useAppSelector((state: any) => state.wallet);
 
     // Wallet connection
     const { account, signer } = useHederaWallet();
 
-    // NFT Marketplace hook
+    const { user } = useAppSelector((state:any) => state.wallet);
+    
+    // const { 
+    //     listNFT,
+    //     createCollection,
+    //     createComicNFT,
+    //     batchListNFTs,
+    //     status, 
+    //     error 
+    // } = useNFTMarketplace({
+    //     accountId: account || user?.walletAddress || '',
+    //     network: "testnet",
+    //    // marketplaceContractId: "0.0.7726588", // Your deployed marketplace contract
+    // //    marketplaceContractId:"0.0.7750266",
+    //    marketplaceContractId:"0.0.7774217",
+    //    signer: signer,
+    //     //provider: provider,
+    // });
+
     const {
-        createCollection,
-        createComicNFT,
-        batchListNFTs,
-        status,
-        error
-    } = useNFTMarketplace({
+        createComicCollection,
+        createDirectListing
+    } = useComicPlatform({
         accountId: account || user?.walletAddress || '',
-        network: NETWORK,
-        marketplaceContractId: MARKETPLACE_CONTRACT_ID,
+        network: "testnet",
         signer: signer,
     });
+    const {
+    createComicNFT
+    } = useMintComic({
+    accountId: account || user?.walletAddress || '',
+    network: "testnet",
+    signer: signer,
+    })
+
+    // const {
+    //      createInscription 
+
+    // } = useComicInscription({
+    //     accountId: account || user?.walletAddress || '',
+    //     network: "testnet",
+    //     signer: signer,
+    // });
+
+   
+
+    // Rarity configuration with actual supply numbers
+    const rarityOptions = {
+        legendary: {
+            name: 'Legendary',
+            type: 'legendary' as const,
+            supply: 'Supply 1 – 5,000',
+            maxSupply: 5000,
+                icon: <Image src={crownIcon} alt="legendary" className="w-6 h-6 object-cover"/>
+        },
+        epic: {
+            name: 'Epic',
+            type: 'epic' as const,
+            supply: 'Supply 1 – 8,000',
+            maxSupply: 8000,
+                    icon: <Image src={sportsMedal} alt="epic" className="w-6 h-6 object-cover"/>
+        },
+        common: {
+            name: 'Common',
+            type: 'common' as const,
+            supply: 'Infinite',
+            maxSupply: 1000000, // Large number for "infinite",
+            icon: <Image src={sportsMedal} alt="common" className="w-6 h-6 object-cover"/>
+        }
+    };
+
+    const handleRaritySelect = (selectedRarity : string) => {
+        const rarity = rarityOptions[selectedRarity as keyof typeof rarityOptions];
+        setFlowData(prev => ({
+            ...prev,
+            rarity
+        }));
 
     // Fetch episode data on mount
     useEffect(() => {
@@ -180,47 +253,85 @@ const ListView: React.FC<ListViewProps> = ({
             const dbComicId = episodeData?._id || '';
 
             console.log(`🎨 Minting ${numberOfCopies} NFT(s)...`);
-            const mintResult = await createComicNFT({
-                tokenId: nftTokenId,
-                metadata: metadataURI,
-                copies: numberOfCopies,
-                dbComicId: dbComicId
-            });
+            // const metadataHRL = `hcs://1/${topicId}`;
+            const metadataHRL = `https://gateway.pinata.cloud/ipfs/${metadataURI}`;
+            console.log("Metadata HRL for minting:", metadataHRL);
+            
+            // const mintResult = await createComicNFT({
+            //     tokenId: nftTokenId,
+            //     metadata: metadataURI,
+            //     copies: numberOfCopies,
+            //     dbComicId: dbComicId
+            // });
+            const mintAndListResult = await createDirectListing({
+                 episodeId: dbComicId,
+                 quantity: 10,
+                 pricePerNFT: parseFloat(flowData.listing.price),
+                 metadata: metadataHRL
+                //  metadata: metadataHRL,
+            })
 
-            console.log("✅ NFTs minted:", mintResult);
+             console.log("✅ NFTs minted:", mintAndListResult);
 
             const mintedData: MintResult = {
                 tokenId: nftTokenId,
-                serials: mintResult.serials || [],
-                transactionId: mintResult.transactionId || "",
+                status: mintAndListResult.status || '',
+                serials: serials || [],
+                transactionId: mintAndListResult.transactionId || "",
+                listingIds: mintAndListResult.listingId ? [mintAndListResult.listingId] : [],
+
             };
 
-            setMintedNFTs(mintedData);
+         setMintedNFTs(mintedData);
 
-            // Step 3: List NFTs on marketplace
-            console.log("💰 Listing NFTs on marketplace...");
+            // // Save to localStorage for recovery
+            localStorage.setItem('lastMintedNFT', JSON.stringify(mintedData));
+
+            // Step 4: List each NFT for sale
+            console.log("💰 Minted and Listed NFTs on marketplace Successfully");
+            
+            // const priceInHbar = parseFloat(flowData.listing.price);
+            
+            // const listingPromises = mintedData.serials.map(async (serial) => {
+            //     // return await listNFT({
+            //     //     tokenId: nftTokenId,
+            //     //     serialNumber: serial,
+            //     //     priceInHbar: priceInHbar,
+            //     // });
+            //     return await batchListNFTs({
+            //         tokenId: nftTokenId,
+            //         serialNumbers: [serial],
+            //         priceInHbar: priceInHbar,
+            //     });
+            // });
+
+            // const listingResults = await Promise.all(listingPromises);
+            
+            // console.log("✅ All NFTs listed:", listingResults);
+
+            // Step 5: Update backend (if you have one)
+            // await updateBackendListing(mintedData.tokenId, mintedData.serials, flowData.listing.price);
+
             const priceInHbar = parseFloat(flowData.listing.price);
 
-            const listingPromises = mintedData.serials.map(serial =>
-                batchListNFTs({
+            // // Save complete info to localStorage
+            const completeInfo = {
+                collection: {
                     tokenId: nftTokenId,
-                    serialNumbers: [serial],
-                    priceInHbar: priceInHbar,
-                })
-            );
-
-            const listingResults = await Promise.all(listingPromises);
-            console.log("✅ All NFTs listed:", listingResults);
-
-            // Step 4: Update backend
-            const updateResult = await dispatch(updateComicToken({
-                tokenId: nftTokenId,
-                listingId: listingResults[0].listingIds[0],
-                price: priceInHbar,
-                serial: mintedData.serials[0],
-                transactionId: mintedData.transactionId,
-                metadataTopicIds: episodeData?.nftMetadataCid
-            } as any));
+                    name: `${episodeTitle} Collection`,
+                    symbol: flowData.rarity.type.toUpperCase().substring(0, 4),
+                },
+                minted: mintedData,
+                listings: (mintedData.listingIds || []).map((listingId, index) => ({
+                    listingId,
+                    serial: mintedData.serials[index],
+                    price: priceInHbar,
+                })),
+                metadata: {
+                    cid: metadataCid,
+                    comicId: comicId,
+                },
+            };
 
             console.log("✅ Backend updated:", updateResult);
             console.log("✅ Complete NFT creation and listing successful!");

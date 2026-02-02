@@ -4,7 +4,7 @@ import React from 'react'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
 import { LOCAL_IMAGE } from '@/components/utils/dummy-data'
-import { useNFTMarketplace } from '@/hook/useMarkeplace';
+import useComicPlatform from '@/hook/useMarkeplace';
 import { useHederaWallet } from '@/providers/HashPackProvider'
 import { useAppSelector } from '@/redux/hook'
 
@@ -43,27 +43,44 @@ const MintConfirmationModal: React.FC<MintConfirmationModalProps> = ({
     
         const { user } = useAppSelector((state:any) => state.wallet);
         
-        const { 
-            listNFT,
-            createCollection,
-            mintNFTs, 
-            purchaseNFT,
-            status, 
-            error 
-        } = useNFTMarketplace({
-            accountId: account || user?.walletAddress || '',
-            network: "testnet",
-            marketplaceContractId: "0.0.7750266", // Your deployed marketplace contract
-            signer: signer,
+        // const { 
+        //     purchaseFromListing  
+        // } = useNFTMarketplace({
+        //     accountId: account || user?.walletAddress || '',
+        //     network: "testnet",
+        //     // marketplaceContractId: "0.0.7750266", // Your deployed marketplace contract
+        //    marketplaceContractId:"0.0.7774217",
+        //     signer: signer,
            
-        });
+        // });
+        const {
+           purchaseFromListing,
+            getDirectListing
+
+        } = useComicPlatform({
+          accountId: account || user?.walletAddress || '',
+          network: "testnet",
+    
+          signer: signer,
+
+        })
     
 
   const handleMintComic = async () => {
 
     try {
-       await purchaseNFT({ listingId: 0, priceInHbar: 30 })
-       console.log('Minting successful');
+
+      //fetch the info first
+      const currentListing =  await getDirectListing(0);
+      console.log('Current Listing:', currentListing);
+      //  await purchaseNFT({ listingId: 0, priceInHbar: 30 })
+      const result = await purchaseFromListing({
+        listingId: 0, // Replace with actual listing ID
+        quantity: 1,
+        pricePerNFT: 10 ,
+
+      })
+       console.log('Minting successful', result);
    } catch (error) {
         console.error('Minting failed:', error);
     
@@ -106,7 +123,7 @@ const MintConfirmationModal: React.FC<MintConfirmationModalProps> = ({
             <div 
               className="absolute inset-0 bg-cover bg-center"
               style={{
-                backgroundImage: `url('${imageSrc}')`, 
+                backgroundImage: `url('${imageSrc}')`,  
                 filter: 'blur(20px) brightness(0.6)',
                 transform: 'scale(1.1)'
               }}
