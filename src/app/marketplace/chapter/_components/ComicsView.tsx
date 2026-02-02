@@ -37,9 +37,9 @@ const handlePurchase = async () => {
       // const currentListing =  await getDirectListing(0);
       // console.log('Current Listing:', currentListing);
   const result = await purchaseFromListing({
-    listingId: 0,
+    listingId: 1,
     quantity: 2,
-    pricePerNFT: 10
+    pricePerNFT: 20
   });
   console.log('Purchase Result:', result);
   

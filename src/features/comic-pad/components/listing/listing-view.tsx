@@ -115,22 +115,22 @@ const ListView : React.FC < ListViewProps > = ({
         network: "testnet",
         signer: signer,
     });
-    const {
-    createComicNFT
-    } = useMintComic({
-    accountId: account || user?.walletAddress || '',
-    network: "testnet",
-    signer: signer,
-    })
-
     // const {
-    //      createInscription 
+    // createComicNFT
+    // } = useMintComic({
+    // accountId: account || user?.walletAddress || '',
+    // network: "testnet",
+    // signer: signer,
+    // })
 
-    // } = useComicInscription({
-    //     accountId: account || user?.walletAddress || '',
-    //     network: "testnet",
-    //     signer: signer,
-    // });
+    const {
+         createInscription 
+
+    } = useComicInscription({
+        accountId: account || user?.walletAddress || '',
+        network: "testnet",
+        signer: signer,
+    });
 
    
 
@@ -194,10 +194,10 @@ const ListView : React.FC < ListViewProps > = ({
                 console.log("📝 Creating NFT collection...");
                 
             // const metadataURI ="bafkreiatw24wireql2dj74wylfbls3vxo5j2woqmnbzrotu62g5qvipluu";
-            const metadataURI = "bafkreicecnx2gvntm6fbcrvnc336qze6st5u7qq7457igegamd3bzkx7ri";
+            const metadataURI = "bafkreicdrvu6mnyvlo2vzasvrgh3hsgndgfzuvlxugapfwupa4cx6tguh4";
             console.log("✅ Metadata URI prepared:", metadataURI);
             // const dbComicId = "69786c446a14dd56c6121d78"
-            const dbComicId = "697dd87d5cc92fa44f43f683";
+            const dbComicId = "697b9df589db1b499fc42d48";
                 // Step 1: Create Collection 
                 const createCollectionResult = await createComicCollection({
                     episodeId: dbComicId,
@@ -219,12 +219,12 @@ const ListView : React.FC < ListViewProps > = ({
 
             // Step 2: Prepare Inscription / Metadata
     //         console.log("📦 Preparing Inscription...");
-    // const inscriptionResult = await createInscription(metadataURI, dbComicId);
-    //       console.log("✅ Inscription completed:", inscriptionResult);
-    //         const topicId = inscriptionResult.topicId || '';
-    //         console.log("🎉 Inscription Topic ID:", topicId);
-    //         setMetadataCid(metadataCid);
-    //         setComicId(dbComicId);
+    const inscriptionResult = await createInscription(metadataURI, dbComicId);
+          console.log("✅ Inscription completed:", inscriptionResult);
+            const topicId = inscriptionResult.topicId || '';
+            console.log("🎉 Inscription Topic ID:", topicId);
+            setMetadataCid(metadataURI);
+            setComicId(dbComicId);
 
             const numberOfCopies = parseInt(flowData.listing.sales) || 1;
             // const metadataURIs = Array(numberOfCopies).fill(metadataURI);
@@ -258,8 +258,8 @@ const ListView : React.FC < ListViewProps > = ({
         //    console.log("✅ Comic NFTs created:", comicCreation);
             // Step 3: Mint NFTs
             console.log(`🎨 Minting ${numberOfCopies} NFT(s)...`);
-            // const metadataHRL = `hcs://1/${topicId}`;
-            const metadataHRL = `https://gateway.pinata.cloud/ipfs/${metadataURI}`;
+            const metadataHRL = `hcs://1/${topicId}`;
+            // const metadataHRL = `https://gateway.pinata.cloud/ipfs/${metadataURI}`;
             console.log("Metadata HRL for minting:", metadataHRL);
             
             // const mintResult = await createComicNFT({
