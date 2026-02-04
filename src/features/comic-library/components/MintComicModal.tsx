@@ -59,6 +59,7 @@ const MintComicModal: React.FC<MintComicModalProps> = ({
   const [isMinting, setIsMinting] = useState(false)
   
   // Wallet states
+  
   const [isWalletConnected, setIsWalletConnected] = useState(true)
   const [walletAddress, setWalletAddress] = useState('0xA182...C3D4')
 

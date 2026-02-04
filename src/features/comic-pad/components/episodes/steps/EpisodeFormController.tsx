@@ -6,7 +6,7 @@ import ContentFilesStepComponent from './ContentFilesStep';
 import PreviewPublishStep from './PreviewPublishStep';
 import { useMintComic } from '@/hook/useMintComic'; // Adjust path as needed
 import { useHederaWallet } from '@/providers/HashPackProvider';
-import { useAppSelector } from '@/redux/hook';
+import { useAppDispatch, useAppSelector } from '@/redux/hook';
 import axios from 'axios';
 // import { file } from 'jszip';
 interface EpisodeFormData {
@@ -37,6 +37,9 @@ const EpisodeFormController: React.FC<EpisodeFormControllerProps> = ({
   isLoading: externalLoading = false,
   collectionId
 }) => {
+
+  const dispatch = useAppDispatch();
+
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<EpisodeFormData>({
     title: '',
@@ -122,8 +125,21 @@ const EpisodeFormController: React.FC<EpisodeFormControllerProps> = ({
     });
     formDataToSend.append('collectionId', collectionId || '');
 
+    const nftDetails = {
+      "mintStatus": "pending",
+      "price": 0,
+      "tokenId": "0",
+      "contractAddress": "0",
+      "maxSupply": 0,
+      "currentSupply": 0,
+      "royaltyPercentage": 0
+    };
+
+    formDataToSend.append('nftDetails', JSON.stringify(nftDetails));
+
     try {
       const token = localStorage.getItem('token');
+
       const response = await axios.post(`http://localhost:5000/api/comics/full/${collectionId}`,
             formDataToSend,
             {

@@ -42,6 +42,8 @@ const MintConfirmationModal: React.FC<MintConfirmationModalProps> = ({
         } = useHederaWallet();
     
         const { user } = useAppSelector((state:any) => state.wallet);
+        const { currentComic, isLoading } = useAppSelector((state: any) => state.comic);
+        console.log("Current Comic in Mint Modal:", currentComic);
         
         // const { 
         //     purchaseFromListing  
@@ -73,6 +75,7 @@ const MintConfirmationModal: React.FC<MintConfirmationModalProps> = ({
       //fetch the info first
       const currentListing =  await getDirectListing(0);
       console.log('Current Listing:', currentListing);
+      // currentComic?.nftId?.listingId
       //  await purchaseNFT({ listingId: 0, priceInHbar: 30 })
       const result = await purchaseFromListing({
         listingId: 0, // Replace with actual listing ID
