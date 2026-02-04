@@ -39,11 +39,11 @@ const ComicReaderViewer = () => {
 
   const comicId = searchParams.get('id');
 
-  //  images as fallback
+  //  images as fallback - updated to use bannerImage from API
   const images = {
-    //  comic data if available, otherwise  images
-    cover: currentComic?.coverImage || "/dev_images/Rectangle3051.png",
-    avatar: currentComic?.creator?.avatar || "/dev_images/Rectangle3048.png",
+    //  comic data if available, otherwise fallback images
+    cover: currentComic?.bannerImage || currentComic?.coverImage || "/dev_images/Rectangle3051.png",
+    avatar: currentComic?.creatorId?.avatar || "/dev_images/Rectangle3048.png",
     //  hardcoded images for other sections
     inosuke: "/dev_images/Image2.png",
     cross: "/dev_images/Group427320759.png",
@@ -72,12 +72,27 @@ const ComicReaderViewer = () => {
   const activeComic = useMemo(() => {
     const comic = useDummyData ? DUMMY_READER_COMIC : currentComic;
     if (!comic) return null;
+    
+    // Map API data structure to expected format
+    const creator = comic.creatorId 
+      ? {
+          name: comic.creatorId.username || 'Unknown Creator',
+          avatar: comic.creatorId.avatar || images.avatar,
+          walletAddress: comic.creatorId.walletAddress,
+        }
+      : comic.creator ?? {
+          name: 'Studio Kyra',
+          avatar: images.avatar,
+        };
+    
     return {
       ...comic,
-      creator: comic.creator ?? {
-        name: 'Studio Kyra',
-        avatar: images.avatar, 
-      },
+      creator,
+      // Ensure coverImage is properly mapped from bannerImage
+      coverImage: comic.bannerImage || comic.coverImage,
+      // Add additional helpful properties
+      title: comic.title || 'Untitled Comic',
+      episodeNumber: comic.episodeNumber || 1,
     };
   }, [useDummyData, currentComic, images.avatar]);
 
@@ -97,7 +112,8 @@ const ComicReaderViewer = () => {
         });
       }
     });
-    return pages.slice(0, 15);
+    // Return all available pages (not limited to 15)
+    return pages;
   }, [activeComic]);
 
   const totalPages = comicPages.length;
@@ -182,7 +198,8 @@ const ComicReaderViewer = () => {
       <div className="relative w-full overflow-hidden min-h-[380px]">
         <div className="absolute inset-0">
           <img
-            src={images.cover}
+            src={activeComic.coverImage || images.cover}
+            alt={activeComic.title}
             className="w-full h-full object-cover blur-2xl scale-110"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/80 to-black" />
@@ -202,7 +219,11 @@ const ComicReaderViewer = () => {
       {/* COVER Image */}
       <div className="absolute left-1/2 -translate-x-1/2 top-[190px] z-30">
         <div className="w-[279px] h-[356px] rounded-xl overflow-hidden shadow-2xl">
-          <img src={images.cover} className="w-full h-full object-cover" />
+          <img 
+            src={activeComic.coverImage || images.cover} 
+            alt={activeComic.title}
+            className="w-full h-full object-cover" 
+          />
         </div>
       </div>
 
@@ -259,10 +280,10 @@ const ComicReaderViewer = () => {
               <div key={index} className="flex items-center justify-center w-full mb-3 sm:mb-6 last:mb-0">
                 <div className="w-full px-2 sm:px-4">
                   <div className="relative w-full mx-auto">
-                   
+                  
                     <img
                       src={page.imageUrl}
-                      alt={`Page ${actualPageNumber}`}
+                      alt={`${activeComic.title} - Page ${actualPageNumber}`}
                       className="w-[90%] sm:w-[80%] h-auto object-contain rounded-lg shadow-lg min-h-[calc(70vh-80px)] max-h-[80vh] sm:min-h-[calc(80vh-100px)] sm:max-h-[90vh] md:min-h-[calc(160vh-200px)] md:max-h-[180vh] mx-auto"
                     />
                   </div>
@@ -305,8 +326,13 @@ const ComicReaderViewer = () => {
           <div className="text-center -mt-1">
             <div className="text-white/60 text-xs mb-0.5">creator</div>
             <div className="text-white text-lg md:text-xl font-bold">
-              {activeComic.creator?.name || 'Studio Kyra'}
+              {activeComic.creator?.name || 'Unknown Creator'}
             </div>
+            {activeComic.creator?.walletAddress && (
+              <div className="text-white/40 text-xs mt-1 font-mono">
+                {activeComic.creator.walletAddress.slice(0, 6)}...{activeComic.creator.walletAddress.slice(-4)}
+              </div>
+            )}
           </div>
           
           <div className="text-center mt-2">
