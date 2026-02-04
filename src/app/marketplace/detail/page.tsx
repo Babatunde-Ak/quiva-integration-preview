@@ -107,6 +107,7 @@ export default function ComicDetail() {
   const creatorDescription = `${displayAuthorName} is a visionary ${currentCollection?.comic?.length > 1 ? 'series creator' : 'artist'} dedicated to pushing the boundaries of digital art and interactive narratives. ${currentCollection?.description || ''}`.trim();
 
   const handleReadClick = () => {
+    router.push(`/reader?id=${currentComic?._id}&chapterId=${chapters[0]?._id || ''}`);
     setShowMintPage(true);
   };
 
