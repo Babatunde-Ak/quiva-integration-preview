@@ -13,6 +13,7 @@ import {
 import { ChevronDown, ChevronUp } from "lucide-react"
 import { useState } from "react"
 import { hbar } from "../../../../public/dev_images"
+import { useRouter } from "next/navigation"
 
 export interface TopComic {
   rank: number
@@ -24,6 +25,7 @@ export interface TopComic {
   sales: number
   volume: string
   image: string
+  id: string
 }
 
 interface TopComicsTableProps {
@@ -31,6 +33,8 @@ interface TopComicsTableProps {
 }
 
 export function TopComicsTable({ comics }: TopComicsTableProps) {
+  const router = useRouter()
+
   const timePeriods = ['10m', '1h', '6h', '1d', '7d', '30d']
 
   const [selectedPeriod, setSelectedPeriod] = useState('10m')
@@ -72,8 +76,9 @@ export function TopComicsTable({ comics }: TopComicsTableProps) {
           <TableBody>
             {comics.map((comic) => (
               <TableRow 
+                onClick={() => router.push(`/marketplace/chapter?id=${comic.id}`)}
                 key={comic.rank} 
-                className="border-white/10 hover:bg-black-600/50 px-4 py-4 font-light text-base"
+                className="border-white/10 hover:bg-black-600/50 px-4 py-4 font-light text-base cursor-pointer"
               >
                 <TableCell className="flex items-center space-x-3 ml-3">
                   <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
@@ -112,11 +117,11 @@ export function TopComicsTable({ comics }: TopComicsTableProps) {
                 </TableCell>
                 
                 <TableCell className="text-white">
-                  {comic.copies.toLocaleString()} Supply
+                  {comic.copies.toLocaleString()}
                 </TableCell>
                 
                 <TableCell className="text-white">
-                  {comic.sales} Sales
+                  {comic.sales}
                 </TableCell>
                 
                 <TableCell className="text-white font-light flex items-center gap-1">

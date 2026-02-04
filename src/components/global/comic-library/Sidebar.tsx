@@ -113,7 +113,7 @@ export function Sidebar({ isMobileMenuOpen, onMobileMenuClose, isCollapsed, onTo
       isActive: pathname === '/marketplace/user-profile'
     },
     {
-      label: 'Chapter', 
+      label: 'Secondary Market', 
       path: '/marketplace/chapter',
       isActive: pathname === '/marketplace/chapter'
     },

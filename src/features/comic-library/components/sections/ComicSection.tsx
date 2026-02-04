@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ComicCard } from '@/components/cards/ComicCard'
 import { motion } from 'framer-motion'
-import { InertedGridComicCard } from '@/components/cards/InvertedGridComicCard'
+import { InvertedGridComicCard } from '@/components/cards/InvertedGridComicCard'
+import { Comic } from '@/features/comic-library/utils/transformComicData'
 
 const FILTERS = [
   {
@@ -21,25 +22,13 @@ const FILTERS = [
 
 type FilterType = typeof FILTERS[number]['id']
 
-interface Comic {
-  id: string
-  title: string
-  subtitle?: string
-  price?: string
-  description?: string
-  image: string
-  premium?: boolean
-  buttonText?: string
-  buttonVariant?: 'default' | 'outline'
-}
-
 interface ComicSectionProps {
   title: string
   subtitle?: string
   comics: Comic[]
   showNavigation?: boolean
   cardSize?: 'small' | 'medium' | 'large'
-  isLoading?: boolean,
+  isLoading?: boolean
   onFilterChange?: (filter: string) => void
   defaultFilter?: string
   filters?: {
@@ -212,18 +201,10 @@ export function ComicSection({
             // Inverted Comics
             comics.map((comic, index) => (
               <div key={comic.id} className="flex-shrink-0 snap-start">
-                <InertedGridComicCard 
-                  id={comic.id}
-                  title={comic.title}
-                  price={comic.price}
-                  subtitle={comic.subtitle}
-                  description={comic.description}
-                  image={comic.image}
-                  premium={comic.premium}
-                  buttonText={comic.buttonText}
-                  buttonVariant={comic.buttonVariant}
-                  size={cardSize}
+                <InvertedGridComicCard 
+                  {...comic}
                   number={index + 1}
+                  size={cardSize}
                 />
               </div>
             ))
@@ -232,17 +213,9 @@ export function ComicSection({
             comics.map((comic, index) => (
               <div key={comic.id} className="flex-shrink-0 snap-start">
                 <ComicCard 
-                  id={comic.id}
-                  title={comic.title}
-                  price={comic.price}
-                  subtitle={comic.subtitle}
-                  description={comic.description}
-                  image={comic.image}
-                  premium={comic.premium}
-                  buttonText={comic.buttonText}
-                  buttonVariant={comic.buttonVariant}
-                  size={cardSize}
+                  {...comic}
                   number={index + 1}
+                  size={cardSize}
                 />
               </div>
             ))
