@@ -1,10 +1,11 @@
 import React from 'react';
 import Image from 'next/image';
-import { Search, ChevronDown } from 'lucide-react';
+import { Search, ChevronDown, PrinterCheckIcon } from 'lucide-react';
 import  useComicPlatform  from '@/hook/useMarkeplace';
 import { useHederaWallet } from '@/providers/HashPackProvider'
 import { useAppSelector } from '@/redux/hook'
-
+import {  approveNFTForMarketplace, setApprovalForAllHTS } from '@/hook/ApproveAssociate';
+import { canAuthorizeHTSTransfer } from '@/hook/useCheckAccountType';
  
 
 const ComicsView = () => {
@@ -25,24 +26,77 @@ const ComicsView = () => {
     
   const { user } = useAppSelector((state:any) => state.wallet);
 
-  const { purchaseFromListing,  getDirectListing } = useComicPlatform({
+  const { purchaseFromListing, listForResale, getDirectListing, purchaseFromMarketplace, getMarketplaceListing } = useComicPlatform({
           accountId: account || user?.walletAddress || '',
           network: "testnet",
           signer: signer,
 
   });
 
+//   export async function getHederaAccountInfo(accountId: string) {
+//   const res = await fetch(
+//     `https://mainnet-public.mirrornode.hedera.com/api/v1/accounts/${accountId}`
+//   );
+
+//   if (!res.ok) {
+//     throw new Error("Failed to fetch account info");
+//   }
+
+//   return res.json();
+// }
+
+
 const handlePurchase = async () => {
  try {
       // const currentListing =  await getDirectListing(0);
       // console.log('Current Listing:', currentListing);
-  const result = await purchaseFromListing({
-    listingId: 1,
-    quantity: 2,
-    pricePerNFT: 20
-  });
-  console.log('Purchase Result:', result);
+  // const result = await purchaseFromListing({
+  //   listingId: 1,
+  //   quantity: 2,
+  //   pricePerNFT: 20
+  // });
+  //  const approveResult = await setApprovalForAllHTS(
+  //    '0.0.7813755',
+  //    '0.0.7806693',
+  //     account || user?.walletAddress || '',
+  //     signer,
+  //      [1]
+  //  )
+
+  // const approveResult = await approveNFTForMarketplace(
+  //   '0.0.7813755',
+  //   [1],
+  //   '0.0.7806693',
+  //   account || user?.walletAddress || '',
+  //   signer,
+  //   "testnet"
+
+  // )
+
+  //  console.log('Approve Result:', approveResult);
+
+  // const result = await listForResale({
+  //   tokenAddress: '0.0.7813755',
+  //   serialNumber: 1,
+  //   priceInHbar: 50
+  // })
+  // const getListing = await getMarketplaceListing(0);
+  // console.log('Get Listing Result:', getListing);
+
   
+// const canBuy = await canAuthorizeHTSTransfer(user?.walletAddress || '');
+
+// if (!canBuy) {
+//   throw new Error(
+//     "This wallet cannot authorize NFT transfers on Hedera. Please use an EVM-compatible (ECDSA) account."
+//   );
+// }
+  const result = await purchaseFromMarketplace({
+    listingId: 0,
+    priceInHbar: 50
+  })
+  // console.log('Purchase Result:', result);
+   console.log('DepositList Result:', result);
  } catch (error) {
   console.error('Purchase failed:', error);
   

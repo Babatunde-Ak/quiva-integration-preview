@@ -197,7 +197,7 @@ const ListView: React.FC<ListViewProps> = ({
             
             const mintAndListResult = await createDirectListing({
                 episodeId: dbComicId,
-                quantity: 10,
+                quantity: numberOfCopies,
                 pricePerNFT: parseFloat(flowData.listing.price),
                 metadata: metadataHRL
             });

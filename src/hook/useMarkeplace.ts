@@ -879,8 +879,17 @@ import {
   ContractCallQuery,
   Hbar,
   HbarUnit,
+  TokenId,
 } from "@hashgraph/sdk";
 import { useComicInscription } from "./useComicInscription";
+import { ethers } from 'ethers';
+
+// Define the ABI for your function
+const abi = [
+  'function canReadComic(string episodeId, address user) external view returns (bool)'
+];
+
+// Create interface and encode the function call
 
 // ============================================
 // CONTRACT ADDRESSES (Update after deployment)
@@ -892,8 +901,10 @@ import { useComicInscription } from "./useComicInscription";
 // };
 const CONTRACTS = {
   COMIC_CORE: "0.0.7806656",
-  COMIC_SALES: "0.0.7806676",
-  COMIC_MARKETPLACE: "0.0.7806693"
+   COMIC_SALES: "0.0.7829668",
+  // COMIC_SALES: "0.0.7806676",
+  // COMIC_MARKETPLACE: "0.0.7806693"
+  COMIC_MARKETPLACE: "0.0.7829656"
 }
 
 interface UseComicPlatformProps {
@@ -1449,11 +1460,11 @@ export function useComicPlatform({
       const tx = new ContractExecuteTransaction()
         .setContractId(CONTRACTS.COMIC_MARKETPLACE)
         .setTransactionId(TransactionId.generate(AccountId.fromString(accountId)))
-        .setGas(3000000)
+        .setGas(5000000)
         .setFunction(
           "depositAndListForResale",
           new ContractFunctionParameters()
-            .addAddress(tokenAddress)
+            .addAddress(TokenId.fromString(tokenAddress).toEvmAddress())
             .addInt64(serialNumber)
             .addUint256(priceInTinybars)
         );
@@ -1536,7 +1547,7 @@ export function useComicPlatform({
         .setFunction(
           "batchDepositAndListForResale",
           new ContractFunctionParameters()
-            .addAddress(tokenAddress)
+            .addAddress(TokenId.fromString(tokenAddress).toEvmAddress())
             .addInt64Array(serialNumbers)
             .addUint256Array(pricesInTinybars)
         );
@@ -1579,12 +1590,12 @@ export function useComicPlatform({
       const tx = new ContractExecuteTransaction()
         .setContractId(CONTRACTS.COMIC_MARKETPLACE)
         .setTransactionId(TransactionId.generate(AccountId.fromString(accountId)))
-        .setGas(4000000)
+        .setGas(5000000)
         .setPayableAmount(new Hbar(priceInHbar, HbarUnit.Hbar))
         .setFunction(
           "purchaseNFT",
           new ContractFunctionParameters()
-            .addUint256(listingId)
+            .addUint256(typeof listingId === "string" ? parseInt(listingId) : listingId)
         );
 
       const response = await executeWithSigner(tx);
@@ -1646,30 +1657,61 @@ export function useComicPlatform({
   // QUERY FUNCTIONS
   // ============================================
 
+ const canReadComic = async (episodeId: string, userAddress: string): Promise<boolean> => {
+  try {
+    const abi = ['function canReadComic(string episodeId, address user) external view returns (bool)'];
+    const abiInterface = new ethers.Interface(abi);
+    const encodedData = abiInterface.encodeFunctionData('canReadComic', [episodeId, userAddress]);
+
+    // Convert contract ID to EVM address (e.g., 0.0.1234 → 0x00000000000000000000000000000000000004d2)
+    const contractAddress = ContractId.fromString(CONTRACTS.COMIC_CORE).toEvmAddress();
+
+    const response = await fetch('https://testnet.mirrornode.hedera.com/api/v1/contracts/call', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        block: 'latest',
+        data: encodedData,
+        to: contractAddress
+      })
+    });
+
+    const result = await response.json();
+    
+    // Decode the boolean result
+    const decoded = abiInterface.decodeFunctionResult('canReadComic', result.result);
+    return decoded[0];
+  } catch (err) {
+    console.error('❌ Query failed:', err);
+    return false;
+  }
+};
+
+
   /**
    * Check if user can read comic (for backend)
    */
-  const canReadComic = async (episodeId: string, userAddress: string): Promise<boolean> => {
-    try {
-      const client = Client.forName(network);
+  // const canReadComic = async (episodeId: string, userAddress: string): Promise<boolean> => {
+  //   try {
+  //     const client = Client.forName(network);
 
-      const query = new ContractCallQuery()
-        .setContractId(CONTRACTS.COMIC_CORE)
-        .setGas(100000)
-        .setFunction(
-          "canReadComic",
-          new ContractFunctionParameters()
-            .addString(episodeId)
-            .addAddress(userAddress)
-        );
+  //     const query = new ContractCallQuery()
+  //       .setContractId(CONTRACTS.COMIC_CORE)
+  //       .setGas(100000)
+  //       .setFunction(
+  //         "canReadComic",
+  //         new ContractFunctionParameters()
+  //           .addString(episodeId)
+  //           .addAddress(userAddress)
+  //       );
 
-      const result = await query.execute(client);
-      return result.getBool(0);
-    } catch (err: any) {
-      console.error("❌ Query failed:", err);
-      return false;
-    }
-  };
+  //     const result = await query.execute(client);
+  //     return result.getBool(0);
+  //   } catch (err: any) {
+  //     console.error("❌ Query failed:", err);
+  //     return false;
+  //   }
+  // };
 
   /**
    * Get episode details
@@ -1782,8 +1824,9 @@ export function useComicPlatform({
           new ContractFunctionParameters()
             .addUint256(listingId)
         );
-
-      const result = await query.execute(client);
+       const response = await executeWithSigner(query);
+      const result = await response.execute(client);
+      console.log("Marketplace listing result:", result);
 
       return {
         tokenAddress: result.getAddress(0),
