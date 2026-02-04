@@ -892,8 +892,8 @@ import { useComicInscription } from "./useComicInscription";
 // };
 const CONTRACTS = {
   COMIC_CORE: "0.0.7806656",
-  COMIC_SALES: "0.0.7806676",
-  COMIC_MARKETPLACE: "0.0.7806693"
+  COMIC_SALES: "0.0.7829668",
+  COMIC_MARKETPLACE: "0.0.7829656"
 }
 
 interface UseComicPlatformProps {

@@ -87,7 +87,7 @@ export function InvertedGridComicCard({
             whileTap={{
                 scale: 0.98
             }}
-            onClick={() => router.push(`/marketplace/chapter?id=${id}`)}>
+            onClick={() => router.push(`/marketplace/detail?id=${id}`)}>
             
             {/* Content Section */}
             <div className="pt-3 sm:pt-4">
