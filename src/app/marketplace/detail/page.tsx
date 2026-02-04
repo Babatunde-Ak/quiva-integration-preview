@@ -26,6 +26,7 @@ export default function ComicDetail() {
   const { currentComic, isLoading } = useAppSelector((state: any) => state.comic);
   const { currentCollection } = useAppSelector((state: any) => state.collection || {});
 
+  console.log("Current Comic from Redux:", currentComic);
   // Fetch comic and collection data on mount or when comicId changes
   useEffect(() => {
     const fetchData = async () => {
