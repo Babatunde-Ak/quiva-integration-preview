@@ -5,6 +5,7 @@ import { ChevronDown, ListFilter, Zap, CircleDollarSign, LayoutGrid } from 'luci
 import { Skeleton } from '@/components/ui/skeleton'
 import { ComicCard } from '@/components/cards/ComicCard'
 import { motion } from 'framer-motion'
+import { Comic } from '../../utils/transformComicData'
 
 const FILTERS = [
     { id: 'category', label: 'Category', icon: <LayoutGrid size={20} /> },
@@ -19,20 +20,6 @@ const SORT_OPTIONS = [
     { id: 'price-high', label: 'Price: High to Low' }
 ]
 
-interface Comic {
-    id: string
-    title: string
-    creator?: string
-    creatorAvatar?: string
-    mintPrice?: string
-    currentPrice?: string
-    views?: string
-    image: string
-    premium?: boolean
-    free?: boolean
-    number?: number
-    isLiked?: boolean
-}
 
 interface MarketplaceComicsProps {
     title: string
@@ -189,16 +176,18 @@ export function SortComicSection({
                                 <ComicCard 
                                     id={comic.id}
                                     title={comic.title}
-                                    creator={comic.creator}
+                                    creator={comic?.creatorUsername || ""}
+                                    creatorUsername={comic?.creatorUsername || ""}
                                     creatorAvatar={comic.creatorAvatar}
-                                    mintPrice={comic.mintPrice}
-                                    currentPrice={comic.currentPrice}
+                                    mintPrice={comic.price}
+                                    currentPrice={comic.price}
                                     views={comic.views}
                                     image={comic.image}
                                     premium={comic.premium}
-                                    free={comic.free}
+                                    free={comic.premium ? false : true}
                                     number={index + 1}
-                                    isLiked={comic.isLiked}
+                                    isLiked={false}
+                                    likes={comic.likes}
                                 />
                             </motion.div>
                         ))

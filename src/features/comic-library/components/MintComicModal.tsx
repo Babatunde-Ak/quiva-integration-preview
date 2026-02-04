@@ -7,6 +7,8 @@ import { useRouter } from 'next/navigation'
 import MintConfirmationModal from './MintConfirmationModal'
 import MintProcessingModal from './MintProcessingModal'
 import MintSuccessModal from './MintSuccessModal'
+import { useAppDispatch } from '@/redux/hook'
+import { createTransaction } from '@/redux/slices/transactionSlice'
 
 interface MintComicModalProps {
   title: string
@@ -32,6 +34,7 @@ interface MintComicModalProps {
 
 const MintComicModal: React.FC<MintComicModalProps> = ({
   title,
+  walletAddress: walletAddressProp,
   issueNumber,
   author,
   coverImage,
@@ -43,8 +46,9 @@ const MintComicModal: React.FC<MintComicModalProps> = ({
   onBack,
   comicId = '1'
 }) => {
-  const router = useRouter()
-  
+  const router = useRouter();
+  const dispatch = useAppDispatch();
+
   // Modal states
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [showProcessingModal, setShowProcessingModal] = useState(false)
@@ -85,6 +89,14 @@ const MintComicModal: React.FC<MintComicModalProps> = ({
     setShowConfirmModal(false)
     setShowProcessingModal(true)
     setIsMinting(true)
+
+    dispatch(createTransaction({
+      comicId:comicId,
+      "walletAddress": walletAddressProp,
+      "txHash": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+      "price": price,
+      "currency": "HBAR"
+    } as any)).unwrap()
     
     setTimeout(() => {
       setTransactionHash('0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef')
@@ -108,11 +120,7 @@ const MintComicModal: React.FC<MintComicModalProps> = ({
 
   //  back button
   const handleBack = () => {
-    if (onBack) {
-      onBack()
-    } else {
-      router.back()
-    }
+    router.push(`/marketplace`)
   }
 
   // tab change
@@ -144,7 +152,7 @@ const MintComicModal: React.FC<MintComicModalProps> = ({
               className="flex items-center text-[#fff]/70 space-x-2 bg-[#000] backdrop-blur-md px-4 py-2 rounded-full border border-white/10 hover:bg-[#000]/70 transition-colors mb-8 text-sm font-medium"
             >
               <ChevronLeft size={16} />
-              <span>Back to Collection</span>
+              <span>Back to Marketplace</span>
             </button>
 
             <div className="flex flex-col md:flex-row gap-8 items-start md:items-end">

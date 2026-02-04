@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import HeroSection from './_components/Hero';
 import MarketStats from './_components/MarketStats';
@@ -12,10 +12,50 @@ import ActivityView from './_components/ActivityView';
 import CollectionsView from './_components/CollectionsView';
 import AboutView from './_components/AboutView';
 import ReleaseView from './_components/ReleaseView';
+import { useAppDispatch, useAppSelector } from '@/redux/hook';
+import { getAllComics, getComicById } from '@/redux/slices/comicSlice';
+import { getCollectionById } from '@/redux/slices/collectionSlice';
+import { useSearchParams } from 'next/navigation';
 
 const Marketplace = () => {
   const [activeTab, setActiveTab] = useState('Comics');
 
+  const searchParams = useSearchParams();
+  const comicId = searchParams.get('id');
+
+  const dispatch = useAppDispatch();
+
+  const {currentComic, comics, isLoading: comicLoading, error: comicError} = useAppSelector((state: any) => state.comic);
+  const {currentCollection, isLoading: collectionLoading} = useAppSelector((state: any) => state.collection || {});
+
+  const isLoading = comicLoading || collectionLoading;
+  const error = comicError;
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch all comics first
+        await dispatch(getAllComics()).unwrap();
+        
+        // Then fetch specific comic if ID exists
+        if (comicId) {
+          const comicResult = await dispatch(getComicById({id: comicId} as any)).unwrap();
+          
+          // If comic has a collectionId, fetch the collection too
+          const collectionId = comicResult?.data?.comic?.collectionId;
+          if (collectionId) {
+            await dispatch(getCollectionById({id: collectionId} as any)).unwrap();
+          }
+        }
+
+      } catch (err) {
+        console.error('Error fetching data:', err);
+      }
+    };
+
+    fetchData();
+  }, [dispatch, comicId]);
+  
   const tabs = ["Comics", "Release", "Holders", "Offers", "Activity", "Collections", "About"];
 
   // Custom CSS for animations
@@ -51,14 +91,38 @@ const Marketplace = () => {
 
         {/* Dynamic Content Area */}
         <div className="bg-[#151515] font-mono rounded-3xl p-6 md:p-8 animate-fade-in-up delay-300 min-h-[600px] border border-[#242424]">
-          {activeTab === 'Comics' && <ComicsView />}
-          {activeTab === 'Release' && <ReleaseView />}
-          {activeTab === 'Holders' && <HoldersView />}
-          {activeTab === 'Offers' && <OffersView />}
-          {activeTab === 'Activity' && <ActivityView />}
-          {activeTab === 'Collections' && <CollectionsView />}
-          {activeTab === 'About' && <AboutView />}
-          
+          {/* Loading State */}
+          {isLoading && (
+            <div className="flex items-center justify-center h-[500px]">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+                <p className="text-white/60">Loading data...</p>
+              </div>
+            </div>
+          )}
+
+          {/* Error State */}
+          {error && !isLoading && (
+            <div className="flex items-center justify-center h-[500px]">
+              <div className="text-center">
+                <p className="text-red-500 mb-2">Error loading data</p>
+                <p className="text-white/60 text-sm">{error}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Content Views */}
+          {!isLoading && !error && (
+            <>
+              {activeTab === 'Comics' && <ComicsView />}
+              {activeTab === 'Release' && <ReleaseView />}
+              {activeTab === 'Holders' && <HoldersView />}
+              {activeTab === 'Offers' && <OffersView />}
+              {activeTab === 'Activity' && <ActivityView />}
+              {activeTab === 'Collections' && <CollectionsView />}
+              {activeTab === 'About' && <AboutView />}
+            </>
+          )}
         </div>
       </div>
     </div>

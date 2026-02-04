@@ -3,16 +3,10 @@ import { ArrowRight, ArrowLeft, Search } from 'lucide-react';
 import Picture from '@/components/picture/Index';
 import { bgSlider } from '../../../../public/dev_images';
 import Link from 'next/link';
-
-interface Comic {
-  id: string;
-  title: string;
-  image: string;
-  description?: string;
-}
+import { Comic } from '@/features/comic-library/utils/transformComicData';
 
 interface ComicsCarouselProps {
-  comics: any[];
+  comics: Comic[];
   autoPlayInterval?: number;
   showSearch?: boolean;
   onComicSelect?: (comic: Comic) => void;
@@ -26,10 +20,19 @@ const ComicsCarousel: React.FC<ComicsCarouselProps> = ({
   onComicSelect,
   onSearch
 }) => {
-  const [currentIndex, setCurrentIndex] = useState(Math.floor(comics.length / 2));
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const [direction, setDirection] = useState<'next' | 'prev' | null>(null);
+
+  // Initialize and update currentIndex based on comics length
+  useEffect(() => {
+    if (comics.length > 0) {
+      setCurrentIndex(Math.min(Math.floor(comics.length / 2), comics.length - 1));
+    } else {
+      setCurrentIndex(0);
+    }
+  }, [comics.length]);
 
   // Auto-play functionality
   useEffect(() => {
@@ -46,18 +49,21 @@ const ComicsCarousel: React.FC<ComicsCarouselProps> = ({
   }, [isAutoPlaying, comics.length, autoPlayInterval]);
 
   const goToPrevious = () => {
+    if (comics.length === 0) return;
     setIsAutoPlaying(false);
     setDirection('prev');
-    setCurrentIndex(currentIndex === 0 ? comics.length - 1 : currentIndex - 1);
+    setCurrentIndex((prev) => prev === 0 ? comics.length - 1 : prev - 1);
   };
 
   const goToNext = () => {
+    if (comics.length === 0) return;
     setIsAutoPlaying(false);
     setDirection('next');
-    setCurrentIndex(currentIndex === comics.length - 1 ? 0 : currentIndex + 1);
+    setCurrentIndex((prev) => prev === comics.length - 1 ? 0 : prev + 1);
   };
 
   const goToSlide = (index: number) => {
+    if (comics.length === 0 || index < 0 || index >= comics.length) return;
     setIsAutoPlaying(false);
     setDirection(index > currentIndex ? 'next' : 'prev');
     setCurrentIndex(index);
@@ -78,6 +84,8 @@ const ComicsCarousel: React.FC<ComicsCarouselProps> = ({
 
   // Get visible cards with their positions
   const getVisibleCards = () => {
+    if (comics.length === 0) return [];
+    
     const visibleCards = [];
     const totalCards = Math.min(5, comics.length); // Show max 5 cards
     const sideCards = Math.floor(totalCards / 2);
@@ -85,12 +93,24 @@ const ComicsCarousel: React.FC<ComicsCarouselProps> = ({
     for (let i = -sideCards; i <= sideCards; i++) {
       let index = currentIndex + i;
       
-      // Handle wrapping
-      if (index < 0) index = comics.length + index;
-      if (index >= comics.length) index = index - comics.length;
+      // Handle wrapping with bounds checking
+      while (index < 0) index = comics.length + index;
+      while (index >= comics.length) index = index - comics.length;
+      
+      // Double check index is valid
+      if (index < 0 || index >= comics.length) {
+        console.warn("Invalid index calculated:", index, "comics.length:", comics.length);
+        continue;
+      }
+      
+      const comic = comics[index];
+      if (!comic) {
+        console.warn("No comic found at index:", index);
+        continue;
+      }
       
       visibleCards.push({
-        comic: comics[index],
+        comic,
         originalIndex: index,
         position: i, // -2, -1, 0, 1, 2
         isCenter: i === 0
@@ -169,8 +189,6 @@ const ComicsCarousel: React.FC<ComicsCarouselProps> = ({
         />
       </div>
 
-      
-
       {/* Carousel Container */}
       <div className="relative">
         <div className="relative overflow-visible">
@@ -179,8 +197,9 @@ const ComicsCarousel: React.FC<ComicsCarouselProps> = ({
             {/* Cards Container - Card Deck Style */}
             <div className="relative w-full h-full flex items-center justify-center">
               {getVisibleCards().map(({ comic, originalIndex, position, isCenter }) => (
-                <Link href={`/marketplace/chapter?id=${comic?.id}`}
-                  key={`${comic?.id}-${originalIndex}`}
+                <Link 
+                  href={`/marketplace/detail?id=${comic.id}`}
+                  key={`${comic.id}-${originalIndex}`}
                   className={`absolute cursor-pointer transform-gpu transition-all duration-700 ease-out ${
                     isCenter ? 'hover:scale-105' : 'hover:scale-95'
                   }`}
@@ -189,8 +208,8 @@ const ComicsCarousel: React.FC<ComicsCarouselProps> = ({
                 >
                   <div className="group relative border border-white rounded-2xl overflow-hidden shadow-2xl w-64 h-72">
                     <img
-                      src={comic?.image}
-                      alt={comic?.title}
+                      src={comic.image}
+                      alt={comic.title}
                       className="w-full h-full object-cover transition-all duration-700"
                     />
                     
@@ -201,19 +220,48 @@ const ComicsCarousel: React.FC<ComicsCarouselProps> = ({
                     <div className="absolute inset-0 bg-black/30 group-hover:bg-black/60 transition-all duration-300" />
                     
                     {/* Original overlay gradient for title readability */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black-200/70 via-transparent to-transparent" />
                     
                     {/* Comic title overlay */}
                     <div className="absolute bottom-0 left-0 right-0 p-4 z-10">
-                      <h3 className="font-bold text-white text-lg leading-tight transition-all duration-700">
-                        {comic?.title}
+                      <h3 className="font-bold shadow-md text-white text-lg leading-tight transition-all duration-700">
+                        {comic.title}
                       </h3>
-                      {comic?.description && isCenter && (
+                      {/* Show episode number if available */}
+                      {comic.episodeNumber && isCenter && (
+                        <p className="text-white/80 text-xs mt-1">
+                          Episode {comic.episodeNumber}
+                        </p>
+                      )}
+                      {/* Show description or summary for center card */}
+                      {(comic.description || comic.summary) && isCenter && (
                         <p className="text-white/80 text-sm mt-1 line-clamp-2 transition-all duration-700">
-                          {comic?.description}
+                          {comic.description || comic.summary}
+                        </p>
+                      )}
+                      {/* Show genre/subtitle if no description */}
+                      {!comic.description && !comic.summary && comic.subtitle && isCenter && (
+                        <p className="text-white/70 text-xs mt-1">
+                          {comic.subtitle}
                         </p>
                       )}
                     </div>
+
+                    {/* Stats overlay (views, likes) for center card */}
+                    {isCenter && (comic.views !== undefined || comic.likes !== undefined) && (
+                      <div className="absolute top-3 left-3 z-10 flex gap-2">
+                        {comic.views !== undefined && (
+                          <div className="bg-black/50 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-full">
+                            👁 {comic.views}
+                          </div>
+                        )}
+                        {comic.likes !== undefined && (
+                          <div className="bg-black/50 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-full">
+                            ❤️ {comic.likes}
+                          </div>
+                        )}
+                      </div>
+                    )}
 
                     {/* Center card highlight border */}
                     {isCenter && (

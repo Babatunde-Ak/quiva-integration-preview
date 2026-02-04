@@ -139,6 +139,7 @@ export const mintComics = [
 
 export const topComics = [
   {
+    id: "1",
     rank: 1,
     title: 'NaruHina',
     author: 'NaruHina',
@@ -150,6 +151,7 @@ export const topComics = [
     image: "https://cdn.marvel.com/content/1x/asm2025001_dimeo.jpg"
   },
   {
+    id: "2",
     rank: 2,
     title: 'NaruHina', 
     author: 'NaruHina',
@@ -161,6 +163,7 @@ export const topComics = [
     image: "https://cdn.marvel.com/content/1x/asm2025001_dimeo.jpg"
   },
   {
+    id: "3",
     rank: 3,
     title: 'NaruHina',
     author: 'NaruHina', 
@@ -172,6 +175,7 @@ export const topComics = [
     image: "https://cdn.marvel.com/content/1x/asm2025001_dimeo.jpg"
   },
   {
+    id: "4",
     rank: 4,
     title: 'NaruHina',
     author: 'NaruHina',
@@ -183,6 +187,7 @@ export const topComics = [
     image: "https://cdn.marvel.com/content/1x/asm2025001_dimeo.jpg"
   },
   {
+    id: "5",
     rank: 5,
     title: 'NaruHina',
     author: 'NaruHina',

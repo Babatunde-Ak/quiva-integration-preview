@@ -1,3 +1,5 @@
+// utils/transformTopComicsData.ts
+
 import { TopComic } from "../components/TopComicsTable"
 
 interface ApiComic {
@@ -5,30 +7,36 @@ interface ApiComic {
     creatorId: {
         _id: string
         walletAddress: string
+        username?: string
         avatar?: string
     }
+    collectionId: string
     title: string
-    description: string
-    coverImage: string
     coverImageCid: string
+    episodeNumber: number
+    summary: string
+    bannerImage: string
+    maturityRating: string
+    collaborators: Array<{
+        _id: string
+        walletAddress: string
+    }>
     genre: string[]
     tags: string[]
     chapters: Array<{
         _id: string
         chapterNumber: number
         title: string
-        pages: Array<{
-        _id: string
-        pageNumber: number
-        imageUrl: string
-        }>
+        pages: any[]
         createdAt: string
     }>
     totalPages: number
     status: string
-    publishType: 'free' | 'nft'
     views: number
     likes: number
+    isMinted: boolean
+    isPublished?: boolean
+    isVisible: boolean
     createdAt: string
     updatedAt: string
     __v: number
@@ -41,17 +49,18 @@ interface ApiComic {
  */
 export function transformApiComicsToTopComics(apiComics: ApiComic[]): TopComic[] {
     return apiComics
-        .filter(comic => comic.publishType === 'nft') // Only NFT comics
         .map((comic, index) => ({
             rank: index + 1,
             title: comic.title,
-            author: comic.creatorId.walletAddress.slice(0, 6) + '...' + comic.creatorId.walletAddress.slice(-4), // Shortened wallet address
-            floorPrice: generateMockFloorPrice(), // Since API doesn't provide this, generate mock data
-            priceChange: generateMockPriceChange(), // Since API doesn't provide this, generate mock data
+            author: comic.creatorId.username || 
+                    (comic.creatorId.walletAddress.slice(0, 6) + '...' + comic.creatorId.walletAddress.slice(-4)),
+            floorPrice: generateMockFloorPrice(),
+            priceChange: generateMockPriceChange(),
             copies: comic.totalPages * 100, // Mock calculation based on total pages
-            sales: comic.views || Math.floor(Math.random() * 100), // Use views or generate mock data
-            volume: generateMockVolume(), // Since API doesn't provide this, generate mock data
-            image: comic.coverImage
+            sales: comic.views || Math.floor(Math.random() * 100),
+            volume: generateMockVolume(),
+            image: comic.bannerImage,
+            id: comic._id
         }))
         .slice(0, 10) // Limit to top 10
 }
