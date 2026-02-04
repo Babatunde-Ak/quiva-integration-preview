@@ -60,7 +60,6 @@ const MintConfirmationModal: React.FC<MintConfirmationModalProps> = ({
         } = useComicPlatform({
           accountId: account || user?.walletAddress || '',
           network: "testnet",
-    
           signer: signer,
 
         })
@@ -71,13 +70,13 @@ const MintConfirmationModal: React.FC<MintConfirmationModalProps> = ({
     try {
 
       //fetch the info first
-      const currentListing =  await getDirectListing(0);
-      console.log('Current Listing:', currentListing);
+      // const currentListing =  await getDirectListing(0);
+      // console.log('Current Listing:', currentListing);
       //  await purchaseNFT({ listingId: 0, priceInHbar: 30 })
       const result = await purchaseFromListing({
         listingId: 0, // Replace with actual listing ID
         quantity: 1,
-        pricePerNFT: 10 ,
+        pricePerNFT: 20
 
       })
        console.log('Minting successful', result);

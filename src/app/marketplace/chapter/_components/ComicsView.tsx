@@ -51,34 +51,34 @@ const ComicsView = () => {
     return sortOrder === 'low-to-high' ? priceA - priceB : priceB - priceA;
   });
 
-  const { 
-    account,
-    signer,
-  } = useHederaWallet();
+  // const { 
+  //   account,
+  //   signer,
+  // } = useHederaWallet();
     
-  const { user } = useAppSelector((state: any) => state.wallet);
+  // const { user } = useAppSelector((state: any) => state.wallet);
 
-  const { purchaseFromListing, getDirectListing } = useComicPlatform({
-    accountId: account || user?.walletAddress || '',
-    network: "testnet",
-    signer: signer,
-  });
+  // const { purchaseFromListing, getDirectListing } = useComicPlatform({
+  //   accountId: account || user?.walletAddress || '',
+  //   network: "testnet",
+  //   signer: signer,
+  // });
 
-  const handlePurchase = async (comic: any) => {
-    try {
-      // const currentListing = await getDirectListing(0);
-      // console.log('Current Listing:', currentListing);
-      const result = await purchaseFromListing({
-        listingId: 1,
-        quantity: 2,
-        pricePerNFT: parseFloat(comic.price)
-      });
-      console.log('Purchase Result:', result);
+  // const handlePurchase = async (comic: any) => {
+  //   try {
+  //     // const currentListing = await getDirectListing(0);
+  //     // console.log('Current Listing:', currentListing);
+  //     const result = await purchaseFromListing({
+  //       listingId: 1,
+  //       quantity: 2,
+  //       pricePerNFT: parseFloat(comic.price)
+  //     });
+  //     console.log('Purchase Result:', result);
       
-    } catch (error) {
-      console.error('Purchase failed:', error);
-    }
-  };
+  //   } catch (error) {
+  //     console.error('Purchase failed:', error);
+  //   }
+  // };
 
   const toggleSortOrder = () => {
     setSortOrder(prev => prev === 'low-to-high' ? 'high-to-low' : 'low-to-high');
@@ -159,7 +159,7 @@ const ComicsView = () => {
 
               <button 
                 className="w-full bg-[#FF9F1C] hover:bg-[#FFB045] active:scale-[0.98] text-black font-bold py-3 rounded-full flex items-center justify-center gap-1 transition-all duration-200 shadow-md"
-                onClick={() => handlePurchase(comic)}
+                // onClick={() => handlePurchase(comic)}
               >
                 {comic.price} <Image src="/hbar.png" alt="HBAR" width={16} height={16} />
               </button>
