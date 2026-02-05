@@ -26,6 +26,7 @@ export default function ComicDetail() {
   const { currentComic, isLoading } = useAppSelector((state: any) => state.comic);
   const { currentCollection } = useAppSelector((state: any) => state.collection || {});
 
+  console.log("Current Comic from Redux:", currentComic);
   // Fetch comic and collection data on mount or when comicId changes
   useEffect(() => {
     const fetchData = async () => {
@@ -107,8 +108,9 @@ export default function ComicDetail() {
   const creatorDescription = `${displayAuthorName} is a visionary ${currentCollection?.comic?.length > 1 ? 'series creator' : 'artist'} dedicated to pushing the boundaries of digital art and interactive narratives. ${currentCollection?.description || ''}`.trim();
 
   const handleReadClick = () => {
-    router.push(`/reader?id=${currentComic?._id}&chapterId=${chapters[0]?._id || ''}`);
     setShowMintPage(true);
+    router.push(`/reader?id=${currentComic?._id}&chapterId=${chapters[0]?._id || ''}`);
+   
   };
 
   const handleBackFromMint = () => {

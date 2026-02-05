@@ -254,7 +254,8 @@ const ListView: React.FC<ListViewProps> = ({
                 price: priceInHbar,
                 serial: mintedData?.serials[0] || 0,
                 transactionId: mintedData.transactionId || '',
-                metadataTopicIds: topicId
+                metadataTopicIds: topicId,
+                maxSupply: flowData.listing.supply,
             } as any));
 
             console.log("✅ Backend updated:", updateResult);
@@ -283,7 +284,7 @@ const ListView: React.FC<ListViewProps> = ({
         title: episodeData?.title || "",
         image: episodeData?.bannerImage || episodeImage,
         rarity: flowData.rarity || RARITY_OPTIONS.legendary,
-        supply: flowData.rarity?.supply?.split('–')[1]?.trim() || '5,000',
+        supply: flowData.listing?.supply?.split('–')[1]?.trim() || '5,000',
         price: flowData.listing?.price ? `${flowData.listing.price} HBAR` : '12 HBAR',
         royalty: flowData.listing?.royalty ? `${flowData.listing.royalty}%` : '5%'
     };

@@ -299,6 +299,7 @@ export function useComicPlatform({
     pricePerNFT: number; // in HBAR
     metadata: string; // "hcs://1/topicId"
   }) => {
+    let lastTxId = '';
     try {
       setStatus("processing");
       setError(null);
@@ -321,7 +322,7 @@ export function useComicPlatform({
         const currentBatch = completedBatches + 1;
         
         console.log(`📦 Processing batch ${currentBatch}/${totalBatches}: NFTs ${batchStart + 1}-${batchEnd} (${batchQuantity} NFTs)`);
-        setMintStatusText(`Minting batch ${currentBatch}/${totalBatches} (${batchQuantity} NFTs)...`);
+        //setMintStatusText(`Minting batch ${currentBatch}/${totalBatches} (${batchQuantity} NFTs)...`);
 
         try {
           const tx = new ContractExecuteTransaction()
@@ -340,6 +341,8 @@ export function useComicPlatform({
           const response = await executeWithSigner(tx);
           const txIdStr = response.transactionId.toString();
           const receipt = await response.getReceipt(getClient());
+          console.log("✅ Batch direct listing created!", receipt);
+           lastTxId = txIdStr;
 
           console.log(`✅ Batch ${currentBatch}/${totalBatches} completed! Transaction: ${txIdStr}`);
           
@@ -354,9 +357,9 @@ export function useComicPlatform({
           }
 
           // Store the last transaction ID for return
-          if (batchEnd >= quantity) {
-            setTxId(txIdStr);
-          }
+          // if (batchEnd >= quantity) {
+          //   setTxId(txIdStr);
+          // }
 
         } catch (batchError: any) {
           console.error(`❌ Batch ${currentBatch}/${totalBatches} failed:`, batchError);
@@ -366,12 +369,13 @@ export function useComicPlatform({
 
       console.log("✅ All batches completed! Direct listing created successfully!");
       setMintProgress(100);
-      setMintStatusText(`Successfully minted and listed ${quantity} NFTs!`);
+      setTxId(lastTxId);
+      // setMintStatusText(`Successfully minted and listed ${quantity} NFTs!`);
       setStatus("done");
       
       // Get listing ID from mirror node for the last transaction
       await new Promise(resolve => setTimeout(resolve, 5000));
-      const txIdFormatted = formatTxIdForMirror(txId!);
+      const txIdFormatted = formatTxIdForMirror(lastTxId);
       const mirrorResponse = await fetch(
         `${getMirrorNodeUrl()}/api/v1/contracts/results/${txIdFormatted}`
       );
@@ -384,7 +388,7 @@ export function useComicPlatform({
       }
 
       return {
-        transactionId: txId!,
+        transactionId: lastTxId,
         status: "SUCCESS",
         listingId,
         totalMinted: quantity,
@@ -1156,7 +1160,7 @@ function setMintProgress(progress: number) {
 //   if (!text) return;
 //   console.debug("Mint status:", text);
 // }
-function setMintStatusText(arg0: string) {
-  throw new Error("Function not implemented.");
-}
+// function setMintStatusText(arg0: string) {
+//   throw new Error("Function not implemented.");
+// }
 
