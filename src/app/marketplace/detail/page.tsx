@@ -108,9 +108,9 @@ export default function ComicDetail() {
   const creatorDescription = `${displayAuthorName} is a visionary ${currentCollection?.comic?.length > 1 ? 'series creator' : 'artist'} dedicated to pushing the boundaries of digital art and interactive narratives. ${currentCollection?.description || ''}`.trim();
 
   const handleReadClick = () => {
+    // TODO: Implement logic to determine if user can read full comic or just preview based on ownership
+    // router.push(`/reader?id=${currentComic?._id}&chapterId=${chapters[0]?._id || ''}`);
     setShowMintPage(true);
-    router.push(`/reader?id=${currentComic?._id}&chapterId=${chapters[0]?._id || ''}`);
-   
   };
 
   const handleBackFromMint = () => {
