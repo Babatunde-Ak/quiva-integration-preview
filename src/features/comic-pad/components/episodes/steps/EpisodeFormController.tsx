@@ -1,14 +1,21 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import EpisodeDetailsStepComponent from './EpisodeDetailsStep';
 import ContentFilesStepComponent from './ContentFilesStep';
 import PreviewPublishStep from './PreviewPublishStep';
 import { useMintComic } from '@/hook/useMintComic'; // Adjust path as needed
 import { useHederaWallet } from '@/providers/HashPackProvider';
 import { useAppDispatch, useAppSelector } from '@/redux/hook';
-import axios from 'axios';
-// import { file } from 'jszip';
+import { 
+  createFullComic, 
+  clearError, 
+  clearSuccessMessage,
+  selectIsCreating,
+  selectComicError,
+  selectSuccessMessage 
+} from '@/redux/slices/comicSlice'; // Adjust path to your comic slice
+
 interface EpisodeFormData {
   // Episode Details
   title: string;
@@ -29,8 +36,6 @@ interface EpisodeFormControllerProps {
   collectionId?: string;
 }
 
-// Example async function to get metadacid from your backend
-
 const EpisodeFormController: React.FC<EpisodeFormControllerProps> = ({
   onSubmit,
   onSaveDraft,
@@ -39,6 +44,12 @@ const EpisodeFormController: React.FC<EpisodeFormControllerProps> = ({
 }) => {
 
   const dispatch = useAppDispatch();
+
+  // Redux selectors with safe fallbacks
+  const isCreating = useAppSelector(selectIsCreating) || false;
+  const {currentComic:createdComic} = useAppSelector((state: any) => state.comic) || null;
+  const error = useAppSelector(selectComicError) || null;
+  const successMessage = useAppSelector(selectSuccessMessage) || null;
 
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<EpisodeFormData>({
@@ -61,17 +72,42 @@ const EpisodeFormController: React.FC<EpisodeFormControllerProps> = ({
       connectWallet 
     } = useHederaWallet();
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const {user} = useAppSelector((state:any) => state.wallet);
-  // const {  account } = useAccount();
+  const { user } = useAppSelector((state: any) => state.wallet || {});
   
-
   const { createComicNFT } = useMintComic({
-    accountId:  account || user?.walletAddress || '',
+    accountId: account || user?.walletAddress || '',
     signer: signer,
     network: "testnet"
-  }); // Adjust to your hook's API
+  });
+
+  // Handle successful comic creation
+  useEffect(() => {
+    if (createdComic && !isCreating && !error) {
+      console.log("🆔 Created comic in DB with ID:", createdComic._id);
+      console.log("📝 Created comic with metadata CID:", createdComic.nftMetadataCid);
+      console.log("📄 Full created comic data:", createdComic);
+
+      // Call onSubmit to finalize (or show success UI)
+      onSubmit(formData);
+      
+    }
+  }, [createdComic, isCreating, error, formData, onSubmit, dispatch]);
+
+  // Handle errors
+  useEffect(() => {
+    if (error) {
+      console.error("Comic creation error:", error);
+      // You can show a toast notification here or handle the error as needed
+    }
+  }, [error]);
+
+  // Clear error and success messages on unmount
+  useEffect(() => {
+    return () => {
+      dispatch(clearError());
+      dispatch(clearSuccessMessage());
+    };
+  }, [dispatch]);
 
   // Update form data
   const updateFormData = useCallback((updates: Partial<EpisodeFormData>) => {
@@ -80,7 +116,6 @@ const EpisodeFormController: React.FC<EpisodeFormControllerProps> = ({
   }, []);
 
   // Step validation
-  //   const isStep1Valid = formData.title.trim() && formData.episodeNumber.trim() && formData.maturityRating.trim() && formData.bannerImage;
   const isStep1Valid = true;
   const isStep2Valid = formData.contentType && formData.pages.length > 0;
   const isStep3Valid = true; // Preview step is always valid
@@ -105,9 +140,16 @@ const EpisodeFormController: React.FC<EpisodeFormControllerProps> = ({
   }, [formData, onSaveDraft]);
 
   const handlePublish = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
+    if (!collectionId) {
+      console.error("Collection ID is required");
+      return;
+    }
+
     console.log("Publishing episode with data:", formData);
+
+    // Clear any previous errors
+    dispatch(clearError());
+    dispatch(clearSuccessMessage());
 
     const formDataToSend = new FormData();
     formDataToSend.append('title', formData.title);
@@ -115,15 +157,19 @@ const EpisodeFormController: React.FC<EpisodeFormControllerProps> = ({
     formDataToSend.append('summary', formData.summary);
     formDataToSend.append('maturityRating', formData.maturityRating);
     formDataToSend.append('genre', JSON.stringify(formData.genre));
+    
     if (formData.bannerImage) {
       formDataToSend.append('bannerImage', formData.bannerImage);
     }
+    
     formDataToSend.append('collaborators', JSON.stringify(formData.collaborators));
     formDataToSend.append('contentType', formData.contentType || '');
+    
     formData.pages.forEach((file, index) => {
       formDataToSend.append('pages', file);
     });
-    formDataToSend.append('collectionId', collectionId || '');
+    
+    formDataToSend.append('collectionId', collectionId);
 
     const nftDetails = {
       "mintStatus": "pending",
@@ -137,49 +183,21 @@ const EpisodeFormController: React.FC<EpisodeFormControllerProps> = ({
 
     formDataToSend.append('nftDetails', JSON.stringify(nftDetails));
 
+    // Dispatch Redux action instead of direct API call
     try {
-      const token = localStorage.getItem('token');
+      const result = await dispatch(createFullComic({ 
+        formData: formDataToSend, 
+        collectionId 
+      } as any)).unwrap();
+      
+      console.log("Redux dispatch successful:", result);
 
-      const response = await axios.post(`http://localhost:5000/api/comics/full/${collectionId}`,
-            formDataToSend,
-            {
-              headers: {
-                'Content-Type': 'multipart/form-data',
-                Authorization: `Bearer ${token}`,
-              },
-
-            }
-          );
-      const createdComic = response.data.data.comic;
-      const metadataCid = createdComic.nftMetadataCid;
-      const dbComicId = createdComic._id;
-      console.log("🆔 Created comic in DB with ID:", dbComicId);
-      console.log("📝 Created comic with metadata CID:", metadataCid);
-      console.log("📄 Full response data:", response.data);
-      console.log("📄 Full created comic data:", createdComic);
-
-       localStorage.setItem(
-      "latestComic",
-      JSON.stringify({
-        metadataCid: metadataCid,
-        dbComicId: dbComicId,
-        formData: formDataToSend, // keep the full form details too (title, description, etc.)
-      })
-    );
-
-    console.log("✅ Comic metadata saved locally:", { metadataCid, dbComicId });
-
-      // 2. Mint the episode NFT using the hook
-      // await createComicNFT({ ...formData, episodeNumber: Number(formData.episodeNumber) }, collectionId);
-
-      // 3. Call onSubmit to finalize (or show success UI)
       onSubmit(formData);
     } catch (err: any) {
-      setError(err.message || 'Failed to publish episode');
-    } finally {
-      setIsLoading(false);
+      console.error("Redux dispatch failed:", err);
+      // Error is already handled in Redux state and useEffect
     }
-  }, [formData, onSubmit]);
+  }, [formData, collectionId, dispatch]);
 
   // Render current step
   const renderCurrentStep = () => {
@@ -229,7 +247,7 @@ const EpisodeFormController: React.FC<EpisodeFormControllerProps> = ({
             onPublish={handlePublish}
             onPrev={handlePrev}
             onSaveDraft={handleSaveDraft}
-            isLoading={isLoading || externalLoading}
+            isLoading={isCreating || externalLoading}
           />
         );
 
@@ -242,7 +260,7 @@ const EpisodeFormController: React.FC<EpisodeFormControllerProps> = ({
     <div className="w-full h-full bg-black-500">
       {error && (
         <div className="bg-red-600 text-white p-2 mb-2 rounded">
-          {error}
+          {typeof error === 'string' ? error : 'An error occurred'}
         </div>
       )}
       {renderCurrentStep()}
