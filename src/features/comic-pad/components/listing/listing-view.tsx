@@ -57,7 +57,7 @@ interface MintResult {
     tokenId: string;
     serials: number[];
     transactionId: string;
-    listingIds?: string[];
+    listingId?: string;
     status: string;
 }
 
@@ -211,7 +211,7 @@ const ListView: React.FC<ListViewProps> = ({
                 status: mintAndListResult.status || '',
                 serials: serials || [],
                 transactionId: mintAndListResult.transactionId || "",
-                listingIds: mintAndListResult.listingId ? [mintAndListResult.listingId] : [],
+                listingId: mintAndListResult.listingId || "",
 
             };
 
@@ -234,23 +234,26 @@ const ListView: React.FC<ListViewProps> = ({
                     symbol: flowData.rarity.type.toUpperCase().substring(0, 4),
                 },
                 minted: mintedData,
-                listings: (mintedData.listingIds || []).map((listingId, index) => ({
-                    listingId,
-                    serial: mintedData.serials[index],
+    
+                    listingId: mintedData.listingId,
+                    serial: mintedData.serials[0] || 0,
                     price: priceInHbar,
-                })),
+               
                 metadata: {
                     cid: metadataURI,
                     comicId: episodeId,
                 },
             };
 
+            console.log("💾 Saving complete NFT info locally...", completeInfo);
+            localStorage.setItem('completeNFTInfo', JSON.stringify(completeInfo));
+
             // Step 5: Update backend with token ID and listing info
             console.log("🔄 Updating backend with NFT details...");
             const updateResult = await dispatch(updateComicToken({
                 comicId: episodeId,
                 tokenId: nftTokenId,
-                listingId: mintedData.listingIds[0] || '',
+                listingId: mintedData.listingId || '',
                 price: priceInHbar,
                 serial: mintedData?.serials[0] || 0,
                 transactionId: mintedData.transactionId || '',
