@@ -25,11 +25,11 @@ export const createComic = createAsyncThunk(
     try {
       const formData = new FormData();
       formData.append("title", payload.title);
-      if (payload.description) {
-        formData.append("description", payload.description);
+      if (payload.summary) {
+        formData.append("summary", payload.summary);
       }
-      if (payload.coverImage) {
-        formData.append("coverImage", payload.coverImage);
+      if (payload.bannerImage) {
+        formData.append("bannerImage", payload.bannerImage);
       }
 
       const response = await axiosInstance.post("/comics", formData, {
