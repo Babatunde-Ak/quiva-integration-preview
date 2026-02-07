@@ -47,13 +47,13 @@ export const createComic = createAsyncThunk(
 // Create a full comic with pages
 export const createFullComic = createAsyncThunk(
   "comics/createFull",
-  async (payload, { rejectWithValue }) => {
+  async ({formData, collectionId}, { rejectWithValue }) => {
     try {
-      console.log(payload);
+      console.log(formData, collectionId);
 
       const response = await axiosInstance.post(
-        `/comics/full/${payload.collectionId}`,
-        payload,
+        `/comics/full/${collectionId}`,
+        formData,
         {
           headers: {
             "Content-Type": "multipart/form-data",
@@ -464,17 +464,17 @@ export const {
 } = comicSlice.actions;
 
 // Selectors
-export const selectComics = (state) => state.comics.comics;
-export const selectUserComics = (state) => state.comics.userComics;
-export const selectCurrentComic = (state) => state.comics.currentComic;
-export const selectPreviewComic = (state) => state.comics.previewComic;
-export const selectIsLoading = (state) => state.comics.isLoading;
-export const selectIsCreating = (state) => state.comics.isCreating;
-export const selectIsUpdating = (state) => state.comics.isUpdating;
-export const selectIsDeleting = (state) => state.comics.isDeleting;
-export const selectIsPreviewing = (state) => state.comics.isPreviewing;
-export const selectComicError = (state) => state.comics.error;
-export const selectSuccessMessage = (state) => state.comics.successMessage;
+export const selectComics = (state) => state.comic.comics;
+export const selectUserComics = (state) => state.comic.userComics;
+export const selectCurrentComic = (state) => state.comic.currentComic;
+export const selectPreviewComic = (state) => state.comic.previewComic;
+export const selectIsLoading = (state) => state.comic.isLoading;
+export const selectIsCreating = (state) => state.comic.isCreating;
+export const selectIsUpdating = (state) => state.comic.isUpdating;
+export const selectIsDeleting = (state) => state.comic.isDeleting;
+export const selectIsPreviewing = (state) => state.comic.isPreviewing;
+export const selectComicError = (state) => state.comic.error;
+export const selectSuccessMessage = (state) => state.comic.successMessage;
 
 // Reducer
 export default comicSlice.reducer;

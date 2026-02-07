@@ -147,11 +147,7 @@ const collectionSlice = createSlice({
                     .collections
                     .push(action.payload.data.collection);
             }
-            if (state.userCollections) {
-                state
-                    .userCollections
-                    .push(action.payload.data.collection);
-            }
+            
             state.successMessage = action.payload.message || "Collection created successfully";
         }).addCase(createCollection.rejected, (state, action) => {
             state.isCreating = false;

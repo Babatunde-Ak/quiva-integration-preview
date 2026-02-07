@@ -10,6 +10,7 @@ import {Avatar, AvatarFallback} from '@/components/ui/avatar';
 import {Upload, X, Plus} from 'lucide-react';
 import { genres } from '../../mock-data/data';
 import {IconToggleSwitch} from '@/components/switch/Switch';
+import { MainButton } from '@/components/button';
 
 interface CollectionFormData {
     title : string;
@@ -419,14 +420,15 @@ const CreateCollectionForm : React.FC < CreateCollectionFormProps > = ({
 
                             {/* Action Buttons */}
                             <div className="space-y-4 pt-4 col-span-1 lg:col-span-2 lg:self-start w-3/4 mx-auto">
-                                <Button
+                                <MainButton
                                     type="submit"
-                                    disabled={isLoading || (!formData.title.trim() || !formData.description.trim() || formData.genres.length === 0)}
-                                    className="w-full bg-primary-500 hover:bg-primary-600 text-white font-semibold py-3 disabled:opacity-50 rounded-full transition-colors">
+                                    // disabled={isLoading || (!formData.title.trim() || !formData.description.trim() || formData.genres.length === 0)}
+                                    disabled={isLoading}
+                                    className="w-full">
                                     {isLoading
                                         ? 'Creating Series...'
                                         : 'Create Series'}
-                                </Button>
+                                </MainButton>
 
                                 <Button
                                     type="button"

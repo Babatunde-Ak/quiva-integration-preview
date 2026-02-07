@@ -22,12 +22,13 @@ interface CreateCollectionPayload {
 function CollectionView({ onClose }: CollectionViewProps) {
   const [showSuccess, setShowSuccess] = useState(false);
   const [collectionData, setCollectionData] = useState<any>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const dispatch = useAppDispatch();
 
   const handleSuccess = async (formData: any) => {
-    console.log('Collection created successfully');
-    console.log('Collection Data:', formData);
+    console.log('=== handleSuccess called ===');
+    console.log('Form Data:', formData);
 
     const data: CreateCollectionPayload = {
       title: formData.title,
@@ -38,14 +39,30 @@ function CollectionView({ onClose }: CollectionViewProps) {
       creatorDetails: formData.creatorDetails
     };
 
+    console.log('Payload to send:', data);
+
     try {
-      // Cast to any to bypass TypeScript checking for JS slice
+      setIsSubmitting(true);
+      
+      console.log('Dispatching createCollection...');
       const result = await dispatch(createCollection(data as any)).unwrap();
-      console.log('Create Collection Result:', result);
+      
+      console.log('✅ Create Collection SUCCESS:', result);
       setCollectionData(formData);
       setShowSuccess(true);
-    } catch (error) {
-      console.error('Error creating collection:', error);
+      console.log('showSuccess set to true');
+      
+    } catch (error: any) {
+      console.error('❌ Error creating collection:', error);
+      console.error('Error details:', {
+        message: error?.message,
+        response: error?.response,
+        stack: error?.stack
+      });
+      
+      alert(`Failed to create collection: ${error?.message || 'Unknown error'}`);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -64,6 +81,7 @@ function CollectionView({ onClose }: CollectionViewProps) {
                 onSaveDraft={(data) => {
                     setCollectionData(data);
                 }}
+                isLoading={isSubmitting}
             />  
         )}
         
