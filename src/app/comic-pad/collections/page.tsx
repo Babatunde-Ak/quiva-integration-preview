@@ -47,6 +47,14 @@ function Page() {
         );
     }
 
+    if(error) {
+        return(
+            <div className="flex items-center justify-center min-h-screen">
+                <p className="text-red-500">{error}</p>
+            </div>
+        )
+    }
+    
     return (
         <>
             <PublishedCollections collections={collections} />

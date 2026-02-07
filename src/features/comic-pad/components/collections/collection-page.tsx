@@ -40,13 +40,8 @@ const PublishedCollections: React.FC<PublishedCollectionsProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const router = useRouter();
 
-    // const filteredCollections = Array.isArray(collections)
-    //   ? collections.filter(collection =>
-    //       collection?.title?.toLowerCase().includes(searchTerm.toLowerCase())
-    //     )
-    //   : [];
-const filteredCollections = collections.filter(collection =>
-        collection.title.toLowerCase().includes(searchTerm.toLowerCase())
+    const filteredCollections = collections.length === 0 ? [] : collections.filter(collection =>
+        collection?.title?.toLowerCase().includes(searchTerm.toLowerCase())
     );
   // Empty State Component
   const EmptyState = () => (
