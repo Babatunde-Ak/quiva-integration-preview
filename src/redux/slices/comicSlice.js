@@ -25,11 +25,11 @@ export const createComic = createAsyncThunk(
     try {
       const formData = new FormData();
       formData.append("title", payload.title);
-      if (payload.description) {
-        formData.append("description", payload.description);
+      if (payload.summary) {
+        formData.append("summary", payload.summary);
       }
-      if (payload.coverImage) {
-        formData.append("coverImage", payload.coverImage);
+      if (payload.bannerImage) {
+        formData.append("bannerImage", payload.bannerImage);
       }
 
       const response = await axiosInstance.post("/comics", formData, {
@@ -49,11 +49,11 @@ export const createFullComic = createAsyncThunk(
   "comics/createFull",
   async (payload, { rejectWithValue }) => {
     try {
-      console.log(payload);
-
+      // Accepts { formData, collectionId }
+      const { formData, collectionId } = payload;
       const response = await axiosInstance.post(
-        `/comics/full/${payload.collectionId}`,
-        payload,
+        `/comics/full/${collectionId}`,
+        formData,
         {
           headers: {
             "Content-Type": "multipart/form-data",
@@ -467,14 +467,14 @@ export const {
 export const selectComics = (state) => state.comics.comics;
 export const selectUserComics = (state) => state.comics.userComics;
 export const selectCurrentComic = (state) => state.comics.currentComic;
-export const selectPreviewComic = (state) => state.comics.previewComic;
-export const selectIsLoading = (state) => state.comics.isLoading;
-export const selectIsCreating = (state) => state.comics.isCreating;
-export const selectIsUpdating = (state) => state.comics.isUpdating;
-export const selectIsDeleting = (state) => state.comics.isDeleting;
-export const selectIsPreviewing = (state) => state.comics.isPreviewing;
-export const selectComicError = (state) => state.comics.error;
-export const selectSuccessMessage = (state) => state.comics.successMessage;
+export const selectPreviewComic = (state) => state.comic.previewComic;
+export const selectIsLoading = (state) => state.comic.isLoading;
+export const selectIsCreating = (state) => state.comic.isCreating;
+export const selectIsUpdating = (state) => state.comic.isUpdating;
+export const selectIsDeleting = (state) => state.comic.isDeleting;
+export const selectIsPreviewing = (state) => state.comic.isPreviewing;
+export const selectComicError = (state) => state.comic.error;
+export const selectSuccessMessage = (state) => state.comic.successMessage;
 
 // Reducer
 export default comicSlice.reducer;

@@ -40,10 +40,14 @@ const PublishedCollections: React.FC<PublishedCollectionsProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const router = useRouter();
 
-    const filteredCollections = collections.filter(collection =>
+    // const filteredCollections = Array.isArray(collections)
+    //   ? collections.filter(collection =>
+    //       collection?.title?.toLowerCase().includes(searchTerm.toLowerCase())
+    //     )
+    //   : [];
+const filteredCollections = collections.filter(collection =>
         collection.title.toLowerCase().includes(searchTerm.toLowerCase())
     );
-
   // Empty State Component
   const EmptyState = () => (
     <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 sm:px-8">
@@ -165,16 +169,16 @@ const PublishedCollections: React.FC<PublishedCollectionsProps> = ({
         </div>
 
         {/* Show empty state if no collections */}
-        {collections.length === 0 && !isLoading && <EmptyState />}
+        {(Array.isArray(collections) ? collections.length : 0) === 0 && !isLoading && <EmptyState />}
 
         {/* Collections List */}
-        {collections.length > 0 && (
+        {(Array.isArray(collections) ? collections.length : 0) > 0 && (
           <div className='bg-black-200 border border-black-50 rounded-lg p-3 sm:p-4'>
             {/* Search and Header */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 sm:mb-8  gap-4 lg:gap-0">
               <div className="flex items-center gap-3 sm:gap-4">
                 <h2 className="text-lg sm:text-xl font-semibold text-white">
-                  You have {collections.length} collection{collections.length !== 1 ? 's' : ''}
+                  You have {(Array.isArray(collections) ? collections.length : 0)} collection{(Array.isArray(collections) ? collections.length : 0) !== 1 ? 's' : ''}
                 </h2>
               </div>
 
