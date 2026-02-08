@@ -10,7 +10,10 @@ import MintComicModal from "@/features/comic-library/components/MintComicModal";
 import { useAppDispatch, useAppSelector } from "@/redux/hook";
 import { getComicById } from "@/redux/slices/comicSlice";
 import { getCollectionById } from "@/redux/slices/collectionSlice";
-
+import useMarketplace from "@/hook/useMarkeplace";
+import   { useHederaWallet } from "@/providers/HashPackProvider";
+import { FaBullseye } from "react-icons/fa";
+ "@/providers/HashPackProvider";
 export default function ComicDetail() {
   const [isResellOpen, setIsResellOpen] = useState(false);
   const [localActiveTab, setLocalActiveTab] = useState('details');
@@ -18,7 +21,17 @@ export default function ComicDetail() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
+  const {user} = useAppSelector((state: any) => state.wallet);
+  const { account, signer } = useHederaWallet();
 
+  const { canReadComic } = useMarketplace({
+    accountId: user?.walletAddress || "",
+    signer: signer,
+    network: "testnet",
+
+
+  }
+  );
   // Get comicId from URL
   const comicId = searchParams.get('id');
 
@@ -50,6 +63,8 @@ export default function ComicDetail() {
 
     fetchData();
   }, [dispatch, comicId]);
+
+
   
   // Extract real data with fallbacks
   const nftData = currentComic?.nftId || {};
@@ -107,10 +122,20 @@ export default function ComicDetail() {
   // Creator description with real data
   const creatorDescription = `${displayAuthorName} is a visionary ${currentCollection?.comic?.length > 1 ? 'series creator' : 'artist'} dedicated to pushing the boundaries of digital art and interactive narratives. ${currentCollection?.description || ''}`.trim();
 
-  const handleReadClick = () => {
+  const handleReadClick = async () => {
     // TODO: Implement logic to determine if user can read full comic or just preview based on ownership
+     
+    const readingAccess = await  canReadComic(currentComic?._id, user?.walletAddress);
+      console.log(`User has ${readingAccess} to this comic.`);
+      if (readingAccess === false) {
+        alert("You have preview access to this comic. Please mint to unlock the full story!");
+          setShowMintPage(true);
+        // router.push(`/reader?id=${currentComic?._id}&chapterId=${chapters[0]?._id || ''}`);
+      } else {
+          router.push(`/reader?id=${currentComic?._id}&chapterId=${chapters?._id || ''}`);
+      }
     // router.push(`/reader?id=${currentComic?._id}&chapterId=${chapters[0]?._id || ''}`);
-    setShowMintPage(true);
+ 
   };
 
   const handleBackFromMint = () => {

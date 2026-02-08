@@ -159,7 +159,7 @@ const EpisodeFormController: React.FC<EpisodeFormControllerProps> = ({
     formDataToSend.append('genre', JSON.stringify(formData.genre));
     
     if (formData.bannerImage) {
-      formDataToSend.append('coverImage', formData.bannerImage);
+      formDataToSend.append('bannerImage', formData.bannerImage);
     }
     
     formDataToSend.append('collaborators', JSON.stringify(formData.collaborators));

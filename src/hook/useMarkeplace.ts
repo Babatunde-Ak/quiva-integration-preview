@@ -925,6 +925,7 @@ export function useComicPlatform({
     });
 
     const result = await response.json();
+    console.log('Raw canReadComic result:', result);
     
     // Decode the boolean result
     const decoded = abiInterface.decodeFunctionResult('canReadComic', result.result);
