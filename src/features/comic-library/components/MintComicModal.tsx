@@ -2,12 +2,11 @@
 
 import React, { useState } from 'react'
 import { ChevronLeft, Lock, Heart, ChevronRight, Wallet, LogOut } from 'lucide-react'
-import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import MintConfirmationModal from './MintConfirmationModal'
 import MintProcessingModal from './MintProcessingModal'
 import MintSuccessModal from './MintSuccessModal'
-import { useAppDispatch } from '@/redux/hook'
+import { useAppDispatch, useAppSelector } from '@/redux/hook'
 import { createTransaction } from '@/redux/slices/transactionSlice'
 
 interface MintComicModalProps {
@@ -48,6 +47,7 @@ const MintComicModal: React.FC<MintComicModalProps> = ({
 }) => {
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const { currentComic, isLoading } = useAppSelector((state: any) => state.comic);
 
   // Modal states
   const [showConfirmModal, setShowConfirmModal] = useState(false)
@@ -57,6 +57,7 @@ const MintComicModal: React.FC<MintComicModalProps> = ({
   const [transactionHash, setTransactionHash] = useState('')
   const [editionNumber, setEditionNumber] = useState('#1,001')
   const [isMinting, setIsMinting] = useState(false)
+  const [favourites, setFavourites] = useState(false)
   
   // Wallet states
   
@@ -85,7 +86,7 @@ const MintComicModal: React.FC<MintComicModalProps> = ({
     setShowConfirmModal(true)
   }
 
-  //  confirm mint
+  //confirm mint
   const handleConfirmMint = async () => {
     setShowConfirmModal(false)
     setShowProcessingModal(true)
@@ -94,18 +95,19 @@ const MintComicModal: React.FC<MintComicModalProps> = ({
     dispatch(createTransaction({
       comicId:comicId,
       "walletAddress": walletAddressProp,
-      "txHash": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
-      "price": price,
+      "txHash": currentComic?.nftId?.transactionId || "",
+      "price": currentComic?.nftId?.price || 0,
       "currency": "HBAR"
     } as any)).unwrap()
     
     setTimeout(() => {
-      setTransactionHash('0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef')
-      setEditionNumber('#721')
+      setTransactionHash(currentComic?.nftId?.transactionId || "")
+      setEditionNumber(currentComic?.episodeNumber || "1")
       setShowProcessingModal(false)
       setShowSuccessModal(true)
       setIsMinting(false)
-    }, 3000)
+    }, 1000)
+
   }
 
   //  view comic after success
@@ -116,7 +118,7 @@ const MintComicModal: React.FC<MintComicModalProps> = ({
 
   //  add to favourite
   const handleAddToFavourite = () => {
-    alert('Added to favourites!')
+    setFavourites(true);
   }
 
   //  back button
@@ -256,8 +258,8 @@ const MintComicModal: React.FC<MintComicModalProps> = ({
                     onClick={handleAddToFavourite}
                     className="flex-1 bg-transparent border border-white text-white font-medium py-2 px-1 md:py-2 md:px-1 rounded-full hover:bg-white/5 transition-all flex items-center justify-center gap-2 text-sm md:text-base"
                   >
-                    <Heart className="w-3 h-3 md:w-4 md:h-4" />
-                    <span>Add to favourite</span>
+                    <Heart className={`w-3 h-3 md:w-4 md:h-4 ${favourites ? 'fill-red-500 text-red-500' : ''}`} />
+                    <span>{favourites ? 'Favourited' : 'Add to favourite'}</span>
                   </button>
                 </div>
               </div>
@@ -588,7 +590,7 @@ const MintComicModal: React.FC<MintComicModalProps> = ({
         onClose={() => setShowConfirmModal(false)}
         onConfirm={handleConfirmMint}
         comicTitle={title}
-         coverImage={coverImage}
+        coverImage={coverImage}
         price={price.toString()}
         walletAddress={walletAddress}
         edition="1 of 1000"

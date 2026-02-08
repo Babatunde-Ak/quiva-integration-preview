@@ -11,8 +11,6 @@ import {
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/redux/hook';
 import { getComicById, clearCurrentComic } from '@/redux/slices/comicSlice';
-//  IMPORT FOR COMPATIBILITY
-import { ComicCard } from '@/components/cards/ComicCard';
 import CollectionCard from '@/components/cards/TopSellingCard';
 import { Footer } from '@/components/global/comic-library/Footer';
 import {
@@ -76,9 +74,9 @@ const ComicReaderViewer = () => {
     // Map API data structure to expected format
     const creator = comic.creatorId 
       ? {
-          name: comic.creatorId.username || 'Unknown Creator',
-          avatar: comic.creatorId.avatar || images.avatar,
-          walletAddress: comic.creatorId.walletAddress,
+          name: comic?.creatorId?.username || 'Unknown Creator',
+          avatar: comic?.creatorId?.avatar || images.avatar,
+          walletAddress: comic?.creatorId?.walletAddress,
         }
       : comic.creator ?? {
           name: 'Studio Kyra',

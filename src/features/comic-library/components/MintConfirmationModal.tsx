@@ -53,12 +53,11 @@ const MintConfirmationModal: React.FC<MintConfirmationModalProps> = ({
         //     // marketplaceContractId: "0.0.7750266", // Your deployed marketplace contract
         //    marketplaceContractId:"0.0.7774217",
         //     signer: signer,
-           
         // });
+        
         const {
-           purchaseFromListing,
-            getDirectListing
-
+          purchaseFromListing,
+          getDirectListing
         } = useComicPlatform({
           accountId: account || user?.walletAddress || '',
           network: "testnet",
@@ -72,17 +71,16 @@ const MintConfirmationModal: React.FC<MintConfirmationModalProps> = ({
     try {
 
       //fetch the info first
-      // const currentListing =  await getDirectListing(0);
-      // console.log('Current Listing:', currentListing);
-      // currentComic?.nftId?.listingId
-      //  await purchaseNFT({ listingId: 0, priceInHbar: 30 })
       const result = await purchaseFromListing({
         listingId: currentComic?.nftId?.listingId, // Replace with actual listing ID
         quantity: currentComic?.nftId?.quantity || 1,
         pricePerNFT: parseFloat(currentComic?.nftId?.price) || 0
 
       })
-       console.log('Minting successful', result);
+      if(result){
+        onConfirm()
+      }
+      console.log('Minting successful', result);
    } catch (error) {
         console.error('Minting failed:', error);
     

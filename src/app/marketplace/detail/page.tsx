@@ -12,8 +12,7 @@ import { getComicById } from "@/redux/slices/comicSlice";
 import { getCollectionById } from "@/redux/slices/collectionSlice";
 import useMarketplace from "@/hook/useMarkeplace";
 import   { useHederaWallet } from "@/providers/HashPackProvider";
-import { FaBullseye } from "react-icons/fa";
- "@/providers/HashPackProvider";
+
 export default function ComicDetail() {
   const [isResellOpen, setIsResellOpen] = useState(false);
   const [localActiveTab, setLocalActiveTab] = useState('details');
@@ -124,18 +123,14 @@ export default function ComicDetail() {
 
   const handleReadClick = async () => {
     // TODO: Implement logic to determine if user can read full comic or just preview based on ownership
-     
     const readingAccess = await  canReadComic(currentComic?._id, user?.walletAddress);
       console.log(`User has ${readingAccess} to this comic.`);
       if (readingAccess === false) {
         alert("You have preview access to this comic. Please mint to unlock the full story!");
           setShowMintPage(true);
-        // router.push(`/reader?id=${currentComic?._id}&chapterId=${chapters[0]?._id || ''}`);
       } else {
           router.push(`/reader?id=${currentComic?._id}&chapterId=${chapters?._id || ''}`);
-      }
-    // router.push(`/reader?id=${currentComic?._id}&chapterId=${chapters[0]?._id || ''}`);
- 
+      } 
   };
 
   const handleBackFromMint = () => {
