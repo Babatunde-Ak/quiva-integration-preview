@@ -45,7 +45,6 @@ export function InvertedGridComicCard({
     price
 } : InvertedGridComicCardProps) {
 
-    console.log("inverted props: ", creatorId, creatorUsername, views, likes);
     const router = useRouter()
     const [liked, setLiked] = useState(isLiked)
 
