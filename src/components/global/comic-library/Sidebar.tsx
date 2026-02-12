@@ -50,8 +50,6 @@ export function Sidebar({ isMobileMenuOpen, onMobileMenuClose, isCollapsed, onTo
 
   const {user} = useAppSelector((state: any) => state.wallet);
 
-  console.log(user)
-
   // Manage sidebar state class on document body for layout adjustments
   useEffect(() => {
     if (!isMobile) {

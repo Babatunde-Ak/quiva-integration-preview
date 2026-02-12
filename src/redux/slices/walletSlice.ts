@@ -174,8 +174,6 @@ const walletAuthSlice = createSlice({
       })
       .addCase(creatorRegister.fulfilled, (state, action) => {
         state.isLoading = false;
-        console.log(action.payload);
-        // state.user.isCreator = true
         if (state.user) {
           state.user.isCreator = true;
         } else {
