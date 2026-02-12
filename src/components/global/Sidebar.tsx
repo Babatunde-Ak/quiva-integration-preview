@@ -6,6 +6,7 @@ import { WaveLine } from "../utils/SVGicons";
 import { usePathname } from "next/navigation";
 import { NAV_LINKS } from "../utils/constant";
 import { QuivaLogo } from "../utils/function";
+import { useAppDispatch, useAppSelector } from "@/redux/hook";
 
 interface SidebarProps {
 	isSidebarOpen: boolean;

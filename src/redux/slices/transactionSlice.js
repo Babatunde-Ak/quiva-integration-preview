@@ -36,14 +36,15 @@ export const getAllTransactions = createAsyncThunk("transactions/getAll", async(
 });
 
 // Create a new transaction
-export const createTransaction = createAsyncThunk("transactions/create", async({payload}, {rejectWithValue}) => {
+export const createTransaction = createAsyncThunk("transactions/create", 
+    async({comicId, walletAddress, txHash, price, currency}, {rejectWithValue}) => {
     try {
         console.log('📝 Creating transaction with payload');
-        console.log('📤 Sending transaction to API:', payload);
-        console.log(payload);
-        console.log(typeof payload);
-        const data = JSON.stringify(payload);
-        const response = await axiosInstance.post("/transactions", payload, {
+        console.log('📤 Sending transaction to API:', {comicId, walletAddress, txHash, price, currency});
+        console.log({comicId, walletAddress, txHash, price, currency});
+        console.log(typeof {comicId, walletAddress, txHash, price, currency});
+        const data = JSON.stringify({comicId, walletAddress, txHash, price, currency});
+        const response = await axiosInstance.post("/transactions", data, {
             headers: {
                 'Content-Type': 'application/json'
             }

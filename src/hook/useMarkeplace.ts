@@ -929,6 +929,8 @@ export function useComicPlatform({
     
     // Decode the boolean result
     const decoded = abiInterface.decodeFunctionResult('canReadComic', result.result);
+    console.log('Decoded canReadComic result:', decoded[0]);
+    
     return decoded[0];
   } catch (err) {
     console.error('❌ Query failed:', err);

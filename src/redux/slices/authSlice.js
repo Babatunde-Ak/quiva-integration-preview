@@ -82,6 +82,26 @@ export const verifyOtpEmail = createAsyncThunk(
     }
 );
 
+
+
+export const becomeCreator = createAsyncThunk(
+    'auth/becomeCreator',
+    async ({ id}, { rejectWithValue }) => {
+   
+        try {
+            const response = await axiosInstance.post(`/auth/${id}/become-creator`);
+            return response.data;
+            
+        } catch (error) {
+            return rejectWithValue(
+                error.response?.data?.message || 
+                error.response?.data || 
+                'Failed to become a creator'
+            );
+        }
+    }
+);
+
 // USER PROFILE THUNKS (new and updated)
 export const getUserProfile = createAsyncThunk(
     'auth/getUserProfile',
@@ -304,6 +324,22 @@ const authSlice = createSlice({
                 state.verifyOtp.error = action.payload;
                 state.verifyOtp.success = false;
             });
+
+            // Become Creator
+        builder
+            .addCase(becomeCreator.pending, (state) => {
+                state.profile.isLoading = true;
+                state.profile.error = null;
+            })
+            .addCase(becomeCreator.fulfilled, (state, action) => {
+                state.profile.isLoading = false;
+                state.profile.data = action.payload.data;
+            })
+            .addCase(becomeCreator.rejected, (state, action) => {
+                state.profile.isLoading = false;
+                state.profile.error = action.payload;
+            });
+
 
         // Get User Profile
         builder

@@ -223,6 +223,9 @@ export const deleteComic = createAsyncThunk(
   }
 );
 
+// Delete comic
+
+
 const comicSlice = createSlice({
   name: "comics",
   initialState,

@@ -3,6 +3,7 @@
 import { MainButton } from '@/components/button'
 import { Button } from '@/components/ui/button'
 import { QuivaLogo } from '@/components/utils/function'
+import { useAppDispatch, useAppSelector } from '@/redux/hook'
 import { 
   X, 
   Search, 
@@ -49,6 +50,8 @@ const getNavIcon = (label: string) => {
 export function Sidebar({ isMobileMenuOpen, onMobileMenuClose, isCollapsed, onToggleCollapse }: SidebarProps) {
   const router = useRouter()
   const pathname = usePathname()
+   const dispatch = useAppDispatch();
+   const user = useAppSelector((state) => state.user);
   const [isMobile, setIsMobile] = useState(false)
 
   // Manage sidebar state class on document body for layout adjustments
@@ -125,7 +128,11 @@ export function Sidebar({ isMobileMenuOpen, onMobileMenuClose, isCollapsed, onTo
     if (isMobile) onMobileMenuClose()
   }
 
-  const handleBecomeCreator = () => {
+  const handleBecomeCreator = async () => {
+    // const become_creator = await dispatch(becomeCreator({
+    //   id: user?.id,
+    // } as any));
+    //  console.log('Become Creator Response:', become_creator);
     router.push('/comic-pad')
     if (isMobile) onMobileMenuClose()
   }

@@ -70,7 +70,8 @@ export default function ComicDetail() {
   const chapters = currentComic?.chapters || [];
   
   // Minting Details - Real data
-  const mintPrice = nftData?.price?.toFixed(2) || "0.09";
+  // const mintPrice = nftData?.price?.toFixed(2) || "0.09";
+   const mintPrice = currentComic?.nftId?.price?.toFixed(2) || "0.09";
   const maxSupply = nftData?.maxSupply?.toLocaleString() || "1,000";
   const royaltyPercentage = nftData?.royaltyPercentage || 7;
   
@@ -123,13 +124,15 @@ export default function ComicDetail() {
 
   const handleReadClick = async () => {
     // TODO: Implement logic to determine if user can read full comic or just preview based on ownership
-    const readingAccess = await  canReadComic(currentComic?._id, user?.walletAddress);
+    const readingAccess = await canReadComic(currentComic?._id, user?.walletAddress);
       console.log(`User has ${readingAccess} to this comic.`);
-      if (readingAccess === false) {
-        alert("You have preview access to this comic. Please mint to unlock the full story!");
-          setShowMintPage(true);
-      } else {
+      if (readingAccess == true && hasNFTAccess == true) {
           router.push(`/reader?id=${currentComic?._id}&chapterId=${chapters?._id || ''}`);
+          //router.push(`/reader?id=${currentComic?._id}&chapterId=${chapters?._id || ''}`);
+      } else {
+         
+           alert("You have preview access to this comic. Please mint to unlock the full story!");
+          setShowMintPage(true);
       } 
   };
 
