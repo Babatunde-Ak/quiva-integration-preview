@@ -93,20 +93,20 @@ const MintConfirmationModal: React.FC<MintConfirmationModalProps> = ({
       //   price: parseFloat(currentComic?.nftId?.price) || 0,
       //   currency: "HBAR"
       // } as any ));
-      const createPurchaseTransaction = await fetch(`http://localhost:5000/api/transactions/${currentComic?.id}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          walletAddress: account || user?.walletAddress || '',
-          txHash: result?.transactionId || '',
-          price: parseFloat(currentComic?.nftId?.price) || 0,
-          currency: "HBAR"
-        })
-      }) 
+      // const createPurchaseTransaction = await fetch(`http://localhost:5000/api/transactions/${currentComic?.id}`, {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //   },
+      //   body: JSON.stringify({
+      //     walletAddress: account || user?.walletAddress || '',
+      //     txHash: result?.transactionId || '',
+      //     price: parseFloat(currentComic?.nftId?.price) || 0,
+      //     currency: "HBAR"
+      //   })
+      // }) 
       
-      console.log('Transaction recorded in backend:', createPurchaseTransaction);
+     // console.log('Transaction recorded in backend:', createPurchaseTransaction);
       console.log('Minting successful', result);
    } catch (error) {
         console.error('Minting failed:', error);

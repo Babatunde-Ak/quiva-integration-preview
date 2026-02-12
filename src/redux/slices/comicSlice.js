@@ -49,8 +49,6 @@ export const createFullComic = createAsyncThunk(
   "comics/createFull",
   async ({formData, collectionId}, { rejectWithValue }) => {
     try {
-      console.log(formData, collectionId);
-
       const response = await axiosInstance.post(
         `/comics/full/${collectionId}`,
         formData,

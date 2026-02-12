@@ -44,7 +44,6 @@ export default function CollectionEpisodesRoute({ params }: PageProps) {
                     creator: apiCollection.creatorId || {},
                 };
                 
-                console.log('Fetched Collection:', mappedCollection);
                 setCollection(mappedCollection);
                 setError(null);
             } catch (error) {

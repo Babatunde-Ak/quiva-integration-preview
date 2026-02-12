@@ -22,15 +22,15 @@ const layout = ({children}) => {
     } = useDisclosure();
 
     useEffect(() => {
-        console.log(user);
-        // If user is not a creator or username is not set, assign role and open profile modal
-        if(user?.role.filter(role => role === 'creator').length === 0) {
-            dispatch(creatorRegister(user._id as string));
+        if (user?.role) {
+            const isCreator = user.role.includes("creator");
+            
+            if (!isCreator) {
+                dispatch(creatorRegister(user._id as string));
+                onOpenUserProfile();
+            }
         }
-        if (!user?.username) {
-            onOpenUserProfile();
-        }
-    }, []);
+    }, [user, dispatch, onOpenUserProfile]);
 
     const handleProfileComplete = () => {
         // Close the user profile modal

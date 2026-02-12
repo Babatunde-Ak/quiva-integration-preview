@@ -92,13 +92,14 @@ const MintComicModal: React.FC<MintComicModalProps> = ({
     setShowProcessingModal(true)
     setIsMinting(true)
 
-    dispatch(createTransaction({
+    const transaction = await dispatch(createTransaction({
       comicId:comicId,
       "walletAddress": walletAddressProp,
       "txHash": currentComic?.nftId?.transactionId || "",
       "price": currentComic?.nftId?.price || 0,
       "currency": "HBAR"
-    } as any)).unwrap()
+    } as any));
+    console.log('Transaction recorded in backend:', transaction);
     
     setTimeout(() => {
       setTransactionHash(currentComic?.nftId?.transactionId || "")

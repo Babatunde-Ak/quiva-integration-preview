@@ -42,7 +42,6 @@ function Page() {
                 // Map API response to mock data format
                 const mappedCollections = mapApiCollectionsToMockFormat(apiCollections);
                 
-                console.log('Mapped Collections:', mappedCollections);
                 setCollections(mappedCollections);
                 setError(null);
             } catch (error) {

@@ -110,10 +110,8 @@ if (!evmAddress.startsWith("0x")) {
     throw new Error("Invalid Hedera account format");
   }
 }
- 
- const checksummedAddress = getAddress(convertedAddress) as `0x${string}`;
-     
-// Get message to sign from backend (same API as Ethereum)
+
+const checksummedAddress = getAddress(convertedAddress) as `0x${string}`;
       const msgRes = await dispatch(walletAuth({ walletAddress: checksummedAddress })).unwrap();
       const message = msgRes.message;
 

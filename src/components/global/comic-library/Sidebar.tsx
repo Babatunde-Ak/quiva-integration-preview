@@ -3,20 +3,16 @@
 import { MainButton } from '@/components/button'
 import { Button } from '@/components/ui/button'
 import { QuivaLogo } from '@/components/utils/function'
-import { useAppDispatch, useAppSelector } from '@/redux/hook'
+import { useAppSelector } from '@/redux/hook'
 import { 
   X, 
-  Search, 
-  BookOpen, 
-  Folder, 
-  Users, 
-  User,
   ChevronLeft,
   ChevronRight,
   PenTool
 } from 'lucide-react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
+import { toast } from 'react-toastify'
 
 interface SidebarProps {
   isMobileMenuOpen: boolean
@@ -48,11 +44,11 @@ const getNavIcon = (label: string) => {
 }
 
 export function Sidebar({ isMobileMenuOpen, onMobileMenuClose, isCollapsed, onToggleCollapse }: SidebarProps) {
-  const router = useRouter()
-  const pathname = usePathname()
-   const dispatch = useAppDispatch();
-   const user = useAppSelector((state) => state.user);
-  const [isMobile, setIsMobile] = useState(false)
+  const router = useRouter();
+  const pathname = usePathname();
+  const [isMobile, setIsMobile] = useState(false);
+
+  const {user} = useAppSelector((state: any) => state.wallet);
 
   // Manage sidebar state class on document body for layout adjustments
   useEffect(() => {
@@ -128,12 +124,13 @@ export function Sidebar({ isMobileMenuOpen, onMobileMenuClose, isCollapsed, onTo
     if (isMobile) onMobileMenuClose()
   }
 
-  const handleBecomeCreator = async () => {
-    // const become_creator = await dispatch(becomeCreator({
-    //   id: user?.id,
-    // } as any));
-    //  console.log('Become Creator Response:', become_creator);
-    router.push('/comic-pad')
+  const handleBecomeCreator = () => {
+    if(user && user.role && user.role.includes("creator")) {
+      router.push('/comic-pad');
+    }
+    else{
+      toast.info("Please Connect Wallet");
+    }
     if (isMobile) onMobileMenuClose()
   }
 

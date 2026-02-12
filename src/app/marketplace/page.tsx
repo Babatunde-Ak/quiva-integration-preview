@@ -33,7 +33,6 @@ export default function MainPage() {
   const dispatch = useAppDispatch()
   
   useEffect(() => {
-    console.log("hello from marketplace")
     dispatch(getAllComics())
   }, [dispatch])
 
