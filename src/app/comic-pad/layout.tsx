@@ -22,7 +22,6 @@ const layout = ({children}) => {
     } = useDisclosure();
 
     useEffect(() => {
-        console.log(user);
         if (user?.role) {
             const isCreator = user.role.includes("creator");
             

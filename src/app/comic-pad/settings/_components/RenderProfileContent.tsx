@@ -22,7 +22,6 @@ const RenderProfileContent = () => {
 
 	const handleBookClick = (book: BookType) => {
 		console.log("Book clicked:", book);
-		// Handle book click - navigate to detail page, open modal, etc.
 	};
 
 	return (

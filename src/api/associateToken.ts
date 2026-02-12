@@ -18,13 +18,6 @@ async function associateToken(tokenId: string) {
     const MARKETPLACE_OWNER_PRIVATE_KEY = process.env.MARKETPLACE_OWNER_PRIVATE_KEY!;
     const NETWORK = process.env.NEXT_PUBLIC_HEDERA_NETWORK || 'testnet';
 
-    console.log("🔧 Token Association Script");
-    console.log("============================");
-    console.log("Marketplace:", MARKETPLACE_CONTRACT_ID);
-    console.log("Token:", tokenId);
-    console.log("Network:", NETWORK);
-    console.log("");
-
     const client = Client.forName(NETWORK);
     client.setOperator(
       AccountId.fromString(MARKETPLACE_OWNER_ACCOUNT_ID),
@@ -45,18 +38,12 @@ async function associateToken(tokenId: string) {
     console.log("⏳ Waiting for receipt...");
     const receipt = await txResponse.getReceipt(client);
 
-    console.log("");
     console.log("✅ SUCCESS!");
-    console.log("============================");
-    console.log("Status:", receipt.status.toString());
-    console.log("Transaction ID:", txResponse.transactionId.toString());
-    console.log("");
 
     return { success: true, transactionId: txResponse.transactionId.toString() };
 
   } catch (err: any) {
     if (err.message?.includes("TOKEN_ALREADY_ASSOCIATED")) {
-      console.log("✅ Token already associated!");
       return { success: true, alreadyAssociated: true };
     }
     console.error("❌ Failed:", err);
@@ -69,7 +56,6 @@ const tokenId = process.argv[2] || "0.0.7659745";
 
 associateToken(tokenId)
   .then((result) => {
-    console.log("Result:", result);
     process.exit(0);
   })
   .catch((err) => {

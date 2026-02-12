@@ -27,31 +27,22 @@ export default function ComicDetail() {
     accountId: user?.walletAddress || "",
     signer: signer,
     network: "testnet",
+  });
 
-
-  }
-  );
-  // Get comicId from URL
   const comicId = searchParams.get('id');
 
-  // Get data from Redux for additional info
   const { currentComic, isLoading } = useAppSelector((state: any) => state.comic);
   const { currentCollection } = useAppSelector((state: any) => state.collection || {});
 
-  console.log("Current Comic from Redux:", currentComic);
-  // Fetch comic and collection data on mount or when comicId changes
   useEffect(() => {
     const fetchData = async () => {
       if (!comicId) return;
 
       try {
-        // Fetch comic by ID
         const comicResult = await dispatch(getComicById({ id: comicId } as any)).unwrap();
         
-        // Extract collectionId from comic response
         const collectionId = comicResult?.data?.comic?.collectionId;
         
-        // If comic has a collectionId, fetch the collection too
         if (collectionId) {
           await dispatch(getCollectionById({ id: collectionId } as any)).unwrap();
         }
@@ -65,11 +56,9 @@ export default function ComicDetail() {
 
 
   
-  // Extract real data with fallbacks
   const nftData = currentComic?.nftId || {};
   const chapters = currentComic?.chapters || [];
   
-  // Minting Details - Real data
   const mintPrice = nftData?.price?.toFixed(2) || "0.09";
   const maxSupply = nftData?.maxSupply?.toLocaleString() || "1,000";
   const royaltyPercentage = nftData?.royaltyPercentage || 7;
@@ -124,7 +113,6 @@ export default function ComicDetail() {
   const handleReadClick = async () => {
     // TODO: Implement logic to determine if user can read full comic or just preview based on ownership
     const readingAccess = await  canReadComic(currentComic?._id, user?.walletAddress);
-      console.log(`User has ${readingAccess} to this comic.`);
       if (readingAccess === false) {
         alert("You have preview access to this comic. Please mint to unlock the full story!");
           setShowMintPage(true);
