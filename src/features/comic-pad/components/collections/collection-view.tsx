@@ -5,6 +5,7 @@ import CreateCollectionForm from '../modals/new-collection';
 import CollectionSuccess from '../modals/collection-success';
 import { useAppDispatch } from "@/redux/hook";
 import { createCollection } from '@/redux/slices/collectionSlice';
+import { toast } from 'react-toastify';
 
 interface CollectionViewProps {
   onClose?: () => void;
@@ -27,8 +28,6 @@ function CollectionView({ onClose }: CollectionViewProps) {
   const dispatch = useAppDispatch();
 
   const handleSuccess = async (formData: any) => {
-    console.log('=== handleSuccess called ===');
-    console.log('Form Data:', formData);
 
     const data: CreateCollectionPayload = {
       title: formData.title,
@@ -38,29 +37,20 @@ function CollectionView({ onClose }: CollectionViewProps) {
       collaborators: formData.collaborators,
       creatorDetails: formData.creatorDetails
     };
-
-    console.log('Payload to send:', data);
+    setCollectionData(formData);
 
     try {
       setIsSubmitting(true);
       
-      console.log('Dispatching createCollection...');
       const result = await dispatch(createCollection(data as any)).unwrap();
-      
-      console.log('✅ Create Collection SUCCESS:', result);
-      setCollectionData(formData);
-      setShowSuccess(true);
-      console.log('showSuccess set to true');
-      
+      if(result){
+        toast.success('Collection created successfully!');
+        setShowSuccess(true); 
+      }
+
     } catch (error: any) {
       console.error('❌ Error creating collection:', error);
-      console.error('Error details:', {
-        message: error?.message,
-        response: error?.response,
-        stack: error?.stack
-      });
-      
-      alert(`Failed to create collection: ${error?.message || 'Unknown error'}`);
+      toast.info(`Failed to create collection: ${error?.message || 'Unknown error'}`);
     } finally {
       setIsSubmitting(false);
     }

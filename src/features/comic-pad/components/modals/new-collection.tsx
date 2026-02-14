@@ -6,11 +6,12 @@ import {Input} from '@/components/ui/input';
 import {Textarea} from '@/components/ui/textarea';
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
 import {Badge} from '@/components/ui/badge';
-import {Avatar, AvatarFallback} from '@/components/ui/avatar';
-import {Upload, X, Plus} from 'lucide-react';
+import {Upload, X} from 'lucide-react';
 import { genres } from '../../mock-data/data';
 import {IconToggleSwitch} from '@/components/switch/Switch';
 import { MainButton } from '@/components/button';
+import { deleteCookie, getCookie, setCookie } from '../../utils/utils';
+import { toast } from 'react-toastify';
 
 interface CollectionFormData {
     title : string;
@@ -26,28 +27,6 @@ interface CreateCollectionFormProps {
     onSaveDraft : (data : CollectionFormData) => void;
     isLoading?: boolean;
 }
-
-// Cookie utility functions
-const setCookie = (name: string, value: string, days: number = 7) => {
-    const expires = new Date();
-    expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
-    document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
-};
-
-const getCookie = (name: string): string | null => {
-    const nameEQ = name + "=";
-    const ca = document.cookie.split(';');
-    for (let i = 0; i < ca.length; i++) {
-        let c = ca[i];
-        while (c.charAt(0) === ' ') c = c.substring(1, c.length);
-        if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
-    }
-    return null;
-};
-
-const deleteCookie = (name: string) => {
-    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-};
 
 const CreateCollectionForm : React.FC < CreateCollectionFormProps > = ({
     onSubmit,
@@ -72,7 +51,6 @@ const CreateCollectionForm : React.FC < CreateCollectionFormProps > = ({
     const [showCollaborators, setShowCollaborators] = useState(false);
     const fileInputRef = useRef < HTMLInputElement > (null);
 
-    // Load draft from cookies on component mount
     useEffect(() => {
         const draftData = getCookie('collection_draft');
         if (draftData) {
@@ -81,10 +59,9 @@ const CreateCollectionForm : React.FC < CreateCollectionFormProps > = ({
                 setFormData(prev => ({
                     ...prev,
                     ...parsedDraft,
-                    bannerImage: null // Can't restore File object from cookie
+                    bannerImage: null
                 }));
                 
-                // Show collaborators section if there are any collaborators
                 if (parsedDraft.collaborators && parsedDraft.collaborators.length > 0) {
                     setShowCollaborators(true);
                 }
@@ -94,7 +71,8 @@ const CreateCollectionForm : React.FC < CreateCollectionFormProps > = ({
                 
                 // Hide notification after 5 seconds
                 setTimeout(() => setShowDraftNotification(false), 5000);
-            } catch (error) {
+            } 
+            catch (error) {
                 console.error('Error loading draft from cookies:', error);
                 // Clear corrupted cookie
                 deleteCookie('collection_draft');
@@ -176,6 +154,11 @@ const CreateCollectionForm : React.FC < CreateCollectionFormProps > = ({
 
     const handleSubmit = (e : React.FormEvent) => {
         e.preventDefault();
+
+        if (!formData.title.trim() || !formData.description.trim() || formData.genres.length === 0 || !formData.bannerImage) {
+            toast.info('Please fill in all required fields and upload a banner image before submitting.');
+            return;
+        }
         
         // Clear draft cookie on successful submission
         deleteCookie('collection_draft');
@@ -338,11 +321,6 @@ const CreateCollectionForm : React.FC < CreateCollectionFormProps > = ({
                                                             <div
                                                                 key={index}
                                                                 className="flex items-center gap-2 bg-black-300 border border-black-50 rounded-md pr-3 py-1">
-                                                                {/* <Avatar className="w-7 h-7">
-                                                                    <AvatarFallback className="bg-black-50 text-white text-xs font-semibold">
-                                                                        {collaborator.charAt(0).toUpperCase()}
-                                                                    </AvatarFallback>
-                                                                </Avatar> */}
                                                                 <span className="text-sm text-white">{collaborator}</span>
                                                                 <button
                                                                     type="button"
@@ -422,7 +400,7 @@ const CreateCollectionForm : React.FC < CreateCollectionFormProps > = ({
                             <div className="space-y-4 pt-4 col-span-1 lg:col-span-2 lg:self-start w-3/4 mx-auto">
                                 <MainButton
                                     type="submit"
-                                    // disabled={isLoading || (!formData.title.trim() || !formData.description.trim() || formData.genres.length === 0)}
+                                    // disabled={isLoading || (!formData.title.trim() || !formData.description.trim() || formData.genres.length === 0 || !formData.bannerImage)}
                                     disabled={isLoading}
                                     className="w-full">
                                     {isLoading
@@ -434,7 +412,7 @@ const CreateCollectionForm : React.FC < CreateCollectionFormProps > = ({
                                     type="button"
                                     variant="outline"
                                     onClick={handleSaveDraftToCookies}
-                                    disabled={isLoading}
+                                    disabled={isLoading || !formData.title.trim() || !formData.description.trim() || formData.genres.length === 0 || !formData.bannerImage}
                                     className="w-full border-gray-600 text-gray-300 hover:bg-gray-700 font-semibold py-3 rounded-full transition-colors">
                                     Save as Draft
                                 </Button>
