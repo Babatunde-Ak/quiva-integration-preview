@@ -4,7 +4,7 @@ import React, { useState } from 'react'
 import CreateCollectionForm from '../modals/new-collection';
 import CollectionSuccess from '../modals/collection-success';
 import { useAppDispatch } from "@/redux/hook";
-import { createCollection } from '@/redux/slices/collectionSlice';
+import { createCollection, getUserCollections } from '@/redux/slices/collectionSlice';
 import { toast } from 'react-toastify';
 
 interface CollectionViewProps {
@@ -57,6 +57,7 @@ function CollectionView({ onClose }: CollectionViewProps) {
   };
 
   const handleCloseSuccess = () => {
+    dispatch(getUserCollections());
     setShowSuccess(false);
     if (onClose) {
       onClose();
