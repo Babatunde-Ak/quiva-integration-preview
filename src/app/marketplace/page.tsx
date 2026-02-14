@@ -1,9 +1,7 @@
 'use client';
 
-import { MainButton } from '@/components/button'
 import { ComicSection } from '@/features/comic-library/components/sections/ComicSection'
 import { CreatorsSection } from '@/features/comic-library/components/CreatorsSection'
-import { FeaturedComic } from '@/features/comic-library/components/FeaturedComic'
 import { HeroComicSlider } from '@/features/comic-library/components/HeroComicSlider'
 import { TopComicsTable } from '@/features/comic-library/components/TopComicsTable'
 import { 
@@ -12,8 +10,6 @@ import {
   upcomingComics, 
   creators, 
   topComics, 
-  mintComics, 
-  FeaturesComics, 
   heroComics 
 } from '@/features/comic-library/data/sampleData'
 
