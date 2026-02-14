@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import EpisodeFormController from './steps/EpisodeFormController';
 import EpisodeSuccess from './episode-success';
 import axios from 'axios';
+import { toast } from 'react-toastify';
 
 interface EpisodeFormData {
   title: string;
@@ -30,11 +31,8 @@ function EpisodeForm({ onClose, collectionId }: EpisodeFormProps) {
     setIsLoading(true);
     setEpisodeData(data);
     
-    try {
-      console.log('Creating episode:', data);
-      
+    try {      
       setShowSuccess(true);
-      console.log('Episode created successfully');
     } catch (error) {
       console.error('Failed to create episode:', error);
       // Handle error (show toast, etc.)
@@ -56,7 +54,7 @@ function EpisodeForm({ onClose, collectionId }: EpisodeFormProps) {
       }));
       
       // Show success message
-      // You could add a toast notification here
+      toast.success('Draft saved successfully!');
     } catch (error) {
       console.error('Failed to save draft:', error);
     }

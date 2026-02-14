@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Upload, X } from 'lucide-react';
+import { Upload, X, AlertCircle } from 'lucide-react';
 import { IconToggleSwitch } from '@/components/switch/Switch';
 import { MainButton } from '@/components/button';
 import { genres } from '@/features/comic-pad/mock-data/data';
@@ -21,12 +21,22 @@ interface EpisodeDetailsData {
   genre?: string[];
 }
 
+interface ValidationState {
+  title: boolean;
+  episodeNumber: boolean;
+  maturityRating: boolean;
+  genre: boolean;
+  bannerImage: boolean;
+}
+
 interface EpisodeDetailsStepProps {
   data: EpisodeDetailsData;
   onUpdate: (data: Partial<EpisodeDetailsData>) => void;
   onNext: () => void;
   onSaveDraft: () => void;
   isValid: boolean;
+  validationErrors?: ValidationState;
+  showValidation?: boolean;
 }
 
 const EpisodeDetailsStepComponent: React.FC<EpisodeDetailsStepProps> = ({
@@ -34,7 +44,15 @@ const EpisodeDetailsStepComponent: React.FC<EpisodeDetailsStepProps> = ({
   onUpdate,
   onNext,
   onSaveDraft,
-  isValid
+  isValid,
+  validationErrors = {
+    title: false,
+    episodeNumber: false,
+    maturityRating: false,
+    genre: false,
+    bannerImage: false
+  },
+  showValidation = false
 }) => {
   const [newCollaborator, setNewCollaborator] = useState('');
   const [showCollaborators, setShowCollaborators] = useState(false);
@@ -70,6 +88,11 @@ const EpisodeDetailsStepComponent: React.FC<EpisodeDetailsStepProps> = ({
     });
   };
 
+  // Helper function to get error styling
+  const getInputErrorClass = (hasError: boolean) => {
+    return hasError ? 'border-red-500 focus:border-red-500' : 'border-black-50 focus:border-primary-500';
+  };
+
   return (
     <div className="w-full h-full p-6 overflow-y-auto">
       <div className="mx-auto">
@@ -93,20 +116,43 @@ const EpisodeDetailsStepComponent: React.FC<EpisodeDetailsStepProps> = ({
             <h3 className="font-light text-white">Episode details</h3>
 
             <div className="space-y-4">
-              <Input
-                placeholder="Enter episode title"
-                value={data.title}
-                onChange={(e) => onUpdate({ title: e.target.value })}
-                className="bg-black-500 border-black-50 text-white placeholder-white/40 focus:border-primary-500 !py-2"
-              />
+              {/* Title Input */}
+              <div className="space-y-2">
+                <Input
+                  placeholder="Enter episode title"
+                  value={data.title}
+                  onChange={(e) => onUpdate({ title: e.target.value })}
+                  className={`bg-black-500 text-white placeholder-white/40 !py-2 ${
+                    showValidation ? getInputErrorClass(validationErrors.title) : 'border-black-50 focus:border-primary-500'
+                  }`}
+                />
+                {showValidation && validationErrors.title && (
+                  <div className="flex items-center gap-2 text-red-500 text-sm">
+                    <AlertCircle size={16} />
+                    <span>Episode title is required</span>
+                  </div>
+                )}
+              </div>
 
-              <Input
-                placeholder="Enter episode No"
-                value={data.episodeNumber}
-                onChange={(e) => onUpdate({ episodeNumber: e.target.value })}
-                className="bg-black-500 border-black-50 text-white placeholder-white/40 focus:border-primary-500 !py-2"
-              />
+              {/* Episode Number Input */}
+              <div className="space-y-2">
+                <Input
+                  placeholder="Enter episode No"
+                  value={data.episodeNumber}
+                  onChange={(e) => onUpdate({ episodeNumber: e.target.value })}
+                  className={`bg-black-500 text-white placeholder-white/40 !py-2 ${
+                    showValidation ? getInputErrorClass(validationErrors.episodeNumber) : 'border-black-50 focus:border-primary-500'
+                  }`}
+                />
+                {showValidation && validationErrors.episodeNumber && (
+                  <div className="flex items-center gap-2 text-red-500 text-sm">
+                    <AlertCircle size={16} />
+                    <span>Episode number is required</span>
+                  </div>
+                )}
+              </div>
 
+              {/* Summary Textarea */}
               <Textarea
                 placeholder="Add an optional summary for this episode…"
                 value={data.summary}
@@ -118,6 +164,9 @@ const EpisodeDetailsStepComponent: React.FC<EpisodeDetailsStepProps> = ({
               <div className="space-y-4">
                 <p className="text-white">
                   Choose at least one genre so readers can find your episode.
+                  {showValidation && validationErrors.genre && (
+                    <span className="text-red-500"> *</span>
+                  )}
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {genres.map((genre) => (
@@ -128,25 +177,42 @@ const EpisodeDetailsStepComponent: React.FC<EpisodeDetailsStepProps> = ({
                         (data.genre || []).includes(genre.id)
                           ? 'bg-white hover:bg-white text-black-100 border-white'
                           : 'bg-transparent border-white/60 text-white/30 hover:border-white/50'
-                      } rounded-full px-3 py-2 font-normal`}
+                      } rounded-full px-3 py-2 font-normal ${
+                        showValidation && validationErrors.genre && (data.genre || []).length === 0
+                          ? 'border-red-500'
+                          : ''
+                      }`}
                       onClick={() => handleGenreToggle(genre.id)}
                     >
                       {genre.name}
                     </Badge>
                   ))}
                 </div>
+                {showValidation && validationErrors.genre && (
+                  <div className="flex items-center gap-2 text-red-500 text-sm">
+                    <AlertCircle size={16} />
+                    <span>Please select at least one genre</span>
+                  </div>
+                )}
               </div>
 
               {/* Maturity Rating */}
               <div className="space-y-2">
                 <h3 className="font-light text-white">
-                    Maturity Rating
+                  Maturity Rating
+                  {showValidation && validationErrors.maturityRating && (
+                    <span className="text-red-500"> *</span>
+                  )}
                 </h3>
                 <Select 
                   value={data.maturityRating} 
                   onValueChange={(value) => onUpdate({ maturityRating: value })}
                 >
-                  <SelectTrigger className="bg-black-500 border-black-50 text-white">
+                  <SelectTrigger className={`bg-black-500 text-white ${
+                    showValidation && validationErrors.maturityRating
+                      ? 'border-red-500 focus:border-red-500'
+                      : 'border-black-50'
+                  }`}>
                     <SelectValue placeholder="Who is this content for?" />
                   </SelectTrigger>
                   <SelectContent className="bg-black-400 border-black-50 text-white">
@@ -156,6 +222,12 @@ const EpisodeDetailsStepComponent: React.FC<EpisodeDetailsStepProps> = ({
                     <SelectItem value="adult">Adult (18+)</SelectItem>
                   </SelectContent>
                 </Select>
+                {showValidation && validationErrors.maturityRating && (
+                  <div className="flex items-center gap-2 text-red-500 text-sm">
+                    <AlertCircle size={16} />
+                    <span>Please select a maturity rating</span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -264,7 +336,7 @@ const EpisodeDetailsStepComponent: React.FC<EpisodeDetailsStepProps> = ({
         <div className="space-y-4 pt-8 max-w-2xl mx-auto">
           <MainButton
             onClick={onNext}
-            disabled={!isValid}
+            disabled={false} // Remove disabled state to allow user to attempt
             className='w-full'
           >
             Next step
@@ -278,6 +350,25 @@ const EpisodeDetailsStepComponent: React.FC<EpisodeDetailsStepProps> = ({
               Save as Draft
           </Button>
         </div>
+
+        {/* Validation Summary */}
+        {showValidation && !isValid && (
+          <div className="mt-4 max-w-2xl mx-auto">
+            <div className="bg-red-500/10 border border-red-500 rounded-lg p-4">
+              <div className="flex items-center gap-2 text-red-500 mb-2">
+                <AlertCircle size={20} />
+                <span className="font-semibold">Please complete all required fields</span>
+              </div>
+              <ul className="text-red-400 text-sm space-y-1">
+                {validationErrors.title && <li>• Episode title is required</li>}
+                {validationErrors.episodeNumber && <li>• Episode number is required</li>}
+                {validationErrors.maturityRating && <li>• Maturity rating must be selected</li>}
+                {validationErrors.genre && <li>• At least one genre must be selected</li>}
+                {validationErrors.bannerImage && <li>• Banner image is required</li>}
+              </ul>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
