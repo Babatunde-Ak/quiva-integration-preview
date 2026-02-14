@@ -125,7 +125,7 @@ export function Sidebar({ isMobileMenuOpen, onMobileMenuClose, isCollapsed, onTo
   }
 
   const handleBecomeCreator = () => {
-    if(user && user.role && user.role.includes("creator")) {
+    if(user && user.walletAddress) {
       router.push('/comic-pad');
     }
     else{
