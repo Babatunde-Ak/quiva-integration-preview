@@ -8,7 +8,8 @@ import {
   X, 
   ChevronLeft,
   ChevronRight,
-  PenTool
+  PenTool,
+  ChartSpline
 } from 'lucide-react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
@@ -37,7 +38,8 @@ const getNavIcon = (label: string) => {
     case 'user profile':
       return <img src="/wallet-icon.svg" alt="Explore" className={iconClass} />
     case 'analytics':
-      return <img src="/folder-icon.svg" alt="analytics" className={iconClass} />
+      // return <img src="/folder-icon.svg" alt="analytics" className={iconClass} />
+      return <ChartSpline className={iconClass} />
     default:
       return <img src="/category.svg" alt="Explore" className={iconClass} />
   }
