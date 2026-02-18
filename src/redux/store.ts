@@ -11,7 +11,7 @@ import collectionReducer from './slices/collectionSlice';
 const persistConfig = {
   key: 'root',
   storage,
-  whitelist: ['auth', 'wallet']
+  whitelist: ['auth', 'wallet', 'comic', 'collections']
 };
 
 const rootReducer = combineReducers({
