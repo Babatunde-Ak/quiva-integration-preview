@@ -64,12 +64,14 @@ const CollectionEpisodesPage : React.FC < CollectionEpisodesPageProps > = ({
 
     // Handle episode actions with fallback navigation
     const handleCreateDrop = (episodeId: string) => {
-        if (onCreateDrop) {
-            onCreateDrop(episodeId);
-        } else {
+        router.push(`/comic-pad/collections/${collectionId}/${episodeId}/drops`);
+        
+        // if (onCreateDrop) {
+        //     onCreateDrop(episodeId);
+        // } else {
             // Navigate to create drop page
-            router.push(`/comic-pad/collections/${collectionId}/${episodeId}/drops`);
-        }
+            // router.push(`/comic-pad/collections/${collectionId}/${episodeId}/drops`);
+        // }
     };
 
     const handleListToMarketplace = (episodeId: string) => {
