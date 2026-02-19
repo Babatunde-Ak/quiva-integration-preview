@@ -42,9 +42,8 @@ function EpisodeForm({ onClose, collectionId }: EpisodeFormProps) {
   };
 
   const handleSaveDraft = (data: EpisodeFormData) => {
-    setEpisodeData(data);
-    console.log('Episode draft saved:', data);
-    
+    setEpisodeData(data);    
+
     // Save to localStorage or make API call
     try {
       localStorage.setItem(`episode_draft_${collectionId}`, JSON.stringify({
@@ -100,7 +99,7 @@ function EpisodeForm({ onClose, collectionId }: EpisodeFormProps) {
             onUploadNewEpisode={handleUploadNewEpisode}
             onBackToCollection={handleBackToCollection}
             episodeImage={episodeData?.bannerImage ? URL.createObjectURL(episodeData.bannerImage) : undefined}
-            collectionCover="https://images.unsplash.com/photo-1578662996442-48f60103fc96?auto=format&fit=crop&w=300&q=80"
+            collectionCover={null}
           />
         </div>
       )}

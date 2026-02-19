@@ -31,7 +31,7 @@ const EpisodeSuccess: React.FC<EpisodeSuccessModalProps> = ({
           <div className="relative">
             {/* Main collection cover */}
             <img
-              src={collectionCover || "https://images.unsplash.com/photo-1578662996442-48f60103fc96?auto=format&fit=crop&w=300&q=80"}
+              src={episodeImage || collectionCover || "https://images.unsplash.com/photo-1578662996442-48f60103fc96?auto=format&fit=crop&w=300&q=80"}
               alt="Collection cover"
               className="w-32 h-44 md:w-80 md:h-80 object-cover rounded-lg shadow-2xl"
             />
