@@ -494,7 +494,7 @@ interface TransactionState {
 // Constants
 const AUTO_RENEW_PERIOD = 7000000;
 const TRANSACTION_STATE_KEY = 'nft_transaction_state';
-const MAX_RETRIES = 3;
+const MAX_RETRIES = 30;
 const RETRY_DELAY = 2000; // 2 seconds
 
 const RARITY_OPTIONS: Record<string, RarityOption> = {

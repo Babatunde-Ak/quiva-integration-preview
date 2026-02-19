@@ -13,6 +13,7 @@ import {
 } from "@hashgraph/sdk";
 import { useComicInscription } from "./useComicInscription";
 import { ethers } from 'ethers';
+import MirrorNodeService  from "./MirrorNodeService";
 
 // Define the ABI for your function
 const abi = [
@@ -59,6 +60,7 @@ export function useComicPlatform({
   signer,
   network = "testnet"
 }: UseComicPlatformProps) {
+  const mirrorNodeService = new MirrorNodeService(network);
   
   const [status, setStatus] = useState<"idle" | "processing" | "done" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
@@ -912,8 +914,8 @@ export function useComicPlatform({
     const encodedData = abiInterface.encodeFunctionData('canReadComic', [episodeId, userAddress]);
 
     // Convert contract ID to EVM address (e.g., 0.0.1234 → 0x00000000000000000000000000000000000004d2)
-    const contractAddress = ContractId.fromString(CONTRACTS.COMIC_CORE).toEvmAddress();
-
+    // const contractAddress = ContractId.fromString(CONTRACTS.COMIC_CORE).toEvmAddress();
+const contractAddress = mirrorNodeService.hederaIdToEvmAddress(CONTRACTS.COMIC_CORE);
     const response = await fetch('https://testnet.mirrornode.hedera.com/api/v1/contracts/call', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

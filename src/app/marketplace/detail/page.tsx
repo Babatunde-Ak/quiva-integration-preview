@@ -11,6 +11,7 @@ import { useAppDispatch, useAppSelector } from "@/redux/hook";
 import { getComicById } from "@/redux/slices/comicSlice";
 import { getCollectionById } from "@/redux/slices/collectionSlice";
 import useMarketplace from "@/hook/useMarkeplace";
+import useMirrorNodeQueries from "@hook/useMirrorNodeQueries";
 import   { useHederaWallet } from "@/providers/HashPackProvider";
 
 export default function ComicDetail() {
@@ -23,12 +24,12 @@ export default function ComicDetail() {
   const {user} = useAppSelector((state: any) => state.wallet);
   const { account, signer } = useHederaWallet();
 
-  const { canReadComic } = useMarketplace({
-    accountId: user?.walletAddress || "",
-    signer: signer,
-    network: "testnet",
-  });
-
+  // const { canReadComic } = useMarketplace({
+  //   accountId: user?.walletAddress || "",
+  //   signer: signer,
+  //   network: "testnet",
+  // });
+ const {checkCanReadComic} = useMirrorNodeQueries();
   const comicId = searchParams.get('id');
 
   const { currentComic, isLoading } = useAppSelector((state: any) => state.comic);
@@ -112,8 +113,9 @@ export default function ComicDetail() {
 
   const handleReadClick = async () => {
     // TODO: Implement logic to determine if user can read full comic or just preview based on ownership
-    const readingAccess = await  canReadComic(currentComic?._id, user?.walletAddress);
-      if (readingAccess === false) {
+    // const readingAccess = await  canReadComic(currentComic?._id, user?.walletAddress);
+        const readingAccess = await checkCanReadComic(currentComic?._id, user?.walletAddress);
+      if (readingAccess === false && !hasNFTAccess) {
         alert("You have preview access to this comic. Please mint to unlock the full story!");
           setShowMintPage(true);
       } 
