@@ -7,8 +7,6 @@ import { LOCAL_IMAGE } from '@/components/utils/dummy-data'
 import useComicPlatform from '@/hook/useMarkeplace';
 import { useHederaWallet } from '@/providers/HashPackProvider'
 import { useAppDispatch, useAppSelector } from '@/redux/hook'
-//import { createTransaction } from '@/redux/slices/transactionSlice'
-
 
 interface MintConfirmationModalProps {
   isOpen: boolean
@@ -37,7 +35,6 @@ const MintConfirmationModal: React.FC<MintConfirmationModalProps> = ({
       const { 
             account,
             isConnected, 
-            // connector,
             provider,
             signer,
             connectWallet 
@@ -46,18 +43,7 @@ const MintConfirmationModal: React.FC<MintConfirmationModalProps> = ({
         const { user } = useAppSelector((state:any) => state.wallet);
         const dispatch = useAppDispatch();
         const { currentComic, isLoading } = useAppSelector((state: any) => state.comic);
-        console.log("Current Comic in Mint Modal:", currentComic);
-        
-        // const { 
-        //     purchaseFromListing  
-        // } = useNFTMarketplace({
-        //     accountId: account || user?.walletAddress || '',
-        //     network: "testnet",
-        //     // marketplaceContractId: "0.0.7750266", // Your deployed marketplace contract
-        //    marketplaceContractId:"0.0.7774217",
-        //     signer: signer,
-        // });
-        
+
         const {
           purchaseFromListing,
           getDirectListing
@@ -72,47 +58,20 @@ const MintConfirmationModal: React.FC<MintConfirmationModalProps> = ({
   const handleMintComic = async () => {
 
     try {
-       
       //fetch the info first
       const result = await purchaseFromListing({
         listingId: currentComic?.nftId?.listingId, // Replace with actual listing ID
         quantity: currentComic?.nftId?.quantity || 1,
         pricePerNFT: parseFloat(currentComic?.nftId?.price) || 0
-
       })
       
-     
       if(result){
         onConfirm()
       }
-      
-      //  const createPurchaseTransaction = await dispatch(createTransaction({
-      //   comicId: currentComic?.id,
-      //   walletAddress: account || user?.walletAddress || '',
-      //   txHash: result?.transactionId || '',
-      //   price: parseFloat(currentComic?.nftId?.price) || 0,
-      //   currency: "HBAR"
-      // } as any ));
-      // const createPurchaseTransaction = await fetch(`http://localhost:5000/api/transactions/${currentComic?.id}`, {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify({
-      //     walletAddress: account || user?.walletAddress || '',
-      //     txHash: result?.transactionId || '',
-      //     price: parseFloat(currentComic?.nftId?.price) || 0,
-      //     currency: "HBAR"
-      //   })
-      // }) 
-      
-     // console.log('Transaction recorded in backend:', createPurchaseTransaction);
-      console.log('Minting successful', result);
-   } catch (error) {
+    } catch (error) {
         console.error('Minting failed:', error);
     
-   }
- 
+    }
 
   
   };

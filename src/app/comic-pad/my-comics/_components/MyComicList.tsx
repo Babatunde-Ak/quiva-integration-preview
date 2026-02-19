@@ -1,9 +1,7 @@
 "use client";
 import MyComicCard from "@/components/cards/MyComicCard";
 import React, { useState, useEffect, useMemo } from "react";
-import { soloLevel } from "../../../../../public/dev_images";
 import { motion, AnimatePresence } from "framer-motion";
-import { MY_COMICS_DATA } from "@/components/utils/constant";
 import { useAppDispatch, useAppSelector } from "@/redux/hook";
 import { getUserComics } from "@/redux/slices/comicSlice";
 import { Loader2 } from "lucide-react";
@@ -34,15 +32,27 @@ const MyComicList = () => {
 	const transformedComics = useMemo(() => {
 		if (!userComics?.data?.comics?.data) return [];
 
-		return userComics.data.comics.data.map((comic: any) => ({
-			id: comic._id,
-			title: comic.title,
-			subtitle: comic.description || "",
-			imageSrc: comic.coverImage || soloLevel,
-			category: comic.premium ? "Paid" : "Free",
-			createdAt: comic.createdAt,
-			views: comic.views || 0,
-		}));
+		return userComics.data.comics.data.map((comic: any) => {
+			// Determine if paid based on nftId price
+			const isPaid = comic.nftId?.price && comic.nftId.price > 0;
+
+			// Get the best available image
+			const imageSrc = comic.bannerImage ||
+				comic.coverImage ||
+				'';
+
+			return {
+				id: comic._id,
+				title: comic.title,
+				subtitle: comic.summary || comic.description || "",
+				imageSrc,
+				category: isPaid ? "Paid" : "Free",
+				createdAt: comic.createdAt,
+				views: comic.views || 0,
+				status: comic.status,
+				isPublished: comic.isPublished,
+			};
+		});
 	}, [userComics]);
 
 	// Sort by recent (latest first)
@@ -60,21 +70,19 @@ const MyComicList = () => {
 
 	// Filter comics based on active tab
 	const filteredComics = useMemo(() => {
-		const comics = transformedComics.length > 0 ? transformedComics : MY_COMICS_DATA;
-
 		switch (activeTab) {
 			case "All":
-				return comics;
+				return transformedComics;
 			case "Recent":
-				return transformedComics.length > 0 ? sortedByRecent : comics.filter((c) => c.category === "Recent");
+				return sortedByRecent;
 			case "Popular":
-				return transformedComics.length > 0 ? sortedByPopular : comics.filter((c) => c.category === "Popular");
+				return sortedByPopular;
 			case "Free":
-				return comics.filter((c) => c.category === "Free");
+				return transformedComics.filter((c) => c.category === "Free");
 			case "Paid":
-				return comics.filter((c) => c.category === "Paid");
+				return transformedComics.filter((c) => c.category === "Paid");
 			default:
-				return comics;
+				return transformedComics;
 		}
 	}, [activeTab, transformedComics, sortedByRecent, sortedByPopular]);
 

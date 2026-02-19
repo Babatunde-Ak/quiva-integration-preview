@@ -1,9 +1,7 @@
 'use client';
 
-import { MainButton } from '@/components/button'
 import { ComicSection } from '@/features/comic-library/components/sections/ComicSection'
 import { CreatorsSection } from '@/features/comic-library/components/CreatorsSection'
-import { FeaturedComic } from '@/features/comic-library/components/FeaturedComic'
 import { HeroComicSlider } from '@/features/comic-library/components/HeroComicSlider'
 import { TopComicsTable } from '@/features/comic-library/components/TopComicsTable'
 import { 
@@ -12,8 +10,6 @@ import {
   upcomingComics, 
   creators, 
   topComics, 
-  mintComics, 
-  FeaturesComics, 
   heroComics 
 } from '@/features/comic-library/data/sampleData'
 
@@ -65,59 +61,81 @@ export default function MainPage() {
   };
 
   return (
-    <div className="w-full container mx-auto px-4">
-      {/* Hero section */}
-      <div className="mb-8">
-        <HeroComicSlider comics={heroComics} />
+    <div className="w-full min-h-full">
+      {/* Hero section - Constrained container */}
+      <div className="w-full mb-6 sm:mb-8 md:mb-10 lg:mb-12">
+        <div className="w-full max-w-full">
+          <HeroComicSlider comics={heroComics} />
+        </div>
       </div>
 
-      <div className="container mx-auto px-4">
-        <ComicsCarousel
-          comics={transformedComics.length > 0 ? transformedComics.slice(0, 10) : normalizedTrendingComics}
-          autoPlayInterval={4000}
-          showSearch={true}
-          onComicSelect={handleComicSelect}
-          onSearch={handleSearch}
-        />
+      {/* Main content sections */}
+      <div className="w-full space-y-6 sm:space-y-8 md:space-y-10 lg:space-y-12">
+        {/* Comics Carousel Section */}
+        <div className="w-full">
+          <div className="max-w-full">
+            <ComicsCarousel
+              comics={transformedComics.length > 0 ? transformedComics.slice(0, 10) : normalizedTrendingComics}
+              autoPlayInterval={4000}
+              showSearch={true}
+              onComicSelect={handleComicSelect}
+              onSearch={handleSearch}
+            />
+          </div>
+        </div>
+
+        {/* Top Comics Table */}
+        <div className="w-full">
+          <TopComicsTable comics={topNftComics} />
+        </div>
+
+        {/* Trending & Popular Collections */}
+        <div className="w-full">
+          <ComicSection 
+            title="Trending & Popular Collections" 
+            subtitle='Highest sales in the past hours'
+            comics={transformedComics.length > 0 ? transformedComics : normalizedUpcomingComics} 
+            isLoading={isLoading}
+          />
+        </div>
+
+        {/* Top selling Comics - Grid Section */}
+        <div className="w-full">
+          <GridSection
+            title="Top selling Comics" 
+            subtitle='Highest move in the past hours'
+            comics={transformedComics.length > 0 ? transformedComics : normalizedUpcomingComics} 
+            isLoading={isLoading}
+          />
+        </div>
+
+        {/* Popular Editions */}
+        <div className="w-full">
+          <ComicSection 
+            title="Popular Editions" 
+            subtitle='Check out the best editions'
+            comics={transformedComics.length > 0 ? transformedComics : normalizedUpcomingComics} 
+            isLoading={isLoading}
+            inverted={true}
+            filters={popularFilters}
+          />
+        </div>
+
+        {/* Our Creators */}
+        <div className="w-full">
+          <CreatorsSection creators={creators} />
+        </div>
+
+        {/* Today's Pick */}
+        <div className="w-full">
+          <SortComicSection 
+            title="Today's Pick"
+            comics={transformedComics.length > 0 ? transformedComics : normalizedUpcomingComics}
+            onFilterChange={(filter) => console.log('Filter:', filter)}
+            onSortChange={(sort) => console.log('Sort:', sort)}
+          />
+        </div>
       </div>
-
-      {/* Top Comics Table - Use API NFT comics */}
-      <TopComicsTable comics={topNftComics} />
-
-      {/* Trending & Popular Collections */}
-      <ComicSection 
-        title="Trending & Popular Collections" 
-        subtitle='Highest sales in the past hours'
-        comics={transformedComics.length > 0 ? transformedComics : normalizedUpcomingComics} 
-        isLoading={isLoading}
-      />
-
-      <GridSection
-        title="Top selling Comics" 
-        subtitle='Highest move in the past hours'
-        comics={transformedComics.length > 0 ? transformedComics : normalizedUpcomingComics} 
-        isLoading={isLoading}
-      />
-
-      <ComicSection 
-        title="Popular Editions" 
-        subtitle='Check out the best editions'
-        comics={transformedComics.length > 0 ? transformedComics : normalizedUpcomingComics} 
-        isLoading={isLoading}
-        inverted={true}
-        filters={popularFilters}
-      />
-
-      {/* Our Creators */}
-      <CreatorsSection creators={creators} />
-
-      <SortComicSection 
-          title="Today's Pick"
-          comics={transformedComics.length > 0 ? transformedComics : normalizedUpcomingComics}
-          onFilterChange={(filter) => console.log('Filter:', filter)}
-          onSortChange={(sort) => console.log('Sort:', sort)}
-      />
-
     </div>
   )
 }

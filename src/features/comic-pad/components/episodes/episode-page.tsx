@@ -4,29 +4,10 @@ import React, {useState, useEffect} from 'react';
 import {useParams, useRouter} from 'next/navigation';
 import EpisodesEmpty from './episode-empty';
 import EpisodesList from './episode-list';
-import { mapApiCollectionsToMockFormat, MappedCollection } from '../../utils/utils';
 import { getCollectionById } from '@/redux/slices/collectionSlice';
 import { useAppDispatch } from '@/redux/hook';
 
-interface Episode {
-    id : string;
-    title : string;
-    thumbnail : string;
-    description?: string;
-    publishDate?: string;
-    isPublished?: boolean;
-}
-
-interface Collection {
-    id : string;
-    title : string;
-    description : string;
-    coverImage : string;
-    episodes : Episode[];
-}
-
 interface CollectionEpisodesPageProps {
-    // Optional props for when data is passed from parent
     collection?: any;
     onGoBack?: () => void;
     onUploadEpisode?: () => void;
@@ -54,8 +35,6 @@ const CollectionEpisodesPage : React.FC < CollectionEpisodesPageProps > = ({
     const [error, setError] = useState <string | null> (null);
     const [selectedEpisodes, setSelectedEpisodes] = useState<string[]>([]);
 
-    console.log('CollectionEpisodesPage Props:', collection);
-
     const dispatch = useAppDispatch();
 
     const fetchCollection = async () => {
@@ -64,8 +43,7 @@ const CollectionEpisodesPage : React.FC < CollectionEpisodesPageProps > = ({
             const result = await dispatch(getCollectionById({id: collectionId})).unwrap();                
             // Extract collections from the nested response structure
             const apiCollection = result?.data?.collections || result?.data?.data || result?.data || [];
-                        
-            console.log('Mapped Collections:', apiCollection);
+
             setCollection(apiCollection);
             setError(null);
         } catch (error) {
@@ -86,20 +64,20 @@ const CollectionEpisodesPage : React.FC < CollectionEpisodesPageProps > = ({
 
     // Handle episode actions with fallback navigation
     const handleCreateDrop = (episodeId: string) => {
-        if (onCreateDrop) {
-            onCreateDrop(episodeId);
-        } else {
-            console.log('Create drop for episode:', episodeId);
+        router.push(`/comic-pad/collections/${collectionId}/${episodeId}/drops`);
+        
+        // if (onCreateDrop) {
+        //     onCreateDrop(episodeId);
+        // } else {
             // Navigate to create drop page
-            router.push(`/comic-pad/collections/${collectionId}/${episodeId}/drops`);
-        }
+            // router.push(`/comic-pad/collections/${collectionId}/${episodeId}/drops`);
+        // }
     };
 
     const handleListToMarketplace = (episodeId: string) => {
         if (onListToMarketplace) {
             onListToMarketplace(episodeId);
         } else {
-            console.log('List to marketplace for episode:', episodeId);
             // Navigate to marketplace listing
             router.push(`/comic-pad/collections/${collectionId}/${episodeId}/listing`);
         }
@@ -109,7 +87,6 @@ const CollectionEpisodesPage : React.FC < CollectionEpisodesPageProps > = ({
         if (onViewEpisodeDetails) {
             onViewEpisodeDetails(episodeId);
         } else {
-            console.log('View details for episode:', episodeId);
             // Navigate to episode details
             router.push(`/comic-pad/collections/${collectionId}/${episodeId}`);
         }

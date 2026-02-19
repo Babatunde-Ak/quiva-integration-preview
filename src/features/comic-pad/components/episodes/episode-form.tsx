@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import EpisodeFormController from './steps/EpisodeFormController';
 import EpisodeSuccess from './episode-success';
 import axios from 'axios';
+import { toast } from 'react-toastify';
 
 interface EpisodeFormData {
   title: string;
@@ -30,11 +31,8 @@ function EpisodeForm({ onClose, collectionId }: EpisodeFormProps) {
     setIsLoading(true);
     setEpisodeData(data);
     
-    try {
-      console.log('Creating episode:', data);
-      
+    try {      
       setShowSuccess(true);
-      console.log('Episode created successfully');
     } catch (error) {
       console.error('Failed to create episode:', error);
       // Handle error (show toast, etc.)
@@ -44,9 +42,8 @@ function EpisodeForm({ onClose, collectionId }: EpisodeFormProps) {
   };
 
   const handleSaveDraft = (data: EpisodeFormData) => {
-    setEpisodeData(data);
-    console.log('Episode draft saved:', data);
-    
+    setEpisodeData(data);    
+
     // Save to localStorage or make API call
     try {
       localStorage.setItem(`episode_draft_${collectionId}`, JSON.stringify({
@@ -56,7 +53,7 @@ function EpisodeForm({ onClose, collectionId }: EpisodeFormProps) {
       }));
       
       // Show success message
-      // You could add a toast notification here
+      toast.success('Draft saved successfully!');
     } catch (error) {
       console.error('Failed to save draft:', error);
     }
@@ -102,7 +99,7 @@ function EpisodeForm({ onClose, collectionId }: EpisodeFormProps) {
             onUploadNewEpisode={handleUploadNewEpisode}
             onBackToCollection={handleBackToCollection}
             episodeImage={episodeData?.bannerImage ? URL.createObjectURL(episodeData.bannerImage) : undefined}
-            collectionCover="https://images.unsplash.com/photo-1578662996442-48f60103fc96?auto=format&fit=crop&w=300&q=80"
+            collectionCover={null}
           />
         </div>
       )}

@@ -14,7 +14,8 @@ import {
   selectIsCreating,
   selectComicError,
   selectSuccessMessage 
-} from '@/redux/slices/comicSlice'; // Adjust path to your comic slice
+} from '@/redux/slices/comicSlice';
+import { toast } from 'react-toastify';
 
 interface EpisodeFormData {
   // Episode Details
@@ -27,6 +28,14 @@ interface EpisodeFormData {
   genre: string[];
   contentType: 'pdf' | 'images' | null;
   pages: File[];
+}
+
+interface ValidationState {
+  title: boolean;
+  episodeNumber: boolean;
+  maturityRating: boolean;
+  genre: boolean;
+  bannerImage: boolean;
 }
 
 interface EpisodeFormControllerProps {
@@ -64,6 +73,16 @@ const EpisodeFormController: React.FC<EpisodeFormControllerProps> = ({
     genre: []
   });
 
+  const [validationErrors, setValidationErrors] = useState<ValidationState>({
+    title: false,
+    episodeNumber: false,
+    maturityRating: false,
+    genre: false,
+    bannerImage: false
+  });
+
+  const [showValidation, setShowValidation] = useState(false);
+
   const { 
       account,
       isConnected, 
@@ -83,13 +102,8 @@ const EpisodeFormController: React.FC<EpisodeFormControllerProps> = ({
   // Handle successful comic creation
   useEffect(() => {
     if (createdComic && !isCreating && !error) {
-      console.log("🆔 Created comic in DB with ID:", createdComic._id);
-      console.log("📝 Created comic with metadata CID:", createdComic.nftMetadataCid);
-      console.log("📄 Full created comic data:", createdComic);
-
-      // Call onSubmit to finalize (or show success UI)
+      // Call onSubmit to finalize
       onSubmit(formData);
-      
     }
   }, [createdComic, isCreating, error, formData, onSubmit, dispatch]);
 
@@ -97,7 +111,7 @@ const EpisodeFormController: React.FC<EpisodeFormControllerProps> = ({
   useEffect(() => {
     if (error) {
       console.error("Comic creation error:", error);
-      // You can show a toast notification here or handle the error as needed
+      toast.error("Failed to create episode. Please try again.");
     }
   }, [error]);
 
@@ -109,25 +123,88 @@ const EpisodeFormController: React.FC<EpisodeFormControllerProps> = ({
     };
   }, [dispatch]);
 
+  // Validation function
+  const validateStep1 = useCallback(() => {
+    const errors = {
+      title: formData.title.trim() === '',
+      episodeNumber: formData.episodeNumber.trim() === '',
+      maturityRating: formData.maturityRating === '',
+      genre: (formData.genre || []).length === 0,
+      bannerImage: formData.bannerImage === null
+    };
+    
+    setValidationErrors(errors);
+    return !Object.values(errors).some(Boolean);
+  }, [formData]);
+
   // Update form data
   const updateFormData = useCallback((updates: Partial<EpisodeFormData>) => {
     console.log("Updating form data:", updates);
     setFormData(prev => ({ ...prev, ...updates }));
-  }, []);
+    
+    // Clear validation errors for updated fields
+    if (showValidation) {
+      const newErrors = { ...validationErrors };
+      Object.keys(updates).forEach(key => {
+        if (key in newErrors) {
+          const fieldKey = key as keyof ValidationState;
+          if (fieldKey === 'title' || fieldKey === 'episodeNumber') {
+            newErrors[fieldKey] = (updates[key] as string)?.trim() === '';
+          } else if (fieldKey === 'maturityRating') {
+            newErrors[fieldKey] = (updates[key] as string) === '';
+          } else if (fieldKey === 'genre') {
+            newErrors[fieldKey] = ((updates[key] as string[]) || []).length === 0;
+          }
+          else if (fieldKey === 'bannerImage') {
+            newErrors[fieldKey] = updates[key] === null;
+          }
+        }
+      });
+      setValidationErrors(newErrors);
+    }
+  }, [showValidation, validationErrors]);
 
   // Step validation
-  const isStep1Valid = true;
+  const isStep1Valid = formData.title.trim() !== '' && 
+                      formData.episodeNumber.trim() !== '' && 
+                      formData.maturityRating !== '' && 
+                      (formData.genre || []).length > 0 &&
+                      formData.bannerImage !== null;
   const isStep2Valid = formData.contentType && formData.pages.length > 0;
   const isStep3Valid = true; // Preview step is always valid
 
+  // Get missing fields for toast message
+  const getMissingFields = () => {
+    const missing = [];
+    if (formData.title.trim() === '') missing.push('Title');
+    if (formData.episodeNumber.trim() === '') missing.push('Episode Number');
+    if (formData.maturityRating === '') missing.push('Maturity Rating');
+    if ((formData.genre || []).length === 0) missing.push('At least one Genre');
+    if (formData.bannerImage === null) missing.push('Banner Image');
+    return missing;
+  };
+
   // Navigation handlers
   const handleNext = useCallback(() => {
+    if (currentStep === 1) {
+      const isValid = validateStep1();
+      setShowValidation(true);
+      
+      if (!isValid) {
+        const missingFields = getMissingFields();
+        toast.error(`Please complete the following required fields: ${missingFields.join(', ')}`);
+        return;
+      }
+      
+      toast.success("Episode details completed!");
+    }
+    
     if (currentStep < 3) {
       setCurrentStep(prev => prev + 1);
     } else {
       onSubmit(formData);
     }
-  }, [currentStep, formData, onSubmit]);
+  }, [currentStep, formData, onSubmit, validateStep1]);
 
   const handlePrev = useCallback(() => {
     if (currentStep > 1) {
@@ -137,15 +214,15 @@ const EpisodeFormController: React.FC<EpisodeFormControllerProps> = ({
 
   const handleSaveDraft = useCallback(() => {
     onSaveDraft(formData);
+    toast.success("Draft saved successfully!");
   }, [formData, onSaveDraft]);
 
   const handlePublish = useCallback(async () => {
     if (!collectionId) {
       console.error("Collection ID is required");
+      toast.error("Collection ID is required to publish episode");
       return;
     }
-
-    console.log("Publishing episode with data:", formData);
 
     // Clear any previous errors
     dispatch(clearError());
@@ -183,6 +260,9 @@ const EpisodeFormController: React.FC<EpisodeFormControllerProps> = ({
 
     formDataToSend.append('nftDetails', JSON.stringify(nftDetails));
 
+    // Show loading toast
+    const loadingToast = toast.loading("Publishing episode...");
+
     // Dispatch Redux action instead of direct API call
     try {
       const result = await dispatch(createFullComic({ 
@@ -190,14 +270,16 @@ const EpisodeFormController: React.FC<EpisodeFormControllerProps> = ({
         collectionId 
       } as any)).unwrap();
       
-      console.log("Redux dispatch successful:", result);
-
+      toast.dismiss(loadingToast);
+      toast.success("Episode published successfully!");
+      
       onSubmit(formData);
     } catch (err: any) {
       console.error("Redux dispatch failed:", err);
-      // Error is already handled in Redux state and useEffect
+      toast.dismiss(loadingToast);
+      toast.error("Failed to publish episode. Please try again.");
     }
-  }, [formData, collectionId, dispatch]);
+  }, [formData, collectionId, dispatch, onSubmit]);
 
   // Render current step
   const renderCurrentStep = () => {
@@ -218,6 +300,8 @@ const EpisodeFormController: React.FC<EpisodeFormControllerProps> = ({
             onNext={handleNext}
             onSaveDraft={handleSaveDraft}
             isValid={isStep1Valid}
+            validationErrors={validationErrors}
+            showValidation={showValidation}
           />
         );
 

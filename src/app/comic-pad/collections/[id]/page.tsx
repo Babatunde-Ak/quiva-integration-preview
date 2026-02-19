@@ -47,9 +47,7 @@ export default function CollectionEpisodesRoute({ params }: PageProps) {
                 setCollection(mappedCollection);
                 setError(null);
             } catch (error) {
-                console.error('Error fetching collection:', error);
                 setError('Failed to load collection');
-                // Fallback to mock data on error
                 setCollection(null);
             } finally {
                 setIsLoading(false);
