@@ -16,28 +16,18 @@ const ComicsView = () => {
   const { currentCollection } = useAppSelector((state: any) => state.collection || {});
 
   // Transform API comics data to match UI structure
-  const allComics = comicsData?.data?.comics?.data?.map((comic: any, index: number) => ({
+  const comics = comicsData?.data?.comics?.data?.map((comic: any) => ({
     id: comic._id,
     title: comic.title || "Untitled Comic",
     type: "Edition Supply",
-    supply: 500, // Default placeholder
-    minted: 312, // Default placeholder
-    price: "15.00", // Default placeholder
+    supply: comic.nftId?.maxSupply || 0,
+    minted: comic.nftId?.currentSupply || 0,
+    price: comic.nftId?.price?.toFixed(2) || "0",
     image: comic.bannerImage || "/dev_images/avatar-2.png",
     episodeNumber: comic.episodeNumber,
     nftId: comic.nftId,
     collectionId: comic.collectionId
   })) || [];
-
-  // Fallback to mock data if no comics available
-  const comics = allComics.length > 0 ? allComics : [
-    { id: 1, title: "The Awakening #1", type: "Edition Supply", supply: 500, minted: 312, price: "15.00", image: "/dev_images/avatar-2.png" },
-    { id: 2, title: "The Awakening #1", type: "Edition Supply", supply: 500, minted: 312, price: "15.00", image: "/dev_images/avatar-2.png" },
-    { id: 3, title: "The Awakening #1", type: "Edition Supply", supply: 500, minted: 312, price: "15.00", image: "/dev_images/avatar-2.png" },
-    { id: 4, title: "The Awakening #1", type: "Edition Supply", supply: 500, minted: 312, price: "15.00", image: "/dev_images/avatar-2.png" },
-    { id: 5, title: "The Awakening #1", type: "Edition Supply", supply: 500, minted: 312, price: "15.00", image: "/dev_images/avatar-2.png" },
-    { id: 6, title: "The Awakening #1", type: "Edition Supply", supply: 500, minted: 312, price: "15.00", image: "/dev_images/avatar-2.png" },
-  ];
 
   // Filter comics based on search
   const filteredComics = comics.filter(comic => 

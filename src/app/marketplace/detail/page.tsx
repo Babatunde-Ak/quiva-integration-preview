@@ -5,7 +5,7 @@ import { ChevronLeft, Lock } from "lucide-react";
 import Image from "next/image";
 import ResellModal from "@/components/modals/ResellModal";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ACTIVITY_DATA } from "@/components/utils/dummy-data";
+
 import dynamic from "next/dynamic";
 const MintComicModal = dynamic(() => import("@/features/comic-library/components/MintComicModal"), { ssr: false });
 import { useAppDispatch, useAppSelector } from "@/redux/hook";
@@ -60,17 +60,17 @@ export default function ComicDetail() {
   const nftData = currentComic?.nftId || {};
   const chapters = currentComic?.chapters || [];
   
-  const mintPrice = nftData?.price?.toFixed(2) || "0.09";
-  const maxSupply = nftData?.maxSupply?.toLocaleString() || "1,000";
-  const royaltyPercentage = nftData?.royaltyPercentage || 7;
-  
+  const mintPrice = nftData?.price?.toFixed(2) || "0";
+  const maxSupply = nftData?.maxSupply?.toLocaleString() || "0";
+  const royaltyPercentage = nftData?.royaltyPercentage || 0;
+
   // Market Stats - Real/Calculated data
-  const currentSupply = nftData?.currentSupply || 721;
-  const floorPrice = (nftData?.price ? (nftData.price * 0.94).toFixed(3) : "0.085");
-  const totalVolume = (nftData?.price && nftData?.currentSupply 
-    ? (nftData.price * nftData.currentSupply).toFixed(1) 
-    : "45.8");
-  const collectors = Math.floor(currentSupply * 0.54) || 389;
+  const currentSupply = nftData?.currentSupply || 0;
+  const floorPrice = nftData?.price ? (nftData.price * 0.94).toFixed(3) : "0";
+  const totalVolume = nftData?.price && nftData?.currentSupply
+    ? (nftData.price * nftData.currentSupply).toFixed(1)
+    : "0";
+  const collectors = currentSupply ? Math.floor(currentSupply * 0.54) : 0;
   
   // Related comics from collection
   const relatedComics = currentCollection?.comic?.filter((comic: any) => comic._id !== currentComic?._id) || [];
@@ -95,18 +95,14 @@ export default function ComicDetail() {
     currentComic?.creatorId?.avatar;
   
   const images = {
-    cover: coverImage || "/dev_images/Rectangle3051.png", 
-    avatar: authorAvatar || "/dev_images/Rectangle3048.png", 
-    inosuke: "/dev_images/Image2.png",
-    cross: "/dev_images/Group427320759.png",
-    mj: "/dev_images/Grouup9.png",
+    cover: coverImage || "/dev_images/Rectangle3051.png",
+    avatar: authorAvatar || "/dev_images/Rectangle3048.png",
   };
 
-  // Use props for text content with fallbacks
-  const displayTitle = title || "Avatar - Book of Beginnings #1";
-  const displayAuthorName = authorName || "Studio Kyra";
-  const displayDescription = description || "In a world torn between the elements, a young avatar rises to restore balance – not by choice, but by destiny. 'Book of Beginnings' marks the first chapter of the Avatar Chronicles, where every mint helps since the legend.";
-  const displayTags = tags?.length ? tags : ["Fantasy", "Adventure", "On-chain Epic"];
+  const displayTitle = title || "Untitled Comic";
+  const displayAuthorName = authorName || "Unknown Creator";
+  const displayDescription = description || "";
+  const displayTags = tags?.length ? tags : [];
 
   // Creator description with real data
   const creatorDescription = `${displayAuthorName} is a visionary ${currentCollection?.comic?.length > 1 ? 'series creator' : 'artist'} dedicated to pushing the boundaries of digital art and interactive narratives. ${currentCollection?.description || ''}`.trim();
@@ -316,25 +312,7 @@ export default function ComicDetail() {
                                 </div>
                               ))
                             ) : (
-                              ["The First Flame", "Whispers of the Wind", "Echoes Beneath the Earth"].map((title, idx) => (
-                                <div
-                                  key={idx}
-                                  className="flex items-center justify-between group cursor-pointer"
-                                >
-                                  <div className="flex items-center space-x-3 group-hover:text-orange-400 transition-colors">
-                                    <span className="font-mono text-sm">
-                                      Episode {idx + 1} :
-                                    </span>
-                                    <span className="font-medium">{title}</span>
-                                  </div>
-                                  <div className="flex items-center space-x-2">
-                                    <span className="text-[10px] bg-[#1a1a1a] border border-white/10 px-1.5 py-0.5 rounded font-mono uppercase tracking-wider">
-                                      Open
-                                    </span>
-                                    <Lock size={12} className="text-yellow-500" />
-                                  </div>
-                                </div>
-                              ))
+                              <p className="text-white/40 text-sm">No episodes available yet.</p>
                             )}
                           </div>
                         </div>
@@ -375,32 +353,11 @@ export default function ComicDetail() {
                               </tr>
                             </thead>
                             <tbody>
-                              {ACTIVITY_DATA.map((activity, index) => (
-                                <tr key={index} className="border-b border-white/5 hover:bg-white/5">
-                                  <td className="py-3 px-2">
-                                    <span className="text-white text-sm font-medium">{activity.username}</span>
-                                  </td>
-                                  <td className="py-3 px-2">
-                                    <span className="text-white text-sm font-medium">{activity.event}</span>
-                                  </td>
-                                  <td className="py-3 px-2">
-                                    <span className="text-white text-sm font-medium flex items-center gap-1">
-                                      {activity.price}
-                                      <img 
-                                        src="/hbar.png" 
-                                        alt="HBAR" 
-                                        className="inline-block"
-                                      />
-                                    </span>
-                                  </td>
-                                  <td className="py-3 px-2">
-                                    <span className="text-white text-sm font-medium">{activity.edition}</span>
-                                  </td>
-                                  <td className="py-3 px-2">
-                                    <span className="text-white/60 text-sm">{activity.time}</span>
-                                  </td>
-                                </tr>
-                              ))}
+                              <tr>
+                                <td colSpan={5} className="py-8 text-center text-white/40 text-sm">
+                                  No activity yet.
+                                </td>
+                              </tr>
                             </tbody>
                           </table>
                         </div>
@@ -489,29 +446,7 @@ export default function ComicDetail() {
                         />
                       ))
                     ) : (
-                      <>
-                        <RelatedCard
-                          title="Inosuke degen"
-                          creator="Estevao"
-                          price="4.89K"
-                          image={images.inosuke}
-                          avatar={images.avatar}
-                        />
-                        <RelatedCard
-                          title="The son is also the father"
-                          creator="Mia den"
-                          price="4.89K"
-                          image={images.cross}
-                          avatar={images.avatar}
-                        />
-                        <RelatedCard
-                          title="Spiderman: Mary Jane"
-                          creator="Mia den"
-                          price="4.89K"
-                          image={images.mj}
-                          avatar={images.avatar}
-                        />
-                      </>
+                      <p className="text-white/40 text-sm col-span-3">No related comics found.</p>
                     )}
                   </div>
                 </div>

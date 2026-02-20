@@ -90,7 +90,7 @@ function ComicConnect() {
           </MainButton>
 
           {isOpen && (
-            <ComicModal className="max-w-xl" onClose={() => setIsOpen(false)}>
+            <ComicModal className="max-w-xl z-20" onClose={() => setIsOpen(false)}>
               <div className='flex flex-col gap-4'>
                 <div className='flex flex-col items-center justify-center'>
                     <QuivaLogo showText className="invert" />

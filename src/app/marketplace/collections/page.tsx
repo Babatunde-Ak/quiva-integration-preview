@@ -1,7 +1,7 @@
 'use client';
 
 import { ComicsTable } from "@/features/comic-library/components/ComicsTable";
-import { topComics } from "@/features/comic-library/data/sampleData";
+
 import { useAppDispatch, useAppSelector } from "@/redux/hook";
 import { getAllComics } from "@/redux/slices/comicSlice";
 import { useEffect, useMemo } from "react";
@@ -46,11 +46,11 @@ const CollectionPage = () => {
           title: comic.title,
           author: comic.creatorId?.username || comic.creatorId?.walletAddress || 'Unknown Creator',
           floorPrice: comic.price ? `${comic.price} HBAR` : '0 HBAR',
-          priceChange: Math.random() * 20 - 10, // Mock price change
+          priceChange: 0,
           copies: 0, // Will be updated with totalComics
           sales: 0, // Will be updated with totalLikes
           volume: '0 HBAR', // Will be calculated
-          image: comic.bannerImage || comic.coverImageCid || '/api/placeholder/100/100'
+          image: comic.bannerImage || comic.coverImageCid || '/dev_images/avatar-2.png'
         });
       }
       
@@ -63,7 +63,7 @@ const CollectionPage = () => {
       // Update display values
       collection.copies = collection.totalComics;
       collection.sales = collection.totalLikes;
-      collection.volume = `${(collection.totalViews * 0.1).toFixed(1)} HBAR`; // Mock volume calculation
+      collection.volume = `${(collection.totalViews * 0.1).toFixed(1)} HBAR`;
       
       // Use the latest comic's data for collection metadata
       if (!collection.bannerImage && comic.bannerImage) {
@@ -84,18 +84,18 @@ const CollectionPage = () => {
 
   // Convert individual comics to table format as fallback
   const comicsTableData = useMemo(() => {
-    if (!transformedComics.length) return topComics; // Use sample data as fallback
+    if (!transformedComics.length) return [];
     
     return transformedComics.map((comic, index) => ({
       rank: index + 1,
       title: comic.title,
       author: comic.creatorUsername || comic.creatorWalletAddress || 'Unknown Creator',
       floorPrice: comic.price ? `${comic.price} HBAR` : '0 HBAR',
-      priceChange: Math.random() * 20 - 10, // Mock price change
+      priceChange: 0,
       copies: comic.totalPages || 1,
       sales: comic.likes || 0,
       volume: `${((comic.views || 0) * 0.1).toFixed(1)} HBAR`,
-      image: comic.bannerImage || comic.image || '/api/placeholder/100/100'
+      image: comic.bannerImage || comic.image || '/dev_images/avatar-2.png'
     }));
   }, [transformedComics]);
 
