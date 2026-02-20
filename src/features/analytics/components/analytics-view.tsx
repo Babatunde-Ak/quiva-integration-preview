@@ -1,9 +1,11 @@
 import { Metadata } from 'next'
+import dynamic from 'next/dynamic'
 import { AnalyticsHeader } from './sections/analytics-header'
 import { AnalyticsStats } from './sections/analytics-stats'
-import { UserGrowthSection } from './sections/user-growth-section'
-import { VolumeChartSection } from './sections/volume-chart-section'
-import { BottomChartsSection } from './sections/bottom-charts-section'
+
+const UserGrowthSection = dynamic(() => import('./sections/user-growth-section').then(mod => mod.UserGrowthSection), { ssr: false })
+const VolumeChartSection = dynamic(() => import('./sections/volume-chart-section').then(mod => mod.VolumeChartSection), { ssr: false })
+const BottomChartsSection = dynamic(() => import('./sections/bottom-charts-section').then(mod => mod.BottomChartsSection), { ssr: false })
 
 export const metadata: Metadata = {
   title: 'Analytics - Quiva Dashboard',

@@ -1,11 +1,12 @@
 import AppLayout from "@/components/global/AppLayout";
 import React from "react";
+import dynamic from "next/dynamic";
 import Hero from "./_components/Hero";
 import ExcitingProducts from "./_components/ExcitingProducts";
 import HowComicPadWorks from "./_components/HowComicPadWorks";
 import NoToolsNoProblem from "./_components/NoToolsNoProblem";
 import WhyQuiva from "./_components/WhyQuiva";
-import WhyBlockchain from "./_components/WhyBlockchain";
+const WhyBlockchain = dynamic(() => import("./_components/WhyBlockchain"), { ssr: false });
 import WhatYouCanDoWithTMS from "./_components/WhatYouCanDoWithTMS";
 import HomeRoadMap from "./_components/HomeRoadMap";
 import WhatIsQuiva from "./_components/WhatIsQuiva";
