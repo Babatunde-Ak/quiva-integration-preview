@@ -88,8 +88,8 @@ export function Header({ onMobileMenuToggle, isMobileMenuOpen }) {
   };
 
   return (
-    <header className="bg-black-200 border-b border-dashed border-white/30 w-full relative">
-      <div className="px-4 lg:px-6 py-3">
+    <header className="bg-black-200 border-b border-dashed border-white/30 w-full relative z-50">
+      <div className="px-4 lg:px-6 py-3 ">
         <div className="flex items-center justify-between">
           {/* Mobile Menu Button & Logo */}
           <div className="flex items-center space-x-3 lg:hidden">

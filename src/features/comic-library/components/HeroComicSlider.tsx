@@ -10,14 +10,14 @@ import { formatNumberShorthand } from '@/lib/Formatnumber'
 export interface HeroComicData {
   id: string
   title: string
-  description: string
-  tags: string[]
+  description?: string
+  tags?: string[]
   image: string
   buttonText?: string
   studio?: string
   totalIssues?: number
   floorPrice?: number
-  price?: number
+  price?: number | string
   status?: string
 }
 
@@ -225,7 +225,7 @@ export function HeroComicSlider({
                 <div className="flex flex-col border-r border-white/30 pr-2 sm:pr-3 md:pr-4">
                   <span className="text-[10px] sm:text-xs text-white/60 uppercase tracking-wide mb-0.5 sm:mb-1 font-light">Price</span>
                   <span className="text-sm sm:text-base md:text-lg font-semibold flex items-center">
-                    {currentComic.price.toFixed(3)}
+                    {Number(currentComic.price || 0).toFixed(2)}
                     <img src={hbar.src} alt="hbar" className="inline w-4 h-4 sm:w-6 sm:h-6 md:w-8 md:h-8 ml-1" />
                   </span>
                 </div>

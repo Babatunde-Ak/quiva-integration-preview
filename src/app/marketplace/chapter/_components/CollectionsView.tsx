@@ -24,32 +24,22 @@ const CollectionsView = () => {
   const comicsToDisplay = currentCollection?.comic || (currentComic ? [currentComic] : []);
   
   // Map comics from collection with default values - maintaining original structure
-  const allCollections = comicsToDisplay.length > 0 ? comicsToDisplay.map((comic: any, index: number) => ({
+  const allCollections = comicsToDisplay.map((comic: any, index: number) => ({
     id: comic._id || `comic-${index}`,
     title: comic.title || "Untitled Comic",
-    count: index + 1, // Sequential numbering
+    count: index + 1,
     image: comic.bannerImage || "/dev_images/avatar-2.png",
-    creator: currentCollection?.creatorId?.username || 
+    creator: currentCollection?.creatorId?.username ||
       comic?.creatorId?.username ||
-      (currentCollection?.creatorId?.walletAddress 
+      (currentCollection?.creatorId?.walletAddress
         ? `${currentCollection.creatorId.walletAddress.slice(0, 6)}...${currentCollection.creatorId.walletAddress.slice(-4)}`
         : comic?.creatorId?.walletAddress
         ? `${comic.creatorId.walletAddress.slice(0, 6)}...${comic.creatorId.walletAddress.slice(-4)}`
         : "Unknown Creator"),
     creatorAvatar: currentCollection?.creatorId?.avatar || comic?.creatorId?.avatar || "/dev_images/avatar-2.png",
-    likes: "1.2K", // Default placeholder - maintaining original format
-    views: "4.8K", // Default placeholder - maintaining original format
-    price: "12.00" // Default mint price - maintaining original format
-  })) : Array.from({ length: 6 }, (_, i) => ({
-    id: i + 1,
-    title: i % 3 === 0 ? "Inosuke degen" : i % 3 === 1 ? "The son is also the father" : "Spiderman: Mary Jane",
-    count: (i % 5) + 1,
-    image: "/dev_images/avatar-2.png",
-    creator: i % 2 === 0 ? "Estevao" : "Mia den",
-    creatorAvatar: "/dev_images/avatar-2.png",
-    likes: (1000 + i * 5).toLocaleString(),
-    views: (3000 + i * 12).toLocaleString(),
-    price: "4.89K"
+    likes: comic.likes?.toLocaleString() || "0",
+    views: comic.views?.toLocaleString() || "0",
+    price: comic.nftId?.price?.toFixed(2) || "0"
   }));
 
   // 3. STATE

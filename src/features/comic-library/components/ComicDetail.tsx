@@ -6,7 +6,8 @@ import Image from "next/image";
 import ResellModal from "@/components/modals/ResellModal";
 import { useRouter } from "next/navigation";
 import { ACTIVITY_DATA } from "@/components/utils/dummy-data";
-import MintComicModal from "@/features/comic-library/components/MintComicModal";
+import dynamic from "next/dynamic";
+const MintComicModal = dynamic(() => import("@/features/comic-library/components/MintComicModal"), { ssr: false });
 
 // PROPS INTERFACE FOR BACKWARD COMPATIBILITY
 interface ComicIssue {

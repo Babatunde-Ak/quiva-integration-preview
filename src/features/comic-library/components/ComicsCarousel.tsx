@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowRight, ArrowLeft, Search } from 'lucide-react';
 import Picture from '@/components/picture/Index';
-import { bgSlider } from '../../../../public/dev_images';
 import Link from 'next/link';
 import { Comic } from '@/features/comic-library/utils/transformComicData';
 
@@ -178,15 +177,16 @@ const ComicsCarousel: React.FC<ComicsCarouselProps> = ({
           )}
         </div>
       </div>
-    <div className="w-full read_all-slider rounded-2xl p-8 relative overflow-hidden">
-      {/* Background pattern/texture */}
-      <div className='absolute inset-0'>
-        <Picture
-          src={bgSlider}
-          alt='bg what'
-          loading='eager'
-          className='w-full h-full object-fill'
+    <div className="w-full read_all-slider rounded-2xl p-8 relative overflow-hidden isolate z-0">
+      {/* Dynamic background from active comic */}
+      <div className='absolute inset-0 transition-all duration-700'>
+        <img
+          key={comics[currentIndex]?.id}
+          src={comics[currentIndex]?.image}
+          alt=''
+          className='w-full h-full object-cover scale-110 blur-2xl'
         />
+        <div className='absolute inset-0 bg-black/90' />
       </div>
 
       {/* Carousel Container */}

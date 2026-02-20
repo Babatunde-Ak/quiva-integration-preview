@@ -1,5 +1,8 @@
-import { loadingBarRef } from "@/app/redux-provider";
+import React from "react";
 import { toast } from "react-toastify";
+import type { LoadingBarRef } from "react-top-loading-bar";
+
+export const loadingBarRef = React.createRef<LoadingBarRef | null>();
 type voidFn = () => void;
 let resetState: voidFn = () => {};
 

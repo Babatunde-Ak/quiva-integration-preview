@@ -8,7 +8,7 @@ const AboutView = () => {
   const { currentCollection } = useAppSelector((state: any) => state.collection || {});
 
   // Extract data with fallbacks
-  const comicSummary = currentComic?.summary || "In a world split between four ancient factions, one young hero discovers a power long forgotten. This volume follows their first steps into destiny — choices, battles, and the awakening of a legend.";
+  const comicSummary = currentComic?.summary || "";
   
   const creatorName = currentCollection?.creatorId?.username || 
     currentComic?.creatorId?.username ||
@@ -16,24 +16,24 @@ const AboutView = () => {
       ? `${currentCollection.creatorId.walletAddress.slice(0, 6)}...${currentCollection.creatorId.walletAddress.slice(-4)}`
       : currentComic?.creatorId?.walletAddress
       ? `${currentComic.creatorId.walletAddress.slice(0, 6)}...${currentComic.creatorId.walletAddress.slice(-4)}`
-      : "Studio Kyra");
+      : "Unknown Creator");
 
   const creatorAvatar = currentCollection?.creatorId?.avatar || 
     currentComic?.creatorId?.avatar || 
     "/dev_images/avatar-2.png";
 
-  const creatorSummary = "Independent creator bringing unique stories to life on the blockchain. Creating immersive comic experiences for collectors worldwide.";
+  const creatorSummary = currentCollection?.description || "";
 
   const collectionTitle = currentCollection?.title || currentComic?.title || "Collection";
-  const genres = currentCollection?.genre || currentComic?.genre || ["Manga", "Action", "Fantasy"];
-  const genreDisplay = Array.isArray(genres) ? genres.join(' / ') : "Manga / Action / Fantasy";
+  const genres = currentCollection?.genre || currentComic?.genre || [];
+  const genreDisplay = Array.isArray(genres) && genres.length > 0 ? genres.join(' / ') : "N/A";
 
   // Format release date
   const releaseDate = currentComic?.createdAt 
     ? new Date(currentComic.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-    : "February 2025";
+    : "N/A";
 
-  const totalEditions = currentComic?.nftId?.maxSupply?.toLocaleString() || "5,000";
+  const totalEditions = currentComic?.nftId?.maxSupply?.toLocaleString() || "N/A";
 
   return (
     <div className="animate-fade-in-up">
