@@ -77,26 +77,7 @@ export default function HashConnectButton({ disabled = false }: HashConnectProps
     try {
       setIsConnecting(true);
       console.log("Initiating HashPack connection...");
-      console.log("Initiating HashPack connection...");
-      
-      // Clear any stale WalletConnect data before connecting
-      if (typeof window !== 'undefined') {
-        try {
-          // Clear stale WalletConnect sessions that might be causing issues
-          const keysToRemove = Object.keys(localStorage).filter(key => 
-            key.startsWith('wc@') || 
-            key.startsWith('walletconnect') ||
-            key.includes('hashconnect')
-          );
-          keysToRemove.forEach(key => {
-            console.log(`Clearing stale session data: ${key}`);
-            localStorage.removeItem(key);
-          });
-        } catch (e) {
-          console.warn('Could not clear stale session data:', e);
-        }
-      }
-      
+
       const result = await connectWallet();
       console.log("Connection result:", result);
       
