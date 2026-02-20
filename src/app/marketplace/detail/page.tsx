@@ -11,7 +11,7 @@ import { useAppDispatch, useAppSelector } from "@/redux/hook";
 import { getComicById } from "@/redux/slices/comicSlice";
 import { getCollectionById } from "@/redux/slices/collectionSlice";
 import useMarketplace from "@/hook/useMarkeplace";
-import useMirrorNodeQueries from "@hook/useMirrorNodeQueries";
+import useMirrorNodeQueries from "@/hook/useMirrorNodeQueries";
 import   { useHederaWallet } from "@/providers/HashPackProvider";
 
 export default function ComicDetail() {
