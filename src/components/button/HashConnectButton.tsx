@@ -79,11 +79,9 @@ export default function HashConnectButton({ disabled = false }: HashConnectProps
       console.log("Initiating HashPack connection...");
 
       const result = await connectWallet();
-      console.log("Connection result:", result);
       
       if (result) {
         toast.success(`Connected successfully! Address: ${account}`);
-        console.log("Connected to HashPack:", result);
       } else {
         // Connection returned but no result - user may have cancelled
         console.warn("Connection returned without result - user may have cancelled or extension not installed");
