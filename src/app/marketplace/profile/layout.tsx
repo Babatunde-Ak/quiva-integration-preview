@@ -3,10 +3,12 @@
 import React from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
-import { mockUser } from '@/features/user-profile/utils/userData';
+import { useAppSelector } from '@/redux/hook';
 
-const layout = ({ children, title }) => {
-    const user = mockUser;
+const layout = ({ children }: { children: React.ReactNode }) => {
+    const authUser = useAppSelector((state) => state.auth?.user?.data);
+    const profileData = useAppSelector((state) => state.auth?.profile?.data);
+    const user = profileData?.user || profileData || authUser;
     const router = useRouter();
     const pathname = usePathname();
 
@@ -64,13 +66,13 @@ const layout = ({ children, title }) => {
                     
                     <div className="flex items-center gap-3">
                         <img
-                            src={user?.avatar || "https://images.unsplash.com/photo-1494790108755-2616b612c95f?auto=format&fit=crop&w=800&q=80"}
+                            src={user?.avatar || '/default-avatar.png'}
                             alt="Profile"
                             className="w-12 h-12 rounded-full object-cover border-2 border-black-50"
                         />
                         <div>
                             <h1 className="text-lg sm:text-xl font-bold text-white">
-                                {title || `${user?.name || 'Yuna Dean'} / Settings`}
+                                {`${user?.displayName || 'User'} / Settings`}
                             </h1>
                             <p className="text-sm text-white/60">
                                 {subtitle}
