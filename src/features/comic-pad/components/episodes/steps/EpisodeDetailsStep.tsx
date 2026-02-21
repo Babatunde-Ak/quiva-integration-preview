@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Upload, X, AlertCircle } from 'lucide-react';
+import { X, AlertCircle } from 'lucide-react';
+import ImageUpload from '@/components/image-upload/ImageUpload';
 import { IconToggleSwitch } from '@/components/switch/Switch';
 import { MainButton } from '@/components/button';
 import { genres } from '@/features/comic-pad/mock-data/data';
@@ -70,13 +71,6 @@ const EpisodeDetailsStepComponent: React.FC<EpisodeDetailsStepProps> = ({
     onUpdate({
       collaborators: data.collaborators.filter((_, i) => i !== index)
     });
-  };
-
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      onUpdate({ bannerImage: file });
-    }
   };
 
   const handleGenreToggle = (genreId: string) => {
@@ -285,51 +279,12 @@ const EpisodeDetailsStepComponent: React.FC<EpisodeDetailsStepProps> = ({
           </div>
 
           {/* Banner Upload Section */}
-          <div className="space-y-4">
-            <div className="border border-black-50 bg-black-200 rounded-lg p-6 text-center h-full flex flex-col items-center justify-center">
-              {data.bannerImage ? (
-                <div className="space-y-4">
-                  <div className="relative inline-block">
-                    <img
-                      src={URL.createObjectURL(data.bannerImage)}
-                      alt="Banner preview"
-                      className="object-cover w-full max-h-96 rounded-lg"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => onUpdate({ bannerImage: null })}
-                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600"
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                  <p className="text-sm text-gray-400">{data.bannerImage.name}</p>
-                </div>
-              ) : (
-                <>
-                  <Upload className="mx-auto mb-4 text-white/50" size={48} />
-                  <p className="text-white/40 mb-4 font-light max-w-xl">
-                    Please upload a valid image file (PNG, JPG).
-                  </p>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="bg-transparent border-primary-500 text-primary-500 hover:text-primary-500 hover:bg-primary-500/10 rounded-full"
-                    onClick={() => document.getElementById('banner-upload')?.click()}
-                  >
-                    Upload Banner
-                  </Button>
-                </>
-              )}
-            </div>
-            <input
-              id="banner-upload"
-              type="file"
-              accept="image/png,image/jpeg,image/jpg"
-              onChange={handleImageUpload}
-              className="hidden"
-            />
-          </div>
+          <ImageUpload
+            image={data.bannerImage}
+            onImageChange={(file) => onUpdate({ bannerImage: file })}
+            label="Please upload a valid image file (PNG, JPG)."
+            maxFileSizeMB={5}
+          />
         </div>
 
         {/* Action Buttons */}

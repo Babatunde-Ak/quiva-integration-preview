@@ -17,23 +17,23 @@ import {
 
 // Sample data
 const marketShareData = [
-  { name: 'Others', value: 25.2, color: '#3F270C' },
-  { name: 'Quiva', value: 74.8, color: '#D38200' }
+  { name: 'Others', value: 0, color: '#3F270C' },
+  { name: 'Quiva', value: 0, color: '#D38200' }
 ]
 
 const launchpadData = [
-  { month: 'Jan', volume: 100000 },
-  { month: 'Feb', volume: 120000 },
-  { month: 'Mar', volume: 350000 },
-  { month: 'Apr', volume: 280000 },
-  { month: 'May', volume: 320000 },
-  { month: 'Jun', volume: 300000 },
-  { month: 'Jul', volume: 350000 },
-  { month: 'Aug', volume: 380000 },
-  { month: 'Sep', volume: 360000 },
-  { month: 'Oct', volume: 280000 },
-  { month: 'Nov', volume: 250000 },
-  { month: 'Dec', volume: 270000 }
+  { month: 'Jan', volume: 0 },
+  { month: 'Feb', volume: 0 },
+  { month: 'Mar', volume: 0 },
+  { month: 'Apr', volume: 0 },
+  { month: 'May', volume: 0 },
+  { month: 'Jun', volume: 0 },
+  { month: 'Jul', volume: 0 },
+  { month: 'Aug', volume: 0 },
+  { month: 'Sep', volume: 0 },
+  { month: 'Oct', volume: 0 },
+  { month: 'Nov', volume: 0 },
+  { month: 'Dec', volume: 0 }
 ]
 
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -116,7 +116,7 @@ const PieChartComponent = () => {
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="bg-white rounded-full w-24 h-24 flex items-center justify-center shadow-lg">
           <div className="text-center">
-            <div className="text-lg font-bold text-black-100">117.2 M</div>
+            <div className="text-lg font-bold text-black-100">$0.00</div>
             <div className="text-xs text-black-200">Total Volume</div>
           </div>
         </div>

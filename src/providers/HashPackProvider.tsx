@@ -42,16 +42,23 @@ export const HederaWalletProvider = ({ children }: { children: React.ReactNode }
       );
       await dAppConnector.init({ logger: 'error' });
       setConnector(dAppConnector);
-        const signers = dAppConnector.signers;
-        
-         
-        console.log('Initial signers:', signers);
+
+      // Restore existing sessions after init
+      const signers = dAppConnector.signers;
+      console.log('Initial signers after init:', signers);
+      if (signers && signers.length > 0) {
+        const accountId = signers[0].getAccountId().toString();
+        console.log('Restored session, account:', accountId);
+        setAccount(accountId);
+        setIsConnected(true);
+      }
+
       // Subscribe to session events via WalletConnect client
       if (dAppConnector.walletConnectClient) {
         dAppConnector.walletConnectClient.on('session_update', () => {
-         
-          if (signers && signers.length > 0) {
-            const accountId = signers[0].getAccountId().toString();
+          const updatedSigners = dAppConnector.signers;
+          if (updatedSigners && updatedSigners.length > 0) {
+            const accountId = updatedSigners[0].getAccountId().toString();
             console.log('Session updated, new account:', accountId);
             setAccount(accountId);
             setIsConnected(true);
@@ -59,6 +66,12 @@ export const HederaWalletProvider = ({ children }: { children: React.ReactNode }
             setAccount(null);
             setIsConnected(false);
           }
+        });
+
+        dAppConnector.walletConnectClient.on('session_delete', () => {
+          console.log('Session deleted');
+          setAccount(null);
+          setIsConnected(false);
         });
       }
     };

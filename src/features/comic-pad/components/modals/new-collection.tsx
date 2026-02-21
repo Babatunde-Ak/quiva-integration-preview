@@ -1,12 +1,13 @@
 'use client';
 
-import React, {useState, useRef, useEffect} from 'react';
+import React, {useState, useEffect} from 'react';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
 import {Textarea} from '@/components/ui/textarea';
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
 import {Badge} from '@/components/ui/badge';
-import {Upload, X} from 'lucide-react';
+import {X} from 'lucide-react';
+import ImageUpload from '@/components/image-upload/ImageUpload';
 import { genres } from '../../mock-data/data';
 import {IconToggleSwitch} from '@/components/switch/Switch';
 import { MainButton } from '@/components/button';
@@ -49,8 +50,6 @@ const CreateCollectionForm : React.FC < CreateCollectionFormProps > = ({
 
     const [newCollaborator, setNewCollaborator] = useState('');
     const [showCollaborators, setShowCollaborators] = useState(false);
-    const fileInputRef = useRef < HTMLInputElement > (null);
-
     useEffect(() => {
         const draftData = getCookie('collection_draft');
         if (draftData) {
@@ -94,17 +93,6 @@ const CreateCollectionForm : React.FC < CreateCollectionFormProps > = ({
                     genreId
                 ]
         }));
-    };
-
-    const handleImageUpload = (event : React.ChangeEvent < HTMLInputElement >) => {
-        const file = event.target.files
-            ?.[0];
-        if (file) {
-            setFormData(prev => ({
-                ...prev,
-                bannerImage: file
-            }));
-        }
     };
 
     const handleRemoveCollaborator = (index : number) => {
@@ -174,11 +162,6 @@ const CreateCollectionForm : React.FC < CreateCollectionFormProps > = ({
         setShowDraftNotification(false);
         setShowCollaborators(false); // Reset the toggle state
         setNewCollaborator(''); // Clear any pending collaborator input
-        
-        // Clear file input
-        if (fileInputRef.current) {
-            fileInputRef.current.value = '';
-        }
     };
 
     return (
@@ -351,50 +334,12 @@ const CreateCollectionForm : React.FC < CreateCollectionFormProps > = ({
                             </div>
 
                             {/* Banner Upload Section */}
-                            <div className="space-y-4">
-                                <div
-                                    className="border border-black-50 bg-black-200 rounded-lg p-6 text-center h-full flex flex-col items-center justify-center">
-                                    {formData.bannerImage ? (
-                                        <div className="space-y-4">
-                                            <div className="relative inline-block">
-                                                <img
-                                                    src={URL.createObjectURL(formData.bannerImage)}
-                                                    alt="Banner preview"
-                                                    className="object-cover w-full max-h-96 rounded-lg"
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setFormData(prev => ({ ...prev, bannerImage: null }))}
-                                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600"
-                                                >
-                                                    <X size={14} />
-                                                </button>
-                                            </div>
-                                            <p className="text-sm text-gray-400">{formData.bannerImage.name}</p>
-                                        </div>
-                                    ) : (
-                                        <>
-                                            <Upload className="mx-auto mb-4 text-white/50" size={48}/>
-                                            <p className="text-white/40 mb-4 font-light max-w-xl">
-                                                Please upload a valid image file (PNG, JPG).
-                                            </p>
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                className="bg-transparent border-primary-500 text-primary-500 hover:text-primary-500 hover:bg-primary-500/10 rounded-full"
-                                                onClick={() => fileInputRef.current?.click()}>
-                                                Upload Banner
-                                            </Button>
-                                        </>
-                                    )}
-                                </div>
-                                <input
-                                    ref={fileInputRef}
-                                    type="file"
-                                    accept="image/png,image/jpeg,image/jpg"
-                                    onChange={handleImageUpload}
-                                    className="hidden"/>
-                            </div>
+                            <ImageUpload
+                                image={formData.bannerImage}
+                                onImageChange={(file) => setFormData(prev => ({ ...prev, bannerImage: file }))}
+                                label="Please upload a valid image file (PNG, JPG)."
+                                maxFileSizeMB={5}
+                            />
 
                             {/* Action Buttons */}
                             <div className="space-y-4 pt-4 col-span-1 lg:col-span-2 lg:self-start w-3/4 mx-auto">

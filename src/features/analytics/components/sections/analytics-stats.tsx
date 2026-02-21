@@ -43,17 +43,17 @@ export function AnalyticsStats() {
   const stats = [
     {
       title: 'Total Marketplace Trading Volume',
-      value: '$3.07M',
+      value: '$0.00',
       trend: null
     },
     {
       title: 'Total Marketplace Sales',
-      value: '$542.36K',
+      value: '$0.00',
       subtitle: 'All Time'
     },
     {
       title: 'Total Story Views / Reads',
-      value: '10,664',
+      value: '0',
       subtitle: 'All Time'
     }
   ]
