@@ -25,7 +25,7 @@ export const HederaWalletProvider = ({ children }: { children: React.ReactNode }
   const metadata = {
     name: 'Quiva Hedera DApp',
     description: 'Hedera DApp using WalletConnect v2',
-    url: 'localhost:3000/marketplace',
+    url: 'https://quiva.app',
     icons: ['https://yourapp.io/icon.png'],
   };
 
