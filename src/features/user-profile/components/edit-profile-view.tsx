@@ -2,20 +2,35 @@
 
 import React, { useState } from 'react';
 import { Upload, X } from 'lucide-react';
+import { useAppSelector, useAppDispatch } from '@/redux/hook';
+import { updateUserProfile, updateUserUsername, getUserProfile } from '@/redux/slices/authSlice';
 
 const EditProfileView = ({ user }) => {
+    const dispatch = useAppDispatch();
+    const authUser = useAppSelector((state) => state.auth?.user?.data);
+    const profileLoading = useAppSelector((state) => state.auth?.updateProfile?.isLoading);
+    const usernameLoading = useAppSelector((state) => state.auth?.updateUsername?.isLoading);
+
+    const userId = user?._id || authUser?._id;
+    const isLoading = profileLoading || usernameLoading;
+
     // Form state
     const [formData, setFormData] = useState({
-        displayName: user?.displayName || 'Yuna Dean',
+        displayName: user?.displayName || '',
         username: user?.username || '',
-        bio: user?.bio || 'I love to read fanfiction and action series. Passionate collector of NFT comics and digital art.',
-        avatar: user?.avatar || 'https://images.unsplash.com/photo-1494790108755-2616b612c95f?auto=format&fit=crop&w=800&q=80',
-        bannerImage: user?.bannerImage || '/user-profile-bg.png',
+        bio: user?.bio || '',
+        avatar: user?.avatar || '/default-avatar.png',
+        bannerImage: user?.banner || '/user-profile-bg.png',
         socials: {
             twitter: user?.socials?.twitter || '',
             discord: user?.socials?.discord || ''
         }
     });
+
+    // Track actual file objects for upload
+    const [avatarFile, setAvatarFile] = useState(null);
+    const [bannerFile, setBannerFile] = useState(null);
+    const [submitStatus, setSubmitStatus] = useState(null);
 
     // Form handlers
     const handleInputChange = (field, value) => {
@@ -38,6 +53,9 @@ const EditProfileView = ({ user }) => {
     const handleImageUpload = (type, event) => {
         const file = event.target.files[0];
         if (file) {
+            if (type === 'avatar') setAvatarFile(file);
+            if (type === 'bannerImage') setBannerFile(file);
+
             const reader = new FileReader();
             reader.onload = (e) => {
                 handleInputChange(type, e.target.result);
@@ -46,14 +64,45 @@ const EditProfileView = ({ user }) => {
         }
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Handle form submission
-        console.log('Updating profile with:', formData);
-        alert('Profile updated successfully!');
+        if (!userId) return;
+
+        setSubmitStatus(null);
+
+        try {
+            // Update profile (displayName, bio, avatar, banner) via multipart/form-data
+            const profileFormData = new FormData();
+            profileFormData.append('displayName', formData.displayName);
+            profileFormData.append('bio', formData.bio);
+            if (avatarFile) profileFormData.append('avatar', avatarFile);
+            if (bannerFile) profileFormData.append('banner', bannerFile);
+
+            // @ts-ignore - thunk params defined in JS file
+            const profileResult = await dispatch(
+                updateUserProfile({ id: userId, profileData: profileFormData } as any)
+            ).unwrap();
+
+            // Update username if it changed
+            if (formData.username && formData.username !== user?.username) {
+                // @ts-ignore - thunk params defined in JS file
+                await dispatch(
+                    updateUserUsername({ id: userId, username: formData.username } as any)
+                ).unwrap();
+            }
+
+            // Refresh profile data in store
+            // @ts-ignore - thunk params defined in JS file
+            dispatch(getUserProfile(userId));
+
+            setSubmitStatus('success');
+        } catch (error) {
+            console.error('Failed to update profile:', error);
+            setSubmitStatus('error');
+        }
     };
 
-    const EditProfileContent = () => (
+    return (
         <form onSubmit={handleSubmit} className="p-4 sm:p-6 lg:p-8 max-w-4xl mb-12">
             {/* Change Image Section */}
             <div className="mb-8 bg-black-200 p-4 rounded-lg border border-black-50">
@@ -185,26 +234,29 @@ const EditProfileView = ({ user }) => {
                 </div>
             </div>
 
+            {/* Status Message */}
+            {submitStatus === 'success' && (
+                <div className="mb-4 p-3 bg-green-500/20 border border-green-500/50 rounded-lg text-green-400 text-sm">
+                    Profile updated successfully!
+                </div>
+            )}
+            {submitStatus === 'error' && (
+                <div className="mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-400 text-sm">
+                    Failed to update profile. Please try again.
+                </div>
+            )}
+
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-black-50">
-                {/* <button
-                    type="button"
-                    className="px-6 py-3 bg-black-200 text-white border border-black-50 rounded-lg font-medium hover:bg-black-100/50 transition-colors"
-                >
-                    Cancel
-                </button> */}
                 <button
                     type="submit"
-                    className="px-6 py-3 bg-secondary-200 text-black-200 rounded-lg font-medium hover:bg-primary-500 transition-colors"
+                    disabled={isLoading}
+                    className="px-6 py-3 bg-secondary-200 text-black-200 rounded-lg font-medium hover:bg-primary-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    Save Changes
+                    {isLoading ? 'Saving...' : 'Save Changes'}
                 </button>
             </div>
         </form>
-    );
-
-    return (
-        <EditProfileContent />
     );
 };
 

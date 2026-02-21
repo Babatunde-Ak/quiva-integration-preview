@@ -42,7 +42,15 @@ const store = configureStore({
     })
 });
 
-export type RootState = ReturnType<typeof store.getState>;
+// Use store.getState for type inference; cast through any to preserve slice keys from JS reducers
+export type RootState = ReturnType<typeof store.getState> & {
+  auth: any;
+  wallet: any;
+  comic: any;
+  general: any;
+  transactions: any;
+  collections: any;
+};
 export type AppDispatch = typeof store.dispatch;
 
 export default store;
