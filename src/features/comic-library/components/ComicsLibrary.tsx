@@ -1,49 +1,73 @@
 'use client'
 
 import {ComicCard} from "@/components/cards/ComicCard"
-import {ChevronDown} from "lucide-react"
-import {useState} from "react"
+import {ChevronDown, Loader2} from "lucide-react"
+import {useState, useEffect} from "react"
 import EmptyState from "../utils/EmptyState"
+import { useAppDispatch, useAppSelector } from "@/redux/hook"
+import { getAllComics } from "@/redux/slices/comicSlice"
+import { transformApiComicsToComics } from "../utils/transformComicData"
 
 const ComicsLibrary = ({
-    comics,
     title = "All"
 }) => {
-    const [filterBy,
-        setFilterBy] = useState("All")
-    const [sortBy,
-        setSortBy] = useState("Recently Added")
+    const dispatch = useAppDispatch()
+    const { comics, isLoading } = useAppSelector((state: any) => state.comic)
+
+    const [filterBy, setFilterBy] = useState("All")
+    const [sortBy, setSortBy] = useState("Recently Added")
+
+    useEffect(() => {
+        dispatch(getAllComics())
+    }, [dispatch])
 
     const filterOptions = ["All", "Premium", "Free", "Completed", "Reading"]
     const sortOptions = ["Recently Added", "Alphabetical", "Most Pages", "Oldest First"]
 
+    // Transform API comics to the format expected by ComicCard
+    const allComics = (() => {
+        if (!comics) return []
+        const comicsList = comics?.data?.comics?.data || comics?.data?.comics || comics?.data?.data || comics?.data || comics || []
+        if (!Array.isArray(comicsList)) return []
+        try {
+            return transformApiComicsToComics(comicsList)
+        } catch {
+            return comicsList
+        }
+    })()
+
     // Filter and sort logic
-    const filteredAndSortedComics = comics.filter(comic => {
-        if (filterBy === "All") 
+    const filteredAndSortedComics = allComics.filter((comic: any) => {
+        if (filterBy === "All")
             return true
-        if (filterBy === "Premium") 
-            return comic.isPremium
-        if (filterBy === "Free") 
-            return !comic.isPremium
+        if (filterBy === "Premium")
+            return comic.premium || comic.isMinted
+        if (filterBy === "Free")
+            return !comic.premium && !comic.isMinted
         return true
-    }).sort((a, b) => {
+    }).sort((a: any, b: any) => {
         switch (sortBy) {
             case "Alphabetical":
-                return a
-                    .title
-                    .localeCompare(b.title)
-                case "Most Pages":
-                return b.pages - a.pages
+                return (a.title || '').localeCompare(b.title || '')
+            case "Most Pages":
+                return (b.totalPages || 0) - (a.totalPages || 0)
             case "Oldest First":
-                return (a.dateAdded
-                    ?.getTime() || 0) - (b.dateAdded
-                    ?.getTime() || 0)
+                return new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime()
             default: // Recently Added
-                return (b.dateAdded
-                    ?.getTime() || 0) - (a.dateAdded
-                    ?.getTime() || 0)
+                return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
         }
     })
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center py-20">
+                <div className="text-center">
+                    <Loader2 className="w-10 h-10 text-primary-500 animate-spin mx-auto mb-3" />
+                    <p className="text-white/60 text-sm">Loading comics...</p>
+                </div>
+            </div>
+        )
+    }
 
     return (
         <section className="space-y-6">
@@ -95,7 +119,7 @@ const ComicsLibrary = ({
                 : (
                     <div
                         className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-12">
-                        {filteredAndSortedComics.map((comic) => (<ComicCard key={comic.id} {...comic}/>))}
+                        {filteredAndSortedComics.map((comic: any) => (<ComicCard key={comic.id} {...comic}/>))}
                     </div>
                 )}
         </section>
