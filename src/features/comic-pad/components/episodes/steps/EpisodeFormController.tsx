@@ -7,13 +7,14 @@ import PreviewPublishStep from './PreviewPublishStep';
 import { useMintComic } from '@/hook/useMintComic'; // Adjust path as needed
 import { useHederaWallet } from '@/providers/HashPackProvider';
 import { useAppDispatch, useAppSelector } from '@/redux/hook';
-import { 
-  createFullComic, 
-  clearError, 
+import {
+  createFullComic,
+  clearError,
   clearSuccessMessage,
+  clearCurrentComic,
   selectIsCreating,
   selectComicError,
-  selectSuccessMessage 
+  selectSuccessMessage
 } from '@/redux/slices/comicSlice';
 import { toast } from 'react-toastify';
 
@@ -115,9 +116,13 @@ const EpisodeFormController: React.FC<EpisodeFormControllerProps> = ({
     }
   }, [error]);
 
-  // Clear error and success messages on unmount
+  // Clear stale Redux state on mount and on unmount
   useEffect(() => {
+    dispatch(clearCurrentComic());
+    dispatch(clearError());
+    dispatch(clearSuccessMessage());
     return () => {
+      dispatch(clearCurrentComic());
       dispatch(clearError());
       dispatch(clearSuccessMessage());
     };
