@@ -100,14 +100,6 @@ const EpisodeFormController: React.FC<EpisodeFormControllerProps> = ({
     network: "testnet"
   });
 
-  // Handle successful comic creation
-  useEffect(() => {
-    if (createdComic && !isCreating && !error) {
-      // Call onSubmit to finalize
-      onSubmit(formData);
-    }
-  }, [createdComic, isCreating, error, formData, onSubmit, dispatch]);
-
   // Handle errors
   useEffect(() => {
     if (error) {
