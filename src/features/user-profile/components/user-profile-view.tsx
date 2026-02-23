@@ -1,15 +1,49 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { CurrentReadCard, MintedComicCard, FavoriteComicCard, ListedComicCard } from './cards/ProfileCards';
 import EmptyState from './states/EmptyState';
-import { mockUser, mockUserComics } from '../utils/userData';
+import { mockUserComics } from '../utils/userData';
 import { MainButton } from '@/components/button';
+import { useAppSelector, useAppDispatch } from '@/redux/hook';
+import { getUserProfile } from '@/redux/slices/authSlice';
 
 const UserProfile = ({ onEditProfile, onComicAction }) => {
     const router = useRouter();
-    const user = mockUser;
+    const dispatch = useAppDispatch();
+    const authUser = useAppSelector((state) => state.auth?.user?.data);
+    const profileData = useAppSelector((state) => state.auth?.profile?.data);
+
+    const userData = profileData?.user || profileData || authUser;
+
+    useEffect(() => {
+        if (authUser?._id) {
+            dispatch(getUserProfile(authUser._id));
+        }
+    }, [authUser?._id, dispatch]);
+
+    const formatJoinDate = (dateString) => {
+        if (!dateString) return 'Unknown';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    };
+
+    const user = {
+        id: userData?._id || '',
+        name: userData?.displayName || 'User',
+        displayName: userData?.username || userData?.displayName || 'User',
+        avatar: userData?.avatar || '/default-avatar.png',
+        banner: userData?.banner || '/user-profile-bg.png',
+        joinDate: formatJoinDate(userData?.createdAt),
+        bio: userData?.bio || '',
+        stats: {
+            totalComics: 0,
+            portfolioValue: 0,
+            mintedComics: 0
+        }
+    };
+
     const comics = mockUserComics;
     const [activeTab, setActiveTab] = useState('currentReads');
 
@@ -146,11 +180,12 @@ const UserProfile = ({ onEditProfile, onComicAction }) => {
             <div className="relative px-4 sm:px-6 lg:px-16 py-6 sm:py-8 mx-auto">
                 {/* Background Image with Overlay */}
                 <div className="absolute inset-0">
-                    <img 
-                        src={'/user-profile-bg.png'}
+                    <img
+                        src={user.banner}
                         alt="Cover"
                         className="w-full h-full object-cover transition-all duration-1000 ease-in-out"
                     />
+                    <div className="absolute inset-0 bg-black-500/70" />
                 </div>
 
                 <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 relative z-10'>
@@ -212,7 +247,7 @@ const UserProfile = ({ onEditProfile, onComicAction }) => {
                             <div className="text-center lg:text-left">
                                 <div className="text-sm sm:text-base tracking-wide">Portfolio Value</div>
                                 <div className="text-xs sm:text-sm font-semibold">
-                                    {formatNumber(234.096)} 
+                                    {formatNumber(user.stats.portfolioValue)}
                                 </div>
                             </div>
 

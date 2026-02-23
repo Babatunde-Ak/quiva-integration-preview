@@ -686,8 +686,192 @@ const authSlice = createSlice({
                 state.verifyOtp.success = false;
             });
 
-        // Additional reducers would continue with the same pattern...
-        // For brevity, I'm including the wallet auth cases as an example
+        // ================================================================
+        // GET USER BY ID
+        // ================================================================
+        builder
+            .addCase(getUserById.pending, (state) => {
+                state.profile = { data: state.profile?.data || null, isLoading: true, error: null };
+            })
+            .addCase(getUserById.fulfilled, (state, action) => {
+                state.profile = { data: action.payload.data || action.payload, isLoading: false, error: null };
+            })
+            .addCase(getUserById.rejected, (state, action) => {
+                state.profile = { data: state.profile?.data || null, isLoading: false, error: action.payload };
+            });
+
+        // ================================================================
+        // GET USER PROFILE
+        // ================================================================
+        builder
+            .addCase(getUserProfile.pending, (state) => {
+                state.profile = { data: state.profile?.data || null, isLoading: true, error: null };
+            })
+            .addCase(getUserProfile.fulfilled, (state, action) => {
+                state.profile = { data: action.payload.data || action.payload, isLoading: false, error: null };
+            })
+            .addCase(getUserProfile.rejected, (state, action) => {
+                state.profile = { data: state.profile?.data || null, isLoading: false, error: action.payload };
+            });
+
+        // ================================================================
+        // UPDATE USER PROFILE (displayName, bio, avatar, banner)
+        // ================================================================
+        builder
+            .addCase(updateUserProfile.pending, (state) => {
+                state.updateProfile = { isLoading: true, error: null, success: false };
+            })
+            .addCase(updateUserProfile.fulfilled, (state, action) => {
+                state.updateProfile = { isLoading: false, error: null, success: true };
+                const updatedUser = action.payload?.data?.user || action.payload?.data;
+                if (updatedUser) {
+                    ensureStateObject(state, 'user', initialState.user);
+                    state.user.data = { ...state.user.data, ...updatedUser };
+                }
+            })
+            .addCase(updateUserProfile.rejected, (state, action) => {
+                state.updateProfile = { isLoading: false, error: action.payload, success: false };
+            });
+
+        // ================================================================
+        // UPDATE USER BY ID (username, email, role)
+        // ================================================================
+        builder
+            .addCase(updateUserById.pending, (state) => {
+                state.updateUser = { isLoading: true, error: null, success: false };
+            })
+            .addCase(updateUserById.fulfilled, (state, action) => {
+                state.updateUser = { isLoading: false, error: null, success: true };
+                const updatedUser = action.payload?.data?.user || action.payload?.data;
+                if (updatedUser) {
+                    ensureStateObject(state, 'user', initialState.user);
+                    state.user.data = { ...state.user.data, ...updatedUser };
+                }
+            })
+            .addCase(updateUserById.rejected, (state, action) => {
+                state.updateUser = { isLoading: false, error: action.payload, success: false };
+            });
+
+        // ================================================================
+        // UPDATE USERNAME
+        // ================================================================
+        builder
+            .addCase(updateUserUsername.pending, (state) => {
+                state.updateUsername = { isLoading: true, error: null, success: false };
+            })
+            .addCase(updateUserUsername.fulfilled, (state, action) => {
+                state.updateUsername = { isLoading: false, error: null, success: true };
+                const updatedUser = action.payload?.data?.user || action.payload?.data;
+                if (updatedUser) {
+                    ensureStateObject(state, 'user', initialState.user);
+                    state.user.data = { ...state.user.data, ...updatedUser };
+                }
+            })
+            .addCase(updateUserUsername.rejected, (state, action) => {
+                state.updateUsername = { isLoading: false, error: action.payload, success: false };
+            });
+
+        // ================================================================
+        // UPDATE EMAIL
+        // ================================================================
+        builder
+            .addCase(updateUserEmail.pending, (state) => {
+                state.updateEmail = { isLoading: true, error: null, success: false };
+            })
+            .addCase(updateUserEmail.fulfilled, (state) => {
+                state.updateEmail = { isLoading: false, error: null, success: true };
+            })
+            .addCase(updateUserEmail.rejected, (state, action) => {
+                state.updateEmail = { isLoading: false, error: action.payload, success: false };
+            });
+
+        // ================================================================
+        // DELETE USER
+        // ================================================================
+        builder
+            .addCase(deleteUserById.pending, (state) => {
+                state.deleteUser = { isLoading: true, error: null, success: false };
+            })
+            .addCase(deleteUserById.fulfilled, (state) => {
+                state.deleteUser = { isLoading: false, error: null, success: true };
+            })
+            .addCase(deleteUserById.rejected, (state, action) => {
+                state.deleteUser = { isLoading: false, error: action.payload, success: false };
+            });
+
+        // ================================================================
+        // BECOME CREATOR
+        // ================================================================
+        builder
+            .addCase(becomeCreator.pending, (state) => {
+                state.becomeCreator = { isLoading: true, error: null, success: false };
+            })
+            .addCase(becomeCreator.fulfilled, (state) => {
+                state.becomeCreator = { isLoading: false, error: null, success: true };
+            })
+            .addCase(becomeCreator.rejected, (state, action) => {
+                state.becomeCreator = { isLoading: false, error: action.payload, success: false };
+            });
+
+        // ================================================================
+        // ONBOARDING
+        // ================================================================
+        builder
+            .addCase(completeOnboarding.pending, (state) => {
+                state.onboarding = { isLoading: true, error: null, success: false };
+            })
+            .addCase(completeOnboarding.fulfilled, (state) => {
+                state.onboarding = { isLoading: false, error: null, success: true };
+            })
+            .addCase(completeOnboarding.rejected, (state, action) => {
+                state.onboarding = { isLoading: false, error: action.payload, success: false };
+            });
+
+        // ================================================================
+        // CHECK USERNAME
+        // ================================================================
+        builder
+            .addCase(checkUsername.pending, (state) => {
+                state.usernameCheck = { isLoading: true, error: null, isAvailable: null, checkedUsername: state.usernameCheck?.checkedUsername || null };
+            })
+            .addCase(checkUsername.fulfilled, (state, action) => {
+                state.usernameCheck = { isLoading: false, error: null, isAvailable: action.payload.isAvailable ?? action.payload.success, checkedUsername: action.payload.checkedUsername };
+            })
+            .addCase(checkUsername.rejected, (state, action) => {
+                state.usernameCheck = { isLoading: false, error: action.payload, isAvailable: null, checkedUsername: state.usernameCheck?.checkedUsername || null };
+            });
+
+        // ================================================================
+        // UPLOAD AVATAR
+        // ================================================================
+        builder
+            .addCase(uploadAvatar.pending, (state) => {
+                state.uploadAvatar = { isLoading: true, error: null, success: false };
+            })
+            .addCase(uploadAvatar.fulfilled, (state) => {
+                state.uploadAvatar = { isLoading: false, error: null, success: true };
+            })
+            .addCase(uploadAvatar.rejected, (state, action) => {
+                state.uploadAvatar = { isLoading: false, error: action.payload, success: false };
+            });
+
+        // ================================================================
+        // REFRESH TOKEN
+        // ================================================================
+        builder
+            .addCase(refreshAccessToken.pending, (state) => {
+                state.refreshToken = { isLoading: true, error: null, success: false };
+            })
+            .addCase(refreshAccessToken.fulfilled, (state, action) => {
+                state.refreshToken = { isLoading: false, error: null, success: true };
+                ensureStateObject(state, 'user', initialState.user);
+                if (action.payload.token) {
+                    state.user.token = action.payload.token;
+                }
+            })
+            .addCase(refreshAccessToken.rejected, (state, action) => {
+                state.refreshToken = { isLoading: false, error: action.payload, success: false };
+            });
 
         // Wallet Auth cases
         builder
