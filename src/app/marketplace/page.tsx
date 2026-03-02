@@ -17,6 +17,10 @@ import { SortComicSection } from '@/features/comic-library/components/sections/S
 export default function MainPage() {
   const { comics, isLoading } = useAppSelector((state: any) => state.comic)
   const dispatch = useAppDispatch()
+   const hasCampaign = comics.nftId?.campaignId !== undefined && 
+                        comics.nftId?.campaignId !== null;
+      const hasDirectListing = comics.nftId?.listingId !== undefined && 
+                              comics.nftId?.listingId !== null;
   
   useEffect(() => {
     dispatch(getAllComics())
@@ -36,6 +40,10 @@ export default function MainPage() {
 
   const handleComicSelect = (comic: any) => {
     console.log('Selected comic:', comic);
+    // if (comic.nftId?.campaignId) {
+    //   console.log('Navigate to campaign detail page for campaign ID:', comic.nftId.campaignId);
+      
+    // }
     // Handle comic selection - navigate to comic detail page
     // For example: router.push(`/comics/${comic.id}`);
   };

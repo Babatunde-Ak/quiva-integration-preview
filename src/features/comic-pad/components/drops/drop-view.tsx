@@ -506,31 +506,138 @@ const DropView: React.FC<DropViewProps> = ({
         }
     };
 
-    // Load transaction state from localStorage
-    useEffect(() => {
-        const savedState = localStorage.getItem(TRANSACTION_STATE_KEY);
-        if (savedState) {
-            try {
-                const parsed: TransactionState = JSON.parse(savedState);
-                const isRecent = Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000;
-                if (parsed.episodeId === episodeId && isRecent && parsed.stage !== 'completed') {
-                    setTransactionState(parsed);
-                    if (parsed.flowData) {
-                        setFlowData(parsed.flowData);
-                    }
-                    if (parsed.episodeData) {
-                        setEpisodeData(parsed.episodeData);
-                    }
-                    if (parsed.error) {
-                        setShowRetryModal(true);
-                    }
-                }
-            } catch (error) {
-                console.error("Error loading transaction state:", error);
-            }
-        }
-    }, [episodeId]);
 
+const createSerializableState = (state: TransactionState): any => {
+  return {
+    stage: state.stage,
+    episodeId: state.episodeId,
+    timestamp: state.timestamp,
+    collectionData: state.collectionData,
+    inscriptionData: state.inscriptionData,
+    campaignData: state.campaignData,
+    whitelistTransactionId: state.whitelistTransactionId,
+    phasesTransactionIds: state.phasesTransactionIds,
+    error: state.error,
+    
+    flowData: state.flowData ? {
+      mintType: state.flowData.mintType,
+      rarity: state.flowData.rarity ? {
+        name: state.flowData.rarity.name,
+        type: state.flowData.rarity.type,
+        supply: state.flowData.rarity.supply,
+        maxSupply: state.flowData.rarity.maxSupply,
+      } : null,
+      dropDetails: state.flowData.dropDetails ? {
+        supply: state.flowData.dropDetails.supply,
+        price: state.flowData.dropDetails.price,
+        royalty: state.flowData.dropDetails.royalty,
+        maxMintPerWallet: state.flowData.dropDetails.maxMintPerWallet,
+      } : null,
+      whitelistData: state.flowData.whitelistData,
+      scheduleData: state.flowData.scheduleData,
+    } : undefined,
+    
+    episodeData: state.episodeData ? {
+      _id: state.episodeData._id,
+      title: state.episodeData.title,
+      description: state.episodeData.description,
+      nftMetadataCid: state.episodeData.nftMetadataCid,
+      bannerImage: state.episodeData.bannerImage,
+    } : undefined,
+  };
+};
+    // Load transaction state from localStorage
+    // useEffect(() => {
+    //     const savedState = localStorage.getItem(TRANSACTION_STATE_KEY);
+    //     if (savedState) {
+    //         try {
+    //             const parsed: TransactionState = JSON.parse(savedState);
+    //             const isRecent = Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000;
+    //             if (parsed.episodeId === episodeId && isRecent && parsed.stage !== 'completed') {
+    //                 setTransactionState(parsed);
+    //                 if (parsed.flowData) {
+    //                     setFlowData(parsed.flowData);
+    //                 }
+    //                 if (parsed.episodeData) {
+    //                     setEpisodeData(parsed.episodeData);
+    //                 }
+    //                 if (parsed.error) {
+    //                     setShowRetryModal(true);
+    //                 }
+    //             }
+    //         } catch (error) {
+    //             console.error("Error loading transaction state:", error);
+    //         }
+    //     }
+    // }, [episodeId]);
+
+useEffect(() => {
+  const savedState = localStorage.getItem(TRANSACTION_STATE_KEY);
+  if (savedState) {
+    try {
+      const parsed: TransactionState = JSON.parse(savedState);
+      const isRecent = Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000;
+      
+      if (parsed.episodeId === episodeId && isRecent && parsed.stage !== 'completed') {
+        // Restore flowData and reconstruct icon
+        if (parsed.flowData?.rarity) {
+          const rarityType = parsed.flowData.rarity.type;
+          const fullRarity = rarityOptions[rarityType];
+          
+          parsed.flowData.rarity = {
+            ...parsed.flowData.rarity,
+            icon: fullRarity?.icon,
+          };
+        }
+        
+        setTransactionState(parsed);
+        
+        if (parsed.flowData) {
+          setFlowData(parsed.flowData as FlowData);
+        }
+        
+        if (parsed.episodeData) {
+          setEpisodeData(parsed.episodeData);
+        }
+        
+        if (parsed.error) {
+          setShowRetryModal(true);
+        }
+        
+        console.log('✅ Transaction state restored from localStorage');
+      }
+    } catch (error) {
+      console.error("Error loading transaction state:", error);
+      localStorage.removeItem(TRANSACTION_STATE_KEY);
+    }
+  }
+}, [episodeId]);
+
+
+
+
+      // Save transaction state
+    // const saveTransactionState = (state: TransactionState) => {
+    //     setTransactionState(state);
+    //     // localStorage.setItem(TRANSACTION_STATE_KEY, JSON.stringify(state));
+    // };
+const saveTransactionState = (state: TransactionState) => {
+  setTransactionState(state);
+  
+  try {
+    const serializableState = createSerializableState(state);
+    localStorage.setItem(TRANSACTION_STATE_KEY, JSON.stringify(serializableState));
+    console.log('✅ Transaction state saved successfully');
+  } catch (error) {
+    console.error('❌ Failed to save transaction state:', error);
+  }
+};
+
+     // Clear transaction state
+    const clearTransactionState = () => {
+        setTransactionState(null);
+        localStorage.removeItem(TRANSACTION_STATE_KEY);
+    };
     // Fetch episode data
     useEffect(() => {
         const fetchEpisode = async () => {
@@ -546,17 +653,6 @@ const DropView: React.FC<DropViewProps> = ({
         }
     }, [episodeId, dispatch]);
 
-    // Save transaction state
-    const saveTransactionState = (state: TransactionState) => {
-        setTransactionState(state);
-        localStorage.setItem(TRANSACTION_STATE_KEY, JSON.stringify(state));
-    };
-
-    // Clear transaction state
-    const clearTransactionState = () => {
-        setTransactionState(null);
-        localStorage.removeItem(TRANSACTION_STATE_KEY);
-    };
 
     // Retry with exponential backoff
     const retryWithBackoff = async <T,>(
@@ -577,6 +673,20 @@ const DropView: React.FC<DropViewProps> = ({
         }
     };
 
+        // Add this NEW function
+const campaignTypeToBackendString = (campaignType: CampaignType): string => {
+  switch (campaignType) {
+    case CampaignType.PUBLIC:
+      return 'Public';       // Backend needs "Public"
+    case CampaignType.WHITELIST:
+      return 'Whitelist';    // Backend needs "Whitelist"
+    case CampaignType.SCHEDULED:
+      return 'Scheduled';    // Backend needs "Scheduled"
+    default:
+      return 'Public';
+  }
+};
+
     // Get campaign type from mint type
     const getCampaignType = (mintType: string | null): CampaignType => {
         switch (mintType) {
@@ -590,6 +700,7 @@ const DropView: React.FC<DropViewProps> = ({
                 return CampaignType.PUBLIC;
         }
     };
+
 
     // Step 1: Create Collection
     const executeCreateCollection = async (
@@ -670,6 +781,7 @@ const DropView: React.FC<DropViewProps> = ({
         setProcessingMessage('Creating campaign...');
 
         const campaignType = getCampaignType(flowData.mintType);
+        console.log("Campaign Type:", campaignType)
         const maxSupply = parseInt(flowData.dropDetails!.supply) || flowData.rarity!.maxSupply;
         const mintPrice = parseFloat(flowData.dropDetails!.price);
         const maxPerWallet = parseInt(flowData.dropDetails!.maxMintPerWallet) || 1;
@@ -677,10 +789,10 @@ const DropView: React.FC<DropViewProps> = ({
         const result = await retryWithBackoff(async () => {
             return await createCampaign({
                 episodeId: episodeData?._id || '',
-                campaignType,
-                mintPrice,
-                maxSupply,
-                maxPerWallet,
+                campaignType: campaignType ,
+                mintPrice: mintPrice,
+                maxSupply: maxSupply,
+                maxPerWallet: maxPerWallet,
                 metadata: inscriptionData.metadataHRL
             });
         });
@@ -688,22 +800,22 @@ const DropView: React.FC<DropViewProps> = ({
         console.log("✅ Campaign created:", result);
 
         // Get campaign ID from mirror node
-        await new Promise(resolve => setTimeout(resolve, 5000));
-        const txIdFormatted = formatTxIdForMirror(result.transactionId);
-        const mirrorResponse = await fetch(
-            `${getMirrorNodeUrl()}/api/v1/contracts/results/${txIdFormatted}`
-        );
-        const mirrorData = await mirrorResponse.json();
+        // await new Promise(resolve => setTimeout(resolve, 5000));
+        // const txIdFormatted = formatTxIdForMirror(result.transactionId);
+        // const mirrorResponse = await fetch(
+        //     `${getMirrorNodeUrl()}/api/v1/contracts/results/${txIdFormatted}`
+        // );
+        // const mirrorData = await mirrorResponse.json();
         
-        let campaignId: string | undefined;
-        if (mirrorData?.call_result) {
-            campaignId = BigInt("0x" + mirrorData.call_result.slice(2)).toString();
-        }
+        // let campaignId: string | undefined;
+        // if (mirrorData?.call_result) {
+        //     campaignId = BigInt("0x" + mirrorData.call_result.slice(2)).toString();
+        // }
 
         const campaignData: CampaignResult = {
             transactionId: result.transactionId,
             status: result.status,
-            campaignId,
+            campaignId: result.campaignId || undefined
         };
 
         const currentState = transactionState!;
@@ -942,17 +1054,50 @@ const DropView: React.FC<DropViewProps> = ({
                 }
             }
 
+         
             // Success - Update backend
             setProcessingMessage('Updating backend...');
-            await dispatch(updateComicToken({
-                comicId: episodeId,
-                tokenId: collectionData.tokenId,
-                campaignId: campaignData.campaignId || '',
-                transactionId: campaignData.transactionId,
-                metadataTopicIds: inscriptionData.topicId,
-                maxSupply: flowData.dropDetails?.supply || '',
-            } as any));
 
+            const campaignTypeEnum = getCampaignType(flowData.mintType);
+            const campaignTypeString = campaignTypeToBackendString(campaignTypeEnum);
+            console.log('📤 Updating backend with:', {
+            campaignId: campaignData.campaignId,
+            campaignType: campaignTypeString,  // Will be "Public", "Whitelist", or "Scheduled"
+            price: flowData.dropDetails.price,
+});
+            // const updateBackend = await dispatch(updateComicToken({
+            //     comicId: episodeId,
+            //     tokenId: collectionData.tokenId,
+            //     listingId: null,
+            //     campaignId: campaignData.campaignId || '',
+            //     campaignType: campaignTypeString,
+            //     price: flowData.dropDetails.price,
+            //     serial: null,
+            //     maxSupply: flowData.dropDetails?.supply || '',
+            //     transactionId: campaignData.transactionId,
+            //     metadataTopicIds: inscriptionData.topicId,
+               
+            // } as any));
+ try {
+  const updateBackend = await dispatch(updateComicToken({
+    comicId: episodeId,
+    tokenId: collectionData.tokenId,
+    listingId: null,
+    campaignId: campaignData.campaignId || '',
+    campaignType: campaignTypeString,  // ✅ STRING for backend
+    price: parseFloat(flowData.dropDetails.price),
+    serial: null,
+    maxSupply: flowData.dropDetails?.supply || '',
+    transactionId: campaignData.transactionId,
+    metadataTopicIds: inscriptionData.topicId,
+  } as any));
+
+  console.log("✅ Backend updated successfully:", updateBackend);
+} catch (backendError) {
+  console.error("⚠️ Backend update failed (blockchain succeeded):", backendError);
+  // Don't throw - blockchain transaction succeeded
+}
+            // console.log("✅ Backend updated:", updateBackend);
             console.log("✅ Campaign setup complete!");
             setCampaignResult(campaignData);
 
@@ -1025,6 +1170,7 @@ const DropView: React.FC<DropViewProps> = ({
         }
 
         await executeTransaction();
+        
     };
 
     const handleSuccessComplete = () => {

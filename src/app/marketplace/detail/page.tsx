@@ -104,7 +104,7 @@ export default function ComicDetail() {
   const displayAuthorName = authorName || "Unknown Creator";
   const displayDescription = description || "";
   const displayTags = tags?.length ? tags : [];
- const readingAccess = await checkCanReadComic(currentComic?._id, user?.walletAddress);
+ //const readingAccess = await checkCanReadComic(currentComic?._id, user?.walletAddress);
   // Creator description with real data
   const creatorDescription = `${displayAuthorName} is a visionary ${currentCollection?.comic?.length > 1 ? 'series creator' : 'artist'} dedicated to pushing the boundaries of digital art and interactive narratives. ${currentCollection?.description || ''}`.trim();
 
