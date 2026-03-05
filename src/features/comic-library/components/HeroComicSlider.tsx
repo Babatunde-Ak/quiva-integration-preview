@@ -14,7 +14,8 @@ export interface HeroComicData {
   tags?: string[]
   image: string
   buttonText?: string
-  studio?: string
+  creatorUsername?: string
+  creatorWalletAddress?: string
   totalIssues?: number
   floorPrice?: number
   price?: number | string
@@ -177,18 +178,22 @@ export function HeroComicSlider({
             </motion.h1>
 
             {/* Studio */}
-            {currentComic.studio && (
-              <motion.div 
+            {(currentComic.creatorUsername || currentComic.creatorWalletAddress) && (
+              <motion.div
                 variants={itemVariants}
                 className="flex items-center gap-2 mb-2 sm:mb-3 md:mb-4"
               >
                 <div className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 rounded-sm flex items-center justify-center overflow-hidden">
                   <img src={avatar2Img.src} alt="Studio Icon" className="w-full h-full object-cover" />
                 </div>
-                
+
                 <div className='flex flex-col justify-center'>
                   <span className="text-white/80 font-light text-xs sm:text-sm">Creator</span>
-                  <span className="text-white font-semibold text-sm sm:text-base">{currentComic.studio}</span>
+                  <span className="text-white font-semibold text-sm sm:text-base">
+                    {currentComic.creatorUsername || (currentComic.creatorWalletAddress
+                      ? `${currentComic.creatorWalletAddress.slice(0, 6)}...${currentComic.creatorWalletAddress.slice(-4)}`
+                      : '')}
+                  </span>
                 </div>
               </motion.div>
             )}
