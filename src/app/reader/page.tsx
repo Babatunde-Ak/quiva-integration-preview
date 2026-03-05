@@ -11,18 +11,11 @@ import {
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/redux/hook';
 import { getComicById, clearCurrentComic } from '@/redux/slices/comicSlice';
-import CollectionCard from '@/components/cards/TopSellingCard';
 import { Footer } from '@/components/global/comic-library/Footer';
-import {
-  LOCAL_IMAGE,
-  DUMMY_READER_COMIC,
-  TOP_SELLING_COMICS
-} from '@/components/utils/dummy-data';
 
 const COMICS_PER_PAGE = 3;
 
 const ComicReaderViewer = () => {
-  const [useDummyData, setUseDummyData] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [isScrolling, setIsScrolling] = useState(false);
   const [currentComicSet, setCurrentComicSet] = useState(1);
@@ -39,13 +32,8 @@ const ComicReaderViewer = () => {
 
   //  images as fallback - updated to use bannerImage from API
   const images = {
-    //  comic data if available, otherwise fallback images
     cover: currentComic?.bannerImage || currentComic?.coverImage || "/dev_images/Rectangle3051.png",
     avatar: currentComic?.creatorId?.avatar || "/dev_images/Rectangle3048.png",
-    //  hardcoded images for other sections
-    inosuke: "/dev_images/Image2.png",
-    cross: "/dev_images/Group427320759.png",
-    mj: "/dev_images/Grouup9.png",
   };
 
   /* data fetching */
@@ -58,17 +46,8 @@ const ComicReaderViewer = () => {
     };
   }, [comicId, dispatch]);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!currentComic && comicId && isMounted.current) {
-        setUseDummyData(true);
-      }
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [currentComic, comicId]);
-
   const activeComic = useMemo(() => {
-    const comic = useDummyData ? DUMMY_READER_COMIC : currentComic;
+    const comic = currentComic;
     if (!comic) return null;
     
     // Map API data structure to expected format
@@ -79,7 +58,7 @@ const ComicReaderViewer = () => {
           walletAddress: comic?.creatorId?.walletAddress,
         }
       : comic.creator ?? {
-          name: 'Studio Kyra',
+          name: 'Unknown Creator',
           avatar: images.avatar,
         };
     
@@ -92,7 +71,7 @@ const ComicReaderViewer = () => {
       title: comic.title || 'Untitled Comic',
       episodeNumber: comic.episodeNumber || 1,
     };
-  }, [useDummyData, currentComic, images.avatar]);
+  }, [currentComic, images.avatar]);
 
   const comicPages = useMemo(() => {
     if (!activeComic?.chapters) return [];
@@ -101,7 +80,7 @@ const ComicReaderViewer = () => {
       if (chapter.pages && Array.isArray(chapter.pages)) {
         chapter.pages.forEach((page: any) => {
           pages.push({
-            imageUrl: page.imageUrl || LOCAL_IMAGE,
+            imageUrl: page.imageUrl || "/dev_images/Rectangle3051.png",
             pageNumber: page.pageNumber,
             chapterNumber: chapter.chapterNumber,
             chapterTitle: chapter.title,
@@ -177,7 +156,7 @@ const ComicReaderViewer = () => {
 
   /*  loading  */
 
-  if (isLoading && !useDummyData) {
+  if (isLoading) {
     return (
       <div className="fixed inset-0 bg-[#161614] flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-yellow-500 animate-spin" />
@@ -352,139 +331,33 @@ const ComicReaderViewer = () => {
       </div>
 
       {/* MORE EPISODES SECTION  */}
-    
-      <div className="bg-[#0a0a0a]">
-        <div className="bg-[#1a1a1a] max-w-[80%] mx-auto rounded-2xl p-6 mb-12">
-          <h2 className="text-2xl font-bold text-white mb-6">More Episodes</h2>
+      {activeComic?.chapters && activeComic.chapters.length > 0 && (
+        <div className="bg-[#0a0a0a]">
+          <div className="bg-[#1a1a1a] max-w-[80%] mx-auto rounded-2xl p-6 mb-12">
+            <h2 className="text-2xl font-bold text-white mb-6">More Episodes</h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Episode 1 Card */}
-            <div className="group bg-[#111] rounded-xl overflow-hidden border border-white/5 hover:border-yellow-500/50 transition-all hover:-translate-y-1 cursor-pointer">
-              <div className="px-3 pt-3">
-                <div className="aspect-video w-full overflow-hidden bg-gray-800 relative border border-white/5 rounded-xl">
-                  <img
-                    src={images.inosuke}
-                    alt="Episode 1"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {activeComic.chapters.map((chapter: any, idx: number) => (
+                <div key={chapter._id || idx} className="group bg-[#111] rounded-xl overflow-hidden border border-white/5 hover:border-yellow-500/50 transition-all hover:-translate-y-1 cursor-pointer">
+                  <div className="px-3 pt-3">
+                    <div className="aspect-video w-full overflow-hidden bg-gray-800 relative border border-white/5 rounded-xl">
+                      <img
+                        src={chapter.pages?.[0]?.imageUrl || images.cover}
+                        alt={chapter.title || `Episode ${chapter.chapterNumber}`}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                  </div>
+                  <div className="p-4">
+                    <div className="text-white text-lg font-bold">{chapter.title || `Episode ${chapter.chapterNumber}`}</div>
+                  </div>
                 </div>
-              </div>
-              <div className="p-4">
-                <div className="text-white text-lg font-bold">Episode 1</div>
-              </div>
-            </div>
-
-            {/* Episode 2 Card */}
-            <div className="group bg-[#111] rounded-xl overflow-hidden border border-white/5 hover:border-yellow-500/50 transition-all hover:-translate-y-1 cursor-pointer">
-              <div className="px-3 pt-3">
-                <div className="aspect-video w-full overflow-hidden bg-gray-800 relative border border-white/5 rounded-xl">
-                  <img
-                    src={images.cross}
-                    alt="Episode 2"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-              </div>
-              <div className="p-4">
-                <div className="text-white text-lg font-bold">Episode 2</div>
-              </div>
-            </div>
-
-            {/* Episode 3 Card */}
-            <div className="group bg-[#111] rounded-xl overflow-hidden border border-white/5 hover:border-yellow-500/50 transition-all hover:-translate-y-1 cursor-pointer">
-              <div className="px-3 pt-3">
-                <div className="aspect-video w-full overflow-hidden bg-gray-800 relative border border-white/5 rounded-xl">
-                  <img
-                    src={images.mj}
-                    alt="Episode 3"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-              </div>
-              <div className="p-4">
-                <div className="text-white text-lg font-bold">Episode 3</div>
-              </div>
-            </div>
-
-            {/* Episode 4 Card */}
-            <div className="group bg-[#111] rounded-xl overflow-hidden border border-white/5 hover:border-yellow-500/50 transition-all hover:-translate-y-1 cursor-pointer">
-              <div className="px-3 pt-3">
-                <div className="aspect-video w-full overflow-hidden bg-gray-800 relative border border-white/5 rounded-xl">
-                  <img
-                    src={images.inosuke}
-                    alt="Episode 4"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-              </div>
-              <div className="p-4">
-                <div className="text-white text-lg font-bold">Episode 4</div>
-              </div>
-            </div>
-
-            {/* Episode 5 Card */}
-            <div className="group bg-[#111] rounded-xl overflow-hidden border border-white/5 hover:border-yellow-500/50 transition-all hover:-translate-y-1 cursor-pointer">
-              <div className="px-3 pt-3">
-                <div className="aspect-video w-full overflow-hidden bg-gray-800 relative border border-white/5 rounded-xl">
-                  <img
-                    src={images.cross}
-                    alt="Episode 5"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-              </div>
-              <div className="p-4">
-                <div className="text-white text-lg font-bold">Episode 5</div>
-              </div>
-            </div>
-
-            {/* Episode 6 Card */}
-            <div className="group bg-[#111] rounded-xl overflow-hidden border border-white/5 hover:border-yellow-500/50 transition-all hover:-translate-y-1 cursor-pointer">
-              <div className="px-3 pt-3">
-                <div className="aspect-video w-full overflow-hidden bg-gray-800 relative border border-white/5 rounded-xl">
-                  <img
-                    src={images.mj}
-                    alt="Episode 6"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-              </div>
-              <div className="p-4">
-                <div className="text-white text-lg font-bold">Episode 6</div>
-              </div>
+              ))}
             </div>
           </div>
         </div>
-
-        {/*TOP SELLING  SECTION */}
-        <div className="max-w-[80%] mx-auto p-6 mb-12">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-2">
-            <h2 className="text-xl md:text-2xl font-bold text-white">Top selling comics</h2>
-          </div>
-          <div className="text-white/60 text-sm mb-6 text-left">highest moves in the past hour</div>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {TOP_SELLING_COMICS.map((comic) => (
-              <CollectionCard
-                key={comic.id}
-                id={comic.id}
-                rank={comic.rank}
-                name={comic.name}
-                image={comic.image}
-                sales={comic.sales}
-                percentageChange={comic.percentageChange}
-                isPositive={comic.isPositive}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
+      )}
 
       {/* FOOTER  */}
       <Footer />

@@ -18,31 +18,34 @@ enum WalletType {
 }
 
 function ComicConnect() {
-  const { isAuthenticated } = useAppSelector((state: any) => state.wallet);
+  const { isAuthenticated, walletAddress } = useAppSelector((state: any) => state.wallet);
   const [isOpen, setIsOpen] = React.useState(false);
   const [connectedWallet, setConnectedWallet] = useState<WalletType>(WalletType.NONE);
 
   // Rainbow Kit hooks
   const { isConnected: isRainbowConnected, address: rainbowAddress } = useAccount();
 
-  
   // HashPack hooks
-   const { isConnected: isHashpackConnected, account } = useHederaWallet();
-  // const { isConnected: isHashpackConnected } = useWallet( HashpackConnector);
-  // const { data: hashpackEvmAddress } = useEvmAddress();
+  const { isConnected: isHashpackConnected, account } = useHederaWallet();
 
-  // Monitor wallet connections
+  // Monitor wallet connections — also check persisted Redux state
   useEffect(() => {
-    console.log(connectedWallet);
     if (isRainbowConnected && rainbowAddress) {
       setConnectedWallet(WalletType.RAINBOW);
     } else if (isHashpackConnected && account) {
       setConnectedWallet(WalletType.HASHPACK);
-       console.log(connectedWallet);
+    } else if (isAuthenticated && walletAddress) {
+      // Provider hasn't restored yet, but Redux says we're authenticated
+      // Determine wallet type from the persisted address format
+      if (walletAddress.startsWith('0.0.')) {
+        setConnectedWallet(WalletType.HASHPACK);
+      } else if (walletAddress.startsWith('0x')) {
+        setConnectedWallet(WalletType.RAINBOW);
+      }
     } else {
       setConnectedWallet(WalletType.NONE);
     }
-  }, [isRainbowConnected, rainbowAddress, isHashpackConnected, account]);
+  }, [isRainbowConnected, rainbowAddress, isHashpackConnected, account, isAuthenticated, walletAddress]);
 
   const handleConnect = () => {
     setIsOpen(true);
@@ -90,7 +93,7 @@ function ComicConnect() {
           </MainButton>
 
           {isOpen && (
-            <ComicModal className="max-w-xl" onClose={() => setIsOpen(false)}>
+            <ComicModal className="max-w-xl z-20" onClose={() => setIsOpen(false)}>
               <div className='flex flex-col gap-4'>
                 <div className='flex flex-col items-center justify-center'>
                     <QuivaLogo showText className="invert" />

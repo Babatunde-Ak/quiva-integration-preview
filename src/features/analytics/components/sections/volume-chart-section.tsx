@@ -7,18 +7,18 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 
 // Generate realistic monthly volume data with wave pattern
 const volumeData = [
-  { month: 'Jan', volume: 150000 },
-  { month: 'Feb', volume: 280000 },
-  { month: 'Mar', volume: 680000 },
-  { month: 'Apr', volume: 580000 },
-  { month: 'May', volume: 650000 },
-  { month: 'Jun', volume: 520000 },
-  { month: 'Jul', volume: 450000 },
-  { month: 'Aug', volume: 480000 },
-  { month: 'Sep', volume: 550000 },
-  { month: 'Oct', volume: 680000 },
-  { month: 'Nov', volume: 720000 },
-  { month: 'Dec', volume: 820000 }
+  { month: 'Jan', volume: 0 },
+  { month: 'Feb', volume: 0 },
+  { month: 'Mar', volume: 0 },
+  { month: 'Apr', volume: 0 },
+  { month: 'May', volume: 0 },
+  { month: 'Jun', volume: 0 },
+  { month: 'Jul', volume: 0 },
+  { month: 'Aug', volume: 0 },
+  { month: 'Sep', volume: 0 },
+  { month: 'Oct', volume: 0 },
+  { month: 'Nov', volume: 0 },
+  { month: 'Dec', volume: 0 }
 ]
 
 const CustomTooltip = ({ active, payload, label }: any) => {

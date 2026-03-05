@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Upload, X } from 'lucide-react';
 
@@ -10,7 +10,7 @@ interface ImageUploadProps {
   label?: string;
   acceptedFormats?: string;
   className?: string;
-  maxFileSizeMB?: number; // Maximum file size in megabytes
+  maxFileSizeMB?: number;
 }
 
 const ImageUpload: React.FC<ImageUploadProps> = ({
@@ -19,32 +19,36 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   label = 'Please upload a valid image file (PNG, JPG).',
   acceptedFormats = 'image/png,image/jpeg,image/jpg',
   className = '',
-  maxFileSizeMB = 5 // Default to 5MB
+  maxFileSizeMB = 5
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string>('');
+  const [isDragging, setIsDragging] = useState(false);
+
+  const acceptedTypes = acceptedFormats.split(',').map(t => t.trim());
+
+  const validateAndSetFile = useCallback((file: File) => {
+    // Check file type
+    if (!acceptedTypes.includes(file.type)) {
+      setError('Invalid file type. Please upload a PNG or JPG image.');
+      return;
+    }
+
+    // Check file size
+    const maxFileSizeBytes = maxFileSizeMB * 1024 * 1024;
+    if (file.size > maxFileSizeBytes) {
+      setError(`File size must be less than ${maxFileSizeMB}MB. Your file is ${(file.size / (1024 * 1024)).toFixed(2)}MB.`);
+      return;
+    }
+
+    setError('');
+    onImageChange(file);
+  }, [acceptedTypes, maxFileSizeMB, onImageChange]);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    
     if (file) {
-      // Convert max size from MB to bytes
-      const maxFileSizeBytes = maxFileSizeMB * 1024 * 1024;
-      
-      // Check file size
-      if (file.size > maxFileSizeBytes) {
-        setError(`File size must be less than ${maxFileSizeMB}MB. Your file is ${(file.size / (1024 * 1024)).toFixed(2)}MB.`);
-        
-        // Clear the input
-        if (fileInputRef.current) {
-          fileInputRef.current.value = '';
-        }
-        return;
-      }
-      
-      // Clear any previous errors
-      setError('');
-      onImageChange(file);
+      validateAndSetFile(file);
     }
   };
 
@@ -56,9 +60,52 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     }
   };
 
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Only set false if leaving the drop zone (not entering a child)
+    if (e.currentTarget === e.target) {
+      setIsDragging(false);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      validateAndSetFile(file);
+    }
+  };
+
   return (
     <div className={`space-y-4 ${className}`}>
-      <div className="border border-black-50 bg-black-100 rounded-lg p-6 text-center h-full flex flex-col items-center justify-center">
+      <div
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+        className={`border-2 border-dashed rounded-lg p-6 text-center h-full flex flex-col items-center justify-center transition-colors duration-200 ${
+          isDragging
+            ? 'border-primary-500 bg-primary-500/10'
+            : image
+            ? 'border-black-50 bg-black-100'
+            : 'border-black-50 bg-black-100 hover:border-white/30'
+        }`}
+      >
         {image ? (
           <div className="space-y-4">
             <div className="relative inline-block">
@@ -84,12 +131,12 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
           </div>
         ) : (
           <>
-            <Upload className="mx-auto mb-4 text-white/50" size={48} />
+            <Upload className={`mx-auto mb-4 transition-colors ${isDragging ? 'text-primary-500' : 'text-white/50'}`} size={48} />
             <p className="text-white/40 mb-2 font-light max-w-xl">
-              {label}
+              {isDragging ? 'Drop your image here' : label}
             </p>
             <p className="text-white/30 text-xs mb-4">
-              Maximum file size: {maxFileSizeMB}MB
+              Drag & drop or click to upload · Max {maxFileSizeMB}MB
             </p>
             <Button
               type="button"
@@ -102,14 +149,14 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
           </>
         )}
       </div>
-      
+
       {/* Error message */}
       {error && (
         <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-3">
           <p className="text-red-400 text-sm">{error}</p>
         </div>
       )}
-      
+
       <input
         ref={fileInputRef}
         type="file"

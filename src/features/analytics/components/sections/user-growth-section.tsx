@@ -48,18 +48,18 @@ function UserStatsDisplay({ value, label, trend, isActive = false, onClick }: Us
 }
 
 const userData = [
-  { month: 'Jan', high: 15000, middle: 8000, low: 5000 },
-  { month: 'Feb', high: 18000, middle: 9000, low: 6000 },
-  { month: 'Mar', high: 16000, middle: 8500, low: 5500 },
-  { month: 'Apr', high: 14000, middle: 7500, low: 5200 },
-  { month: 'May', high: 20000, middle: 10000, low: 7000 },
-  { month: 'Jun', high: 22000, middle: 11000, low: 7500 },
-  { month: 'Jul', high: 25000, middle: 12000, low: 8000 },
-  { month: 'Aug', high: 23000, middle: 11500, low: 7800 },
-  { month: 'Sep', high: 21000, middle: 10500, low: 7200 },
-  { month: 'Oct', high: 19000, middle: 9500, low: 6800 },
-  { month: 'Nov', high: 17000, middle: 8800, low: 6200 },
-  { month: 'Dec', high: 16000, middle: 8200, low: 5800 }
+  { month: 'Jan', high: 0, middle: 0, low: 0 },
+  { month: 'Feb', high: 0, middle: 0, low: 0 },
+  { month: 'Mar', high: 0, middle: 0, low: 0 },
+  { month: 'Apr', high: 0, middle: 0, low: 0 },
+  { month: 'May', high: 0, middle: 0, low: 0 },
+  { month: 'Jun', high: 0, middle: 0, low: 0 },
+  { month: 'Jul', high: 0, middle: 0, low: 0 },
+  { month: 'Aug', high: 0, middle: 0, low: 0 },
+  { month: 'Sep', high: 0, middle: 0, low: 0 },
+  { month: 'Oct', high: 0, middle: 0, low: 0 },
+  { month: 'Nov', high: 0, middle: 0, low: 0 },
+  { month: 'Dec', high: 0, middle: 0, low: 0 }
 ]
 
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -102,22 +102,22 @@ export function UserGrowthSection() {
   const [activeMetric, setActiveMetric] = useState('monthly')
 
   const userStats = [
-    { 
-      value: '62', 
-      label: 'Monthly', 
-      trend: '+10.78%',
+    {
+      value: '0',
+      label: 'Monthly',
+      trend: '+0.00%',
       key: 'monthly'
     },
-    { 
-      value: '12', 
-      label: 'Weekly', 
-      trend: '+1.08%',
+    {
+      value: '0',
+      label: 'Weekly',
+      trend: '+0.00%',
       key: 'weekly'
     },
-    { 
-      value: '30', 
-      label: 'Daily', 
-      trend: '+5.90%',
+    {
+      value: '0',
+      label: 'Daily',
+      trend: '+0.00%',
       key: 'daily'
     }
   ]

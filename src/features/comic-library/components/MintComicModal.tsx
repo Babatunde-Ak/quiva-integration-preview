@@ -61,13 +61,13 @@ const MintComicModal: React.FC<MintComicModalProps> = ({
   
   // Wallet states
   
-  const [isWalletConnected, setIsWalletConnected] = useState(true)
-  const [walletAddress, setWalletAddress] = useState('0xA182...C3D4')
+  const [isWalletConnected, setIsWalletConnected] = useState(!!walletAddressProp)
+  const [walletAddress, setWalletAddress] = useState(walletAddressProp || '')
 
   // Handle Connect Wallet
   const handleConnectWallet = () => {
     setIsWalletConnected(true)
-    setWalletAddress('0xA182...C3D4')
+    setWalletAddress(walletAddressProp || '')
     setShowConnectWallet(false)
   }
 
@@ -212,7 +212,7 @@ const MintComicModal: React.FC<MintComicModalProps> = ({
                 <div className="mb-4">
                   <div className="text-white/70 text-xs mb-1">Price</div>
                   <div className="text-white text-xl font-bold flex items-center gap-1">
-                    0.09
+                    {currentComic?.nftId?.price?.toFixed(2) || price}
                     <span className="text-xs align-center opacity-70">
                       <img src="/hbar.png" alt="HBAR" />
                     </span>
@@ -311,29 +311,29 @@ const MintComicModal: React.FC<MintComicModalProps> = ({
                   <div className="bg-[#111] border text-white/70 font-mono border-white/5 rounded-2xl p-6 md:p-8">
                     <h3 className="text-xl font-medium mb-6">Episode List</h3>
                     <div className="space-y-4">
-                      {[
-                        { title: "Episode 1 : The First Flame", status: "Open" },
-                        { title: "Episode 2 : Whispers of the Wind", status: "Open" },
-                        { title: "Episode 3 : Echoes Beneath the Earth", status: "Open" },
-                      ].map((ep, idx) => (
-                        <div
-                          key={idx}
-                          className="flex items-center justify-between group cursor-pointer"
-                        >
-                          <div className="flex items-center space-x-3 group-hover:text-orange-400 transition-colors">
-                            <span className="font-mono text-sm">
-                              Episode {idx + 1} :
-                            </span>
-                            <span className="font-medium">{ep.title}</span>
+                      {(currentComic?.chapters || []).length > 0 ? (
+                        currentComic.chapters.map((chapter: any, idx: number) => (
+                          <div
+                            key={chapter._id || idx}
+                            className="flex items-center justify-between group cursor-pointer"
+                          >
+                            <div className="flex items-center space-x-3 group-hover:text-orange-400 transition-colors">
+                              <span className="font-mono text-sm">
+                                Episode {chapter.chapterNumber || idx + 1} :
+                              </span>
+                              <span className="font-medium">{chapter.title || `Chapter ${chapter.chapterNumber}`}</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className="text-[10px] bg-[#1a1a1a] border border-white/10 px-1.5 py-0.5 rounded font-mono uppercase tracking-wider">
+                                Open
+                              </span>
+                              <Lock size={12} className="text-yellow-500" />
+                            </div>
                           </div>
-                          <div className="flex items-center space-x-2">
-                            <span className="text-[10px] bg-[#1a1a1a] border border-white/10 px-1.5 py-0.5 rounded font-mono uppercase tracking-wider">
-                              {ep.status}
-                            </span>
-                            <Lock size={12} className="text-yellow-500" />
-                          </div>
-                        </div>
-                      ))}
+                        ))
+                      ) : (
+                        <p className="text-white/40 text-sm">No episodes available yet.</p>
+                      )}
                     </div>
                   </div>
 
@@ -351,9 +351,7 @@ const MintComicModal: React.FC<MintComicModalProps> = ({
                       <span className="font-bold text-white">{author.name}</span>
                     </div>
                     <p className="leading-relaxed text-sm">
-                      Studio Kyra is a visionary team of artists and storytellers
-                      dedicated to pushing the boundaries of digital art and
-                      interactive narratives.
+                      {author.name} is a creator dedicated to pushing the boundaries of digital art and interactive narratives.
                     </p>
                   </div>
                 </>
@@ -378,33 +376,11 @@ const MintComicModal: React.FC<MintComicModalProps> = ({
                         </tr>
                       </thead>
                       <tbody>
-                        {/* Using ACTIVITY_DATA from props or dummy data */}
-                        {[
-                          { username: "quiva_creator", event: "Mint", price: "0.09", edition: "#721", time: "2 mins ago" },
-                          { username: "nft_collector", event: "Purchase", price: "0.095", edition: "#720", time: "5 mins ago" },
-                          { username: "crypto_artist", event: "List", price: "0.10", edition: "#719", time: "10 mins ago" }
-                        ].map((activity, index) => (
-                          <tr key={index} className="border-b border-white/5 hover:bg-white/5">
-                            <td className="py-3 px-2">
-                              <span className="text-white text-sm font-medium">{activity.username}</span>
-                            </td>
-                            <td className="py-3 px-2">
-                              <span className="text-white text-sm font-medium">{activity.event}</span>
-                            </td>
-                            <td className="py-3 px-2">
-                              <span className="text-white text-sm font-medium flex items-center gap-1">
-                                {activity.price}
-                                <img src="/hbar.png" alt="HBAR" className="inline-block" />
-                              </span>
-                            </td>
-                            <td className="py-3 px-2">
-                              <span className="text-white text-sm font-medium">{activity.edition}</span>
-                            </td>
-                            <td className="py-3 px-2">
-                              <span className="text-white/60 text-sm">{activity.time}</span>
-                            </td>
-                          </tr>
-                        ))}
+                        <tr>
+                          <td colSpan={5} className="py-8 text-center text-white/40 text-sm">
+                            No activity yet.
+                          </td>
+                        </tr>
                       </tbody>
                     </table>
                   </div>
@@ -422,7 +398,7 @@ const MintComicModal: React.FC<MintComicModalProps> = ({
                   <div>
                     <p className="text-xs mb-1">Mint Price</p>
                     <p className="flex text-lg items-center font-bold text-white">
-                      <p>0.09</p>
+                      <span>{currentComic?.nftId?.price?.toFixed(2) || price}</span>
                       <span className="text-xs align-center opacity-70">
                         <img src="/hbar.png" alt="HBAR" />
                       </span>
@@ -430,12 +406,12 @@ const MintComicModal: React.FC<MintComicModalProps> = ({
                   </div>
                   <div>
                     <p className="text-xs mb-1">Editions</p>
-                    <p className="text-lg font-bold text-white">1,000</p>
+                    <p className="text-lg font-bold text-white">{currentComic?.nftId?.maxSupply?.toLocaleString() || '0'}</p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-500 mb-1">Royalties</p>
                     <p className="text-lg font-bold text-white">
-                      7% <span className="text-sm font-normal">to creator</span>
+                      {currentComic?.nftId?.royaltyPercentage || 0}% <span className="text-sm font-normal">to creator</span>
                     </p>
                   </div>
                 </div>
@@ -453,7 +429,7 @@ const MintComicModal: React.FC<MintComicModalProps> = ({
                   <div>
                     <p className="text-xs mb-1">Floor Price</p>
                     <div className="flex text-lg items-center font-bold text-white">
-                      <p>0.085</p>
+                      <p>{currentComic?.nftId?.price ? (currentComic.nftId.price * 0.94).toFixed(3) : '0'}</p>
                       <span className="text-xs align-center opacity-70">
                         <img src="/hbar.png" alt="HBAR" />
                       </span>
@@ -461,12 +437,12 @@ const MintComicModal: React.FC<MintComicModalProps> = ({
                   </div>
                   <div>
                     <p className="text-xs mb-1">Total Mints</p>
-                    <p className="text-lg font-bold text-white">721 / 1,000</p>
+                    <p className="text-lg font-bold text-white">{currentComic?.nftId?.currentSupply || 0} / {currentComic?.nftId?.maxSupply?.toLocaleString() || '0'}</p>
                   </div>
                   <div>
                     <p className="text-xs mb-1">Volume</p>
                     <div className="flex text-lg items-center font-bold text-white">
-                      <p>45.8</p>
+                      <p>{currentComic?.nftId?.price && currentComic?.nftId?.currentSupply ? (currentComic.nftId.price * currentComic.nftId.currentSupply).toFixed(1) : '0'}</p>
                       <span className="text-xs align-center opacity-70">
                         <img src="/hbar.png" alt="HBAR" />
                       </span>
@@ -474,7 +450,7 @@ const MintComicModal: React.FC<MintComicModalProps> = ({
                   </div>
                   <div className="col-span-3">
                     <p className="text-xs mb-1">Collectors</p>
-                    <p className="text-lg font-bold text-white">389</p>
+                    <p className="text-lg font-bold text-white">{currentComic?.nftId?.currentSupply ? Math.floor(currentComic.nftId.currentSupply * 0.54) : 0}</p>
                   </div>
                 </div>
               </div>
@@ -488,46 +464,7 @@ const MintComicModal: React.FC<MintComicModalProps> = ({
             </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* Sample related comics */}
-              {Array.from({ length: 6 }).map((_, idx) => (
-                <div key={idx} className="group bg-[#111] rounded-xl overflow-hidden border border-white/5 hover:border-white/20 transition-all hover:-translate-y-1 cursor-pointer">
-                  <div className="aspect-video w-full overflow-hidden bg-gray-800 relative">
-                    <img
-                      src={coverImage}
-                      alt="Related Comic"
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </div>
-                  <div className="p-4">
-                    <h4 className="font-bold text-white mb-3 truncate">Related Comic {idx + 1}</h4>
-                    <div className="flex items-end justify-between">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-6 h-6 rounded bg-gray-700 overflow-hidden border border-white/10">
-                          <img
-                            src={author.avatar}
-                            alt="creator"
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        <div>
-                          <p className="text-[10px] text-[#fff]/70">Creator</p>
-                          <p className="text-xs font-medium text-white">{author.name}</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-[10px] text-white/70">Mint Price</p>
-                        <div className="flex text-sm font-bold text-white">
-                          <p>0.09</p>
-                          <span className="text-[10px] align-center">
-                            <img src="/hbar.png" alt="HBAR" />
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
+              <p className="text-white/40 text-sm col-span-3">No related comics found.</p>
             </div>
           </div>
         </div>

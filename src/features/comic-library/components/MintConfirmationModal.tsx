@@ -3,7 +3,6 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
-import { LOCAL_IMAGE } from '@/components/utils/dummy-data'
 import useComicPlatform from '@/hook/useMarkeplace';
 import { useHederaWallet } from '@/providers/HashPackProvider'
 import { useAppDispatch, useAppSelector } from '@/redux/hook'
@@ -25,9 +24,9 @@ const MintConfirmationModal: React.FC<MintConfirmationModalProps> = ({
   onConfirm,
   comicTitle,
   coverImage,
-  price = "0.09 H",
-  edition = "#1 of 1000",
-  walletAddress = "0xA182...C3D4"
+  price = "0",
+  edition = "",
+  walletAddress = ""
 }) => {
   if (!isOpen) return null
 
@@ -77,7 +76,7 @@ const MintConfirmationModal: React.FC<MintConfirmationModalProps> = ({
   };
 
   // fallback image if coverImage is invalid
-  const imageSrc = coverImage && coverImage !== '' ? coverImage : LOCAL_IMAGE
+  const imageSrc = coverImage && coverImage !== '' ? coverImage : "/dev_images/Rectangle3051.png"
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
@@ -124,7 +123,7 @@ const MintConfirmationModal: React.FC<MintConfirmationModalProps> = ({
                   alt={comicTitle}
                   className="w-full h-full object-cover"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).src = LOCAL_IMAGE
+                    (e.target as HTMLImageElement).src = "/dev_images/Rectangle3051.png"
                   }}
                 />
               </div>

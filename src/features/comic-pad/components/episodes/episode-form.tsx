@@ -18,14 +18,15 @@ interface EpisodeFormData {
 }
 
 interface EpisodeFormProps {
-  onClose?: () => void;
-  collectionId?: string;
+  readonly onClose?: () => void;
+  readonly collectionId?: string;
 }
 
 function EpisodeForm({ onClose, collectionId }: EpisodeFormProps) {
   const [showSuccess, setShowSuccess] = useState(false);
   const [episodeData, setEpisodeData] = useState<EpisodeFormData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [formKey, setFormKey] = useState(0);
   
   const handleSuccess = async (data: EpisodeFormData) => {
     setIsLoading(true);
@@ -67,9 +68,9 @@ function EpisodeForm({ onClose, collectionId }: EpisodeFormProps) {
   };
 
   const handleUploadNewEpisode = () => {
-    // Reset form and go back to episode creation
     setShowSuccess(false);
     setEpisodeData(null);
+    setFormKey(prev => prev + 1);
   };
 
   const handleBackToCollection = () => {
@@ -83,7 +84,8 @@ function EpisodeForm({ onClose, collectionId }: EpisodeFormProps) {
   return (
     <div className="w-full h-full">
       {!showSuccess && (
-        <EpisodeFormController 
+        <EpisodeFormController
+          key={formKey}
           onSubmit={handleSuccess}
           onSaveDraft={handleSaveDraft}
           isLoading={isLoading}

@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import CollectionEpisodesPage from '@/features/comic-pad/components/episodes/episode-page';
-import { dummyCollections, genres } from '@/features/comic-pad/mock-data/data';
+
 import EpisodeForm from '@/features/comic-pad/components/episodes/episode-form';
 import GeneralModal from '@/components/modals/GeneralModal';
 import { useAppDispatch } from '@/redux/hook';

@@ -3,7 +3,7 @@
 import GeneralModal from '@/components/modals/GeneralModal';
 import PublishedCollections from '@/features/comic-pad/components/collections/collection-page'
 import CollectionView from '@/features/comic-pad/components/collections/collection-view';
-import { mockCollections } from '@/features/comic-pad/mock-data/data'
+
 import { ApiCollection, mapApiCollectionsToMockFormat, MappedCollection } from '@/features/comic-pad/utils/utils';
 import { useAppDispatch, useAppSelector } from '@/redux/hook';
 import { getUserCollections } from '@/redux/slices/collectionSlice';
