@@ -64,8 +64,8 @@ export default function MainPage() {
     <div className="w-full min-h-full">
       {/* Hero section - Constrained container */}
       <div className="w-full mb-6 sm:mb-8 md:mb-10 lg:mb-12">
-        <div className="w-full max-w-full">
-          <HeroComicSlider comics={heroComics} />
+        <div className="w-full max-w-full ">
+          <HeroComicSlider comics={transformedComics.slice(0, 5)} />
         </div>
       </div>
 

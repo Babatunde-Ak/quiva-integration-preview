@@ -22,7 +22,7 @@ export interface HeroComicData {
 }
 
 interface HeroComicSliderProps {
-  comics: HeroComicData[]
+  comics: any[]
   autoplayDelay?: number
 }
 
@@ -116,7 +116,7 @@ export function HeroComicSlider({
 
   return (
     <section 
-      className="relative w-full h-[400px] sm:h-[500px] md:h-[600px] lg:h-[700px] rounded-t-lg md:rounded-2xl overflow-hidden group"
+      className="relative w-full h-[400px] sm:h-[500px] md:h-[600px] lg:h-[600px] rounded-t-lg md:rounded-2xl overflow-hidden group"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
