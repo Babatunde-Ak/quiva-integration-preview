@@ -198,7 +198,7 @@ const ComicsCarousel: React.FC<ComicsCarouselProps> = ({
             <div className="relative w-full h-full flex items-center justify-center">
               {getVisibleCards().map(({ comic, originalIndex, position, isCenter }) => (
                 <Link 
-                  href={`/marketplace/detail?id=${comic.id}`}
+                  href={`/marketplace/chapter?id=${comic.id}`}
                   key={`${comic.id}-${originalIndex}`}
                   className={`absolute cursor-pointer transform-gpu transition-all duration-700 ease-out ${
                     isCenter ? 'hover:scale-105' : 'hover:scale-95'

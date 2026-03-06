@@ -14,6 +14,7 @@ import {
     getCurrentPhase,
     getNftMetadata,
     getAccountNftsForToken,
+    getAllTokenNfts,
     CampaignInfo,
     DirectListingInfo,
     EpisodeInfo,
@@ -237,6 +238,70 @@ export function useMirrorNodeQueries() {
     }
   }, []);
 
+
+   // get a particular account NFTS
+  const [accountOwnedNftsState, setAccountOwnedNftsState] = useState<QueryState<any>>({
+    data: null,
+    isLoading: false,
+    error: null,
+  });
+
+  const fetchAccountOwnedNfts = useCallback(async (accountId: string) => {
+
+  setAccountOwnedNftsState({ data: null, isLoading: true, error: null });
+
+  try {
+
+    const res = await fetch(
+      `https://testnet.mirrornode.hedera.com/api/v1/accounts/${accountId}/nfts`
+    );
+
+    const data = await res.json();
+
+    setAccountOwnedNftsState({
+      data: data.nfts,
+      isLoading: false,
+      error: null
+    });
+
+    return data.nfts;
+
+  } catch (error: any) {
+
+    setAccountOwnedNftsState({
+      data: null,
+      isLoading: false,
+      error: error.message
+    });
+
+    throw error;
+  }
+
+}, []);
+
+  // ============================================
+  // ALL TOKEN NFTs (ANY OWNER)
+  // ============================================
+  
+  const [tokenNftsState, setTokenNftsState] = useState<QueryState<any>>({
+    data: null,
+    isLoading: false,
+    error: null,
+  });
+
+  const fetchAllTokenNfts = useCallback(async (tokenId: string) => {
+    setTokenNftsState({ data: null, isLoading: true, error: null });
+    try {
+      const data = await getAllTokenNfts(tokenId);
+      setTokenNftsState({ data, isLoading: false, error: null });
+      return data;
+    } catch (error: any) {
+      const errorMessage = error.message || 'Failed to fetch token NFTs';
+      setTokenNftsState({ data: null, isLoading: false, error: errorMessage });
+      throw error;
+    }
+  }, []);
+
   return {
     // Direct Listing
     directListing: directListingState,
@@ -273,6 +338,12 @@ export function useMirrorNodeQueries() {
     // Account NFTs
     accountNfts: accountNftsState,
     fetchAccountNfts,
+    // ACCount owned
+    accountOwnedNfts: accountOwnedNftsState,
+    fetchAccountOwnedNfts,
+    // All Token NFTs
+    tokenNfts: tokenNftsState,
+    fetchAllTokenNfts,
   };
 }
 

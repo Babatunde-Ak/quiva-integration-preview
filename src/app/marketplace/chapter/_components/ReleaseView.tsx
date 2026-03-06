@@ -133,8 +133,10 @@ import { Minus, Plus } from 'lucide-react';
 import { useMirrorNodeQueries } from '@/hook/useMirrorNodeQueries';
 import useComicPlatform, { CampaignType } from '@/hook/useMarkeplace';
 import { useHederaWallet } from '@/providers/HashPackProvider';
-import { useAppSelector } from '@/redux/hook';
+import { useAppDispatch, useAppSelector } from '@/redux/hook';
+import { getComicById } from '@/redux/slices/comicSlice';
 import { useRouter, useSearchParams } from 'next/navigation';
+import MintSuccessModal from '@/components/modals/MintSuccessModal';
 
 interface ReleaseViewProps {
   comicId?: string | null;
@@ -145,6 +147,8 @@ const ReleaseView: React.FC<ReleaseViewProps> = ({ comicId }) => {
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [campaignData, setCampaignData] = useState<any>(null);
   const [currentPhaseData, setCurrentPhaseData] = useState<any>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [lastMintedQuantity, setLastMintedQuantity] = useState(0);
 
   const router = useRouter();
   // Accept comicId as prop, fallback to searchParams if not provided
@@ -155,6 +159,7 @@ const ReleaseView: React.FC<ReleaseViewProps> = ({ comicId }) => {
   const { account, signer, isConnected } = useHederaWallet();
   const { user } = useAppSelector((state: any) => state.wallet);
   const { currentComic } = useAppSelector((state: any) => state.comic);
+  const dispatch = useAppDispatch();
 
   // Mirror Node queries
   const {
@@ -243,10 +248,20 @@ const ReleaseView: React.FC<ReleaseViewProps> = ({ comicId }) => {
 
       console.log('✅ Mint successful:', result);
       
+      // Store the minted quantity and show success modal
+      setLastMintedQuantity(mintAmount);
+      setShowSuccessModal(true);
+      
       // Refresh campaign data after minting
       await fetchCampaign(parseInt(currentComic.nftId.campaignId));
       
-      // Reset mint amount
+      // 🔄 IMPORTANT: Refresh currentComic Redux state so ComicsView refetches NFTs from Mirror Node
+      if (effectiveComicId) {
+        console.log('🔄 Refreshing currentComic state to trigger NFT refetch in ComicsView...');
+        await dispatch(getComicById({id: effectiveComicId} as any)).unwrap();
+      }
+      
+      // Reset mint amount for next mint
       setMintAmount(1);
 
     } catch (error: any) {
@@ -254,6 +269,20 @@ const ReleaseView: React.FC<ReleaseViewProps> = ({ comicId }) => {
     } finally {
       setIsPurchasing(false);
     }
+  };
+
+  // Handle mint more button
+  const handleMintMore = () => {
+    setShowSuccessModal(false);
+    // Mint amount is already reset to 1
+    setMintAmount(1);
+  };
+
+  // Handle read comic button
+  const handleReadComic = () => {
+    setShowSuccessModal(false);
+    // Navigate to the comic reader
+    router.push(`/read/${comicId}`);
   };
 
   // Get campaign type label
@@ -547,6 +576,18 @@ const ReleaseView: React.FC<ReleaseViewProps> = ({ comicId }) => {
           </pre>
         </div>
       )}
+
+      {/* Mint Success Modal */}
+      <MintSuccessModal
+        isOpen={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        onMintMore={handleMintMore}
+        onReadComic={handleReadComic}
+        comicTitle={currentComic?.title || "Comic"}
+        comicImage={currentComic?.bannerImage || "/dev_images/avatar-2.png"}
+        mintedQuantity={lastMintedQuantity}
+        totalMinted={campaignData?.totalMinted || 0}
+      />
     </div>
   );
 };

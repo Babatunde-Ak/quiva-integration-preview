@@ -201,28 +201,56 @@ class MirrorNodeService {
   }
 
   /**
+   * Get all NFTs for a specific token (all instances, any owner)
+   */
+  async getTokenNfts(tokenId: string, limit: number = 1000): Promise<any> {
+    try {
+      const url = `${this.baseUrl}/api/v1/tokens/${tokenId}/nfts?limit=${limit}`;
+      
+      console.log('📡 Mirror Node request (all token NFTs):', url);
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        throw new Error(`Failed to get token NFTs: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('📦 Mirror Node response (all token NFTs):', data);
+      return data;
+    } catch (error) {
+      console.error('Error fetching token NFTs:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Get account NFTs
    */
   async getAccountNfts(accountId: string, tokenId?: string): Promise<any> {
     try {
-      let url = `${this.baseUrl}/api/v1/accounts/${accountId}/nfts`;
+      let url = `${this.baseUrl}/api/v1/accounts/${accountId}/nfts?limit=1000`;
       if (tokenId) {
-        url += `?token.id=${tokenId}`;
+        url += `&token.id=${tokenId}`;
       }
 
+      console.log('📡 Mirror Node request:', url);
       const response = await fetch(url);
 
       if (!response.ok) {
         throw new Error(`Failed to get account NFTs: ${response.statusText}`);
       }
 
-      return await response.json();
+      const data = await response.json();
+      console.log('📦 Mirror Node full response:', data);
+      return data;
     } catch (error) {
       console.error('Error fetching account NFTs:', error);
       throw error;
     }
   }
 
+
+    
   /**
    * Get transaction info
    */

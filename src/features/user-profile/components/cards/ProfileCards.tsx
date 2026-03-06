@@ -275,12 +275,25 @@ export const ListedComicCard = ({
     image, 
     number = 1,
     isListed = true,
+    listingId,
+    bannerImage,
     onCardClick
 }) => {
+    const router = useRouter();
+
+    const handleCardClick = () => {
+        if (listingId) {
+            // Navigate to chapter page with comics tab to show direct listing
+            router.push(`/marketplace/chapter?id=${id}&tab=comics`);
+        } else if (onCardClick) {
+            onCardClick(id);
+        }
+    };
+
     return (
         <motion.div 
             className="w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[360px] bg-black-200 rounded-xl overflow-hidden cursor-pointer p-3 sm:p-4 border-[2px] border-black-50 shadow-[4px_4px_0_0_black] hover:shadow-[6px_6px_0_0_black] transition-all duration-200 mx-auto"
-            onClick={() => onCardClick?.(id)}
+            onClick={handleCardClick}
         >
             {/* Image Container */}
             <div className="relative">

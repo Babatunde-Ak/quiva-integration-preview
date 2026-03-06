@@ -331,6 +331,35 @@ export async function getAccountNftsForToken(accountId: string, tokenId: string)
   }
 }
 
+/**
+ * Get all NFTs minted from a specific token (contract)
+ */
+export async function getAllTokenNfts(tokenId: string): Promise<any> {
+  try {
+    console.log(`📖 Fetching ALL NFTs for token ${tokenId}...`);
+
+    const nfts = await mirrorNodeService.getTokenNfts(tokenId);
+    
+    console.log('✅ All Token NFTs:', nfts);
+    return nfts;
+  } catch (error) {
+    console.error('❌ Error fetching all token NFTs:', error);
+    throw error;
+  }
+}
+
+
+export async function getAccountNfts(accountId: string) {
+  try {    console.log(`📖 Fetching NFTs for account ${accountId}...`);
+    const nfts = await mirrorNodeService.getAccountNfts(accountId);
+    
+    console.log('✅ Account NFTs:', nfts);
+    return nfts;
+  } catch (error) {
+    console.error('❌ Error fetching account NFTs:', error);
+    throw error;
+  }
+}
 export default {
   getDirectListingInfo,
   getEpisodeInfo,
@@ -341,4 +370,5 @@ export default {
   getCurrentPhase,
   getNftMetadata,
   getAccountNftsForToken,
+  getAllTokenNfts,
 };
