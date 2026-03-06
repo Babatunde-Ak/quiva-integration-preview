@@ -4,23 +4,27 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { CurrentReadCard, MintedComicCard, FavoriteComicCard, ListedComicCard } from './cards/ProfileCards';
 import EmptyState from './states/EmptyState';
-import { mockUserComics } from '../utils/userData';
 import { MainButton } from '@/components/button';
 import { useAppSelector, useAppDispatch } from '@/redux/hook';
 import { getUserProfile } from '@/redux/slices/authSlice';
+import { getUserComics, selectUserComics, selectIsLoading } from '@/redux/slices/comicSlice';
 
 const UserProfile = ({ onEditProfile, onComicAction }) => {
     const router = useRouter();
     const dispatch = useAppDispatch();
     const authUser = useAppSelector((state) => state.auth?.user?.data);
     const profileData = useAppSelector((state) => state.auth?.profile?.data);
+    const userComicsData = useAppSelector(selectUserComics);
 
     const userData = profileData?.user || profileData || authUser;
+
+    const mintedComicsList = userComicsData?.data?.comics?.data ?? [];
 
     useEffect(() => {
         if (authUser?._id) {
             dispatch(getUserProfile(authUser._id));
         }
+        dispatch(getUserComics());
     }, [authUser?._id, dispatch]);
 
     const formatJoinDate = (dateString) => {
@@ -44,7 +48,7 @@ const UserProfile = ({ onEditProfile, onComicAction }) => {
         }
     };
 
-    const comics = mockUserComics;
+    const comics = {};
     const [activeTab, setActiveTab] = useState('currentReads');
 
     const tabs = [
@@ -99,11 +103,35 @@ const UserProfile = ({ onEditProfile, onComicAction }) => {
     };
 
     const renderComicsList = () => {
+        if (activeTab === 'mintedComics') {
+            if (mintedComicsList.length === 0) {
+                return <EmptyState type={activeTab} onAction={handleEmptyStateAction} />;
+            }
+            return (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6 justify-items-center">
+                    {mintedComicsList.map((comic, index) => (
+                        <MintedComicCard
+                            key={comic._id || index}
+                            id={comic._id}
+                            title={comic.title}
+                            creator={comic.creatorId?.username ?? 'Creator'}
+                            creatorAvatar={comic.creatorId?.avatar}
+                            mintPrice={comic.nftId?.price ?? 0}
+                            views={comic.views ?? 0}
+                            image={comic.bannerImage}
+                            number={comic.episodeNumber}
+                            onCardClick={handleCardClick}
+                        />
+                    ))}
+                </div>
+            );
+        }
+
         const currentComics = comics[activeTab] || [];
 
         if (currentComics.length === 0) {
             return (
-                <EmptyState 
+                <EmptyState
                     type={activeTab}
                     onAction={handleEmptyStateAction}
                 />
@@ -123,19 +151,6 @@ const UserProfile = ({ onEditProfile, onComicAction }) => {
                                     onComicAction?.(comic, 'read');
                                     router.push(`/read/${comic.id}`);
                                 }}
-                            />
-                        ))}
-                    </div>
-                );
-
-            case 'mintedComics':
-                return (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6 justify-items-center">
-                        {currentComics.map((comic, index) => (
-                            <MintedComicCard
-                                key={comic.id || index}
-                                {...comic}
-                                onCardClick={handleCardClick}
                             />
                         ))}
                     </div>
