@@ -7,6 +7,7 @@ import { TopComicsTable } from '@/features/comic-library/components/TopComicsTab
 import { useAppDispatch, useAppSelector } from "@/redux/hook"
 import { getAllComics } from "@/redux/slices/comicSlice"
 import { useEffect, useMemo } from "react"
+import { useRouter } from "next/navigation"
 import { transformApiComicsToComics } from '@/features/comic-library/utils/transformComicData'
 import { transformApiComicsToTopComics } from '@/features/comic-library/utils/transformtopcomicsdata'
 import ComicsCarousel from '@/features/comic-library/components/ComicsCarousel'
@@ -17,6 +18,7 @@ import { SortComicSection } from '@/features/comic-library/components/sections/S
 export default function MainPage() {
   const { comics, isLoading } = useAppSelector((state: any) => state.comic)
   const dispatch = useAppDispatch()
+  const router = useRouter()
   
   useEffect(() => {
     dispatch(getAllComics())
@@ -27,6 +29,13 @@ export default function MainPage() {
     if (!comics?.data?.comics?.data) return []
     return transformApiComicsToComics(comics.data.comics.data)
   }, [comics])
+
+  // Only minted comics (drops) appear in the hero slider
+  const dropComics = useMemo(() => transformedComics.filter((c: any) => c.isMinted), [transformedComics])
+
+  const handleSliderComicClick = (comic: any) => {
+    router.push(`/marketplace/chapter?id=${comic.id}&tab=Release`)
+  }
 
   // Transform API comics to TopComic format for the table
   const topNftComics = useMemo(() => {
@@ -51,7 +60,7 @@ export default function MainPage() {
       {/* Hero section - Constrained container */}
       <div className="w-full mb-6 sm:mb-8 md:mb-10 lg:mb-12">
         <div className="w-full max-w-full">
-          <HeroComicSlider comics={transformedComics.slice(0, 5)} />
+          <HeroComicSlider comics={dropComics.slice(0, 5)} onComicClick={handleSliderComicClick} />
         </div>
       </div>
 

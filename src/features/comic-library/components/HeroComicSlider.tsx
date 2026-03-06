@@ -25,11 +25,13 @@ export interface HeroComicData {
 interface HeroComicSliderProps {
   comics: any[]
   autoplayDelay?: number
+  onComicClick?: (comic: any) => void
 }
 
-export function HeroComicSlider({ 
-  comics, 
-  autoplayDelay = 5000 
+export function HeroComicSlider({
+  comics,
+  autoplayDelay = 5000,
+  onComicClick
 }: HeroComicSliderProps) {
   const [currentSlide, setCurrentSlide] = useState(0)
   const [isAutoPlaying, setIsAutoPlaying] = useState(true)
@@ -245,7 +247,7 @@ export function HeroComicSlider({
 
             {/* Action Button */}
             <motion.div variants={itemVariants}>
-              <MainButton>
+              <MainButton onClick={() => onComicClick?.(currentComic)}>
                 {currentComic.buttonText || 'View'}
               </MainButton>
             </motion.div>
