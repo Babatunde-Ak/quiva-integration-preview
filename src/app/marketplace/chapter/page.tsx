@@ -151,12 +151,12 @@ import { getCollectionById } from '@/redux/slices/collectionSlice';
 import { useSearchParams, useRouter } from 'next/navigation';
 
 const Marketplace = () => {
-  const [activeTab, setActiveTab] = useState('Comics');
-
   const searchParams = useSearchParams();
   const router = useRouter();
   const comicId = searchParams.get('id');
   const tabParam = searchParams.get('tab');
+
+  const [activeTab, setActiveTab] = useState(tabParam || 'Comics');
 
   const dispatch = useAppDispatch();
 

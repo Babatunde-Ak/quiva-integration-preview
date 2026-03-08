@@ -7,13 +7,13 @@ import { TopComicsTable } from '@/features/comic-library/components/TopComicsTab
 import { useAppDispatch, useAppSelector } from "@/redux/hook"
 import { getAllComics } from "@/redux/slices/comicSlice"
 import { useEffect, useMemo } from "react"
+import { useRouter } from "next/navigation"
 import { transformApiComicsToComics } from '@/features/comic-library/utils/transformComicData'
 import { transformApiComicsToTopComics } from '@/features/comic-library/utils/transformtopcomicsdata'
 import ComicsCarousel from '@/features/comic-library/components/ComicsCarousel'
 import { GridSection } from '@/features/comic-library/components/sections/GridSection'
 import { popularFilters } from '@/features/comic-library/data/content'
 import { SortComicSection } from '@/features/comic-library/components/sections/SortComicSection'
-import { useRouter } from 'next/navigation'
 
 export default function MainPage() {
   const { comics, isLoading } = useAppSelector((state: any) => state.comic)
@@ -30,17 +30,23 @@ export default function MainPage() {
     return transformApiComicsToComics(comics.data.comics.data)
   }, [comics])
 
+  // Only minted comics (drops) appear in the hero slider
+  const dropComics = useMemo(() => transformedComics.filter((c: any) => c.isMinted), [transformedComics])
+
+  const handleSliderComicClick = (comic: any) => {
+    router.push(`/marketplace/chapter?id=${comic.id}&tab=Release`)
+  }
+
   // Filter comics with campaignId for "Get all you can read" section
   const campaignComics = useMemo(() => {
     const filtered = transformedComics.filter(comic => {
-      const hasCampaign = typeof comic.nftId === 'object' && 
-                         comic.nftId?.campaignId !== undefined && 
+      const hasCampaign = typeof comic.nftId === 'object' &&
+                         comic.nftId?.campaignId !== undefined &&
                          comic.nftId?.campaignId !== null &&
                          comic.nftId?.campaignId !== '';
       return hasCampaign;
     });
-    
-    // Debug logging
+
     if (process.env.NODE_ENV === 'development') {
       console.log('=== Campaign Comics Debug ===');
       console.log('Total transformed comics:', transformedComics.length);
@@ -50,7 +56,6 @@ export default function MainPage() {
       if (filtered.length > 0) {
         console.log('Sample campaign comic:', filtered[0]);
       }
-      // Log all comics with their campaign status
       transformedComics.slice(0, 3).forEach((comic, idx) => {
         const nftIdType = typeof comic.nftId;
         const campaignId = typeof comic.nftId === 'object' && comic.nftId ? comic.nftId.campaignId : undefined;
@@ -63,7 +68,7 @@ export default function MainPage() {
         });
       });
     }
-    
+
     return filtered;
   }, [transformedComics, comics]);
 
@@ -90,7 +95,7 @@ export default function MainPage() {
       {/* Hero section - Constrained container */}
       <div className="w-full mb-6 sm:mb-8 md:mb-10 lg:mb-12">
         <div className="w-full max-w-full">
-          <HeroComicSlider comics={transformedComics.slice(0, 5)} />
+          <HeroComicSlider comics={dropComics.slice(0, 5)} onComicClick={handleSliderComicClick} />
         </div>
       </div>
 
@@ -99,10 +104,10 @@ export default function MainPage() {
         {/* Comics Carousel Section - "Get all you can read" */}
         <div className="w-full">
           <div className="max-w-full">
-            <div className="mb-4 px-4 sm:px-6 md:px-8">
+            {/* <div className="mb-4 px-4 sm:px-6 md:px-8">
               <h2 className="text-2xl sm:text-3xl font-bold mb-1">Get all you can read</h2>
               <p className="text-white/70 text-sm">Discover our latest releases available now</p>
-            </div>
+            </div> */}
             <ComicsCarousel
               comics={campaignComics.length > 0 ? campaignComics : transformedComics.slice(0, 10)}
               autoPlayInterval={4000}

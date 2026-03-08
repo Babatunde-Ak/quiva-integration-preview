@@ -10,14 +10,15 @@ import { useAppSelector, useAppDispatch } from '@/redux/hook';
 import { getUserProfile } from '@/redux/slices/authSlice';
 import useMirrorNodeQueries from '@/hook/useMirrorNodeQueries';
 import { useHederaWallet } from '@/providers/HashPackProvider';
+import { getUserComics } from '@/redux/slices/comicSlice';
 
 const UserProfile = ({ onEditProfile, onComicAction }) => {
     const router = useRouter();
     const dispatch = useAppDispatch();
     const authUser = useAppSelector((state) => state.auth?.user?.data);
     const profileData = useAppSelector((state) => state.auth?.profile?.data);
-    const { comics, isLoading  } = useAppSelector((state: any) => state.comic);
-    const {currentComic} = useAppSelector((state: any) => state.comic);
+    const { comics, isLoading } = useAppSelector((state: any) => state.comic);
+    const { currentComic } = useAppSelector((state: any) => state.comic);
 
     const userData = profileData?.user || profileData || authUser;
 
@@ -38,11 +39,11 @@ const UserProfile = ({ onEditProfile, onComicAction }) => {
     // Mock data for current reads
     const [currentReads] = useState([]);
 
-    // Fetch user profile
     useEffect(() => {
         if (authUser?._id) {
             dispatch(getUserProfile(authUser._id));
         }
+        dispatch(getUserComics());
     }, [authUser?._id, dispatch]);
 
     // Fetch user's minted NFTs when on minted comics tab
@@ -55,7 +56,6 @@ const UserProfile = ({ onEditProfile, onComicAction }) => {
     // Helper function to normalize token IDs for comparison
     const normalizeTokenId = (tokenId: string): string => {
         if (!tokenId) return '';
-        // Remove whitespace and convert to lowercase for comparison
         return tokenId.toString().trim().toLowerCase();
     };
 
@@ -68,20 +68,17 @@ const UserProfile = ({ onEditProfile, onComicAction }) => {
         setIsLoadingNfts(true);
         try {
             console.log('🔍 Fetching NFTs for wallet:', userWalletAddress);
-            
-            // Fetch ALL NFTs owned by this user
+
             const nftsResponse = await fetchAccountNfts(userWalletAddress, undefined);
-            
+
             console.log('📦 NFTs response:', nftsResponse);
 
             if (nftsResponse?.nfts && Array.isArray(nftsResponse.nfts)) {
-                // Get all comic tokens from Redux
                 const allComics = comics?.data?.comics?.data || [];
-                
+
                 console.log('📚 All comics from Redux:', allComics);
                 console.log('📚 Comics count:', allComics.length);
 
-                // Get token IDs from comics with normalization
                 const comicTokenIds = allComics
                     .filter((comic: any) => comic.nftId?.tokenId)
                     .map((comic: any) => ({
@@ -94,58 +91,51 @@ const UserProfile = ({ onEditProfile, onComicAction }) => {
                 comicTokenIds.forEach(item => {
                     console.log(`  - Original: "${item.original}" | Normalized: "${item.normalized}" | Comic: "${item.comic.title}"`);
                 });
-                
-                // Get token IDs from user's NFTs with normalization
+
                 const userNftTokenIds = nftsResponse.nfts.map((nft: any) => ({
                     original: nft.token_id,
                     normalized: normalizeTokenId(nft.token_id),
                     nft: nft
                 }));
-                
+
                 console.log('🎯 User NFT token IDs from wallet:');
                 userNftTokenIds.forEach(item => {
                     console.log(`  - Original: "${item.original}" | Normalized: "${item.normalized}"`);
                 });
 
-                // Create a Set of normalized comic token IDs for fast lookup
                 const normalizedComicTokenSet = new Set(
                     comicTokenIds.map(item => item.normalized)
                 );
 
                 console.log('🔍 Normalized comic token set:', Array.from(normalizedComicTokenSet));
 
-                // Filter NFTs to ONLY include ones from your comic collection
                 const userComicNfts = nftsResponse.nfts.filter((nft: any) => {
                     const normalizedNftToken = normalizeTokenId(nft.token_id);
                     const isMatch = normalizedComicTokenSet.has(normalizedNftToken);
-                    
+
                     console.log(`🔎 Checking NFT ${nft.token_id}:`, {
                         normalized: normalizedNftToken,
                         isMatch: isMatch
                     });
-                    
+
                     return isMatch;
                 });
 
                 console.log('✅ Filtered comic NFTs (ONLY platform NFTs):', userComicNfts);
                 console.log('✅ Filtered count:', userComicNfts.length);
 
-                // ✅ ONLY show matched NFTs from your platform
                 const nftsToDisplay = userComicNfts;
                 console.log('🎨 NFTs to display (platform only):', nftsToDisplay);
 
-                // Map NFTs to comic data
                 const mappedNfts = nftsToDisplay.map((nft: any) => {
                     const normalizedNftToken = normalizeTokenId(nft.token_id);
-                    
-                    // Find the corresponding comic using normalized comparison
-                    const comicMatch = comicTokenIds.find(item => 
+
+                    const comicMatch = comicTokenIds.find(item =>
                         item.normalized === normalizedNftToken
                     );
-                    
+
                     const comic = comicMatch?.comic;
 
-                    // Parse metadata if it's a string
                     let parsedMetadata = nft.metadata;
                     if (typeof parsedMetadata === 'string') {
                         try {
@@ -155,33 +145,23 @@ const UserProfile = ({ onEditProfile, onComicAction }) => {
                         }
                     }
 
-                    // 🖼️ Get image with priority order
                     const getImage = () => {
-                        // Priority 1: Comic banner image from database
                         if (comic?.bannerImage) {
                             console.log(`✅ Using comic banner for ${nft.token_id}:`, comic.bannerImage);
                             return comic.bannerImage;
                         }
-                        
-                        // Priority 2: NFT metadata image
                         if (parsedMetadata?.image) {
                             console.log(`✅ Using NFT metadata image for ${nft.token_id}:`, parsedMetadata.image);
                             return parsedMetadata.image;
                         }
-                        
-                        // Priority 3: Alternative metadata fields
                         if (parsedMetadata?.image_url) {
                             console.log(`✅ Using NFT image_url for ${nft.token_id}:`, parsedMetadata.image_url);
                             return parsedMetadata.image_url;
                         }
-                        
-                        // Priority 4: Check if metadata has a direct URL
                         if (typeof parsedMetadata === 'string' && parsedMetadata.startsWith('http')) {
                             console.log(`✅ Using metadata URL for ${nft.token_id}:`, parsedMetadata);
                             return parsedMetadata;
                         }
-                        
-                        // Fallback: Default image
                         console.log(`⚠️ No image found for ${nft.token_id}, using default`);
                         return '/dev_images/avatar-2.png';
                     };
@@ -207,21 +187,18 @@ const UserProfile = ({ onEditProfile, onComicAction }) => {
                         serialNumber: nft.serial_number,
                         metadata: parsedMetadata,
                         comic: comic,
-                        // For MintComicCard props
                         creator: comic?.creatorId?.displayName || comic?.creatorId?.username || parsedMetadata?.creator || 'Unknown Creator',
                         creatorAvatar: comic?.creatorId?.avatar || parsedMetadata?.creator_avatar,
                         mintPrice: comic?.nftId?.price?.toFixed(2) || '0',
                         currentPrice: comic?.nftId?.price?.toFixed(2) || '0',
                         views: comic?.views?.toString() || '0',
                         number: nft.serial_number,
-                        // All displayed NFTs are matched since we filtered
                         isMatched: true
                     };
                 });
 
                 setMintedNfts(mappedNfts);
-                
-                // Set debug info
+
                 setDebugInfo({
                     totalNftsInWallet: nftsResponse.nfts.length,
                     comicsInDatabase: allComics.length,
@@ -299,12 +276,10 @@ const UserProfile = ({ onEditProfile, onComicAction }) => {
 
     const handleComicClick = (nft: any) => {
         console.log('🎯 Comic NFT clicked:', nft);
-        
+
         if (nft.id && !nft.id.startsWith('platform-')) {
-            // Navigate to read page
             router.push(`/read/${nft.id}`);
         } else {
-            // Fallback: show details
             router.push(`/marketplace`);
         }
     };
@@ -314,7 +289,7 @@ const UserProfile = ({ onEditProfile, onComicAction }) => {
         if (activeTab === 'currentReads') {
             if (currentReads.length === 0) {
                 return (
-                    <EmptyState 
+                    <EmptyState
                         type="currentReads"
                         onAction={handleEmptyStateAction}
                     />
@@ -355,10 +330,9 @@ const UserProfile = ({ onEditProfile, onComicAction }) => {
 
             if (!userWalletAddress) {
                 return (
-                    <EmptyState 
+                    <EmptyState
                         type="mintedComics"
                         onAction={handleEmptyStateAction}
-                        // customMessage="Connect your wallet to see your minted comics"
                     />
                 );
             }
@@ -366,16 +340,15 @@ const UserProfile = ({ onEditProfile, onComicAction }) => {
             if (mintedNfts.length === 0) {
                 return (
                     <div className="space-y-4">
-                        <EmptyState 
+                        <EmptyState
                             type="mintedComics"
                             onAction={handleEmptyStateAction}
                         />
-                        
-                        {/* Debug info if available */}
+
                         {debugInfo && debugInfo.totalNftsInWallet > 0 && (
                             <div className="bg-yellow-900/20 border border-yellow-500/50 rounded-lg p-4">
                                 <p className="text-yellow-400 text-sm mb-2">
-                                    ℹ️ You have {debugInfo.totalNftsInWallet} NFT{debugInfo.totalNftsInWallet !== 1 ? 's' : ''} in your wallet, 
+                                    ℹ️ You have {debugInfo.totalNftsInWallet} NFT{debugInfo.totalNftsInWallet !== 1 ? 's' : ''} in your wallet,
                                     but none are from Quiva comics.
                                 </p>
                                 <p className="text-yellow-400/70 text-xs">
@@ -389,7 +362,6 @@ const UserProfile = ({ onEditProfile, onComicAction }) => {
 
             return (
                 <div className="space-y-4">
-                    {/* Info message */}
                     <div className="bg-green-900/20 border border-green-500/50 rounded-lg p-4">
                         <p className="text-green-400 text-sm flex items-center gap-2">
                             <span>✓</span>
@@ -402,13 +374,11 @@ const UserProfile = ({ onEditProfile, onComicAction }) => {
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6 justify-items-center">
                         {mintedNfts.map((nft, index) => (
                             <div key={nft.nftId || index} className="relative">
-                                {/* Platform Badge */}
                                 <div className="absolute top-2 left-2 z-20 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg flex items-center gap-1">
                                     <span>✓</span>
                                     <span>Quiva</span>
                                 </div>
-                                
-                                {/* Serial Number Badge */}
+
                                 <div className="absolute top-2 right-2 z-20 bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
                                     #{nft.serialNumber}
                                 </div>
@@ -433,7 +403,7 @@ const UserProfile = ({ onEditProfile, onComicAction }) => {
 
         // Other tabs
         return (
-            <EmptyState 
+            <EmptyState
                 type={activeTab}
                 onAction={handleEmptyStateAction}
             />
@@ -442,7 +412,7 @@ const UserProfile = ({ onEditProfile, onComicAction }) => {
 
     return (
         <div className="min-h-screen bg-background-primary text-text-primary font-space relative overflow-x-hidden">
-            
+
             {/* Header Section */}
             <div className="relative px-4 sm:px-6 lg:px-16 py-6 sm:py-8 mx-auto">
                 <div className="absolute inset-0">
@@ -455,7 +425,7 @@ const UserProfile = ({ onEditProfile, onComicAction }) => {
                 </div>
 
                 <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 relative z-10'>
-                    
+
                     <div className='flex flex-col justify-center'>
                         <div className='flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left'>
                             <div className="relative flex-shrink-0 mb-4 sm:mb-0">
@@ -487,8 +457,8 @@ const UserProfile = ({ onEditProfile, onComicAction }) => {
                             </div>
                         </div>
 
-                        <MainButton 
-                            onClick={() => handleEmptyStateAction('browse')} 
+                        <MainButton
+                            onClick={() => handleEmptyStateAction('browse')}
                             className="mt-4 sm:mt-6 w-full sm:max-w-52 rounded-md py-2 text-sm sm:text-base"
                         >
                             Quiva Comics: {user.stats.totalComics}
@@ -502,7 +472,7 @@ const UserProfile = ({ onEditProfile, onComicAction }) => {
                                 onClick={onEditProfile}
                             >
                                 Edit Profile
-                                <img 
+                                <img
                                     src={'/penline.svg'}
                                     alt="Edit"
                                     className="w-3 h-3 sm:w-4 sm:h-4 object-cover transition-all duration-1000 ease-in-out"
@@ -535,7 +505,7 @@ const UserProfile = ({ onEditProfile, onComicAction }) => {
                     {tabs.map((tab) => (
                         <button
                             key={tab.key}
-                            className={`py-1.5 sm:py-2 px-3 sm:px-4 rounded-full text-sm sm:text-base text-black-100 font-light whitespace-nowrap border transition-all duration-300 relative hover:text-white hover:bg-primary-secondary-200 hover:bg-opacity-5 
+                            className={`py-1.5 sm:py-2 px-3 sm:px-4 rounded-full text-sm sm:text-base text-black-100 font-light whitespace-nowrap border transition-all duration-300 relative hover:text-white hover:bg-primary-secondary-200 hover:bg-opacity-5
                                 ${activeTab === tab.key
                                     ? 'text-primary-secondary-200 border-secondary-200 bg-secondary-200'
                                     : 'text-white border-transparent hover:bg-secondary-200 hover:bg-opacity-5'
@@ -550,7 +520,7 @@ const UserProfile = ({ onEditProfile, onComicAction }) => {
                             )}
                         </button>
                     ))}
-                </div>  
+                </div>
             </div>
 
             {/* Content Section */}
