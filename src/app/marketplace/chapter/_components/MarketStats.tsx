@@ -1,15 +1,53 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Image from 'next/image';
 import { Eye, Heart } from 'lucide-react';
 import { useAppSelector } from '@/redux/hook';
+import {useMirrorNodeQueries} from '@/hook/useMirrorNodeQueries';
 
 const MarketStats = () => {
   const { currentComic, isLoading } = useAppSelector((state: any) => state.comic);
+  const [campaignData, setCampaignData] = React.useState(null);
+  const { fetchCampaign, fetchCurrentPhase } = useMirrorNodeQueries();
+
+  useEffect(() => {
+      const loadCampaignData = async () => {
+        // FIXED: Check if campaignId exists and is not null/empty
+        const campaignId = currentComic?.nftId?.campaignId;
+        
+        if (!campaignId || campaignId === null || campaignId === '') {
+          console.log('📊 No campaignId found for this comic');
+          setCampaignData(null);
+          return;
+        }
+  
+        try {
+          console.log('📊 Fetching campaign data for ID:', campaignId);
+          
+          // Fetch campaign info
+          const campaignInfo = await fetchCampaign(parseInt(campaignId));
+          setCampaignData(campaignInfo);
+          
+          // If it's a scheduled campaign, fetch current phase
+          // if (campaignInfo?.campaignType === CampaignType.SCHEDULED) {
+          //   const phase = await fetchCurrentPhase(parseInt(campaignId));
+          //   setCurrentPhaseData(phase);
+          // }
+        } catch (error) {
+          console.error('Error fetching campaign data:', error);
+          setCampaignData(null);
+        }
+      };
+  
+      if (currentComic) {
+        loadCampaignData();
+      }
+    }, [currentComic, fetchCampaign]);
+  
 
   // Extract NFT data with fallbacks
   const nftData = currentComic?.nftId || {};
   const totalSupply = nftData?.maxSupply?.toLocaleString() || "N/A";
-  const currentSupply = nftData?.currentSupply?.toLocaleString() || "0";
+  const MintedSupply = campaignData?.totalMinted?.toLocaleString() || "0";
   const floorPrice = nftData?.price?.toFixed(2) || "0.00";
   const views = currentComic?.views?.toLocaleString() || "0";
   const likes = currentComic?.likes?.toLocaleString() || "0";
@@ -24,7 +62,7 @@ const MarketStats = () => {
 
   const stats = [
     { label: "Total Supply", value: totalSupply },
-    { label: "Minted", value: currentSupply },
+    { label: "Minted", value: MintedSupply },
     { 
       label: "Floor Price", 
       value: floorPrice, 

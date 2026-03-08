@@ -479,6 +479,8 @@ const ListView: React.FC<ListViewProps> = ({
                 comicId: episodeId,
                 tokenId: collectionData.tokenId,
                 listingId: mintingData.listingId || '',
+                campaignId: null,
+                campaignType: null,
                 price: parseFloat(flowData.listing!.price),
                 serial: mintingData.serials[0] || 0,
                 transactionId: mintingData.transactionId || '',

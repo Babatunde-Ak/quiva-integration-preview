@@ -13,6 +13,7 @@ import {
 } from "@hashgraph/sdk";
 import { useComicInscription } from "./useComicInscription";
 import { ethers } from 'ethers';
+import MirrorNodeService  from "./MirrorNodeService";
 
 // Define the ABI for your function
 const abi = [
@@ -32,8 +33,6 @@ const abi = [
 const CONTRACTS = {
   COMIC_CORE: "0.0.7806656",
    COMIC_SALES: "0.0.7829668",
-  // COMIC_SALES: "0.0.7806676",
-  // COMIC_MARKETPLACE: "0.0.7806693"
   COMIC_MARKETPLACE: "0.0.7829656"
 }
 
@@ -48,6 +47,11 @@ export enum CampaignType {
   WHITELIST = 1,
   SCHEDULED = 2
 }
+// export enum CampaignType {
+//   PUBLIC = "Public",
+//   WHITELIST = "Whitelist",
+//   SCHEDULED = "Scheduled"
+// }
 
 export enum PhaseType {
   WHITELIST = 0,
@@ -59,6 +63,7 @@ export function useComicPlatform({
   signer,
   network = "testnet"
 }: UseComicPlatformProps) {
+  const mirrorNodeService = new MirrorNodeService(network);
   
   const [status, setStatus] = useState<"idle" | "processing" | "done" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
@@ -486,7 +491,7 @@ export function useComicPlatform({
       const tx = new ContractExecuteTransaction()
         .setContractId(CONTRACTS.COMIC_SALES)
         .setTransactionId(TransactionId.generate(AccountId.fromString(accountId)))
-        .setGas(3000000)
+        .setGas(4000000)
         .setFunction(
           "createCampaign",
           new ContractFunctionParameters()
@@ -501,14 +506,28 @@ export function useComicPlatform({
       const response = await executeWithSigner(tx);
       const txIdStr = response.transactionId.toString();
       const receipt = await response.getReceipt(getClient());
-
-      console.log("✅ Campaign created!");
+        await new Promise(resolve => setTimeout(resolve, 5000));
+      const txIdFormatted = formatTxIdForMirror(txIdStr);
+      const mirrorResponse = await fetch(
+        `${getMirrorNodeUrl()}/api/v1/contracts/results/${txIdFormatted}`
+      );
+      const mirrorData = await mirrorResponse.json();
+      console.log("Mirror Node data:", mirrorData);
+      
+      let campaignId: string | undefined;
+      if (mirrorData?.call_result) {
+        campaignId = BigInt("0x" + mirrorData.call_result.slice(2)).toString();
+      }
+      console.log("🎉 New Campaign ID:", campaignId);
       setTxId(txIdStr);
       setStatus("done");
+      console.log("✅ Campaign created!");
+     
 
       return {
         transactionId: txIdStr,
         status: receipt.status.toString(),
+        campaignId: campaignId
       };
     } catch (err: any) {
       console.error("❌ Campaign creation failed:", err);
@@ -912,8 +931,8 @@ export function useComicPlatform({
     const encodedData = abiInterface.encodeFunctionData('canReadComic', [episodeId, userAddress]);
 
     // Convert contract ID to EVM address (e.g., 0.0.1234 → 0x00000000000000000000000000000000000004d2)
-    const contractAddress = ContractId.fromString(CONTRACTS.COMIC_CORE).toEvmAddress();
-
+    // const contractAddress = ContractId.fromString(CONTRACTS.COMIC_CORE).toEvmAddress();
+const contractAddress = mirrorNodeService.hederaIdToEvmAddress(CONTRACTS.COMIC_CORE);
     const response = await fetch('https://testnet.mirrornode.hedera.com/api/v1/contracts/call', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1014,10 +1033,17 @@ export function useComicPlatform({
 
       const result = await query.execute(client);
 
+      const campaignTypeNum = Number(result.getUint8(2));
+      const campaignTypeMap: { [key: number]: CampaignType } = {
+        0: CampaignType.PUBLIC,
+        1: CampaignType.WHITELIST,
+        2: CampaignType.SCHEDULED,
+      };
+      
       return {
         episodeId: result.getString(0),
         creator: result.getAddress(1),
-        campaignType: Number(result.getUint8(2)) as CampaignType,
+        campaignType: campaignTypeMap[campaignTypeNum] || CampaignType.PUBLIC,
         mintPrice: result.getUint256(3).toString(),
         maxSupply: result.getUint256(4).toString(),
         totalMinted: result.getUint256(5).toString(),

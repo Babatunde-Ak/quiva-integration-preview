@@ -1,5 +1,16 @@
 // utils/transformComicData.ts
 
+interface NFTMetadata {
+    tokenId?: string;
+    contractId?: string;
+    maxSupply?: number;
+    currentSupply?: number;
+    price?: string | number;
+    campaignId?: string;
+    listingId?: string;
+    [key: string]: any;
+}
+
 interface ApiComic {
     _id: string
     creatorId: {
@@ -39,7 +50,7 @@ interface ApiComic {
     createdAt: string
     updatedAt: string
     __v: number
-    nftId?: string
+    nftId?: NFTMetadata | string
     nftMetadataCid?: string
 }
 
@@ -78,7 +89,7 @@ interface Comic extends BaseComic {
     isMinted?: boolean
     isPublished?: boolean
     isVisible?: boolean
-    nftId?: string
+    nftId?: NFTMetadata | string
     nftMetadataCid?: string
     
     // Metadata

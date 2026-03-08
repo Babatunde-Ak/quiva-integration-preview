@@ -181,11 +181,13 @@ export const updateComicCover = createAsyncThunk(
 
 export const updateComicToken = createAsyncThunk(
   "comics/updateToken",
-  async ({ comicId, tokenId, listingId, price, maxSupply, serial, transactionId, metadataTopicIds }, { rejectWithValue }) => {
+  async ({ comicId, tokenId, listingId, campaignId, campaignType, price, maxSupply, serial, transactionId, metadataTopicIds }, { rejectWithValue }) => {
     try {
       const payload = {
         tokenId,
         listingId,
+        campaignId,
+        campaignType,
         price,
         maxSupply,
         serial,

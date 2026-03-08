@@ -37,6 +37,41 @@ export default function MainPage() {
     router.push(`/marketplace/chapter?id=${comic.id}&tab=Release`)
   }
 
+  // Filter comics with campaignId for "Get all you can read" section
+  const campaignComics = useMemo(() => {
+    const filtered = transformedComics.filter(comic => {
+      const hasCampaign = typeof comic.nftId === 'object' &&
+                         comic.nftId?.campaignId !== undefined &&
+                         comic.nftId?.campaignId !== null &&
+                         comic.nftId?.campaignId !== '';
+      return hasCampaign;
+    });
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log('=== Campaign Comics Debug ===');
+      console.log('Total transformed comics:', transformedComics.length);
+      console.log('Campaign comics found:', filtered.length);
+      console.log('Sample raw comic data:', comics?.data?.comics?.data?.[0]);
+      console.log('Sample transformed comic:', transformedComics[0]);
+      if (filtered.length > 0) {
+        console.log('Sample campaign comic:', filtered[0]);
+      }
+      transformedComics.slice(0, 3).forEach((comic, idx) => {
+        const nftIdType = typeof comic.nftId;
+        const campaignId = typeof comic.nftId === 'object' && comic.nftId ? comic.nftId.campaignId : undefined;
+        console.log(`Comic ${idx}:`, {
+          title: comic.title,
+          nftIdType,
+          nftId: comic.nftId,
+          campaignId,
+          hasCampaign: campaignId !== undefined && campaignId !== null && campaignId !== '',
+        });
+      });
+    }
+
+    return filtered;
+  }, [transformedComics, comics]);
+
   // Transform API comics to TopComic format for the table
   const topNftComics = useMemo(() => {
     if (!comics?.data?.comics?.data) return []
@@ -45,8 +80,8 @@ export default function MainPage() {
 
   const handleComicSelect = (comic: any) => {
     console.log('Selected comic:', comic);
-    // Handle comic selection - navigate to comic detail page
-    // For example: router.push(`/comics/${comic.id}`);
+    // Navigate to the secondary marketplace (chapter) page with the comic ID
+    router.push(`/marketplace/chapter?id=${comic.id}&tab=release`);
   };
 
   const handleSearch = (query: string) => {
@@ -66,11 +101,15 @@ export default function MainPage() {
 
       {/* Main content sections */}
       <div className="w-full space-y-6 sm:space-y-8 md:space-y-10 lg:space-y-12">
-        {/* Comics Carousel Section */}
+        {/* Comics Carousel Section - "Get all you can read" */}
         <div className="w-full">
           <div className="max-w-full">
+            {/* <div className="mb-4 px-4 sm:px-6 md:px-8">
+              <h2 className="text-2xl sm:text-3xl font-bold mb-1">Get all you can read</h2>
+              <p className="text-white/70 text-sm">Discover our latest releases available now</p>
+            </div> */}
             <ComicsCarousel
-              comics={transformedComics.slice(0, 10)}
+              comics={campaignComics.length > 0 ? campaignComics : transformedComics.slice(0, 10)}
               autoPlayInterval={4000}
               showSearch={true}
               onComicSelect={handleComicSelect}

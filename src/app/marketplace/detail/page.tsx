@@ -12,6 +12,7 @@ import { useAppDispatch, useAppSelector } from "@/redux/hook";
 import { getComicById } from "@/redux/slices/comicSlice";
 import { getCollectionById } from "@/redux/slices/collectionSlice";
 import useMarketplace from "@/hook/useMarkeplace";
+import useMirrorNodeQueries from "@/hook/useMirrorNodeQueries";
 import   { useHederaWallet } from "@/providers/HashPackProvider";
 
 export default function ComicDetail() {
@@ -24,12 +25,12 @@ export default function ComicDetail() {
   const {user} = useAppSelector((state: any) => state.wallet);
   const { account, signer } = useHederaWallet();
 
-  const { canReadComic } = useMarketplace({
-    accountId: user?.walletAddress || "",
-    signer: signer,
-    network: "testnet",
-  });
-
+  // const { canReadComic } = useMarketplace({
+  //   accountId: user?.walletAddress || "",
+  //   signer: signer,
+  //   network: "testnet",
+  // });
+ const {checkCanReadComic} = useMirrorNodeQueries();
   const comicId = searchParams.get('id');
 
   const { currentComic, isLoading } = useAppSelector((state: any) => state.comic);
@@ -103,13 +104,14 @@ export default function ComicDetail() {
   const displayAuthorName = authorName || "Unknown Creator";
   const displayDescription = description || "";
   const displayTags = tags?.length ? tags : [];
-
+ //const readingAccess = await checkCanReadComic(currentComic?._id, user?.walletAddress);
   // Creator description with real data
   const creatorDescription = `${displayAuthorName} is a visionary ${currentCollection?.comic?.length > 1 ? 'series creator' : 'artist'} dedicated to pushing the boundaries of digital art and interactive narratives. ${currentCollection?.description || ''}`.trim();
 
   const handleReadClick = async () => {
     // TODO: Implement logic to determine if user can read full comic or just preview based on ownership
-    const readingAccess = await  canReadComic(currentComic?._id, user?.walletAddress);
+    // const readingAccess = await  canReadComic(currentComic?._id, user?.walletAddress);
+       const readingAccess = await checkCanReadComic(currentComic?._id, user?.walletAddress); 
       if (readingAccess === false) {
         alert("You have preview access to this comic. Please mint to unlock the full story!");
           setShowMintPage(true);
@@ -197,11 +199,11 @@ export default function ComicDetail() {
                     <div className="flex-1 pb-2 flex flex-col">
                       <h1 className="text-3xl font-mono font-bold text-white mb-2 flex gap-2 items-center tracking-tight">
                         <p>{displayTitle}</p>
-                        {hasNFTAccess && (
+                        {/* {hasNFTAccess && (
                           <span className="px-2 py-0.5 rounded-lg bg-[#000] border border-green-500/30 text-[#fff] text-xs font-bold flex items-center gap-1">
                             Owned ✅
                           </span>
-                        )}
+                        )} */}
                       </h1>
 
                       <div className="flex items-center space-x-3 mb-6">
