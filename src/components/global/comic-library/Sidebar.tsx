@@ -24,6 +24,7 @@ import {
   Activity,
   Monitor,
   DollarSign,
+  LogOut,
 } from 'lucide-react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
@@ -185,6 +186,11 @@ export function Sidebar({ isMobileMenuOpen, onMobileMenuClose, isCollapsed, onTo
 
   const handleNavigation = (path: string) => {
     router.push(path)
+    if (isMobile) onMobileMenuClose()
+  }
+
+  const handleLogout = () => {
+    router.push('/')
     if (isMobile) onMobileMenuClose()
   }
 
@@ -355,15 +361,27 @@ export function Sidebar({ isMobileMenuOpen, onMobileMenuClose, isCollapsed, onTo
             {renderEntries(false)}
           </nav>
 
-          <Button
-            className="bg-secondary-200 hover:bg-secondary-300 text-white font-medium rounded-full transition-all duration-200 hover:scale-105 text-xs sidebar-focus mt-auto"
-            onClick={handleBecomeCreator}
-          >
-            <div className="flex items-center gap-2">
-              <PenTool className="w-4 h-4" />
-              Publish on Comicpad
-            </div>
-          </Button>
+          <div className="flex flex-col gap-2 mt-auto">
+            <Button
+              className="bg-secondary-200 hover:bg-secondary-300 text-white font-medium rounded-full transition-all duration-200 hover:scale-105 text-xs sidebar-focus"
+              onClick={handleBecomeCreator}
+            >
+              <div className="flex items-center gap-2">
+                <PenTool className="w-4 h-4" />
+                Publish on Comicpad
+              </div>
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full justify-start px-3 text-white/40 hover:text-red-400 hover:bg-red-500/10 font-medium sidebar-focus rounded-lg"
+              onClick={handleLogout}
+            >
+              <div className="flex items-center gap-2">
+                <LogOut className="w-4 h-4" />
+                <span className="text-sm">Logout</span>
+              </div>
+            </Button>
+          </div>
         </aside>
       </>
     )
@@ -450,14 +468,22 @@ export function Sidebar({ isMobileMenuOpen, onMobileMenuClose, isCollapsed, onTo
         </nav>
 
         {/* Footer */}
-        <div className="p-4 border-t border-dashed border-white/20 h-16 flex-shrink-0 flex items-center justify-center">
-          {!isCollapsed ? (
-            <div className="text-xs text-white/40 text-center">© 2025 Quiva Comics</div>
-          ) : (
-            <div className="flex justify-center">
-              <div className="w-8 h-1 bg-white/20 rounded-full" />
-            </div>
-          )}
+        <div className="px-2 py-3 border-t border-dashed border-white/20 flex-shrink-0">
+          <div className="relative group">
+            <Button
+              variant="ghost"
+              className={`w-full font-medium sidebar-focus text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-colors ${
+                isCollapsed ? 'justify-center px-2' : 'justify-start px-3'
+              }`}
+              onClick={handleLogout}
+            >
+              <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'}`}>
+                <LogOut className="w-5 h-5 flex-shrink-0" />
+                {!isCollapsed && <span>Logout</span>}
+              </div>
+            </Button>
+            {isCollapsed && <div className="sidebar-tooltip">Logout</div>}
+          </div>
         </div>
       </div>
     </aside>
