@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { MintComicCard } from '../components/cards/MintComicCard';
 import ReadComicCard from '../components/cards/ReadComicCard';
 import EmptyState from './states/EmptyState';
@@ -14,6 +14,7 @@ import { getUserComics } from '@/redux/slices/comicSlice';
 
 const UserProfile = ({ onEditProfile, onComicAction }) => {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const dispatch = useAppDispatch();
     const authUser = useAppSelector((state) => state.auth?.user?.data);
     const profileData = useAppSelector((state) => state.auth?.profile?.data);
@@ -30,14 +31,25 @@ const UserProfile = ({ onEditProfile, onComicAction }) => {
     // Mirror Node queries
     const { fetchAccountNfts } = useMirrorNodeQueries();
 
+    const validTabs = ['currentReads', 'mintedComics', 'favoriteComics', 'listedComics'];
+    const tabParam = searchParams.get('tab');
+
     // Local state
-    const [activeTab, setActiveTab] = useState('currentReads');
+    const [activeTab, setActiveTab] = useState(
+        validTabs.includes(tabParam ?? '') ? tabParam! : 'currentReads'
+    );
     const [mintedNfts, setMintedNfts] = useState<any[]>([]);
     const [isLoadingNfts, setIsLoadingNfts] = useState(false);
     const [debugInfo, setDebugInfo] = useState<any>(null);
 
     // Mock data for current reads
     const [currentReads] = useState([]);
+
+    useEffect(() => {
+        if (tabParam && validTabs.includes(tabParam)) {
+            setActiveTab(tabParam);
+        }
+    }, [tabParam]);
 
     useEffect(() => {
         if (authUser?._id) {

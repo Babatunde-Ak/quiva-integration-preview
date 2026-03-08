@@ -1,7 +1,6 @@
 "use client";
 import Picture from "@/components/picture/Index";
 import React from "react";
-import { image3 } from "../../../../public/dev_images";
 import { StaticImageData } from "next/image";
 import GeneralModal from "@/components/modals/GeneralModal";
 import { useDisclosure } from "@heroui/react";
@@ -16,40 +15,7 @@ type HistoryRow = {
 	amount: string;
 };
 
-const data: HistoryRow[] = [
-	{
-		avatar: image3,
-		name: "Oladele Ewatomi",
-		book: "Solo Leveling",
-		status: "Pending",
-		date: "Jan 2, 2025",
-		amount: "$50",
-	},
-	{
-		avatar: image3,
-		name: "Olatunji Toluwani",
-		book: "Darling",
-		status: "Received",
-		date: "Dec 9, 2024",
-		amount: "$70",
-	},
-	{
-		avatar: image3,
-		name: "Eyebioklin Kikelomo",
-		book: "Besteon",
-		status: "Received",
-		date: "Jan 2, 2025",
-		amount: "$20",
-	},
-	{
-		avatar: image3,
-		name: "Akinlabi Busayo",
-		book: "Solo Leveling",
-		status: "Received",
-		date: "Dec 9, 2024",
-		amount: "$60",
-	},
-];
+const data: HistoryRow[] = [];
 
 const EarningHistory = () => {
 	const {
@@ -63,6 +29,13 @@ const EarningHistory = () => {
 		<>
 			<div className='bg-black text-white p-4 sm:p-6 rounded-xl'>
 				<h2 className='text-lg font-semibold mb-4 text-white/80'>History</h2>
+
+				{data.length === 0 && (
+					<div className='py-16 flex flex-col items-center justify-center text-white/40 gap-2'>
+						<p className='text-sm'>No earnings history yet.</p>
+						<p className='text-xs'>Your transaction history will appear here once you start earning.</p>
+					</div>
+				)}
 
 				{/* Desktop Table */}
 				<div className='hidden lg:block overflow-x-auto'>

@@ -208,8 +208,8 @@ export const OVERVIEW_CARDS = [
 	{
 		id: "readers",
 		title: "Readers",
-		value: "1024",
-		change: "35.8k",
+		value: "0",
+		change: "0",
 		changeColor: "text-red-500",
 		changeBg: "bg-red-900/30",
 		Icon: FiArrowUp,
@@ -218,8 +218,8 @@ export const OVERVIEW_CARDS = [
 	{
 		id: "income",
 		title: "Income",
-		value: "256K",
-		change: "38.8k",
+		value: "0",
+		change: "0",
 		changeColor: "text-amber-300",
 		changeBg: "bg-amber-900/30",
 		Icon: FiArrowDown,

@@ -16,7 +16,7 @@ const EarningOverview = () => {
 			{/* Left: Overview boxes */}
 			<div className='col-span-10 lg:col-span-7'>
 				<TitleText
-					title='Welcome, Mary'
+					title='Welcome'
 					className='text-white/70 !text-sm lg:!text-lg'
 				/>
 				<div className='flex items-center gap-2 my-3 lg:my-4'>
@@ -71,7 +71,7 @@ const EarningOverview = () => {
 						<FiEyeOff className='w-5 h-5 text-gray-50/70 cursor-pointer' />
 					</div>
 					<p className='text-gray-50/80 tracking-wider text-sm'>
-						January 27, 2024 . 12:45pm
+						
 					</p>
 					<div className='flex gap-4'>
 						<button className='bg-secondary-300 text-black w-20 py-2 rounded-lg font-medium hover:bg-amber-400 transition flex flex-col items-center'>
