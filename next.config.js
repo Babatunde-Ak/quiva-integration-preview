@@ -244,6 +244,9 @@ webpack: (config) => {
       'node:path': 'path-browserify',
       crypto: 'crypto-browserify',
       path: 'path-browserify',
+      '@hiero-ledger/sdk': require.resolve('@hashgraph/sdk'),
+      '@hiero-ledger/proto': require.resolve('@hashgraph/proto'),
+      '@hiero-ledger/cryptography': require.resolve('@hashgraph/cryptography'),
     };
     config.resolve.fallback = {
       ...(config.resolve.fallback ?? {}),
