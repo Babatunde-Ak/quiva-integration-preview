@@ -10,16 +10,18 @@ import { useAppSelector, useAppDispatch } from '@/redux/hook';
 import { getUserProfile } from '@/redux/slices/authSlice';
 import useMirrorNodeQueries from '@/hook/useMirrorNodeQueries';
 import { useHederaWallet } from '@/providers/HashPackProvider';
-import { getUserComics } from '@/redux/slices/comicSlice';
+import { getUserComics, selectUserComics } from '@/redux/slices/comicSlice';
 
 const UserProfile = ({ onEditProfile, onComicAction }) => {
     const router = useRouter();
     const searchParams = useSearchParams();
     const dispatch = useAppDispatch();
     const authUser = useAppSelector((state) => state.auth?.user?.data);
+    // profileData takes precedence over userComics / comicsData
     const profileData = useAppSelector((state) => state.auth?.profile?.data);
     const { comics, isLoading } = useAppSelector((state: any) => state.comic);
     const { currentComic } = useAppSelector((state: any) => state.comic);
+    const userComicsData = useAppSelector(selectUserComics);
 
     const userData = profileData?.user || profileData || authUser;
 
@@ -45,12 +47,14 @@ const UserProfile = ({ onEditProfile, onComicAction }) => {
     // Mock data for current reads
     const [currentReads] = useState([]);
 
+    // Sync active tab with URL param
     useEffect(() => {
         if (tabParam && validTabs.includes(tabParam)) {
             setActiveTab(tabParam);
         }
     }, [tabParam]);
 
+    // Fetch user profile and comics on mount
     useEffect(() => {
         if (authUser?._id) {
             dispatch(getUserProfile(authUser._id));
@@ -400,6 +404,7 @@ const UserProfile = ({ onEditProfile, onComicAction }) => {
                                     title={nft.title}
                                     creator={nft.creator}
                                     creatorAvatar={nft.creatorAvatar}
+                                    mintPrice={nft.mintPrice}
                                     currentPrice={nft.currentPrice}
                                     views={nft.views}
                                     image={nft.image}
