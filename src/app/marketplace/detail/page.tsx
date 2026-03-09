@@ -14,6 +14,7 @@ import { getCollectionById } from "@/redux/slices/collectionSlice";
 import useMarketplace from "@/hook/useMarkeplace";
 import useMirrorNodeQueries from "@/hook/useMirrorNodeQueries";
 import   { useHederaWallet } from "@/providers/HashPackProvider";
+import { useNftOwnershipCheck } from "@/hook/userNFTOwnershipCheck";
 
 export default function ComicDetail() {
   const [isResellOpen, setIsResellOpen] = useState(false);
@@ -30,7 +31,8 @@ export default function ComicDetail() {
   //   signer: signer,
   //   network: "testnet",
   // });
- const {checkCanReadComic} = useMirrorNodeQueries();
+//  const {checkCanReadComic} = useMirrorNodeQueries();
+ const { checkOwnership } = useNftOwnershipCheck();
   const comicId = searchParams.get('id');
 
   const { currentComic, isLoading } = useAppSelector((state: any) => state.comic);
@@ -108,16 +110,67 @@ export default function ComicDetail() {
   // Creator description with real data
   const creatorDescription = `${displayAuthorName} is a visionary ${currentCollection?.comic?.length > 1 ? 'series creator' : 'artist'} dedicated to pushing the boundaries of digital art and interactive narratives. ${currentCollection?.description || ''}`.trim();
 
-  const handleReadClick = async () => {
-    // TODO: Implement logic to determine if user can read full comic or just preview based on ownership
-    // const readingAccess = await  canReadComic(currentComic?._id, user?.walletAddress);
-       const readingAccess = await checkCanReadComic(currentComic?._id, user?.walletAddress); 
-      if (readingAccess === false) {
-        alert("You have preview access to this comic. Please mint to unlock the full story!");
-          setShowMintPage(true);
-      } 
-  };
+  // const handleReadClick = async () => {
+  //   // TODO: Implement logic to determine if user can read full comic or just preview based on ownership
+  //   //const readingAccess = await  canReadComic(currentComic?._id, user?.walletAddress);
+  //     //  const readingAccess = await checkCanReadComic(currentComic?._id, user?.walletAddress); 
+  //     if (readingAccess === false) {
+  //       alert("You have preview access to this comic. Please mint to unlock the full story!");
+  //         setShowMintPage(true);
+  //     } else {
+  //          router.push(`/reader?id=${currentComic?._id}`);
+  //     }
+  // };
 
+
+  
+  const handleReadClick = async () => {
+    console.log('📖 Start Reading clicked');
+    
+    // Get user's wallet address
+    const userWalletAddress = account || user?.walletAddress;
+    
+    // Get comic's token ID
+    const comicTokenId = currentComic?.nftId?.tokenId;
+    
+    console.log('🔍 Checking read access:', {
+      userWallet: userWalletAddress,
+      comicTokenId,
+      comicTitle: currentComic?.title
+    });
+
+    if (!userWalletAddress) {
+      alert("Please connect your wallet to read this comic!");
+      return;
+    }
+
+    if (!comicTokenId) {
+      console.warn('⚠️ No tokenId found for this comic');
+      alert("This comic is not available as an NFT yet.");
+      return;
+    }
+
+    try {
+      // ✅ Check if user owns this NFT by checking their wallet
+      const ownershipResult = await checkOwnership(userWalletAddress, comicTokenId);
+      
+      console.log('🎯 Ownership result:', ownershipResult);
+
+      if (ownershipResult.hasNft) {
+        // User owns the NFT - allow full reading
+        console.log(`✅ User owns NFT! Serial numbers: ${ownershipResult.serialNumbers.join(', ')}`);
+        router.push(`/reader?id=${currentComic?._id}`);
+      } else {
+        // User doesn't own the NFT - show mint page
+        console.log('❌ User does not own this NFT');
+        alert("You need to own this NFT to read the full comic. Please mint to unlock!");
+        setShowMintPage(true);
+      }
+    } catch (error) {
+      console.error('❌ Error checking NFT ownership:', error);
+      alert("Error checking NFT ownership. Please try again.");
+    }
+  };
   const handleBackFromMint = () => {
     setShowMintPage(false);
   };

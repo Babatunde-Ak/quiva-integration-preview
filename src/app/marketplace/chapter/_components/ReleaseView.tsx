@@ -311,7 +311,8 @@ const ReleaseView: React.FC<ReleaseViewProps> = ({ comicId }) => {
   // Check if this comic has a campaign at all
   const hasCampaignId = currentComic?.nftId?.campaignId && 
                        currentComic.nftId.campaignId !== null && 
-                       currentComic.nftId.campaignId !== '';
+                       currentComic.nftId.campaignId !== '' &&
+                       currentComic.nftId.campaignType !== 'direct_listing';
 
   // Loading state
   if (campaign.isLoading) {

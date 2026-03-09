@@ -170,7 +170,8 @@ export function useComicPlatform({
       const tokenEvmAddress = mirrorData?.call_result 
         ? "0x" + mirrorData.call_result.slice(-40) 
         : null;
-      const tokenId = tokenEvmAddress;
+      const tokenId = TokenId.fromEvmAddress(0,0,tokenEvmAddress).toString();
+      // const tokenId = mirrorData?.call_result
 
       console.log("🎉 New Token ID:", tokenId);
 
