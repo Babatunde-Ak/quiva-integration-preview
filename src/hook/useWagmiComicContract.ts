@@ -403,6 +403,8 @@ const tx = await writeContractAsync({
                 functionName: 'purchaseNFT',
                 args: [listingId],
                 value: price,
+                account: evmAddress,
+                chain: chain!,
               },
               {
                 onSuccess: (hash) => {
@@ -612,6 +614,8 @@ const tx = await writeContractAsync({
                 args: [listingId],
                 value: price,
                 data: undefined,
+                account: evmAddress,
+                chain: chain!,
               },
               {
                 onSuccess: (hash) => {
