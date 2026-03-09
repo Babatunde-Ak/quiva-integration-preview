@@ -237,7 +237,7 @@ export const heroComics: HeroComicData[] = [
   {
     id: '1',
     title: 'Avatar- the Last Air Bender',
-    studio: 'Studio Kyra',
+    creatorUsername: 'Studio Kyra',
     description: 'In a world torn between the elements, a young avatar rises to restore balance - or be broken by destiny. "Book of Beginnings" marks the first chapter of the Avatar Chronicles, where every hint helps since the plot.',
     tags: ['NEW'],
     totalIssues: 6012,
@@ -250,7 +250,7 @@ export const heroComics: HeroComicData[] = [
   {
     id: '2',
     title: 'The Amazing Spider-Man',
-    studio: 'Marvel Comics',
+    creatorUsername: 'Marvel Comics',
     description: 'When a radioactive spider bite gives teenager Peter Parker incredible powers, he must learn that with great power comes great responsibility. Follow the web-slinger through his greatest adventures.',
     tags: ['FEATURED'],
     totalIssues: 8234,
@@ -263,7 +263,7 @@ export const heroComics: HeroComicData[] = [
   {
     id: '3',
     title: 'Neon Chronicles',
-    studio: 'CyberPunk Studios',
+    creatorUsername: 'CyberPunk Studios',
     description: 'In a cyberpunk future where technology and humanity merge, follow the adventures of rebels fighting against corporate tyranny in the neon-lit streets of Neo Tokyo. The revolution begins now.',
     tags: ['TRENDING'],
     totalIssues: 4567,
@@ -276,7 +276,7 @@ export const heroComics: HeroComicData[] = [
   {
     id: '4',
     title: 'Avatar- the Last Air Bender',
-    studio: 'Studio Kyra',
+    creatorUsername: 'Studio Kyra',
     description: 'In a world torn between the elements, a young avatar rises to restore balance - or be broken by destiny. "Book of Beginnings" marks the first chapter of the Avatar Chronicles, where every hint helps since the plot.',
     tags: ['NEW'],
     totalIssues: 6012,
@@ -289,7 +289,7 @@ export const heroComics: HeroComicData[] = [
   {
     id: '5',
     title: 'The Amazing Spider-Man',
-    studio: 'Marvel Comics',
+    creatorUsername: 'Marvel Comics',
     description: 'When a radioactive spider bite gives teenager Peter Parker incredible powers, he must learn that with great power comes great responsibility. Follow the web-slinger through his greatest adventures.',
     tags: ['FEATURED'],
     totalIssues: 8234,
@@ -302,7 +302,7 @@ export const heroComics: HeroComicData[] = [
   {
     id: '6',
     title: 'Neon Chronicles',
-    studio: 'CyberPunk Studios',
+    creatorUsername: 'CyberPunk Studios',
     description: 'In a cyberpunk future where technology and humanity merge, follow the adventures of rebels fighting against corporate tyranny in the neon-lit streets of Neo Tokyo. The revolution begins now.',
     tags: ['TRENDING'],
     totalIssues: 4567,
