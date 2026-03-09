@@ -1082,7 +1082,7 @@ const campaignTypeToBackendString = (campaignType: CampaignType): string => {
   const updateBackend = await dispatch(updateComicToken({
     comicId: episodeId,
     tokenId: collectionData.tokenId,
-    listingId: null,
+    listingId: '',
     campaignId: campaignData.campaignId || '',
     campaignType: campaignTypeString,  // ✅ STRING for backend
     price: parseFloat(flowData.dropDetails.price),

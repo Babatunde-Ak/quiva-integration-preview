@@ -41,9 +41,9 @@ export default function MainPage() {
   const campaignComics = useMemo(() => {
     const filtered = transformedComics.filter(comic => {
       const hasCampaign = typeof comic.nftId === 'object' &&
-                         comic.nftId?.campaignId !== undefined &&
-                         comic.nftId?.campaignId !== null &&
-                         comic.nftId?.campaignId !== '';
+                        comic.nftId?.campaignId !== undefined &&
+                        comic.nftId?.campaignId !== null &&
+                        comic.nftId?.campaignId !== '';
       return hasCampaign;
     });
 
