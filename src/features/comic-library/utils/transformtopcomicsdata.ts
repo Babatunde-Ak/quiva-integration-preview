@@ -2,6 +2,20 @@
 
 import { TopComic } from "../components/TopComicsTable"
 
+interface NFTId {
+    _id: string
+    price: number
+    metadataCid: string
+    tokenId: string
+    contractAddress: string
+    maxSupply: number
+    campaignType: string
+    campaignId: string
+    listingId: string
+    metadataTopicIds: string
+    transactionId: string
+}
+
 interface ApiComic {
     _id: string
     creatorId: {
@@ -20,6 +34,7 @@ interface ApiComic {
     collaborators: Array<{
         _id: string
         walletAddress: string
+        username?: string
     }>
     genre: string[]
     tags: string[]
@@ -40,7 +55,7 @@ interface ApiComic {
     createdAt: string
     updatedAt: string
     __v: number
-    nftId?: string
+    nftId?: NFTId
     nftMetadataCid?: string
 }
 
@@ -49,40 +64,37 @@ interface ApiComic {
  */
 export function transformApiComicsToTopComics(apiComics: ApiComic[]): TopComic[] {
     return apiComics
-        .map((comic, index) => ({
-            rank: index + 1,
-            title: comic.title,
-            author: comic.creatorId.username || 
-                    (comic.creatorId.walletAddress.slice(0, 6) + '...' + comic.creatorId.walletAddress.slice(-4)),
-            floorPrice: generateMockFloorPrice(),
-            priceChange: generateMockPriceChange(),
-            copies: comic.totalPages * 100, // Mock calculation based on total pages
-            sales: comic.views || Math.floor(Math.random() * 100),
-            volume: generateMockVolume(),
-            image: comic.bannerImage,
-            id: comic._id
-        }))
-        .slice(0, 10) // Limit to top 10
+        .map((comic, index) => {
+            const walletAddr = comic.creatorId.walletAddress
+            const author = comic.creatorId.username ||
+                (walletAddr.slice(0, 6) + '...' + walletAddr.slice(-4))
+
+            const floorPrice = comic.nftId?.price != null
+                ? String(comic.nftId.price)
+                : '—'
+
+            const maxSupply = comic.nftId?.maxSupply ?? 0
+
+            return {
+                id: comic._id,
+                rank: index + 1,
+                title: comic.title,
+                author,
+                floorPrice,
+                priceChange: generateMockPriceChange(),
+                copies: maxSupply,
+                sales: comic.views || 0,
+                volume: generateMockVolume(),
+                image: comic.bannerImage,
+            }
+        })
+        .slice(0, 10)
 }
 
-/**
- * Generate mock floor price (since not available in API)
- */
-function generateMockFloorPrice(): string {
-    const prices = ['0.05', '0.1', '0.15', '0.2', '0.25', '0.3', '0.4', '0.5']
-    return prices[Math.floor(Math.random() * prices.length)]
-}
-
-/**
- * Generate mock price change percentage (since not available in API)
- */
 function generateMockPriceChange(): number {
-    return Math.floor(Math.random() * 200) - 100 // Random number between -100 and 100
+    return Math.floor(Math.random() * 200) - 100
 }
 
-/**
- * Generate mock volume (since not available in API)
- */
 function generateMockVolume(): string {
     const volumes = ['1.2', '2.4', '3.6', '4.8', '5.1', '6.3', '7.5', '8.7']
     return volumes[Math.floor(Math.random() * volumes.length)]
