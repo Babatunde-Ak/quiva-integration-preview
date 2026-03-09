@@ -69,7 +69,7 @@ export function useWagmiComicContract() {
   const walletAware = useWalletAware();
   
   // EVM/Wagmi hooks
-  const { address: evmAddress } = useWagmiAccount();
+  const { address: evmAddress, chain } = useWagmiAccount();
   const chainId = useChainId();
   const publicClient = usePublicClient();
  // const { writeContract, isPending: isEvmWritePending } = useWriteContract();
@@ -140,12 +140,12 @@ export function useWagmiComicContract() {
         //     );
         //   });
 const tx = await writeContractAsync({
-     abi: COMIC_CORE_ABI,
+    abi: COMIC_CORE_ABI,
     address: HEDERA_CONTRACTS.COMIC_CORE.evmAddress as `0x${string}`,
     functionName: 'createComicCollection',
     args: [episodeId, name, symbol, memo, BigInt(maxSupply), autoRenewPeriod],
     account: evmAddress,
-    chainId: chainId,
+    chain: chain,
 })
   return await tx;
         } else if (wallet.type === WalletType.HEDERA && hederaAccount && signer) {
