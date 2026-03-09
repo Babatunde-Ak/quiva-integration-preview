@@ -195,7 +195,7 @@ const tx = await writeContractAsync({
               functionName: 'grantReadingAccess',
               args: [tokenAddress as `0x${string}`, userAddress as `0x${string}`],
                 account: evmAddress,
-                chainId: chainId
+                chain: chain,
               },
             //   {
             //     onSuccess: (hash) => {
@@ -255,7 +255,7 @@ const tx = await writeContractAsync({
               functionName: 'revokeReadingAccess',
               args: [tokenAddress as `0x${string}`, userAddress as `0x${string}`],
                 account: evmAddress,
-                chainId: chainId,
+                chain: chain,
               },
               {
                 onSuccess: (hash) => {
@@ -320,7 +320,7 @@ const tx = await writeContractAsync({
               functionName: 'depositAndListForResale',
               args: [tokenAddress as `0x${string}`, serialNumber, price],
                 account: evmAddress,
-                chainId: chainId,
+                chain: chain,
               },
               {
                 onSuccess: (hash) => {
@@ -463,7 +463,7 @@ const tx = await writeContractAsync({
                 functionName: 'cancelListing',
                 args: [listingId],
                 account: evmAddress,
-                chainId: chainId,
+                chain: chain,
               },
               {
                 onSuccess: (hash) => {
@@ -528,7 +528,7 @@ const tx = await writeContractAsync({
                 functionName: 'createDirectListing',
                 args: [episodeId, pricePerNFT, quantity],
                 account: evmAddress,
-                chainId: chainId,
+                chain: chain,
               },
               {
                 onSuccess: (hash) => {
@@ -673,7 +673,7 @@ const tx = await writeContractAsync({
                 functionName: 'createCampaign',
                 args: [episodeId, mintPrice, maxSupply],
                 account: evmAddress,
-                chainId: chainId,
+                chain: chain,
               },
               {
                 onSuccess: (hash) => {
@@ -756,7 +756,7 @@ const tx = await writeContractAsync({
                 functionName: 'mint',
                 args: [campaignId, quantity],
                 account: evmAddress,
-                chainId: chainId,
+                chain: chain,
               },
               {
                 onSuccess: (hash) => {
