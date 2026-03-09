@@ -400,7 +400,6 @@ const UserProfile = ({ onEditProfile, onComicAction }) => {
                                     title={nft.title}
                                     creator={nft.creator}
                                     creatorAvatar={nft.creatorAvatar}
-                                    mintPrice={nft.mintPrice}
                                     currentPrice={nft.currentPrice}
                                     views={nft.views}
                                     image={nft.image}
