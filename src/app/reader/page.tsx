@@ -12,6 +12,8 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/redux/hook';
 import { getComicById, clearCurrentComic } from '@/redux/slices/comicSlice';
 import { Footer } from '@/components/global/comic-library/Footer';
+import { useNftOwnershipCheck } from '@/hook/userNFTOwnershipCheck';
+import { useHederaWallet } from '@/providers/HashPackProvider';
 
 const COMICS_PER_PAGE = 3;
 
@@ -27,6 +29,9 @@ const ComicReaderViewer = () => {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { currentComic, isLoading } = useAppSelector((state: any) => state.comic);
+  const { account } = useHederaWallet();
+  const { user: walletUser } = useAppSelector((state: any) => state.wallet);
+  const { checkOwnership } = useNftOwnershipCheck();
 
   const comicId = searchParams.get('id');
 
@@ -45,6 +50,26 @@ const ComicReaderViewer = () => {
       isMounted.current = false;
     };
   }, [comicId, dispatch]);
+
+  // Guard: verify wallet owns the NFT before allowing read access
+  useEffect(() => {
+    if (!currentComic) return;
+
+    const tokenId = currentComic?.nftId?.tokenId;
+    if (!tokenId) return; // no NFT gate, allow read
+
+    const userWalletAddress = account || walletUser?.walletAddress;
+    if (!userWalletAddress) {
+      router.replace(`/marketplace/detail?id=${comicId}`);
+      return;
+    }
+
+    checkOwnership(userWalletAddress, tokenId).then((result) => {
+      if (!result.hasNft) {
+        router.replace(`/marketplace/detail?id=${comicId}`);
+      }
+    });
+  }, [currentComic, account, walletUser?.walletAddress]);
 
   const activeComic = useMemo(() => {
     const comic = currentComic;

@@ -30,8 +30,11 @@ export default function MainPage() {
     return transformApiComicsToComics(comics.data.comics.data)
   }, [comics])
 
-  // Only minted comics (drops) appear in the hero slider
-  const dropComics = useMemo(() => transformedComics.filter((c: any) => c.isMinted), [transformedComics])
+  // Only comics with a real campaignId (drops) appear in the hero slider
+  const dropComics = useMemo(() => transformedComics.filter((c: any) => {
+    const campaignId = c.nftId?.campaignId
+    return campaignId && campaignId !== '0' && campaignId !== 'string' && c.nftId?.campaignType !== 'direct_listing'
+  }), [transformedComics])
 
   const handleSliderComicClick = (comic: any) => {
     router.push(`/marketplace/chapter?id=${comic.id}&tab=Release`)
@@ -41,9 +44,10 @@ export default function MainPage() {
   const campaignComics = useMemo(() => {
     const filtered = transformedComics.filter(comic => {
       const hasCampaign = typeof comic.nftId === 'object' &&
-                         comic.nftId?.campaignId !== undefined &&
-                         comic.nftId?.campaignId !== null &&
-                         comic.nftId?.campaignId !== '';
+                        comic.nftId?.campaignId !== undefined &&
+                        comic.nftId?.campaignId !== null &&
+                        comic.nftId?.campaignId !== '';
+                        comic.nftId?.campaignType !== 'direct_listing';
       return hasCampaign;
     });
 

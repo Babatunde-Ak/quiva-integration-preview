@@ -16,7 +16,7 @@ export const categories: Category[] = [
     id: "getting-started",
     title: "Getting Started with Quiva",
     description: "If this is your first time visiting Quiva, get started here.",
-    image: "/dev_images/avatar-aang.png",
+    image: "https://cdn.marvel.com/content/1x/asm2025001_dimeo.jpg",
   },
   {
     id: "creator",

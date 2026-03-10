@@ -179,7 +179,6 @@ export function SortComicSection({
                                     creator={comic?.creatorUsername || ""}
                                     creatorUsername={comic?.creatorUsername || ""}
                                     creatorAvatar={comic.creatorAvatar}
-                                    mintPrice={comic.price}
                                     currentPrice={comic.price}
                                     views={comic.views}
                                     image={comic.image}

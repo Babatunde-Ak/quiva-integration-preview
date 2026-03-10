@@ -1,14 +1,17 @@
 // utils/transformComicData.ts
 
-interface NFTMetadata {
-    tokenId?: string;
-    contractId?: string;
-    maxSupply?: number;
-    currentSupply?: number;
-    price?: string | number;
-    campaignId?: string;
-    listingId?: string;
-    [key: string]: any;
+interface NFTId {
+    _id: string
+    price: number
+    metadataCid: string
+    tokenId: string
+    contractAddress: string
+    maxSupply: number
+    campaignType: string
+    campaignId: string
+    listingId: string
+    metadataTopicIds: string
+    transactionId: string
 }
 
 interface ApiComic {
@@ -19,7 +22,6 @@ interface ApiComic {
         username?: string
         avatar?: string
     }
-    price?: string
     collectionId: string
     title: string
     coverImageCid: string
@@ -30,6 +32,7 @@ interface ApiComic {
     collaborators: Array<{
         _id: string
         walletAddress: string
+        username?: string
     }>
     genre: string[]
     tags: string[]
@@ -50,7 +53,7 @@ interface ApiComic {
     createdAt: string
     updatedAt: string
     __v: number
-    nftId?: NFTMetadata | string
+    nftId?: NFTId
     nftMetadataCid?: string
 }
 
@@ -69,35 +72,28 @@ interface BaseComic {
 
 // Full interface with all API fields (all optional except base fields)
 interface Comic extends BaseComic {
-    // Basic Info
     episodeNumber?: number
     summary?: string
-    price?: string
-    
-    // Images
+
     bannerImage?: string
     coverImageCid?: string
-    
-    // Creator Info
+
     creatorId?: string
     creatorWalletAddress?: string
     creatorUsername?: string
     creatorAvatar?: string
-    
-    // Collection & NFT Info
+
     collectionId?: string
     isMinted?: boolean
     isPublished?: boolean
     isVisible?: boolean
-    nftId?: NFTMetadata | string
+    nftId?: NFTId
     nftMetadataCid?: string
-    
-    // Metadata
+
     genre?: string[]
     tags?: string[]
     maturityRating?: string
-    
-    // Chapters & Pages
+
     chapters?: Array<{
         _id: string
         chapterNumber: number
@@ -106,53 +102,67 @@ interface Comic extends BaseComic {
         createdAt: string
     }>
     totalPages?: number
-    
-    // Collaborators
+
     collaborators?: Array<{
         _id: string
         walletAddress: string
+        username?: string
     }>
-    
-    // Status & Metrics
+
     status?: string
     views?: number
     likes?: number
-    
-    // Dates
+
     createdAt?: string
     updatedAt?: string
-    
-    // Version
+
     __v?: number
 }
 
-export type { Comic, BaseComic, ApiComic }
+export type { Comic, BaseComic, ApiComic, NFTId }
+
+/**
+ * Cleans genre strings that may be malformed JSON artifacts from the API
+ * e.g. ["[\"action\"", "\"fantasy\"]"] → ["action", "fantasy"]
+ */
+function parseGenres(genre: string[]): string[] {
+    return genre.flatMap((g) => {
+        // Strip leading/trailing [ ] " and backslash escapes
+        const cleaned = g.replace(/^\[?\\?"?|\\?"?\]?$/g, '').trim()
+        return cleaned ? [cleaned] : []
+    })
+}
 
 export function transformApiComicToComic(apiComic: ApiComic): Comic {
+    const genres = parseGenres(apiComic.genre)
+    const price = apiComic.nftId?.price != null
+        ? `${apiComic.nftId.price}`
+        : undefined
+
     return {
         // Base/Required Fields
         id: apiComic._id,
         title: apiComic.title,
         image: apiComic.bannerImage,
         description: apiComic.summary,
-        subtitle: apiComic.genre.join(', '),
+        subtitle: genres.join(', '),
         premium: apiComic.isMinted,
-        price: apiComic?.price ? apiComic?.price : "1",
+        price,
         buttonText: apiComic.isMinted ? 'View NFT' : 'Read Now',
         buttonVariant: apiComic.isMinted ? 'default' : 'outline',
-        
+
         // Extended Fields
         episodeNumber: apiComic.episodeNumber,
         summary: apiComic.summary,
         bannerImage: apiComic.bannerImage,
         coverImageCid: apiComic.coverImageCid,
-        
+
         // Creator Info
         creatorId: apiComic.creatorId._id,
         creatorWalletAddress: apiComic.creatorId.walletAddress,
         creatorUsername: apiComic.creatorId.username,
         creatorAvatar: apiComic.creatorId.avatar,
-        
+
         // Collection & NFT Info
         collectionId: apiComic.collectionId,
         isMinted: apiComic.isMinted,
@@ -160,29 +170,28 @@ export function transformApiComicToComic(apiComic: ApiComic): Comic {
         isVisible: apiComic.isVisible,
         nftId: apiComic.nftId,
         nftMetadataCid: apiComic.nftMetadataCid,
-        
+
         // Metadata
-        genre: apiComic.genre,
+        genre: genres,
         tags: apiComic.tags,
         maturityRating: apiComic.maturityRating,
-        
+
         // Chapters & Pages
         chapters: apiComic.chapters,
         totalPages: apiComic.totalPages,
-        
+
         // Collaborators
         collaborators: apiComic.collaborators,
-        
+
         // Status & Metrics
         status: apiComic.status,
         views: apiComic.views,
         likes: apiComic.likes,
-        
+
         // Dates
         createdAt: apiComic.createdAt,
         updatedAt: apiComic.updatedAt,
-        
-        // Version
+
         __v: apiComic.__v
     }
 }

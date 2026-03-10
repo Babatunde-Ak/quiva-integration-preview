@@ -10,16 +10,18 @@ import { useAppSelector, useAppDispatch } from '@/redux/hook';
 import { getUserProfile } from '@/redux/slices/authSlice';
 import useMirrorNodeQueries from '@/hook/useMirrorNodeQueries';
 import { useHederaWallet } from '@/providers/HashPackProvider';
-import { getUserComics } from '@/redux/slices/comicSlice';
+import { getUserComics, selectUserComics } from '@/redux/slices/comicSlice';
 
 const UserProfile = ({ onEditProfile, onComicAction }) => {
     const router = useRouter();
     const searchParams = useSearchParams();
     const dispatch = useAppDispatch();
     const authUser = useAppSelector((state) => state.auth?.user?.data);
+    // profileData takes precedence over userComics / comicsData
     const profileData = useAppSelector((state) => state.auth?.profile?.data);
     const { comics, isLoading } = useAppSelector((state: any) => state.comic);
     const { currentComic } = useAppSelector((state: any) => state.comic);
+    const userComicsData = useAppSelector(selectUserComics);
 
     const userData = profileData?.user || profileData || authUser;
 
@@ -45,12 +47,14 @@ const UserProfile = ({ onEditProfile, onComicAction }) => {
     // Mock data for current reads
     const [currentReads] = useState([]);
 
+    // Sync active tab with URL param
     useEffect(() => {
         if (tabParam && validTabs.includes(tabParam)) {
             setActiveTab(tabParam);
         }
     }, [tabParam]);
 
+    // Fetch user profile and comics on mount
     useEffect(() => {
         if (authUser?._id) {
             dispatch(getUserProfile(authUser._id));
@@ -290,7 +294,7 @@ const UserProfile = ({ onEditProfile, onComicAction }) => {
         console.log('🎯 Comic NFT clicked:', nft);
 
         if (nft.id && !nft.id.startsWith('platform-')) {
-            router.push(`/read/${nft.id}`);
+            router.push(`/marketplace/detail?id=${nft.id}`);
         } else {
             router.push(`/marketplace`);
         }
@@ -320,7 +324,7 @@ const UserProfile = ({ onEditProfile, onComicAction }) => {
                             coverImage={comic.image || comic.bannerImage}
                             progress={comic.progress || 0}
                             genres={comic.genres || comic.genre || []}
-                            onContinueReading={() => router.push(`/read/${comic.id}`)}
+                            onContinueReading={() => router.push(`/marketplace/detail?id=${comic.id}`)}
                         />
                     ))}
                 </div>
@@ -373,42 +377,26 @@ const UserProfile = ({ onEditProfile, onComicAction }) => {
             }
 
             return (
-                <div className="space-y-4">
-                    <div className="bg-green-900/20 border border-green-500/50 rounded-lg p-4">
-                        <p className="text-green-400 text-sm flex items-center gap-2">
-                            <span>✓</span>
-                            <span>
-                                Showing {mintedNfts.length} Quiva comic NFT{mintedNfts.length !== 1 ? 's' : ''} from your wallet
-                            </span>
-                        </p>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6 justify-items-center">
-                        {mintedNfts.map((nft, index) => (
-                            <div key={nft.nftId || index} className="relative">
-                                <div className="absolute top-2 left-2 z-20 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg flex items-center gap-1">
-                                    <span>✓</span>
-                                    <span>Quiva</span>
-                                </div>
-
-                                <div className="absolute top-2 right-2 z-20 bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
-                                    #{nft.serialNumber}
-                                </div>
-
-                                <MintComicCard
-                                    id={nft.id}
-                                    title={nft.title}
-                                    creator={nft.creator}
-                                    creatorAvatar={nft.creatorAvatar}
-                                    mintPrice={nft.mintPrice}
-                                    currentPrice={nft.currentPrice}
-                                    views={nft.views}
-                                    image={nft.image}
-                                    number={nft.number}
-                                />
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6 justify-items-center">
+                    {mintedNfts.map((nft, index) => (
+                        <div key={nft.nftId || index} className="relative">
+                            <div className="absolute top-2 right-2 z-20 bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+                                #{nft.serialNumber}
                             </div>
-                        ))}
-                    </div>
+
+                            <MintComicCard
+                                id={nft.id}
+                                title={nft.title}
+                                creator={nft.creator}
+                                creatorAvatar={nft.creatorAvatar}
+                                mintPrice={nft.mintPrice}
+                                currentPrice={nft.currentPrice}
+                                views={nft.views}
+                                image={nft.image}
+                                number={nft.number}
+                            />
+                        </div>
+                    ))}
                 </div>
             );
         }

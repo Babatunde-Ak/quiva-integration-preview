@@ -16,10 +16,17 @@ export interface HeroComicData {
   buttonText?: string
   creatorUsername?: string
   creatorWalletAddress?: string
+  /** @deprecated use nftId.maxSupply */
   totalIssues?: number
+  /** @deprecated use nftId.price */
   floorPrice?: number
   price?: number | string
   status?: string
+  nftId?: {
+    price?: number
+    maxSupply?: number
+    [key: string]: any
+  }
 }
 
 interface HeroComicSliderProps {
@@ -213,27 +220,37 @@ export function HeroComicSlider({
               variants={itemVariants}
               className="flex items-center flex-wrap gap-2 sm:gap-3 md:gap-4 mb-4 sm:mb-6 md:mb-8 text-white bg-gray-400/30 backdrop-blur-sm p-2 sm:p-3 md:p-4 lg:px-6 rounded-md md:rounded-lg max-w-full sm:max-w-lg lg:max-w-xl w-fit border border-white/30"
             >
-              {currentComic.floorPrice !== undefined && (
-                <div className="flex flex-col border-r border-white/30 pr-2 sm:pr-3 md:pr-4">
-                  <span className="text-[10px] sm:text-xs text-white/60 uppercase tracking-wide mb-0.5 sm:mb-1 font-light whitespace-nowrap">Floor Price</span>
-                  <span className="text-sm sm:text-base md:text-lg font-semibold flex items-center">
-                    {currentComic.floorPrice.toFixed(3)}
-                    <img src={hbar.src} alt="hbar" className="inline w-4 h-4 sm:w-6 sm:h-6 md:w-8 md:h-8 ml-1" />
-                  </span>
-                </div>
-              )}
-              {currentComic.totalIssues !== undefined && (
-                <div className="flex flex-col border-r border-white/30 pr-2 sm:pr-3 md:pr-4">
-                  <span className="text-[10px] sm:text-xs text-white/60 uppercase tracking-wide mb-0.5 sm:mb-1 font-light whitespace-nowrap">Total Issues</span>
-                  <span className="text-sm sm:text-base md:text-lg font-semibold">{formatNumberShorthand(currentComic.totalIssues)}</span>
-                </div>
-              )}
+              {(() => {
+                const fp = currentComic.nftId?.price ?? currentComic.floorPrice
+                return fp !== undefined ? (
+                  <div className="flex flex-col border-r border-white/30 pr-2 sm:pr-3 md:pr-4">
+                    <span className="text-[10px] sm:text-xs text-white/60 uppercase tracking-wide mb-0.5 sm:mb-1 font-light whitespace-nowrap">Floor Price</span>
+                    <span className="text-sm sm:text-base md:text-lg font-semibold flex items-center">
+                      {Number(fp).toFixed(3)}
+                      <img src={hbar.src} alt="hbar" className="inline w-4 h-4 sm:w-6 sm:h-6 md:w-8 md:h-8 ml-1" />
+                    </span>
+                  </div>
+                ) : null
+              })()}
+              {(() => {
+                const supply = currentComic.nftId?.maxSupply ?? currentComic.totalIssues
+                return supply !== undefined ? (
+                  <div className="flex flex-col border-r border-white/30 pr-2 sm:pr-3 md:pr-4">
+                    <span className="text-[10px] sm:text-xs text-white/60 uppercase tracking-wide mb-0.5 sm:mb-1 font-light whitespace-nowrap">Total Issues</span>
+                    <span className="text-sm sm:text-base md:text-lg font-semibold">{formatNumberShorthand(supply)}</span>
+                  </div>
+                ) : null
+              })()}
               {currentComic.price !== undefined && (
                 <div className="flex flex-col border-r border-white/30 pr-2 sm:pr-3 md:pr-4">
                   <span className="text-[10px] sm:text-xs text-white/60 uppercase tracking-wide mb-0.5 sm:mb-1 font-light">Price</span>
                   <span className="text-sm sm:text-base md:text-lg font-semibold flex items-center">
-                    {Number(currentComic.price || 0).toFixed(2)}
-                    <img src={hbar.src} alt="hbar" className="inline w-4 h-4 sm:w-6 sm:h-6 md:w-8 md:h-8 ml-1" />
+                    {typeof currentComic.price === 'number'
+                      ? <>{currentComic.price.toFixed(2)}<img src={hbar.src} alt="hbar" className="inline w-4 h-4 sm:w-6 sm:h-6 md:w-8 md:h-8 ml-1" /></>
+                      : String(currentComic.price).replace(/\s*HBAR\s*/i, '')}
+                    {typeof currentComic.price !== 'number' && (
+                      <img src={hbar.src} alt="hbar" className="inline w-4 h-4 sm:w-6 sm:h-6 md:w-8 md:h-8 ml-1" />
+                    )}
                   </span>
                 </div>
               )}

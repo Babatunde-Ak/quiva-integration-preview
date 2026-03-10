@@ -15,7 +15,6 @@ interface ComicCardProps extends Partial<Comic> {
   // Override/add specific props for the card component
   creator?: string
   creatorAvatar?: string
-  mintPrice?: string
   currentPrice?: string
   views?: number
   number?: number
@@ -25,16 +24,16 @@ interface ComicCardProps extends Partial<Comic> {
 }
 
 
-export function ComicCard({ 
+export function ComicCard({
   id,
-  title = "Untitled", 
+  title = "Untitled",
   creator,
   creatorAvatar,
   creatorUsername,
-  mintPrice = "1",
-  currentPrice = "3", 
+  price,
+  currentPrice,
   views: viewsProp = 4890,
-  image = "", 
+  image = "",
   premium = false,
   free = false,
   number = 1,
@@ -138,7 +137,7 @@ export function ComicCard({
             >
               <Heart size={10} className="sm:w-3 sm:h-3" fill={liked ? 'currentColor' : 'none'} stroke={liked ? 'currentColor' : 'white'} />
               <span className="text-[9px] sm:text-[10px] mt-0.5">
-                {likes || mintPrice}
+                {likes}
               </span>
             </button>
             
@@ -155,7 +154,7 @@ export function ComicCard({
                 <span className="sm:hidden">MP</span>
               </span>
               <div className="flex items-center gap-0.5 mt-0.5">
-                <span className="text-[9px] sm:text-[10px]">{currentPrice}</span>
+                <span className="text-[9px] sm:text-[10px]">{price ?? currentPrice}</span>
                 <Picture src={hbar} alt="Hedera Logo" className="w-2 h-2 sm:w-3 sm:h-3"/>
               </div>
             </div>
