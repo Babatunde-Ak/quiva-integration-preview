@@ -129,7 +129,7 @@
 // export default ReleaseView;
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Minus, Plus } from 'lucide-react';
+import { Currency, Minus, Plus } from 'lucide-react';
 import { useMirrorNodeQueries } from '@/hook/useMirrorNodeQueries';
 import useComicPlatform, { CampaignType } from '@/hook/useMarkeplace';
 import { useHederaWallet } from '@/providers/HashPackProvider';
@@ -137,6 +137,7 @@ import { useAppDispatch, useAppSelector } from '@/redux/hook';
 import { getComicById } from '@/redux/slices/comicSlice';
 import { useRouter, useSearchParams } from 'next/navigation';
 import MintSuccessModal from '@/components/modals/MintSuccessModal';
+import { createTransaction } from '@/redux/slices/transactionSlice';
 
 interface ReleaseViewProps {
   comicId?: string | null;
@@ -246,8 +247,15 @@ const ReleaseView: React.FC<ReleaseViewProps> = ({ comicId }) => {
         mintPrice: parseFloat(campaignData.mintPrice),
       });
 
-      console.log('✅ Mint successful:', result);
-      
+      // console.log('✅ Mint successful:', result);
+      // const transactionDispatch = await dispatch(createTransaction(
+      //   comicId: currentComic._id,
+      //   walletAddress: account || user?.walletAddress || '',
+      //   txHash: result.transactionId,
+      //   price: (parseFloat(campaignData.mintPrice) * mintAmount).toString(),
+      //   currency: 'HBAR'
+      // ) as any);
+      //  console.log('Transaction recorded in Redux:', transactionDispatch);
       // Store the minted quantity and show success modal
       setLastMintedQuantity(mintAmount);
       setShowSuccessModal(true);
@@ -347,7 +355,7 @@ const ReleaseView: React.FC<ReleaseViewProps> = ({ comicId }) => {
           </div>
         </div>
 
-        {/* Debug Info */}
+        {/* Debug Info
         {process.env.NODE_ENV === 'development' && (
           <div className="bg-[#0A0A0A] rounded-lg p-4 border border-yellow-500/30">
             <p className="text-yellow-500 font-mono text-xs mb-2">Debug Info:</p>
@@ -361,7 +369,7 @@ const ReleaseView: React.FC<ReleaseViewProps> = ({ comicId }) => {
               }, null, 2)}
             </pre>
           </div>
-        )}
+        )} */}
       </div>
     );
   }

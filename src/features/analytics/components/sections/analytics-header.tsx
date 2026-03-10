@@ -42,7 +42,7 @@ export function AnalyticsHeader() {
         </Select>
         
         <Button className="border border-primary-500 text-white font-semibold bg-transparent hover:bg-transparent p-1 px-2">
-          <span className="bg-primary-500 p-1 px-2 rounded-lg">USD</span> $HIBAR
+          <span className="bg-primary-500 p-1 px-2 rounded-lg">USD</span> $HBAR
         </Button>
       </div>
     </div>

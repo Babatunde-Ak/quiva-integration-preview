@@ -908,7 +908,7 @@ const ComicsView: React.FC<ComicsViewProps> = ({ comicId }) => {
         ))}
       </div>
 
-      {/* Debug Info (Development) */}
+      {/* Debug Info (Development)
       {process.env.NODE_ENV === 'development' && (
         <div className="mt-8 bg-[#0A0A0A] rounded-lg p-4 border border-yellow-500/30">
           <p className="text-yellow-500 font-mono text-xs mb-2">Debug: Minted NFTs</p>
@@ -921,7 +921,7 @@ const ComicsView: React.FC<ComicsViewProps> = ({ comicId }) => {
             }, null, 2)}
           </pre>
         </div>
-      )}
+      )} */}
 
       {/* Mint Comic Modal - For Direct Listings */}
       {showMintModal && currentComic && (

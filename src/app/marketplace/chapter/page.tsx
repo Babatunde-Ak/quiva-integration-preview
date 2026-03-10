@@ -175,9 +175,13 @@ const Marketplace = () => {
     } else if (currentComic && comicId) {
       // Auto-switch tab based on comic type
       const hasCampaign = currentComic.nftId?.campaignId !== undefined && 
-                         currentComic.nftId?.campaignId !== null;
+                         currentComic.nftId?.campaignId !== null &&
+                         currentComic.nftId?.campaignId !== '' &&
+                         currentComic.nftId?.campaignType !== 'direct_listing';
       const hasDirectListing = currentComic.nftId?.listingId !== undefined && 
-                              currentComic.nftId?.listingId !== null;
+                              currentComic.nftId?.listingId !== null &&
+                              currentComic.nftId?.listingId !== '' &&
+                              currentComic.nftId?.campaignType === 'direct_listing';
       
       if (hasCampaign) {
         // If comic has a campaign, show Release tab
@@ -299,7 +303,7 @@ const Marketplace = () => {
           )}
         </div>
 
-        {/* Debug Info (Remove in production) */}
+        {/* Debug Info (Remove in production)
         {process.env.NODE_ENV === 'development' && currentComic && (
           <div className="mt-4 bg-[#0A0A0A] rounded-lg p-4 border border-yellow-500/30">
             <p className="text-yellow-500 font-mono text-xs mb-2">Debug Info:</p>
@@ -314,7 +318,7 @@ const Marketplace = () => {
               }, null, 2)}
             </pre>
           </div>
-        )}
+        )} */}
       </div>
     </div>
   );
