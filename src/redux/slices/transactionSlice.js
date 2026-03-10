@@ -31,7 +31,7 @@ export const getAllTransactions = createAsyncThunk("transactions/getAll", async(
     } catch (error) {
         return rejectWithValue(error.response
             ?.data
-                ?.message || error.response || "Failed to fetch transactions");
+                ?.message || error.message || "Failed to fetch transactions");
     }
 });
 
@@ -48,7 +48,7 @@ export const createTransaction = createAsyncThunk("transactions/create",
     } catch (error) {
         return rejectWithValue(error.response
             ?.data
-                ?.message || error.response || "Failed to create transaction");
+                ?.message || error.message || "Failed to create transaction");
     }
 });
 
@@ -60,7 +60,7 @@ export const getAllUserTransactions = createAsyncThunk("transactions/getUserAll"
     } catch (error) {
         return rejectWithValue(error.response
             ?.data
-                ?.message || error.response || "Failed to fetch user transactions");
+                ?.message || error.message || "Failed to fetch user transactions");
     }
 });
 
@@ -74,7 +74,7 @@ export const verifyNftPurchase = createAsyncThunk("transactions/verifyNft", asyn
     } catch (error) {
         return rejectWithValue(error.response
             ?.data
-                ?.message || error.response || "Failed to verify NFT purchase");
+                ?.message || error.message || "Failed to verify NFT purchase");
     }
 });
 
@@ -88,7 +88,7 @@ export const getBuyersByComic = createAsyncThunk("transactions/getBuyersByComic"
     } catch (error) {
         return rejectWithValue(error.response
             ?.data
-                ?.message || error.response || "Failed to fetch comic buyers");
+                ?.message || error.message || "Failed to fetch comic buyers");
     }
 });
 
@@ -102,7 +102,7 @@ export const getTransactionByHash = createAsyncThunk("transactions/getByHash", a
     } catch (error) {
         return rejectWithValue(error.response
             ?.data
-                ?.message || error.response || "Failed to fetch transaction");
+                ?.message || error.message || "Failed to fetch transaction");
     }
 });
 
@@ -118,7 +118,7 @@ export const updateTransactionStatus = createAsyncThunk("transactions/updateStat
     } catch (error) {
         return rejectWithValue(error.response
             ?.data
-                ?.message || error.response || "Failed to update transaction status");
+                ?.message || error.message || "Failed to update transaction status");
     }
 });
 
