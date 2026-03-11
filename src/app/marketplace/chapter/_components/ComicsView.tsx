@@ -136,26 +136,24 @@ const ComicsView: React.FC<ComicsViewProps> = ({ comicId }) => {
     setSortOrder(prev => prev === 'recent' ? 'oldest' : 'recent');
   };
 
-  const handleConfirmMint = async () => {
+  const handleConfirmMint = async (txHash: string) => {
     setShowConfirmModal(false);
     setShowProcessingModal(true);
     setIsMinting(true);
+    setTransactionHash(txHash);
 
     await dispatch(createTransaction({
       comicId: comicId,
       walletAddress: account,
-      txHash: currentComic?.nftId?.transactionId || '',
+      txHash,
       price: currentComic?.nftId?.price || 0,
       currency: 'HBAR',
     } as any));
 
-    setTimeout(() => {
-      setTransactionHash(currentComic?.nftId?.transactionId || '');
-      setEditionNumber(`${currentComic?.episodeNumber || 1}`);
-      setShowProcessingModal(false);
-      setShowSuccessModal(true);
-      setIsMinting(false);
-    }, 1000);
+    setEditionNumber(`${currentComic?.episodeNumber || 1}`);
+    setShowProcessingModal(false);
+    setShowSuccessModal(true);
+    setIsMinting(false);
   };
 
   const handleViewComic = () => {

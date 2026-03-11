@@ -10,7 +10,7 @@ import { useAppDispatch, useAppSelector } from '@/redux/hook'
 interface MintConfirmationModalProps {
   isOpen: boolean
   onClose: () => void
-  onConfirm: () => void
+  onConfirm: (txHash: string) => void
   comicTitle: string
   coverImage: string
   price: string
@@ -65,7 +65,7 @@ const MintConfirmationModal: React.FC<MintConfirmationModalProps> = ({
       })
       
       if(result){
-        onConfirm()
+        onConfirm(result.transactionId)
       }
     } catch (error) {
         console.error('Minting failed:', error);
