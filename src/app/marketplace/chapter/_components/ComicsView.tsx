@@ -142,14 +142,14 @@ const ComicsView: React.FC<ComicsViewProps> = ({ comicId }) => {
     setIsMinting(true);
     setTransactionHash(txHash);
 
-    await dispatch(createTransaction({
+   const tx = await dispatch(createTransaction({
       comicId: comicId,
       walletAddress: account,
       txHash,
       price: currentComic?.nftId?.price || 0,
       currency: 'HBAR',
     } as any));
-
+    console.log("Update Tx", tx);
     setEditionNumber(`${currentComic?.episodeNumber || 1}`);
     setShowProcessingModal(false);
     setShowSuccessModal(true);
