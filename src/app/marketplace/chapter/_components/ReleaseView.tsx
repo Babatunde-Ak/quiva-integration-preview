@@ -247,7 +247,15 @@ const ReleaseView: React.FC<ReleaseViewProps> = ({ comicId }) => {
         mintPrice: parseFloat(campaignData.mintPrice),
       });
 
-      // console.log('✅ Mint successful:', result);
+      console.log('✅ Mint successful:', result);
+       const tx =   await dispatch(createTransaction({
+            comicId: comicId,
+            walletAddress: account,
+            txHash: result.transactionId,
+            price: currentComic?.nftId?.price || 0,
+            currency: 'HBAR',
+          } as any));
+          console.log("Update to Backend", tx);
       // const transactionDispatch = await dispatch(createTransaction(
       //   comicId: currentComic._id,
       //   walletAddress: account || user?.walletAddress || '',
