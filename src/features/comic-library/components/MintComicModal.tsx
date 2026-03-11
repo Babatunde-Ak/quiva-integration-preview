@@ -48,7 +48,7 @@ const MintComicModal: React.FC<MintComicModalProps> = ({
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { currentComic, isLoading } = useAppSelector((state: any) => state.comic);
-
+   const {user} = useAppSelector((state:any) => state.wallet);
   // Modal states
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [showProcessingModal, setShowProcessingModal] = useState(false)
@@ -94,7 +94,7 @@ const MintComicModal: React.FC<MintComicModalProps> = ({
 
     const transaction = await dispatch(createTransaction({
       comicId:comicId,
-      "walletAddress": walletAddressProp,
+      "walletAddress": user?.walletAddress || '',
       "txHash": currentComic?.nftId?.transactionId || "",
       "price": currentComic?.nftId?.price || 0,
       "currency": "HBAR"

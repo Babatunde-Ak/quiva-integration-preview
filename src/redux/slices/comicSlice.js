@@ -39,7 +39,7 @@ export const createComic = createAsyncThunk(
       });
       return response.data;
     } catch (error) {
-      throw error.response || "Failed to create comic";
+      throw error.message || "Failed to create comic";
     }
   }
 );
@@ -60,7 +60,7 @@ export const createFullComic = createAsyncThunk(
       );
       return response.data;
     } catch (error) {
-      throw error.response || "Failed to create full comic";
+      throw error.message || "Failed to create full comic";
     }
   }
 );
@@ -73,7 +73,7 @@ export const getAllComics = createAsyncThunk(
       const response = await axiosInstance.get("/comics/all");
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response || "Failed to fetch comics");
+      return rejectWithValue(error.response?.data?.message || error.message || "Failed to fetch comics");
     }
   }
 );
@@ -87,7 +87,7 @@ export const getUserComics = createAsyncThunk(
       return response.data;
     } catch (error) {
       return rejectWithValue(
-        error.response || "Failed to fetch user comics"
+        error.response?.data?.message || error.message || "Failed to fetch user comics"
       );
     }
   }
@@ -101,7 +101,7 @@ export const getComicById = createAsyncThunk(
       const response = await axiosInstance.get(`/comics/${id}`);
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response || "Failed to fetch comic");
+      return rejectWithValue(error.response?.data?.message || error.message || "Failed to fetch comic");
     }
   }
 );
@@ -116,7 +116,7 @@ export const getComicPreview = createAsyncThunk(
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message ||
-          error.response ||
+          error.message ||
           "Failed to fetch comic preview"
       );
     }
@@ -133,7 +133,7 @@ export const getPaidComic = createAsyncThunk(
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message ||
-          error.response ||
+          error.message ||
           "Failed to fetch paid comic"
       );
     }
@@ -148,7 +148,7 @@ export const updateComic = createAsyncThunk(
       const response = await axiosInstance.put(`/comics/${id}`, payload);
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response || "Failed to update comic");
+      return rejectWithValue(error.response?.data?.message || error.message || "Failed to update comic");
     }
   }
 );
@@ -173,7 +173,7 @@ export const updateComicCover = createAsyncThunk(
       return response.data;
     } catch (error) {
       return rejectWithValue(
-        error.response || "Failed to update comic cover"
+        error.response?.data?.message || error.message || "Failed to update comic cover"
       );
     }
   }
@@ -203,7 +203,7 @@ export const updateComicToken = createAsyncThunk(
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message ||
-          error.response ||
+          error.message ||
           "Failed to update comic token information"
       );
     }
@@ -218,7 +218,7 @@ export const deleteComic = createAsyncThunk(
       await axiosInstance.delete(`/comics/${id}`);
       return id;
     } catch (error) {
-      return rejectWithValue(error.response || "Failed to delete comic");
+      return rejectWithValue(error.response?.data?.message || error.message || "Failed to delete comic");
     }
   }
 );

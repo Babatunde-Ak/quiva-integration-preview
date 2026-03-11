@@ -12,26 +12,7 @@ import ComicConnect from "./ComicConnect";
 
 export function Header({ onMobileMenuToggle, isMobileMenuOpen }) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      message: "New comic release: Spider-Man #1",
-      read: false,
-      timestamp: Date.now() - 300000,
-    },
-    {
-      id: 2,
-      message: "Your favorite creator posted",
-      read: false,
-      timestamp: Date.now() - 600000,
-    },
-    {
-      id: 3,
-      message: "Weekly digest available",
-      read: true,
-      timestamp: Date.now() - 86400000,
-    },
-  ]);
+  const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const notificationRef = useRef(null);
 

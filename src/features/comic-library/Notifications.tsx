@@ -1,77 +1,5 @@
 import React from "react";
-import { Rocket, ChevronRight } from "lucide-react";
-
-interface NotificationItem {
-  id: number;
-  avatarUrl: string;
-  content: React.ReactNode;
-  timestamp: string;
-  isNew?: boolean;
-}
-
-// Mock Data
-const notificationsData: NotificationItem[] = [
-  {
-    id: 1,
-    avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Brian",
-    content: (
-      <span>
-        <span className="text-white font-bold">Brian Griffin</span> wants to
-        collaborate
-      </span>
-    ),
-    timestamp: "5 days ago",
-  },
-  {
-    id: 2,
-    avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Mayor",
-    content:
-      "Hey Mary, we've got a new buyer for your comic collection. Eagle eyes from The Mayor's Collection has been viewed by 50 people.",
-    timestamp: "1 month ago",
-  },
-  {
-    id: 3,
-    avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Mort",
-    content:
-      "Hey Mary, we've got a new buyer for your comic collection. Eagle eyes from The Mayor's Collection has been viewed by 50 people.",
-    timestamp: "1 month ago",
-  },
-  {
-    id: 4,
-    avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Peter",
-    content:
-      "Hey Mary, we've got a new buyer for your comic collection. Eagle eyes from The Mayor's Collection has been viewed by 50 people.",
-    timestamp: "1 month ago",
-  },
-  {
-    id: 5,
-    avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Herbert",
-    content:
-      "Hey Mary, we've got a new buyer for your comic collection. Eagle eyes from The Mayor's Collection has been viewed by 50 people.",
-    timestamp: "1 month ago",
-  },
-  {
-    id: 6,
-    avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Cleveland",
-    content:
-      "Hey Mary, we've got a new buyer for your comic collection. Eagle eyes from The Mayor's Collection has been viewed by 50 people.",
-    timestamp: "1 month ago",
-  },
-  {
-    id: 7,
-    avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Joe",
-    content:
-      "Hey Mary, we've got a new buyer for your comic collection. Eagle eyes from The Mayor's Collection has been viewed by 50 people.",
-    timestamp: "1 month ago",
-  },
-  {
-    id: 8,
-    avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Stewie",
-    content:
-      "Hey Mary, we've got a new buyer for your comic collection. Eagle eyes from The Mayor's Collection has been viewed by 50 people.",
-    timestamp: "1 month ago",
-  },
-];
+import { Rocket, ChevronRight, Bell } from "lucide-react";
 
 const Notifications = () => {
   return (
@@ -100,32 +28,9 @@ const Notifications = () => {
 
         {/* Notification List Container */}
         <div className="rounded-xl border border-orange-500/40 bg-black/50">
-          <div className="divide-y divide-gray-800">
-            {notificationsData.map((item) => (
-              <div
-                key={item.id}
-                className="flex items-start gap-4 p-5 hover:bg-gray-900/30 transition-colors"
-              >
-                {/* Avatar */}
-                <div className="relative shrink-0">
-                  <img
-                    src={item.avatarUrl}
-                    alt="User avatar"
-                    className="h-10 w-10 rounded-full bg-gray-700 object-cover ring-2 ring-gray-800"
-                  />
-                </div>
-
-                {/* Content */}
-                <div className="flex flex-col gap-1">
-                  <p className="text-sm leading-relaxed text-white/70">
-                    {item.content}
-                  </p>
-                  <span className="text-xs font-medium text-white/70">
-                    {item.timestamp}
-                  </span>
-                </div>
-              </div>
-            ))}
+          <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+            <Bell className="h-10 w-10 text-white/20 mb-4" />
+            <p className="text-white/40 text-sm">No notifications yet</p>
           </div>
         </div>
       </div>
