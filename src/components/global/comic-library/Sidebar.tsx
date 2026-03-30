@@ -25,6 +25,7 @@ import {
   Monitor,
   DollarSign,
   LogOut,
+  LayoutDashboard,
 } from 'lucide-react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
@@ -100,6 +101,8 @@ const getNavIcon = (label: string) => {
       return <img src="/heart-circle-icon.svg" alt="Favorites" className={iconClass} />
     case 'activity log':
       return <Activity className={iconClass} />
+    case 'dashboard':
+      return <LayoutDashboard className={iconClass} />
     default:
       return <img src="/category.svg" alt={label} className={iconClass} />
   }
@@ -139,6 +142,7 @@ export function Sidebar({ isMobileMenuOpen, onMobileMenuClose, isCollapsed, onTo
   }, [])
 
   const navigationEntries: NavEntry[] = [
+    { label: 'Dashboard', path: '/marketplace/dashboard' },
     { label: 'Explore', path: '/marketplace' },
     { label: 'Collections', path: '/marketplace/collections' },
     { label: 'Top Creators', path: '/marketplace/top-creators' },

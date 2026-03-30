@@ -16,7 +16,6 @@
     "@hashgraph/proto": "^2.25.0",
     "@hashgraph/sdk": "^2.78.0",
     "@hashgraphonline/hashinal-wc": "^2.0.1",
-    "@hashgraphonline/standards-sdk": "0.1.143-feat-adapter-registry.canary.30a3e65.61",
     "@headlessui/react": "^1.7.18",
     "@heroui/react": "^2.6.14",
     "@heroui/system": "^2.4.7",
@@ -101,5 +100,13 @@
   },
   "resolutions": {
     "postcss": "^8"
+  },
+  "overrides": {
+    "@hashgraphonline/hashinal-wc": {
+      "@hashgraphonline/standards-sdk": "0.1.143-feat-adapter-registry.canary.30a3e65.61"
+    },
+    "@hashgraphonline/standards-sdk": {
+      "@hashgraphonline/hashinal-wc": "^2.0.1"
+    }
   }
 }

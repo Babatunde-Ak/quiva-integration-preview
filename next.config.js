@@ -213,6 +213,7 @@
 
  /** @type {import('next').NextConfig} */
 
+const path = require('path');
 const webpack = require('webpack');
 
 const nextConfig = {
@@ -234,7 +235,7 @@ const nextConfig = {
     ],
   },
 
-webpack: (config) => {
+webpack: (config, { isServer }) => {
     config.resolve = config.resolve ?? {};
     config.resolve.alias = {
       ...(config.resolve.alias ?? {}),
@@ -247,6 +248,14 @@ webpack: (config) => {
       '@hiero-ledger/sdk': require.resolve('@hashgraph/sdk'),
       '@hiero-ledger/proto': require.resolve('@hashgraph/proto'),
       '@hiero-ledger/cryptography': require.resolve('@hashgraph/cryptography'),
+      // For client builds, redirect @hashgraph/sdk to its browser build (no gRPC/http2/fs).
+      // Must alias both the package root AND the direct .cjs path that
+      // @hashgraph/hedera-wallet-connect hardcodes in its dist bundle.
+      ...(!isServer ? {
+        '@hashgraph/sdk': path.resolve(__dirname, 'node_modules/@hashgraph/sdk/lib/browser.js'),
+        [path.resolve(__dirname, 'node_modules/@hashgraph/sdk/lib/index.cjs')]:
+          path.resolve(__dirname, 'node_modules/@hashgraph/sdk/lib/browser.cjs'),
+      } : {}),
     };
     config.resolve.fallback = {
       ...(config.resolve.fallback ?? {}),
@@ -257,7 +266,16 @@ webpack: (config) => {
       util: require.resolve('util'),
       assert: require.resolve('assert'),
       os: require.resolve('os-browserify/browser'),
-       '@react-native-async-storage/async-storage': false,
+      '@react-native-async-storage/async-storage': false,
+      // Node.js-only modules — only stub for client bundle
+      ...(!isServer ? {
+        fs: false,
+        net: false,
+        tls: false,
+        dns: false,
+        child_process: false,
+        http2: false,
+      } : {}),
     };
     config.resolve.extensions = [
       '.ts',
