@@ -13,63 +13,43 @@ export interface UploadProgress {
 }
 
 class FileUploadService {
-  private ipfs?: any;
-
-  constructor() {
-    // IPFS client is initialised lazily in uploadToIPFS to avoid SSR issues
-  }
-
-  private async getIpfsClient() {
-    if (!this.ipfs) {
-      if (!process.env.NEXT_PUBLIC_IPFS_URL) return null;
-      const { create } = await import('ipfs-http-client');
-      this.ipfs = create({
-        url: process.env.NEXT_PUBLIC_IPFS_URL,
-        headers: process.env.NEXT_PUBLIC_IPFS_API_KEY
-          ? { Authorization: `Bearer ${process.env.NEXT_PUBLIC_IPFS_API_KEY}` }
-          : undefined,
-      });
-    }
-    return this.ipfs;
-  }
+  constructor() {}
 
   async uploadToIPFS(file: File, onProgress?: (progress: UploadProgress) => void): Promise<UploadResult> {
-    const ipfs = await this.getIpfsClient();
-    if (!ipfs) {
-      throw new Error('IPFS not configured');
-    }
-    this.ipfs = ipfs;
+    const ipfsUrl = process.env.NEXT_PUBLIC_IPFS_URL;
+    if (!ipfsUrl) throw new Error('IPFS not configured');
 
-    const fileBuffer = await file.arrayBuffer();
-    
-    // Create progress tracking
-    let loaded = 0;
-    const total = file.size;
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const headers: Record<string, string> = {};
+    if (process.env.NEXT_PUBLIC_IPFS_API_KEY) {
+      headers['Authorization'] = `Bearer ${process.env.NEXT_PUBLIC_IPFS_API_KEY}`;
+    }
 
     try {
-      const result = await this.ipfs.add(
-        { content: fileBuffer },
-        {
-          progress: (bytes: number) => {
-            loaded += bytes;
-            if (onProgress) {
-              onProgress({
-                loaded,
-                total,
-                percentage: Math.round((loaded / total) * 100)
-              });
-            }
-          }
-        }
-      );
+      const response = await fetch(`${ipfsUrl}/api/v0/add`, {
+        method: 'POST',
+        headers,
+        body: formData,
+      });
 
-      const ipfsUrl = `https://ipfs.io/ipfs/${result.path}`;
-      
+      if (!response.ok) {
+        throw new Error(`IPFS upload failed with status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      const hash = result.Hash ?? result.hash ?? result.path;
+
+      if (onProgress) {
+        onProgress({ loaded: file.size, total: file.size, percentage: 100 });
+      }
+
       return {
-        url: ipfsUrl,
-        hash: result.path,
+        url: `https://ipfs.io/ipfs/${hash}`,
+        hash,
         size: file.size,
-        type: file.type
+        type: file.type,
       };
     } catch (error) {
       throw new Error(`IPFS upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
