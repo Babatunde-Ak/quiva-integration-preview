@@ -1,6 +1,4 @@
 // lib/file-upload.ts
-import { create } from 'ipfs-http-client';
-
 export interface UploadResult {
   url: string;
   hash?: string;
@@ -18,21 +16,29 @@ class FileUploadService {
   private ipfs?: any;
 
   constructor() {
-    // Initialize IPFS client if available
-    if (process.env.NEXT_PUBLIC_IPFS_URL) {
-      this.ipfs = create({ 
+    // IPFS client is initialised lazily in uploadToIPFS to avoid SSR issues
+  }
+
+  private async getIpfsClient() {
+    if (!this.ipfs) {
+      if (!process.env.NEXT_PUBLIC_IPFS_URL) return null;
+      const { create } = await import('ipfs-http-client');
+      this.ipfs = create({
         url: process.env.NEXT_PUBLIC_IPFS_URL,
-        headers: process.env.NEXT_PUBLIC_IPFS_API_KEY ? {
-          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_IPFS_API_KEY}`
-        } : undefined
+        headers: process.env.NEXT_PUBLIC_IPFS_API_KEY
+          ? { Authorization: `Bearer ${process.env.NEXT_PUBLIC_IPFS_API_KEY}` }
+          : undefined,
       });
     }
+    return this.ipfs;
   }
 
   async uploadToIPFS(file: File, onProgress?: (progress: UploadProgress) => void): Promise<UploadResult> {
-    if (!this.ipfs) {
+    const ipfs = await this.getIpfsClient();
+    if (!ipfs) {
       throw new Error('IPFS not configured');
     }
+    this.ipfs = ipfs;
 
     const fileBuffer = await file.arrayBuffer();
     
