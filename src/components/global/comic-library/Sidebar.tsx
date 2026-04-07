@@ -69,6 +69,8 @@ const getNavIcon = (label: string) => {
       return <img src="/collections-icon.svg" alt="Collections" className={iconClass} />
     case 'top creators':
       return <img src="/users-icons.png" alt="Top Creators" className={iconClass} />
+    case 'auction':
+      return <Tag className={iconClass} />
     case 'analytics':
       return <ChartSpline className={iconClass} />
     case 'history':
@@ -155,6 +157,7 @@ export function Sidebar({ isMobileMenuOpen, onMobileMenuClose, isCollapsed, onTo
         { label: 'Earnings', path: '/comic-pad/earnings' },
       ],
     },
+    { label: 'Auction', path: '/marketplace/auction' },
     { label: 'Analytics', path: '/marketplace/analytics' },
     { label: 'Favourites', path: '/marketplace/library' },
     { label: 'History', path: '/marketplace/history' },

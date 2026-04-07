@@ -11,16 +11,16 @@ import { hbar } from '../../../public/dev_images'
 import { Comic } from '@/features/comic-library/utils/transformComicData'
 import { formatNumberShorthand } from '@/lib/Formatnumber'
 
-interface ComicCardProps extends Partial<Comic> {
+interface ComicCardProps extends Readonly<Partial<Comic>> {
   // Override/add specific props for the card component
-  creator?: string
-  creatorAvatar?: string
-  currentPrice?: string
-  views?: number
-  number?: number
-  isLiked?: boolean
-  size?: 'small' | 'medium' | 'large'
-  free?: boolean
+  readonly creator?: string
+  readonly creatorAvatar?: string
+  readonly currentPrice?: string
+  readonly views?: number
+  readonly number?: number
+  readonly isLiked?: boolean
+  readonly size?: 'small' | 'medium' | 'large'
+  readonly free?: boolean
 }
 
 
