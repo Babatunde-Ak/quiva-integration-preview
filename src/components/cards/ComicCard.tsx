@@ -62,7 +62,7 @@ export function ComicCard({
 
   return (
     <motion.div 
-      className="w-full max-w-[360px] sm:max-w-[320px] md:max-w-[300px] lg:max-w-[360px] bg-black-200 rounded-xl overflow-hidden cursor-pointer p-3 sm:p-4 border-[2px] border-black-50 shadow-[4px_4px_0_0_black] hover:shadow-[6px_6px_0_0_black] transition-all duration-200 mx-auto"
+      className="w-[280px] sm:w-[300px] lg:w-[320px] shrink-0 bg-black-200 rounded-xl overflow-hidden cursor-pointer p-3 sm:p-4 border-[2px] border-black-50 shadow-[4px_4px_0_0_black] hover:shadow-[6px_6px_0_0_black] transition-all duration-200"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
@@ -71,7 +71,7 @@ export function ComicCard({
         transition: { duration: 0.2, ease: "easeInOut" }
       }}
       whileTap={{ scale: 0.98 }}
-      onClick={() => router.push(`/marketplace/detail?id=${id}`)}
+      onClick={() => router.push(`/chapter/${id}`)}
     >
       {/* Image Container with Number Badge */}
       <div className="relative">

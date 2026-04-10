@@ -63,7 +63,7 @@ export function InvertedGridComicCard({
 
     return (
         <motion.div
-            className="w-full max-w-[380px] bg-black-200 rounded-xl overflow-hidden cursor-pointer p-3 sm:p-4 border-[2px] border-black-50 shadow-[4px_4px_0_0_black] hover:shadow-[6px_6px_0_0_black] transition-all duration-200 mx-auto"
+            className="w-[280px] sm:w-[300px] lg:w-[320px] shrink-0 bg-black-200 rounded-xl overflow-hidden cursor-pointer p-3 sm:p-4 border-[2px] border-black-50 shadow-[4px_4px_0_0_black] hover:shadow-[6px_6px_0_0_black] transition-all duration-200"
             initial={{
                 opacity: 0,
                 y: 20
@@ -86,7 +86,7 @@ export function InvertedGridComicCard({
             whileTap={{
                 scale: 0.98
             }}
-            onClick={() => router.push(`/marketplace/detail?id=${id}`)}>
+            onClick={() => router.push(`/chapter/${id}`)}>
             
             {/* Content Section */}
             <div className="pt-3 sm:pt-4">

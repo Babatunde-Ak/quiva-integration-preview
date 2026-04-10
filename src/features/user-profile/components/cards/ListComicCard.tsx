@@ -63,7 +63,7 @@ export function MintComicCard({
         transition: { duration: 0.2, ease: "easeInOut" }
       }}
       whileTap={{ scale: 0.98 }}
-      onClick={() => router.push(`/marketplace/detail?id=${id}`)}
+      onClick={() => router.push(`/chapter/${id}`)}
     >
       {/* Image Container with Number Badge */}
       <div className="relative">
