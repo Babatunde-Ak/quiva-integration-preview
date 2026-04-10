@@ -6,6 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { MainButton } from '@/components/button';
 import Picture from '@/components/picture/Index';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import { hbarIcon } from '../../../../../public/dev_images';
 
 type TabType = 'overview' | 'editing' | 'analytics';
 
@@ -286,7 +288,7 @@ const AnalyticsTab: React.FC<{ episode: any }> = ({ episode }) => {
                 <div className="grid grid-cols-3 gap-4 mb-4">
                     <StatItem label="Mint Price">
                         <span className="flex items-center gap-1">
-                            {Number(mintPrice).toFixed(2)} <span className="text-primary-500 text-sm">H</span>
+                            {Number(mintPrice).toFixed(2)} <span className=""><Image src={hbarIcon} alt="Hbar" className="w-4 h-4" /></span>
                         </span>
                     </StatItem>
                     <StatItem label="Editions">

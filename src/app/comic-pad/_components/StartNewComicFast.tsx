@@ -30,7 +30,7 @@ const StartNewComicFast = () => {
 					Your all-in-one studio for comic creation, collections, and drops on Quiva.
 				</p>
 			</div>
-			<div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 lg:gap-8 px-2 lg:px-0'>
+			<div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-3 lg:gap-8 px-2 lg:px-0'>
 				<CreateComicCard
 					imageSrc={paintIcon}
 					title='Create Amazing Art'
@@ -39,14 +39,14 @@ const StartNewComicFast = () => {
 					onClick={handleStartNewProject}
 					buttonText="Coming Soon"
 				/>
-				<CreateComicCard
+				{/* <CreateComicCard
 					imageSrc={robotIcon}
 					title='Q Art Maker'
 					description='Turn ideas into comic art with AI assistance.'
 					className='!cursor-not-allowed'
 					onClick={onOpenUploadModal}
 					buttonText="Coming Soon"
-				/>
+				/> */}
 
 				<CreateComicCard
 					imageSrc={bookIcon}
@@ -56,14 +56,14 @@ const StartNewComicFast = () => {
 					buttonText="Create Collection"
 				/>
 
-				<CreateComicCard
+				{/* <CreateComicCard
 					imageSrc={rocketIcon}
 					title='Launch Drops'
 					description='Supply-based mint events designed for hype, scarcity, and momentum.'
 					className='!cursor-not-allowed'
 					onClick={onOpenUploadModal}
 					buttonText="Coming Soon"
-				/>
+				/> */}
 			</div>
 
 			{/* Upload Modal */}

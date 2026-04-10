@@ -23,11 +23,6 @@ export function ComicPadSideNav({ isMobileMenuOpen, onMobileMenuClose }) {
       isActive: pathname === '/comic-pad/collections'
     },
     {
-      label: 'My Comics', 
-      path: '/comic-pad/my-comics',
-      isActive: pathname === '/comic-pad/my-comics'
-    },
-    {
       label: 'Earnings',
       path: '/comic-pad/earnings',
       isActive: pathname === '/comic-pad/earnings'
