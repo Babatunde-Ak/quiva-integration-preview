@@ -1,10 +1,13 @@
 'use client'
 
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useMemo } from 'react'
 import { Search, X, TrendingUp } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useAppSelector } from '@/redux/hook'
+import { transformApiComicsToComics } from '@/features/comic-library/utils/transformComicData'
+import { formatNumberShorthand } from '@/lib/Formatnumber'
 
-interface Comic {
+interface SearchComic {
   id: string
   title: string
   creator: string
@@ -25,18 +28,10 @@ interface TrendingItem {
 
 interface SearchBarProps {
   onSearch?: (query: string) => void
-  onComicSelect?: (comic: Comic) => void
+  onComicSelect?: (comic: SearchComic) => void
   placeholder?: string
   className?: string
 }
-
-const mockTrendingSearches: TrendingItem[] = [
-  { id: '1', title: 'Black Cover', image: '/api/placeholder/40/40', percentageChange: 8.40 },
-  { id: '2', title: 'Black Cover', image: '/api/placeholder/40/40', percentageChange: 8.40 },
-  { id: '3', title: 'Black Cover', image: '/api/placeholder/40/40', percentageChange: 8.40 },
-  { id: '4', title: 'Black Cover', image: '/api/placeholder/40/40', percentageChange: 8.40 },
-  { id: '5', title: 'Black Cover', image: '/api/placeholder/40/40', percentageChange: 8.40 },
-]
 
 const mockTrendingGenres = [
   { id: '1', title: 'Action', percentageChange: 8.40 },
@@ -44,13 +39,6 @@ const mockTrendingGenres = [
   { id: '3', title: 'Sci-Fi', percentageChange: 8.40 },
   { id: '4', title: 'Romance', percentageChange: 6.20 },
   { id: '5', title: 'Comedy', percentageChange: 4.80 },
-]
-
-const mockSearchResults: Comic[] = [
-  { id: '1', title: 'Black Cover', creator: 'Artist Name', image: '/api/placeholder/60/60', floorPrice: '4.89', totalSupply: 500, volume24h: '300K', sales: 50, percentageChange: 8.40 },
-  { id: '2', title: 'Black Cover', creator: 'Artist Name', image: '/api/placeholder/60/60', floorPrice: '4.89', totalSupply: 500, volume24h: '300K', sales: 50, percentageChange: 8.40 },
-  { id: '3', title: 'Black Cover', creator: 'Artist Name', image: '/api/placeholder/60/60', floorPrice: '4.89', totalSupply: 500, volume24h: '300K', sales: 50, percentageChange: 8.40 },
-  { id: '4', title: 'Black Cover', creator: 'Artist Name', image: '/api/placeholder/60/60', floorPrice: '4.89', totalSupply: 500, volume24h: '300K', sales: 50, percentageChange: 8.40 },
 ]
 
 export function SearchBar({
@@ -61,23 +49,49 @@ export function SearchBar({
 }: SearchBarProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const [searchResults, setSearchResults] = useState<Comic[]>([])
+  const [searchResults, setSearchResults] = useState<SearchComic[]>([])
   const [isSearching, setIsSearching] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const modalInputRef = useRef<HTMLInputElement>(null)
 
+  // Pull comics from Redux
+  const rawComics = useAppSelector((state: any) => state.comic.comics)
+
+  // Transform and map to SearchComic shape
+  const allComics: SearchComic[] = useMemo(() => {
+    const data = rawComics?.data?.comics?.data
+    if (!data) return []
+    return transformApiComicsToComics(data).map(c => ({
+      id: c.id,
+      title: c.title,
+      creator: c.creatorUsername || (c.creatorWalletAddress
+        ? `${c.creatorWalletAddress.slice(0, 6)}...${c.creatorWalletAddress.slice(-4)}`
+        : 'Creator'),
+      image: c.image || '',
+      floorPrice: c.price ?? '0',
+      totalSupply: (c.nftId as any)?.maxSupply ?? 0,
+      volume24h: c.views ? formatNumberShorthand(c.views) : '0',
+      sales: c.likes ?? 0,
+      percentageChange: 0,
+    }))
+  }, [rawComics])
+
+  // Trending = top 5 by views
+  const trendingComics: TrendingItem[] = useMemo(() => {
+    return [...allComics]
+      .sort((a, b) => Number(b.volume24h) - Number(a.volume24h))
+      .slice(0, 5)
+      .map(c => ({ id: c.id, title: c.title, image: c.image, percentageChange: c.percentageChange }))
+  }, [allComics])
+
   // Focus modal input when it opens
   useEffect(() => {
-    if (isOpen) {
-      setTimeout(() => modalInputRef.current?.focus(), 50)
-    }
+    if (isOpen) setTimeout(() => modalInputRef.current?.focus(), 50)
   }, [isOpen])
 
   // Close on Escape
   useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') handleClose()
-    }
+    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') handleClose() }
     document.addEventListener('keydown', handleKey)
     return () => document.removeEventListener('keydown', handleKey)
   }, [])
@@ -95,13 +109,13 @@ export function SearchBar({
 
     if (value.trim()) {
       setIsSearching(true)
-      setTimeout(() => {
-        setSearchResults(
-          mockSearchResults.filter(comic =>
-            comic.title.toLowerCase().includes(value.toLowerCase())
-          )
+      const q = value.toLowerCase()
+      setSearchResults(
+        allComics.filter(c =>
+          c.title.toLowerCase().includes(q) ||
+          c.creator.toLowerCase().includes(q)
         )
-      }, 300)
+      )
     } else {
       setIsSearching(false)
       setSearchResults([])
@@ -113,11 +127,12 @@ export function SearchBar({
   const handleTrendingClick = (title: string) => {
     setSearchQuery(title)
     setIsSearching(true)
-    setSearchResults(mockSearchResults)
+    const q = title.toLowerCase()
+    setSearchResults(allComics.filter(c => c.title.toLowerCase().includes(q)))
     onSearch?.(title)
   }
 
-  const handleComicClick = (comic: Comic) => {
+  const handleComicClick = (comic: SearchComic) => {
     handleClose()
     onComicSelect?.(comic)
   }
@@ -192,7 +207,7 @@ export function SearchBar({
                         <TrendingUp size={13} /> Trending Search
                       </h3>
                       <div className="space-y-1">
-                        {mockTrendingSearches.map(item => (
+                        {trendingComics.map(item => (
                           <button
                             key={item.id}
                             onClick={() => handleTrendingClick(item.title)}
@@ -203,8 +218,8 @@ export function SearchBar({
                               alt={item.title}
                               className="w-8 h-8 rounded-md object-cover bg-white/10"
                             />
-                            <span className="flex-1 text-left text-white text-sm">{item.title}</span>
-                            <span className="text-green-400 text-xs flex items-center gap-0.5">
+                            <span className="flex-1 text-left text-white text-sm truncate">{item.title}</span>
+                            <span className="text-green-400 text-xs flex items-center gap-0.5 shrink-0">
                               <TrendingUp size={11} />
                               {item.percentageChange}%
                             </span>
@@ -256,47 +271,52 @@ export function SearchBar({
                       <div>Sale</div>
                     </div>
 
-                    {/* Rows */}
-                    <div className="space-y-1">
-                      {searchResults.map(comic => (
-                        <button
-                          key={comic.id}
-                          onClick={() => handleComicClick(comic)}
-                          className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-3 items-center w-full px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors"
-                        >
-                          {/* Title + image */}
-                          <div className="flex items-center gap-3 min-w-0">
-                            <img
-                              src={comic.image}
-                              alt={comic.title}
-                              className="w-10 h-10 rounded-md object-cover bg-white/10 shrink-0"
-                            />
-                            <span className="text-white text-sm font-medium truncate">{comic.title}</span>
-                          </div>
+                    {searchResults.length === 0 ? (
+                      <p className="text-white/30 text-sm text-center py-8">No results found</p>
+                    ) : (
+                      <div className="space-y-1">
+                        {searchResults.map(comic => (
+                          <button
+                            key={comic.id}
+                            onClick={() => handleComicClick(comic)}
+                            className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-3 items-center w-full px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors"
+                          >
+                            {/* Title + image */}
+                            <div className="flex items-center gap-3 min-w-0">
+                              <img
+                                src={comic.image}
+                                alt={comic.title}
+                                className="w-10 h-10 rounded-md object-cover bg-white/10 shrink-0"
+                              />
+                              <span className="text-white text-sm font-medium truncate">{comic.title}</span>
+                            </div>
 
-                          {/* Floor Price */}
-                          <div className="flex flex-col items-start">
+                            {/* Floor Price */}
+                            <div className="flex flex-col items-start">
+                              <div className="flex items-center gap-1">
+                                <span className="text-white text-sm">{comic.floorPrice}</span>
+                                <span className="text-white/40 text-xs">H</span>
+                              </div>
+                              {comic.percentageChange > 0 && (
+                                <span className="text-green-400 text-[11px]">▲ {comic.percentageChange}%</span>
+                              )}
+                            </div>
+
+                            {/* Total Supply */}
+                            <div className="text-white text-sm font-medium">{comic.totalSupply.toLocaleString()}</div>
+
+                            {/* 24h Volume */}
                             <div className="flex items-center gap-1">
-                              <span className="text-white text-sm">{comic.floorPrice}</span>
+                              <span className="text-white text-sm">{comic.volume24h}</span>
                               <span className="text-white/40 text-xs">H</span>
                             </div>
-                            <span className="text-green-400 text-[11px]">▲ {comic.percentageChange}%</span>
-                          </div>
 
-                          {/* Total Supply */}
-                          <div className="text-white text-sm font-medium">{comic.totalSupply.toLocaleString()}</div>
-
-                          {/* 24h Volume */}
-                          <div className="flex items-center gap-1">
-                            <span className="text-white text-sm">{comic.volume24h}</span>
-                            <span className="text-white/40 text-xs">H</span>
-                          </div>
-
-                          {/* Sale */}
-                          <div className="text-white text-sm font-medium">{comic.sales}</div>
-                        </button>
-                      ))}
-                    </div>
+                            {/* Sale */}
+                            <div className="text-white text-sm font-medium">{comic.sales}</div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
