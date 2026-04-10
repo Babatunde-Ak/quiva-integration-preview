@@ -49,7 +49,7 @@ const HeroSection = () => {
         {/* Navigation - Top Left */}
         <div className="mb-8">
           <button 
-            onClick={() => router.back()}
+            onClick={() => router.push('/marketplace')}
             className="group flex items-center gap-2 px-5 py-2.5 rounded-full hover:bg-[#000] border border-white/5 backdrop-blur-md bg-white/10 transition-all duration-300 text-sm font-medium text-white active:scale-95"
           >
             <ChevronLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" />

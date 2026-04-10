@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, ArrowLeft, Search } from 'lucide-react';
+import { ArrowRight, ArrowLeft } from 'lucide-react';
+import { SearchBar } from '@/components/search/SearchBar';
 import Picture from '@/components/picture/Index';
 import Link from 'next/link';
 import { Comic } from '@/features/comic-library/utils/transformComicData';
@@ -164,16 +165,12 @@ const ComicsCarousel: React.FC<ComicsCarouselProps> = ({
           </h2>
           
           {showSearch && (
-            <div className="relative rounded-full">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/50 w-5 h-5" />
-              <input
-                type="text"
-                placeholder="Search comics/creators"
-                value={searchQuery}
-                onChange={handleSearch}
-                className="bg-black-200 font-light border border-gray-300 rounded-full pl-10 pr-4 py-2 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-72 md:w-96 text-sm"
-              />
-            </div>
+            <SearchBar
+              placeholder="Search comics/creators"
+              onSearch={onSearch}
+              onComicSelect={onComicSelect}
+              className="w-72 md:w-96"
+            />
           )}
         </div>
       </div>
