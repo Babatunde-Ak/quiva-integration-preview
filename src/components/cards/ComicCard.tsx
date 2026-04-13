@@ -71,7 +71,7 @@ export function ComicCard({
         transition: { duration: 0.2, ease: "easeInOut" }
       }}
       whileTap={{ scale: 0.98 }}
-      onClick={() => router.push(`/chapter/${id}`)}
+      onClick={() => router.push(`/marketplace/chapter?id=${id}`)}
     >
       {/* Image Container with Number Badge */}
       <div className="relative">
