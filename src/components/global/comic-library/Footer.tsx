@@ -34,6 +34,11 @@ export function Footer({
             icon: FaYoutube,
             href: "https://youtube.com/@quivacomics?si=tC-pE9LhRkQ32Cxg",
             label: "YouTube"
+        },
+        {
+            icon: FaTiktok,
+            href: "https://www.tiktok.com/@quivacomics?_r=1&_t=ZS-95YBKY1zgrX",
+            label: "Tiktok"
         }
     ]
 
