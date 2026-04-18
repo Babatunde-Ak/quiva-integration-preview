@@ -5,7 +5,7 @@ import { QuivaLogo } from '@/components/utils/function'
 import { motion } from 'framer-motion'
 import { Sun, Moon } from 'lucide-react'
 import { useState } from 'react'
-import { FaXTwitter, FaDiscord, FaGithub, FaYoutube } from 'react-icons/fa6'
+import { FaXTwitter, FaDiscord,FaYoutube, FaTelegram, FaTiktok } from 'react-icons/fa6'
 import { hbar } from '../../../../public/dev_images'
 
 interface FooterProps {
@@ -20,20 +20,25 @@ export function Footer({
     const socialLinks = [
         {
             icon: FaXTwitter,
-            href: "https://twitter.com/quiva",
+            href: "https://x.com/quivacomics",
             label: "Twitter"
         }, {
             icon: FaDiscord,
-            href: "https://discord.gg/quiva",
+            href: "https://discord.gg/nrPnhXqHMN",
             label: "Discord"
         }, {
-            icon: FaGithub,
-            href: "https://github.com/quiva",
-            label: "GitHub"
+            icon: FaTelegram,
+            href: "https://t.me/QuivaCommunity",
+            label: "Telegram"
         }, {
             icon: FaYoutube,
-            href: "https://youtube.com/@quiva",
+            href: "https://youtube.com/@quivacomics?si=tC-pE9LhRkQ32Cxg",
             label: "YouTube"
+        },
+        {
+            icon: FaTiktok,
+            href: "https://www.tiktok.com/@quivacomics?_r=1&_t=ZS-95YBKY1zgrX",
+            label: "Tiktok"
         }
     ]
 
