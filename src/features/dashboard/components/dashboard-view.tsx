@@ -133,7 +133,10 @@ export default function DashboardView() {
   // ── Derived user values ──────────────────────────────────────────────────────
   const xp = user?.xp ?? 0
   const { level, xpInLevel, xpNeededInLevel, xpToNext } = useMemo(() => computeLevel(xp), [xp])
-  const roleLabel = `${user?.role ?? 'Reader'} Level ${level}`
+  const primaryRole = Array.isArray(user?.role)
+    ? (user.role.includes('creator') ? 'Creator' : 'Reader')
+    : (user?.role ?? 'Reader')
+  const roleLabel = `${primaryRole} Level ${level}`
 
   // Dates with a CHECKIN event — used to mark streak bubbles
   const checkinDates = useMemo(() => {
@@ -295,7 +298,7 @@ export default function DashboardView() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <StatBadge label="Wallet Address" value={truncateAddress(walletAddress)} />
           <StatBadge label="Current Rank" value={user?.rank ? `#${user.rank}` : '—'} />
-          <StatBadge label="Role" value={user?.role ?? 'Reader'} />
+          <StatBadge label="Role" value={primaryRole} />
           <StatBadge label="Total XP" value={xp.toLocaleString()} />
         </div>
       </div>

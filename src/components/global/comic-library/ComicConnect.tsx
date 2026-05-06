@@ -47,6 +47,13 @@ function ComicConnect() {
     }
   }, [isRainbowConnected, rainbowAddress, isHashpackConnected, account, isAuthenticated, walletAddress]);
 
+  // Auto-close the connect modal once auth completes
+  useEffect(() => {
+    if (isAuthenticated && isOpen) {
+      setIsOpen(false);
+    }
+  }, [isAuthenticated, isOpen]);
+
   const handleConnect = () => {
     setIsOpen(true);
   };
@@ -56,9 +63,9 @@ function ComicConnect() {
       case WalletType.RAINBOW:
         return <RainbowConnect />;
       case WalletType.HASHPACK:
-        return <HashConnectButton />;
       default:
-        return null;
+        // Default to HashConnectButton — it handles its own session restoration
+        return <HashConnectButton />;
     }
   };
 
@@ -83,7 +90,7 @@ function ComicConnect() {
 
   return (
     <>
-      {!isAuthenticated || connectedWallet === WalletType.NONE ? (
+      {isAuthenticated === false ? (
         <>
           <MainButton 
             className='text-xxs sm:text-sm !px-2 sm:px-4'

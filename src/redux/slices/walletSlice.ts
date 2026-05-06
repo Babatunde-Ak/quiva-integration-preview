@@ -130,6 +130,13 @@ const walletAuthSlice = createSlice({
     setWalletAddress: (state, action) => {
       state.walletAddress = action.payload;
     },
+    setAuthenticated: (state, action) => {
+      state.isAuthenticated = true;
+      state.token = action.payload.accessToken;
+      state.refreshToken = action.payload.refreshToken ?? null;
+      state.user = action.payload.user ?? null;
+      state.error = null;
+    },
   },
   extraReducers: (builder) => {
     // Wallet Auth (Get Message)
@@ -189,7 +196,7 @@ const walletAuthSlice = createSlice({
 });
 
 // Actions
-export const { clearError, clearMessage, logout, setWalletAddress } =
+export const { clearError, clearMessage, logout, setWalletAddress, setAuthenticated } =
   walletAuthSlice.actions;
 
 // Selectors

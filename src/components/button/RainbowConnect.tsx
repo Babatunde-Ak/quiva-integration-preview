@@ -1,5 +1,5 @@
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { ChevronDown, LogOut, Copy, ExternalLink, Loader2 } from "lucide-react";
 import { useWalletAuth } from "@/hook/useWalletAuth";
 import { useAccount, useDisconnect } from "wagmi";
@@ -33,6 +33,9 @@ export const RainbowConnect: React.FC<RainbowConnectProps> = ({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0 });
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const dropdownPanelRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const userMenuItems = [
@@ -47,27 +50,30 @@ export const RainbowConnect: React.FC<RainbowConnectProps> = ({
       }
   ]
 
-  // Auto-login when wallet connects
-  const autoLogin = useCallback(async () => {
-    // Auto-login on initial connection or when JWT expires
-    // console.log("Auto-login check:", { isConnected, isAuthenticated, address, isLoggingIn });
-    // console.log(isConnected && !isAuthenticated && address && !isLoggingIn)
-    if (isConnected && !isAuthenticated && address && !isLoggingIn) {
-      try {
-        setIsLoggingIn(true);
-        await dispatch(setWalletAddress(address));
-        await loginWithWallet();
-      } catch (err) {
-        console.error("Auto-login failed:", err);
-      } finally {
-        setIsLoggingIn(false);
-      }
-    }
-  }, [isConnected, isAuthenticated, address, isLoggingIn, dispatch, loginWithWallet]);
+  // Ref-based guard so changing it never recreates the effect
+  const isLoggingInRef = useRef(false);
 
   useEffect(() => {
-    autoLogin();
-  }, [autoLogin]);
+    if (!isConnected || isAuthenticated || !address || isLoggingInRef.current) return;
+
+    const run = async () => {
+      isLoggingInRef.current = true;
+      setIsLoggingIn(true);
+      try {
+        await dispatch(setWalletAddress(address));
+        await loginWithWallet();
+      } catch (err: any) {
+        console.error("Auto-login failed:", err);
+      } finally {
+        isLoggingInRef.current = false;
+        setIsLoggingIn(false);
+      }
+    };
+
+    run();
+    // loginWithWallet intentionally excluded — new reference every render
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isConnected, isAuthenticated, address, dispatch]);
 
   const handleLogout = () => {
     // Disconnect wallet
@@ -76,21 +82,29 @@ export const RainbowConnect: React.FC<RainbowConnectProps> = ({
     dispatch(logout());
   };
 
-  // Close dropdown when clicking outside
+  const handleToggleDropdown = () => {
+    if (!isDropdownOpen && triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setDropdownPos({
+        top: rect.bottom + 8,
+        right: window.innerWidth - rect.right,
+      });
+    }
+    setIsDropdownOpen((prev) => !prev);
+  };
+
+  // Close dropdown when clicking outside both trigger and panel
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsDropdownOpen(false);
-      }
+        triggerRef.current?.contains(event.target as Node) ||
+        dropdownPanelRef.current?.contains(event.target as Node)
+      ) return;
+      setIsDropdownOpen(false);
     };
 
     document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const copyToClipboard = async (text: string) => {
@@ -214,11 +228,8 @@ export const RainbowConnect: React.FC<RainbowConnectProps> = ({
                 <div className="relative" ref={dropdownRef}>
                   {/* Avatar MainButton */}
                   <button
-                    onClick={
-                      disabled
-                        ? undefined
-                        : () => setIsDropdownOpen(!isDropdownOpen)
-                    }
+                    ref={triggerRef}
+                    onClick={disabled ? undefined : handleToggleDropdown}
                     disabled={disabled}
                     className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors
                       ${
@@ -249,9 +260,13 @@ export const RainbowConnect: React.FC<RainbowConnectProps> = ({
                     />
                   </button>
 
-                  {/* Dropdown Menu */}
+                  {/* Dropdown Menu — fixed so it escapes any overflow-hidden parent */}
                   {isDropdownOpen && (
-                    <div className="absolute top-full right-0 mt-2 w-72 bg-black-400 border border-white/20 rounded-xl shadow-xl z-50 overflow-hidden">
+                    <div
+                      ref={dropdownPanelRef}
+                      className="fixed w-72 bg-black-400 border border-white/20 rounded-xl shadow-xl z-[200] overflow-hidden"
+                      style={{ top: dropdownPos.top, right: dropdownPos.right }}
+                    >
                       {/* User Info Header */}
                       <div className="p-4 border-b border-white/10">
                         <div className="flex items-center gap-3">

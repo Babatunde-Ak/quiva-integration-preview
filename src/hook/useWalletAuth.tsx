@@ -6,7 +6,7 @@ import { useAccount, useSignMessage } from "wagmi";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/redux/store";
 import { getAddress } from "viem";
-import { walletAuth, walletVerifyAuth } from "@/redux/slices/walletSlice";
+import { walletAuth, walletVerifyAuth, setAuthenticated } from "@/redux/slices/walletSlice";
 import { getUserProfile } from "@/redux/slices/authSlice";
 import { useState, useEffect } from "react";
 import { useHederaWallet } from '@/providers/HashPackProvider';
@@ -64,6 +64,11 @@ export function useWalletAuth() {
       // Backend may return a token directly (no-signature flow)
       if ((msgRes as any).accessToken) {
         localStorage.setItem("authToken", (msgRes as any).accessToken);
+        dispatch(setAuthenticated({
+          accessToken: (msgRes as any).accessToken,
+          refreshToken: (msgRes as any).refreshToken,
+          user: (msgRes as any).user,
+        }));
         if ((msgRes as any).user) dispatch(getUserProfile((msgRes as any).user._id));
         return (msgRes as any).user;
       }
@@ -104,6 +109,11 @@ export function useWalletAuth() {
       // Backend may return a token directly (no-signature flow)
       if ((msgRes as any).accessToken) {
         localStorage.setItem("authToken", (msgRes as any).accessToken);
+        dispatch(setAuthenticated({
+          accessToken: (msgRes as any).accessToken,
+          refreshToken: (msgRes as any).refreshToken,
+          user: (msgRes as any).user,
+        }));
         if ((msgRes as any).user) dispatch(getUserProfile((msgRes as any).user._id));
         return (msgRes as any).user;
       }
@@ -195,7 +205,7 @@ export function useWalletAuth() {
 // import { useDispatch } from "react-redux";
 // import { AppDispatch } from "@/redux/store";
 // import { getAddress } from "viem";
-// import { walletAuth, walletVerifyAuth } from "@/redux/slices/walletSlice";
+// import { walletAuth, walletVerifyAuth, setAuthenticated } from "@/redux/slices/walletSlice";
 // import { getUserProfile } from "@/redux/slices/authSlice";
 // import { useState, useEffect } from "react";
 // import { useHederaWallet } from "@/providers/HashPackProvider"; // ✅ NEW IMPORT
