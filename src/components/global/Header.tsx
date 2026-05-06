@@ -11,6 +11,8 @@ import { useDisclosure } from "@heroui/react";
 import WhitePaperModal from "../modals/WhitePaperModal";
 import GeneralModal from "../modals/GeneralModal";
 import UserProfileFlowModal from "../modals/UserProfile/UserProfileFlowModal";
+import ComicConnect from "./comic-library/ComicConnect";
+import { useAppSelector } from "@/redux/hook";
 
 const Header = () => {
 	const [search, setSearch] = useState("");
@@ -18,6 +20,7 @@ const Header = () => {
 	const [modalPage, setModalPage] = useState<string | null>(null);
 	const searchParams = useSearchParams();
 	const pathname = usePathname();
+	const isAuthenticated = useAppSelector((s: any) => s.wallet?.isAuthenticated);
 
 	const router = useRouter();
 
@@ -171,11 +174,15 @@ const Header = () => {
 					</ul>
 
 					<div className='flex justify-end col-span-1'>
-						<MainButton onClick={() => {
-							// router.push("?modal=whitepaper");
-							// onOpenWhitePaper()
-							router.push("/marketplace");
-						}}>Getting Started</MainButton>
+						{isAuthenticated ? (
+							<ComicConnect />
+						) : (
+							<MainButton onClick={() => {
+								// router.push("?modal=whitepaper");
+								// onOpenWhitePaper()
+								router.push("/marketplace");
+							}}>Getting Started</MainButton>
+						)}
 					</div>
 				</nav>
 

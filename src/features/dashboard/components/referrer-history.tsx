@@ -2,16 +2,29 @@
 
 import { ArrowRight } from 'lucide-react'
 import { useDisclosure } from '@heroui/react'
-import { REFERRER_HISTORY } from '../data/data'
 import ReferrerHistoryModal from './referrer-history-modal'
 
-export default function ReferrerHistory({ entries }: { entries: typeof REFERRER_HISTORY }) {
+export type ReferrerEntry = {
+  referee: {
+    username: string
+    avatar?: string
+    walletAddress?: string
+  }
+  xpAwarded: boolean
+  createdAt: string
+}
+
+type Props = {
+  entries: ReferrerEntry[]
+  isLoading?: boolean
+}
+
+export default function ReferrerHistory({ entries, isLoading }: Props) {
   const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure()
 
   return (
     <>
       <div className="mt-8 overflow-hidden">
-        {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
           <h2 className="text-white font-bold text-base">Referrer History</h2>
           <button
@@ -22,26 +35,41 @@ export default function ReferrerHistory({ entries }: { entries: typeof REFERRER_
           </button>
         </div>
 
-        {/* Table */}
         <div>
-          {/* Column headers */}
           <div className="grid grid-cols-3 px-5 py-3 border-b border-white/10">
-            <span className="text-sm text-white/50">Profile</span>
-            <span className="text-sm text-white/50">Point</span>
-            <span className="text-sm text-white/50">Role</span>
+            <span className="text-sm text-white/50">Username</span>
+            <span className="text-sm text-white/50">XP Awarded</span>
+            <span className="text-sm text-white/50">Joined</span>
           </div>
 
-          {/* Rows */}
-          {entries.map((entry) => (
-            <div
-              key={entry.id}
-              className="grid grid-cols-3 px-5 py-4 border-b border-white/10 last:border-b-0"
-            >
-              <span className="text-sm text-white/80">{entry.profile}</span>
-              <span className="text-sm text-white/80">+{entry.points} XP</span>
-              <span className="text-sm text-white/80">{entry.role}</span>
+          {isLoading ? (
+            Array.from({ length: 2 }).map((_, i) => (
+              <div key={i} className="grid grid-cols-3 px-5 py-4 border-b border-white/10 last:border-b-0">
+                {Array.from({ length: 3 }).map((__, j) => (
+                  <div key={j} className="h-4 w-20 rounded bg-white/10 animate-pulse" />
+                ))}
+              </div>
+            ))
+          ) : entries.length === 0 ? (
+            <div className="px-5 py-6 text-center text-sm text-white/40">
+              No referrals yet. Share your invite link to earn XP.
             </div>
-          ))}
+          ) : (
+            entries.map((entry, i) => (
+              <div
+                key={`${entry.referee.username}-${i}`}
+                className="grid grid-cols-3 px-5 py-4 border-b border-white/10 last:border-b-0"
+              >
+                <span className="text-sm text-white/80">{entry.referee.username}</span>
+                <span className={`text-sm font-medium ${entry.xpAwarded ? 'text-[#FAA31E]' : 'text-white/40'}`}>
+                  {entry.xpAwarded ? 'Earned' : 'Pending'}
+                </span>
+                <span className="text-sm text-white/60">
+                  {new Date(entry.createdAt).toLocaleDateString()}
+                </span>
+              </div>
+            ))
+          )}
         </div>
       </div>
 

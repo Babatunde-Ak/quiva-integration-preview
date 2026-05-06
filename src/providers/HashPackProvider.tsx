@@ -101,26 +101,52 @@ export const HederaWalletProvider = ({ children }: { children: React.ReactNode }
     setIsConnected(false);
   };
 
-  const signMessage = async (message: string) => {
+  const signMessage = async (message: string): Promise<`0x${string}`> => {
     if (!connector || !account) throw new Error('Wallet not connected');
+
     const accountId = AccountId.fromString(account);
-    const signer = connector.getSigner(accountId);
-    const messageBuffer = Buffer.from(message, 'utf-8');
-    const signature = await signer.sign([messageBuffer]);
+    const evmAddr = `0x${accountId.toEvmAddress()}`;
+
+    const sessions = connector.walletConnectClient?.session.getAll();
+    if (!sessions || sessions.length === 0) throw new Error('No active WalletConnect session');
+
+    const signature = await connector.walletConnectClient?.request<`0x${string}`>({
+      topic: sessions[0].topic,
+      chainId: 'eip155:296', // Hedera Testnet EVM chain ID
+      request: {
+        method: 'personal_sign',
+        params: [
+          `0x${Buffer.from(message, 'utf-8').toString('hex')}`,
+          evmAddr,
+        ],
+      },
+    });
+
+    if (!signature) throw new Error('No signature returned from wallet');
     return signature;
   };
+
+  const evmAddress = account
+    ? (() => {
+        try {
+          return `0x${AccountId.fromString(account).toEvmAddress()}` as `0x${string}`;
+        } catch {
+          return null;
+        }
+      })()
+    : null;
 
   return (
     <WalletContext.Provider
       value={{
         connector,
         account,
+        evmAddress,
         isConnected,
         connectWallet,
         disconnectWallet,
         signMessage,
-         signer: account ? connector?.getSigner(AccountId.fromString(account)) : null,
-        // accountId: account ? AccountId.fromString(account) : null,
+        signer: account ? connector?.getSigner(AccountId.fromString(account)) : null,
       }}
     >
       {children}

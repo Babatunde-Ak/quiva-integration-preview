@@ -1,12 +1,12 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import Hamburger from "hamburger-react";
-import { WaveLine } from "../utils/SVGicons";
 import { usePathname } from "next/navigation";
 import { NAV_LINKS } from "../utils/constant";
 import { QuivaLogo } from "../utils/function";
-import { useAppDispatch, useAppSelector } from "@/redux/hook";
+import { useAppSelector } from "@/redux/hook";
+import ComicConnect from "./comic-library/ComicConnect";
 
 interface SidebarProps {
 	isSidebarOpen: boolean;
@@ -19,6 +19,7 @@ const Sidebar = ({
 	onOpenWhitePaper,
 }: SidebarProps) => {
 	const pathName = usePathname();
+	const isAuthenticated = useAppSelector((s: any) => s.wallet?.isAuthenticated);
 
 	useEffect(() => {
 		const handleScroll = () => {
@@ -132,10 +133,17 @@ const Sidebar = ({
 					})}
 
 					<div className="flex flex-col gap-3 mt-6">
-						<Link href="/marketplace" onClick={toggleSidebar} 
-						className={`bg-secondary-200 text-black-200 font-recursive text-sm rounded-full px-7 py-3 border-[3px] border-black-200 shadow-[2px_2px_0_0_black] transition-all duration-200 font-medium hover:scale-105`}>
-							Getting Started
-						</Link>
+						{isAuthenticated ? (
+							<ComicConnect />
+						) : (
+							<Link
+								href="/marketplace"
+								onClick={toggleSidebar}
+								className="bg-secondary-200 text-black-200 font-recursive text-sm rounded-full px-7 py-3 border-[3px] border-black-200 shadow-[2px_2px_0_0_black] transition-all duration-200 font-medium hover:scale-105"
+							>
+								Getting Started
+							</Link>
+						)}
 					</div>
 				</ul>
 			</div>

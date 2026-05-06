@@ -59,36 +59,26 @@ export function useWalletAuth() {
     try {
       const checksummedAddress = getAddress(walletAddress) as `0x${string}`;
 
-      // Get message to sign from backend
       const msgRes = await dispatch(walletAuth({ walletAddress: checksummedAddress })).unwrap();
+
+      // Backend may return a token directly (no-signature flow)
+      if ((msgRes as any).accessToken) {
+        localStorage.setItem("authToken", (msgRes as any).accessToken);
+        if ((msgRes as any).user) dispatch(getUserProfile((msgRes as any).user._id));
+        return (msgRes as any).user;
+      }
+
       const message = msgRes.message;
+      if (!message) throw new Error("Backend did not return a message to sign");
 
-      // Sign the message with user's wallet
-      const signature = await signMessageAsync({
-        message,
-        account: checksummedAddress,
-      });
-
+      const signature = await signMessageAsync({ message, account: checksummedAddress });
       setSignature(signature);
-      localStorage.setItem("signature", signature);
 
-      // Verify signature with backend
       const verifyRes = await dispatch(
-        walletVerifyAuth({ 
-          walletAddress: checksummedAddress, 
-          message, 
-          signature 
-        })
+        walletVerifyAuth({ walletAddress: checksummedAddress, message, signature })
       ).unwrap();
 
-      if (verifyRes.accessToken) {
-        localStorage.setItem("token", verifyRes.accessToken);
-      }
-
-      if (verifyRes.user) {
-        dispatch(getUserProfile(verifyRes.user._id));
-      }
-
+      if (verifyRes.user) dispatch(getUserProfile(verifyRes.user._id));
       return verifyRes.user;
     } catch (error) {
       console.error("Ethereum wallet authentication failed:", error);
@@ -98,45 +88,36 @@ export function useWalletAuth() {
 
   const loginWithHederaWallet = async (evmAddress: string) => {
     try {
-      // Use the same backend APIs as Ethereum since we're using EVM addresses
-      // const checksummedAddress = getAddress(evmAddress) as `0x${string}`;
       let convertedAddress = evmAddress;
+      if (!evmAddress.startsWith("0x")) {
+        try {
+          convertedAddress = `0x${AccountId.fromString(evmAddress).toEvmAddress()}`;
+        } catch (err) {
+          console.error("Failed to convert Hedera account to EVM address:", err);
+          throw new Error("Invalid Hedera account format");
+        }
+      }
 
-if (!evmAddress.startsWith("0x")) {
-  try {
-    convertedAddress = `0x${AccountId.fromString(evmAddress).toEvmAddress()}`;
-  } catch (err) {
-    console.error("Failed to convert Hedera account to EVM address:", err);
-    throw new Error("Invalid Hedera account format");
-  }
-}
-
-const checksummedAddress = getAddress(convertedAddress) as `0x${string}`;
+      const checksummedAddress = getAddress(convertedAddress) as `0x${string}`;
       const msgRes = await dispatch(walletAuth({ walletAddress: checksummedAddress })).unwrap();
+
+      // Backend may return a token directly (no-signature flow)
+      if ((msgRes as any).accessToken) {
+        localStorage.setItem("authToken", (msgRes as any).accessToken);
+        if ((msgRes as any).user) dispatch(getUserProfile((msgRes as any).user._id));
+        return (msgRes as any).user;
+      }
+
       const message = msgRes.message;
+      if (!message) throw new Error("Backend did not return a message to sign");
 
-      // HashPack signing using useAuthSignature hook
       const signature = await signHederaMessage(message) as `0x${string}`;
-      console.log(signature)
-      localStorage.setItem("signature", signature);
 
-      // Verify signature with backend (same API as Ethereum)
       const verifyRes = await dispatch(
-        walletVerifyAuth({ 
-          walletAddress: checksummedAddress, 
-          message, 
-          signature
-        })
+        walletVerifyAuth({ walletAddress: checksummedAddress, message, signature })
       ).unwrap();
 
-      if (verifyRes.accessToken) {
-        localStorage.setItem("token", verifyRes.accessToken);
-      }
-
-      if (verifyRes.user) {
-        dispatch(getUserProfile(verifyRes.user._id));
-      }
-
+      if (verifyRes.user) dispatch(getUserProfile(verifyRes.user._id));
       return verifyRes.user;
     } catch (error) {
       console.error("Hedera wallet authentication failed:", error);

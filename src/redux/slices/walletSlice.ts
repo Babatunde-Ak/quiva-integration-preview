@@ -57,7 +57,8 @@ export const walletAuth = createAsyncThunk<
     const response = await axiosInstance.post("/auth/wallet/message", {
       walletAddress,
     });
-    return response.data;
+    // Backend wraps responses as { data: { ... } } — same pattern as walletVerifyAuth
+    return response.data.data ?? response.data;
   } catch (error: any) {
     return rejectWithValue(
       error.response?.data?.message ||

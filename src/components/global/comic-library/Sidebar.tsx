@@ -114,9 +114,7 @@ export function Sidebar({ isMobileMenuOpen, onMobileMenuClose, isCollapsed, onTo
   const router = useRouter()
   const pathname = usePathname()
   const [isMobile, setIsMobile] = useState(false)
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
-    Profile: true,
-  })
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({})
 
   const { user } = useAppSelector((state: any) => state.wallet)
 

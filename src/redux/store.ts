@@ -8,6 +8,7 @@ import comicReducer from './slices/comicSlice';
 import transactionReducer from './slices/transactionSlice';
 import collectionReducer from './slices/collectionSlice';
 import mirrorNodeAnalyticsReducer from './slices/analyticSlide';
+import dashboardReducer from './slices/dashboardSlice';
 
 const persistConfig = {
   key: 'root',
@@ -22,7 +23,8 @@ const rootReducer = combineReducers({
   comic: comicReducer,
   transactions: transactionReducer,
   collections: collectionReducer,
-  mirrorNodeAnalytics: mirrorNodeAnalyticsReducer
+  mirrorNodeAnalytics: mirrorNodeAnalyticsReducer,
+  dashboard: dashboardReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
@@ -53,6 +55,7 @@ export type RootState = ReturnType<typeof store.getState> & {
   transactions: any;
   collections: any;
   mirrorNodeAnalytics: any;
+  dashboard: any;
 };
 export type AppDispatch = typeof store.dispatch;
 

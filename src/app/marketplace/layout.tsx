@@ -7,7 +7,7 @@ import { useState } from 'react'
 
 export default function MainPage({ children }: { children: React.ReactNode }) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true)
 
     const toggleMobileMenu = () => {
         setIsMobileMenuOpen(prev => !prev)
