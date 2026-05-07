@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { MintComicCard } from '../components/cards/MintComicCard';
 import ReadComicCard from '../components/cards/ReadComicCard';
@@ -415,11 +416,15 @@ const UserProfile = ({ onEditProfile, onComicAction }) => {
 
             {/* Header Section */}
             <div className="relative px-4 sm:px-6 lg:px-16 py-6 sm:py-8 mx-auto">
-                <div className="absolute inset-0">
-                    <img
+                <div className="absolute inset-0 overflow-hidden">
+                    <Image
                         src={user.banner}
                         alt="Cover"
-                        className="w-full h-full object-cover transition-all duration-1000 ease-in-out"
+                        fill
+                        sizes="100vw"
+                        className="object-cover"
+                        priority
+                        quality={90}
                     />
                     <div className="absolute inset-0 bg-black-500/70" />
                 </div>

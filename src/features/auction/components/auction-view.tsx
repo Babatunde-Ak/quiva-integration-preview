@@ -1,19 +1,72 @@
 'use client'
 
+import { useEffect } from 'react'
 import { ChevronLeft } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { SELLER, COMIC, OFFER_STATS, BREAKDOWN } from '../data/data'
 import SellerProfile from './seller-profile'
 import OfferPanel from './offer-panel'
 import MoreFromSection from './more-from-section'
+import { useAppSelector, useAppDispatch } from '@/redux/hook'
+import { getComicById } from '@/redux/slices/comicSlice'
 
 export default function AuctionView() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const comicId = searchParams.get('id')
+  const dispatch = useAppDispatch()
+  const { currentComic } = useAppSelector((state: any) => state.comic)
+
+  useEffect(() => {
+    if (comicId && currentComic?._id !== comicId) {
+      dispatch(getComicById({ id: comicId } as any))
+    }
+  }, [comicId, currentComic?._id, dispatch])
+
+  const comic = currentComic ? {
+    id: currentComic._id || COMIC.id,
+    title: currentComic.title || COMIC.title,
+    series: currentComic.collectionTitle || currentComic.collection?.title || COMIC.series,
+    episode: currentComic.episodeNumber ? `Episode ${String(currentComic.episodeNumber).padStart(2, '0')}` : COMIC.episode,
+    creator: currentComic.creatorId?.username ||
+      (currentComic.creatorId?.walletAddress
+        ? `${currentComic.creatorId.walletAddress.slice(0, 6)}...${currentComic.creatorId.walletAddress.slice(-4)}`
+        : COMIC.creator),
+    image: currentComic.bannerImage || COMIC.image,
+    backgroundImage: currentComic.bannerImage || COMIC.backgroundImage,
+    editionNumber: currentComic.editionNumber || COMIC.editionNumber,
+    totalEditions: currentComic.totalEditions || COMIC.totalEditions,
+    currentPrice: currentComic.price ?? COMIC.currentPrice,
+    currency: COMIC.currency,
+    usdPrice: currentComic.price != null
+      ? (currentComic.price * 0.115).toFixed(2)
+      : COMIC.usdPrice,
+    floorPrice: currentComic.price ?? COMIC.floorPrice,
+    floorStatus: COMIC.floorStatus,
+    floorPercent: COMIC.floorPercent,
+    activity: currentComic.activity || COMIC.activity,
+    onHatiko: COMIC.onHatiko,
+  } : COMIC
+
+  const seller = currentComic?.creatorId ? {
+    handle: `@${currentComic.creatorId.username || 'Unknown'}`,
+    displayName: currentComic.creatorId.username || 'Unknown',
+    initials: (currentComic.creatorId.username || 'UK').slice(0, 2).toUpperCase(),
+    verified: true,
+    rating: SELLER.rating,
+    stats: SELLER.stats,
+  } : SELLER
+
+  const offerStats = currentComic?.price != null ? {
+    listed: { value: currentComic.price, currency: 'ℏ' },
+    floorPrice: { value: currentComic.price, currency: 'ℏ' },
+    topBalance: OFFER_STATS.topBalance,
+    highestBid: OFFER_STATS.highestBid,
+  } : OFFER_STATS
 
   return (
     <div className="min-h-screen bg-black text-white">
       <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* Back */}
         <button
           onClick={() => router.back()}
           className="flex items-center gap-1.5 text-white/50 hover:text-white text-sm mb-6 transition-colors"
@@ -21,22 +74,17 @@ export default function AuctionView() {
           <ChevronLeft className="w-4 h-4" /> Back
         </button>
 
-        {/* Main two-column layout */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Left — seller + comic info */}
-          <SellerProfile seller={SELLER} comic={COMIC} />
-
-          {/* Right — offer panel */}
+          <SellerProfile seller={seller} comic={comic} />
           <OfferPanel
-            seller={SELLER}
-            comic={COMIC}
-            offerStats={OFFER_STATS}
+            seller={seller}
+            comic={comic}
+            offerStats={offerStats}
             breakdown={BREAKDOWN}
           />
         </div>
 
-        {/* More from section — full width */}
-        <MoreFromSection seller={SELLER} />
+        <MoreFromSection seller={seller} />
       </div>
     </div>
   )

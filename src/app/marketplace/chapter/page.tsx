@@ -89,17 +89,20 @@ const Marketplace = () => {
 
   // Handle tab change and update URL
   const handleTabChange = (tab: string) => {
+    // Offers tab routes to the standalone auction page
+    if (tab === 'Offers') {
+      const params = new URLSearchParams();
+      if (comicId) params.set('id', comicId);
+      router.push(`/marketplace/auction?${params.toString()}`);
+      return;
+    }
+
     setActiveTab(tab);
-    
-    // Update URL with new tab parameter
+
     const params = new URLSearchParams(searchParams.toString());
     params.set('tab', tab.toLowerCase());
-    
-    // Preserve comic ID if it exists
-    if (comicId) {
-      params.set('id', comicId);
-    }
-    
+    if (comicId) params.set('id', comicId);
+
     router.push(`?${params.toString()}`, { scroll: false });
   };
 

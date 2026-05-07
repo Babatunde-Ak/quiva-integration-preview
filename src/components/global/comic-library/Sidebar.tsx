@@ -155,7 +155,6 @@ export function Sidebar({ isMobileMenuOpen, onMobileMenuClose, isCollapsed, onTo
         { label: 'Earnings', path: '/comic-pad/earnings' },
       ],
     },
-    { label: 'Auction', path: '/marketplace/auction' },
     { label: 'Analytics', path: '/marketplace/analytics' },
     { label: 'Favourites', path: '/marketplace/library' },
     { label: 'History', path: '/marketplace/history' },
