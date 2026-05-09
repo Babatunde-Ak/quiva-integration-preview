@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { ChevronLeft, Lock } from "lucide-react";
 import Image from "next/image";
+import { HbarIcon } from "@/components/ui/HbarIcon";
 import ResellModal from "@/components/modals/ResellModal";
 import { useRouter } from "next/navigation";
 import { ACTIVITY_DATA } from "@/components/utils/dummy-data";
@@ -341,11 +342,7 @@ export default function ComicDetail({
                               <td className="py-3 px-2">
                                 <span className="text-white text-sm font-medium flex items-center gap-1">
                                   {activity.price}
-                                  <img 
-                                    src="/hbar.png" 
-                                    alt="HBAR" 
-                                    className="inline-block"
-                                  />
+                                  <HbarIcon size={14} />
                                 </span>
                               </td>
                               <td className="py-3 px-2">
@@ -371,9 +368,7 @@ export default function ComicDetail({
                       <p className="text-xs mb-1">Mint Price</p>
                       <p className="flex text-lg items-center font-bold text-white">
                         <p>0.09</p>
-                        <span className="text-xs align-center opacity-70">
-                          <img src="/hbar.png" alt="HBAR" />
-                        </span>
+                        <HbarIcon size={14} className="opacity-70" />
                       </p>
                     </div>
                     <div>
@@ -400,9 +395,7 @@ export default function ComicDetail({
                       <p className="text-xs mb-1">Floor Price</p>
                       <div className="flex text-lg items-center font-bold text-white">
                         <p>0.085</p>
-                        <span className="text-xs align-center opacity-70">
-                          <img src="/hbar.png" alt="HBAR" />
-                        </span>
+                        <HbarIcon size={14} className="opacity-70" />
                       </div>
                     </div>
                     <div>
@@ -413,9 +406,7 @@ export default function ComicDetail({
                       <p className="text-xs mb-1">Volume</p>
                       <div className="flex text-lg items-center font-bold text-white">
                         <p>45.8</p>
-                        <span className="text-xs align-center opacity-70">
-                          <img src="/hbar.png" alt="HBAR" />
-                        </span>
+                        <HbarIcon size={14} className="opacity-70" />
                       </div>
                     </div>
                     <div className="col-span-3">
@@ -540,9 +531,7 @@ function RelatedCard({
             <p className="text-[10px] text-white/70">Mint Price</p>
             <div className="flex text-sm font-bold text-white">
               <p>{price}</p>
-              <span className="text-[10px] align-center">
-                <img src="/hbar.png" alt="HBAR" />
-              </span>
+              <HbarIcon size={12} />
             </div>
           </div>
         </div>

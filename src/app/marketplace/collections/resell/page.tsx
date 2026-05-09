@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { HbarIcon } from "@/components/ui/HbarIcon";
 import { ChevronLeft, Lock } from "lucide-react";
 import ResellModal from "@/components/modals/ResellModal";
 
@@ -201,9 +202,7 @@ export default function ComicPage() {
                   <p className="text-xs mb-1">Mint Price</p>
                   <p className="flex text-lg  items-center font-bold text-white">
                     <p>0.09</p>
-                    <span className="text-xs align-center opacity-70">
-                      <img src="/hbar.png" />
-                    </span>
+                    <HbarIcon size={14} className="opacity-70" />
                   </p>
                 </div>
                 <div>
@@ -232,9 +231,7 @@ export default function ComicPage() {
                   <p className="text-xs mb-1">Floor Price</p>
                   <div className="flex text-lg items-center font-bold text-white">
                     <p> 0.085</p>
-                    <span className="text-xs align-center opacity-70">
-                      <img src="/hbar.png" />
-                    </span>
+                    <HbarIcon size={14} className="opacity-70" />
                   </div>
                 </div>
                 <div>
@@ -245,9 +242,7 @@ export default function ComicPage() {
                   <p className="text-xs mb-1">Volume</p>
                   <div className="flex text-lg items-center font-bold text-white">
                     <p>45.8</p>
-                    <span className="text-xs align-center opacity-70">
-                      <img src="/hbar.png" />
-                    </span>
+                    <HbarIcon size={14} className="opacity-70" />
                   </div>
                 </div>
                 <div className="col-span-3">
@@ -366,9 +361,7 @@ function RelatedCard({
             <p className="text-[10px] text-white/70">Mint Price</p>
             <div className="flex text-sm font-bold text-white">
               <p>{price}</p>
-              <span className="text-[10px] align-center">
-                <img src="/hbar.png" />
-              </span>
+              <HbarIcon size={12} />
             </div>
           </div>
         </div>

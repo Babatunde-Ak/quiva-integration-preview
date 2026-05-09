@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, Loader2 } from "lucide-react";
 import Image from "next/image";
+import { HbarIcon } from "@/components/ui/HbarIcon";
 
 interface ComicData {
   id: string;
@@ -154,9 +155,7 @@ const ListingStep = ({
       </div>
       <p className="flex text-xs items-center text-neutral-400 mt-2">
         Minimum resale price: 0.1
-        <span className="text-[10px] align-center">
-          <img src="/hbar.png" />
-        </span>
+        <HbarIcon size={12} />
       </p>
     </div>
 

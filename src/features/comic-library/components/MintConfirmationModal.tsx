@@ -3,6 +3,7 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
+import { HbarIcon } from '@/components/ui/HbarIcon'
 import useComicPlatform from '@/hook/useMarkeplace';
 import { useHederaWallet } from '@/providers/HashPackProvider'
 import { useAppDispatch, useAppSelector } from '@/redux/hook'
@@ -141,13 +142,7 @@ const MintConfirmationModal: React.FC<MintConfirmationModalProps> = ({
                     <div className="text-white text-xl font-bold flex items-center gap-1">
                       {price.replace(' H', '')}
                     
-                      <img 
-                        src="/hbar.png" 
-                        alt="HBAR" 
-                        width={20} 
-                        height={20} 
-                        className="inline-block"
-                      />
+                      <HbarIcon size={20} />
                     </div>
                   </div>
                   <div>

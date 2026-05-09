@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import { HbarIcon } from '@/components/ui/HbarIcon'
 import { ChevronLeft, Lock, Heart, ChevronRight, Wallet, LogOut } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import MintConfirmationModal from './MintConfirmationModal'
@@ -213,9 +214,7 @@ const MintComicModal: React.FC<MintComicModalProps> = ({
                   <div className="text-white/70 text-xs mb-1">Price</div>
                   <div className="text-white text-xl font-bold flex items-center gap-1">
                     {currentComic?.nftId?.price?.toFixed(2) || price}
-                    <span className="text-xs align-center opacity-70">
-                      <img src="/hbar.png" alt="HBAR" />
-                    </span>
+                    <HbarIcon size={14} className="opacity-70" />
                   </div>
                 </div>
 
@@ -399,9 +398,7 @@ const MintComicModal: React.FC<MintComicModalProps> = ({
                     <p className="text-xs mb-1">Mint Price</p>
                     <p className="flex text-lg items-center font-bold text-white">
                       <span>{currentComic?.nftId?.price?.toFixed(2) || price}</span>
-                      <span className="text-xs align-center opacity-70">
-                        <img src="/hbar.png" alt="HBAR" />
-                      </span>
+                      <HbarIcon size={14} className="opacity-70" />
                     </p>
                   </div>
                   <div>
@@ -430,9 +427,7 @@ const MintComicModal: React.FC<MintComicModalProps> = ({
                     <p className="text-xs mb-1">Floor Price</p>
                     <div className="flex text-lg items-center font-bold text-white">
                       <p>{currentComic?.nftId?.price ? (currentComic.nftId.price * 0.94).toFixed(3) : '0'}</p>
-                      <span className="text-xs align-center opacity-70">
-                        <img src="/hbar.png" alt="HBAR" />
-                      </span>
+                      <HbarIcon size={14} className="opacity-70" />
                     </div>
                   </div>
                   <div>
@@ -443,9 +438,7 @@ const MintComicModal: React.FC<MintComicModalProps> = ({
                     <p className="text-xs mb-1">Volume</p>
                     <div className="flex text-lg items-center font-bold text-white">
                       <p>{currentComic?.nftId?.price && currentComic?.nftId?.currentSupply ? (currentComic.nftId.price * currentComic.nftId.currentSupply).toFixed(1) : '0'}</p>
-                      <span className="text-xs align-center opacity-70">
-                        <img src="/hbar.png" alt="HBAR" />
-                      </span>
+                      <HbarIcon size={14} className="opacity-70" />
                     </div>
                   </div>
                   <div className="col-span-3">
@@ -495,7 +488,7 @@ const MintComicModal: React.FC<MintComicModalProps> = ({
                   className="w-full bg-white/10 hover:bg-white/20 text-white font-medium py-4 rounded-xl transition-all flex items-center justify-center gap-3"
                 >
                   <div className="w-8 h-8 bg-yellow-600 rounded-lg flex items-center justify-center">
-                    <img src="/hbar.png" alt="HBAR" width={20} height={20} />
+                    <HbarIcon size={20} />
                   </div>
                   <span>Hedera HashPack</span>
                 </button>
