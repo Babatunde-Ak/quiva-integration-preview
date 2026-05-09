@@ -124,53 +124,53 @@ export default function ComicDetail() {
 
 
   
-  const handleReadClick = async () => {
-    console.log('📖 Start Reading clicked');
+  // const handleReadClick = async () => {
+  //   console.log('📖 Start Reading clicked');
     
-    // Get user's wallet address
-    const userWalletAddress = account || user?.walletAddress;
+  //   // Get user's wallet address
+  //   const userWalletAddress = account || user?.walletAddress;
     
-    // Get comic's token ID
-    const comicTokenId = currentComic?.nftId?.tokenId;
+  //   // Get comic's token ID
+  //   const comicTokenId = currentComic?.nftId?.tokenId;
     
-    console.log('🔍 Checking read access:', {
-      userWallet: userWalletAddress,
-      comicTokenId,
-      comicTitle: currentComic?.title
-    });
+  //   console.log('🔍 Checking read access:', {
+  //     userWallet: userWalletAddress,
+  //     comicTokenId,
+  //     comicTitle: currentComic?.title
+  //   });
 
-    if (!userWalletAddress) {
-      alert("Please connect your wallet to read this comic!");
-      return;
-    }
+  //   if (!userWalletAddress) {
+  //     alert("Please connect your wallet to read this comic!");
+  //     return;
+  //   }
 
-    if (!comicTokenId) {
-      console.warn('⚠️ No tokenId found for this comic');
-      alert("This comic is not available as an NFT yet.");
-      return;
-    }
+  //   if (!comicTokenId) {
+  //     console.warn('⚠️ No tokenId found for this comic');
+  //     alert("This comic is not available as an NFT yet.");
+  //     return;
+  //   }
 
-    try {
-      // ✅ Check if user owns this NFT by checking their wallet
-      const ownershipResult = await checkOwnership(userWalletAddress, comicTokenId);
+  //   try {
+  //     // ✅ Check if user owns this NFT by checking their wallet
+  //     const ownershipResult = await checkOwnership(userWalletAddress, comicTokenId);
       
-      console.log('🎯 Ownership result:', ownershipResult);
+  //     console.log('🎯 Ownership result:', ownershipResult);
 
-      if (ownershipResult.hasNft) {
-        // User owns the NFT - allow full reading
-        console.log(`✅ User owns NFT! Serial numbers: ${ownershipResult.serialNumbers.join(', ')}`);
-        router.push(`/reader?id=${currentComic?._id}`);
-      } else {
-        // User doesn't own the NFT - show mint page
-        console.log('❌ User does not own this NFT');
-        alert("You need to own this NFT to read the full comic. Please mint to unlock!");
-        setShowMintPage(true);
-      }
-    } catch (error) {
-      console.error('❌ Error checking NFT ownership:', error);
-      alert("Error checking NFT ownership. Please try again.");
-    }
-  };
+  //     if (ownershipResult.hasNft) {
+  //       // User owns the NFT - allow full reading
+  //       console.log(`✅ User owns NFT! Serial numbers: ${ownershipResult.serialNumbers.join(', ')}`);
+  //       router.push(`/reader?id=${currentComic?._id}`);
+  //     } else {
+  //       // User doesn't own the NFT - show mint page
+  //       console.log('❌ User does not own this NFT');
+  //       alert("You need to own this NFT to read the full comic. Please mint to unlock!");
+  //       setShowMintPage(true);
+  //     }
+  //   } catch (error) {
+  //     console.error('❌ Error checking NFT ownership:', error);
+  //     alert("Error checking NFT ownership. Please try again.");
+  //   }
+  // };
   const handleBackFromMint = () => {
     setShowMintPage(false);
   };
@@ -290,7 +290,7 @@ export default function ComicDetail() {
 
                       <div className="flex gap-4 font-mono max-w-md">
                         <button 
-                          onClick={handleReadClick}
+                          // onClick={handleReadClick}
                           className="flex-1 bg-[#FAA31E] text-black font-bold py-2 px-1 rounded-full hover:brightness-110 transition-all shadow-lg shadow-orange-500/20"
                         >
                           Start Read
