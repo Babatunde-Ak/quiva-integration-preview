@@ -395,6 +395,7 @@ const UserProfile = ({ onEditProfile, onComicAction }) => {
                                 views={nft.views}
                                 image={nft.image}
                                 number={nft.number}
+                                tokenId={nft.tokenId}
                             />
                         </div>
                     ))}

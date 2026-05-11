@@ -7,7 +7,8 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import Picture from '@/components/picture/Index'
 import { hbar } from '../../../../../public/dev_images'
-
+import   { useHederaWallet } from "@/providers/HashPackProvider";
+import { useNftOwnershipCheck } from "@/hook/userNFTOwnershipCheck";
 interface ComicCardProps {
   id?: string
   title: string
@@ -27,6 +28,7 @@ interface ComicCardProps {
   buttonText?: string
   buttonVariant?: 'default' | 'outline'
   size?: 'small' | 'medium' | 'large'
+  tokenId?: string
 }
 
 
@@ -42,16 +44,68 @@ export function MintComicCard({
   premium = false,
   free = false,
   number = 1,
-  isLiked = false
+  isLiked = false,
+  tokenId
 }: ComicCardProps) {
 
   const router = useRouter()
+  const { account, user } = useHederaWallet();
+  const { checkOwnership } = useNftOwnershipCheck();
+  const [showMintPage, setShowMintPage] = useState(false);
   const [liked, setLiked] = useState(isLiked)
 
   const handleLike = (e: React.MouseEvent) => {
     e.stopPropagation()
     setLiked(!liked)
   }
+   
+  const handleReadClick = async () => {
+    console.log('📖 Start Reading clicked');
+    
+    // Get user's wallet address
+    const userWalletAddress = account || user?.walletAddress;
+    
+    // Get comic's token ID from prop
+    const comicTokenId = tokenId;
+    
+    console.log('🔍 Checking read access:', {
+      userWallet: userWalletAddress,
+      comicTokenId,
+      comicTitle: title
+    });
+
+    if (!userWalletAddress) {
+      alert("Please connect your wallet to read this comic!");
+      return;
+    }
+
+    if (!comicTokenId) {
+      console.warn('⚠️ No tokenId found for this comic');
+      alert("This comic is not available as an NFT yet.");
+      return;
+    }
+
+    try {
+      // ✅ Check if user owns this NFT by checking their wallet
+      const ownershipResult = await checkOwnership(userWalletAddress, comicTokenId);
+      
+      console.log('🎯 Ownership result:', ownershipResult);
+
+      if (ownershipResult.hasNft) {
+        // User owns the NFT - allow full reading
+        console.log(`✅ User owns NFT! Serial numbers: ${ownershipResult.serialNumbers.join(', ')}`);
+        router.push(`/reader?id=${id}`);
+      } else {
+        // User doesn't own the NFT - show mint page
+        console.log('❌ User does not own this NFT');
+        alert("You need to own this NFT to read the full comic. Please mint to unlock!");
+        setShowMintPage(true);
+      }
+    } catch (error) {
+      console.error('❌ Error checking NFT ownership:', error);
+      alert("Error checking NFT ownership. Please try again.");
+    }
+  };
 
   return (
     <motion.div 
@@ -64,7 +118,8 @@ export function MintComicCard({
         transition: { duration: 0.2, ease: "easeInOut" }
       }}
       whileTap={{ scale: 0.98 }}
-      onClick={() => router.push(`/chapter/${id}`)}
+      //onClick={() => router.push(`/chapter/${id}`)}
+      onClick={handleReadClick}
     >
       {/* Image Container with Number Badge */}
       <div className="relative">
