@@ -1,7 +1,6 @@
 "use client";
 
-import { Search, Bell, User, Menu, X } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Bell, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect, useRef } from "react";
@@ -9,9 +8,9 @@ import { QuivaLogo } from "@/components/utils/function";
 // import { RainbowConnect } from "@/components/button/RainbowConnect";
 // import HashConnectButton from "@/components/button/HashConnectButton";
 import ComicConnect from "./ComicConnect";
+import { SearchBar } from "@/components/search/SearchBar";
 
 export function Header({ onMobileMenuToggle, isMobileMenuOpen }) {
-  const [searchQuery, setSearchQuery] = useState("");
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const notificationRef = useRef(null);
@@ -61,13 +60,6 @@ export function Header({ onMobileMenuToggle, isMobileMenuOpen }) {
     }
   }, [showNotifications]);
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      console.log("Searching for:", searchQuery);
-    }
-  };
-
   return (
     <header className="bg-black-200 border-b border-dashed border-white/30 w-full relative z-50">
       <div className="px-4 lg:px-6 py-3 ">
@@ -96,16 +88,10 @@ export function Header({ onMobileMenuToggle, isMobileMenuOpen }) {
 
           {/* Desktop Search Bar */}
           <div className="hidden md:flex flex-1 max-w-md mx-8">
-            <form onSubmit={handleSearch} className="relative w-full">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/40" />
-              <Input
-                type="text"
-                placeholder="Search comics, creators..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-black-200 border-white/25 text-white placeholder-gray-400 focus:border-secondary-200 focus:ring-secondary-200/20 rounded-2xl"
-              />
-            </form>
+            <SearchBar
+              placeholder="Search comics, creators..."
+              className="w-full"
+            />
           </div>
 
           {/* User Actions */}
@@ -194,16 +180,10 @@ export function Header({ onMobileMenuToggle, isMobileMenuOpen }) {
 
         {/* Mobile Search Bar */}
         <div className="md:hidden mt-3">
-          <form onSubmit={handleSearch} className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white" />
-            <Input
-              type="text"
-              placeholder="Search comics, creators..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-black-300/50 border-black-100 text-white placeholder-gray-400 focus:border-secondary-200 focus:ring-secondary-200/20"
-            />
-          </form>
+          <SearchBar
+            placeholder="Search comics, creators..."
+            className="w-full"
+          />
         </div>
       </div>
     </header>

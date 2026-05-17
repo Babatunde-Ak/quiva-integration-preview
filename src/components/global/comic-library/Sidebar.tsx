@@ -146,19 +146,19 @@ export function Sidebar({ isMobileMenuOpen, onMobileMenuClose, isCollapsed, onTo
     { label: 'Explore', path: '/marketplace' },
     { label: 'Collections', path: '/marketplace/collections' },
     { label: 'Top Creators', path: '/marketplace/top-creators' },
-    {
-      label: 'Comicpad',
-      isGroup: true,
-      path: '/comic-pad',
-      children: [
-        { label: 'My Comics', path: '/comic-pad/my-comics' },
-        { label: 'Earnings', path: '/comic-pad/earnings' },
-      ],
-    },
+    // {
+    //   label: 'Comicpad',
+    //   isGroup: true,
+    //   path: '/comic-pad',
+    //   children: [
+    //     { label: 'My Comics', path: '/comic-pad/my-comics' },
+    //     { label: 'Earnings', path: '/comic-pad/earnings' },
+    //   ],
+    // },
     { label: 'Analytics', path: '/marketplace/analytics' },
-    { label: 'Favourites', path: '/marketplace/library' },
-    { label: 'History', path: '/marketplace/history' },
-    { label: 'Notifications', path: '/marketplace/notification' },
+    // { label: 'Favourites', path: '/marketplace/library' },
+    // { label: 'History', path: '/marketplace/history' },
+    // { label: 'Notifications', path: '/marketplace/notification' },
     {
       label: 'Profile',
       isGroup: true,
