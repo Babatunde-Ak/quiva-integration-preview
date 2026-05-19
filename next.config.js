@@ -226,13 +226,13 @@ const nextConfig = {
   },
   experimental: {
     // Prevent webpack from bundling these packages for SSR — Node.js loads them natively.
-    // @hashgraph/hedera-wallet-connect hardcodes sub-paths into @hashgraph/proto, so we also
-    // cover that via the webpack externals regex below.
+    // NOTE: @hashgraph/hedera-wallet-connect is intentionally excluded here. Its dist/index.js
+    // uses ESM directory imports (export * from './lib') that fail when Node.js require()s it.
+    // Instead we alias it to a server-safe stub via the webpack config below.
     serverComponentsExternalPackages: [
       '@hashgraph/sdk',
       '@hashgraph/proto',
       '@hashgraph/cryptography',
-      '@hashgraph/hedera-wallet-connect',
       'protobufjs',
       'long',
     ],
@@ -268,7 +268,12 @@ webpack: (config, { isServer }) => {
         '@hashgraph/sdk': path.resolve(__dirname, 'node_modules/@hashgraph/sdk/lib/browser.js'),
         [path.resolve(__dirname, 'node_modules/@hashgraph/sdk/lib/index.cjs')]:
           path.resolve(__dirname, 'node_modules/@hashgraph/sdk/lib/browser.cjs'),
-      } : {}),
+      } : {
+        // On the server, @hashgraph/hedera-wallet-connect dist/index.js uses
+        // ESM directory imports that crash Node.js require(). Use a CJS stub
+        // instead — all usage is inside useEffect so values never matter in SSR.
+        '@hashgraph/hedera-wallet-connect': path.resolve(__dirname, 'src/polyfills/hedera-wallet-connect-server.js'),
+      }),
     };
     config.resolve.fallback = {
       ...(config.resolve.fallback ?? {}),
@@ -299,17 +304,17 @@ webpack: (config, { isServer }) => {
       '.json',
       '.wasm',
     ];
-    // On the server, mark all @hashgraph/* packages, protobufjs (including sub-paths like
-    // protobufjs/minimal), and long as CommonJS externals. This catches hardcoded sub-path
-    // imports in @hashgraph/hedera-wallet-connect's dist bundle that name-based
-    // serverComponentsExternalPackages cannot match.
+    // On the server, mark @hashgraph/* (except hedera-wallet-connect, which is aliased to a
+    // CJS stub above), protobufjs sub-paths, and long as CommonJS externals. This catches
+    // hardcoded sub-path imports in @hashgraph/* dist bundles that serverComponentsExternalPackages
+    // cannot match by name alone.
     if (isServer) {
       const existing = config.externals ?? [];
       config.externals = [
         ...(Array.isArray(existing) ? existing : [existing]),
         ({ request }, callback) => {
           if (
-            request.startsWith('@hashgraph/') ||
+            (request.startsWith('@hashgraph/') && request !== '@hashgraph/hedera-wallet-connect') ||
             request.startsWith('protobufjs') ||
             request === 'long'
           ) {
