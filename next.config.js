@@ -224,6 +224,17 @@ const nextConfig = {
     // Ignore ESLint errors during Vercel builds
     ignoreDuringBuilds: true,
   },
+  experimental: {
+    // Prevent webpack from bundling these packages for SSR — Node.js loads them natively.
+    // @hashgraph/sdk (full build) depends on @hashgraph/proto which depends on `long` (ESM),
+    // and webpack cannot bundle `long` v5 for server-side correctly.
+    serverComponentsExternalPackages: [
+      '@hashgraph/sdk',
+      '@hashgraph/proto',
+      '@hashgraph/cryptography',
+      'long',
+    ],
+  },
   
   // Configure image domains for external images (IPFS gateways, etc.)
   images: {
@@ -300,6 +311,7 @@ webpack: (config, { isServer }) => {
     return config;
   },
   transpilePackages: [
+    'recharts',
     '@hashgraphonline/hashinal-wc',
     '@hashgraphonline/standards-sdk',
   ]
