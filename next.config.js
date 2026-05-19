@@ -226,12 +226,14 @@ const nextConfig = {
   },
   experimental: {
     // Prevent webpack from bundling these packages for SSR — Node.js loads them natively.
-    // @hashgraph/sdk (full build) depends on @hashgraph/proto which depends on `long` (ESM),
-    // and webpack cannot bundle `long` v5 for server-side correctly.
+    // @hashgraph/hedera-wallet-connect hardcodes sub-paths into @hashgraph/proto, so we also
+    // cover that via the webpack externals regex below.
     serverComponentsExternalPackages: [
       '@hashgraph/sdk',
       '@hashgraph/proto',
       '@hashgraph/cryptography',
+      '@hashgraph/hedera-wallet-connect',
+      'protobufjs',
       'long',
     ],
   },
@@ -297,6 +299,27 @@ webpack: (config, { isServer }) => {
       '.json',
       '.wasm',
     ];
+    // On the server, mark all @hashgraph/* packages, protobufjs (including sub-paths like
+    // protobufjs/minimal), and long as CommonJS externals. This catches hardcoded sub-path
+    // imports in @hashgraph/hedera-wallet-connect's dist bundle that name-based
+    // serverComponentsExternalPackages cannot match.
+    if (isServer) {
+      const existing = config.externals ?? [];
+      config.externals = [
+        ...(Array.isArray(existing) ? existing : [existing]),
+        ({ request }, callback) => {
+          if (
+            request.startsWith('@hashgraph/') ||
+            request.startsWith('protobufjs') ||
+            request === 'long'
+          ) {
+            return callback(null, `commonjs ${request}`);
+          }
+          callback();
+        },
+      ];
+    }
+
     config.plugins = config.plugins ?? [];
     config.plugins.push(
       new webpack.ProvidePlugin({
