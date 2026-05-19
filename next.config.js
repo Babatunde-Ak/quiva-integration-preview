@@ -310,8 +310,12 @@ webpack: (config, { isServer }) => {
     // cannot match by name alone.
     if (isServer) {
       const existing = config.externals ?? [];
+      // IMPORTANT: our CJS externals function must come FIRST before the
+      // serverComponentsExternalPackages externals. Those use the `module`
+      // external type which generates `import()` (async) instead of `require()`.
+      // For @hashgraph/* packages, async externals make HashPackProvider's
+      // module async, causing its exports to be undefined during SSR.
       config.externals = [
-        ...(Array.isArray(existing) ? existing : [existing]),
         ({ request }, callback) => {
           if (
             (request.startsWith('@hashgraph/') && request !== '@hashgraph/hedera-wallet-connect') ||
@@ -322,6 +326,7 @@ webpack: (config, { isServer }) => {
           }
           callback();
         },
+        ...(Array.isArray(existing) ? existing : [existing]),
       ];
     }
 
@@ -342,6 +347,9 @@ webpack: (config, { isServer }) => {
     'recharts',
     '@hashgraphonline/hashinal-wc',
     '@hashgraphonline/standards-sdk',
+    '@heroui/react',
+    '@heroui/system',
+    '@heroui/theme',
   ]
 }
 
