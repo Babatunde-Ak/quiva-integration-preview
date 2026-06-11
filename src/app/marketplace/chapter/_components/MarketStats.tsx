@@ -7,7 +7,9 @@ import {useMirrorNodeQueries} from '@/hook/useMirrorNodeQueries';
 const MarketStats = () => {
   const { currentComic, isLoading } = useAppSelector((state: any) => state.comic);
   const [campaignData, setCampaignData] = React.useState(null);
-  const { fetchCampaign, fetchCurrentPhase } = useMirrorNodeQueries();
+  const [actualMintedCount, setActualMintedCount] = React.useState(0);
+  const [loadingMintedCount, setLoadingMintedCount] = React.useState(false);
+  const { fetchCampaign, fetchCurrentPhase, fetchAllTokenNfts } = useMirrorNodeQueries();
 
   useEffect(() => {
       const loadCampaignData = async () => {
@@ -43,11 +45,53 @@ const MarketStats = () => {
       }
     }, [currentComic, fetchCampaign]);
   
+  // Fetch actual minted NFTs count from blockchain
+  useEffect(() => {
+    const loadActualMintedCount = async () => {
+      const tokenId = currentComic?.nftId?.tokenId;
+      
+      if (!tokenId) {
+        console.log('📊 No tokenId found for market stats');
+        setActualMintedCount(0);
+        return;
+      }
+
+      setLoadingMintedCount(true);
+      try {
+        console.log('📊 Fetching actual minted NFTs for token:', tokenId);
+        
+        const nftsData = await fetchAllTokenNfts(tokenId);
+        
+        // Handle both array and object-with-nfts-array responses
+        let nftsList: any[] = [];
+        if (Array.isArray(nftsData)) {
+          nftsList = nftsData;
+        } else if (nftsData?.nfts && Array.isArray(nftsData.nfts)) {
+          nftsList = nftsData.nfts;
+        } else {
+          nftsList = [];
+        }
+        
+        console.log(`📊 Found ${nftsList.length} minted NFTs`);
+        setActualMintedCount(nftsList.length);
+      } catch (error) {
+        console.error('Error fetching minted count:', error);
+        setActualMintedCount(0);
+      } finally {
+        setLoadingMintedCount(false);
+      }
+    };
+
+    if (currentComic) {
+      loadActualMintedCount();
+    }
+  }, [currentComic, fetchAllTokenNfts]);
+  
 
   // Extract NFT data with fallbacks
   const nftData = currentComic?.nftId || {};
   const totalSupply = nftData?.maxSupply?.toLocaleString() || "N/A";
-  const MintedSupply = campaignData?.totalMinted?.toLocaleString() || "0";
+  const MintedSupply = actualMintedCount?.toLocaleString() || "0";
   const floorPrice = nftData?.price?.toFixed(2) || "0.00";
   const views = currentComic?.views?.toLocaleString() || "0";
   const likes = currentComic?.likes?.toLocaleString() || "0";

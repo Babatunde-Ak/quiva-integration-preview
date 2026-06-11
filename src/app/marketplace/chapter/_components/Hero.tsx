@@ -1,14 +1,29 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronLeft, Flame } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useAppSelector } from '@/redux/hook';
+import { useAppSelector, useAppDispatch } from '@/redux/hook';
+import { useHederaWallet } from '@/providers/HashPackProvider';
+import dynamic from 'next/dynamic';
+const MintConfirmationModal = dynamic(() => import('@/features/comic-library/components/MintConfirmationModal'), { ssr: false });
+import { createTransaction } from '@/redux/slices/transactionSlice';
+import useMirrorNodeQueries from '@/hook/useMirrorNodeQueries';
 
 const HeroSection = () => {
   const router = useRouter();
+  const dispatch = useAppDispatch();
+  const { account } = useHederaWallet();
   const { currentComic, isLoading } = useAppSelector((state: any) => state.comic);
+  const { user } = useAppSelector((state: any) => state.wallet);
+  const { fetchAllTokenNfts } = useMirrorNodeQueries();
+
+  // Modal state
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [transactionHash, setTransactionHash] = useState('');
+  const [isMinting, setIsMinting] = useState(false);
+  const [actualMintedCount, setActualMintedCount] = useState(0);
 
   // Extract data from currentComic with fallbacks
   const coverImage = currentComic?.bannerImage || "/Naruto.jpg";
@@ -23,6 +38,45 @@ const HeroSection = () => {
   const createdAt = currentComic?.createdAt;
   const isMinted = currentComic?.isMinted || false;
 
+  // Fetch actual minted NFTs count from blockchain
+  useEffect(() => {
+    const loadActualMintedCount = async () => {
+      const tokenId = currentComic?.nftId?.tokenId;
+      
+      if (!tokenId) {
+        console.log('🎬 No tokenId found for hero');
+        setActualMintedCount(0);
+        return;
+      }
+
+      try {
+        console.log('🎬 Fetching actual minted NFTs for token:', tokenId);
+        
+        const nftsData = await fetchAllTokenNfts(tokenId);
+        
+        // Handle both array and object-with-nfts-array responses
+        let nftsList: any[] = [];
+        if (Array.isArray(nftsData)) {
+          nftsList = nftsData;
+        } else if (nftsData?.nfts && Array.isArray(nftsData.nfts)) {
+          nftsList = nftsData.nfts;
+        } else {
+          nftsList = [];
+        }
+        
+        console.log(`🎬 Found ${nftsList.length} minted NFTs`);
+        setActualMintedCount(nftsList.length);
+      } catch (error) {
+        console.error('Error fetching minted count:', error);
+        setActualMintedCount(0);
+      }
+    };
+
+    if (currentComic) {
+      loadActualMintedCount();
+    }
+  }, [currentComic, fetchAllTokenNfts]);
+
   // Format date for sales start
   const salesStartDate = createdAt 
     ? new Date(createdAt).toLocaleDateString('en-US', { 
@@ -31,6 +85,40 @@ const HeroSection = () => {
         year: 'numeric' 
       }).toUpperCase()
     : "TBA";
+
+  // Check if supply is exhausted
+  const maxSupply = currentComic?.nftId?.maxSupply || 0;
+  const isSoldOut = maxSupply > 0 && actualMintedCount >= maxSupply;
+
+  // Check if this is a direct listing (no campaignId = direct listing, has campaignId = release campaign)
+  const hasCampaignId = currentComic?.nftId?.campaignId && 
+                       currentComic.nftId.campaignId !== null && 
+                       currentComic.nftId.campaignId !== '';
+  const isDirectListing = !hasCampaignId;
+
+  // Handle mint confirmation
+  const handleConfirmMint = async (txHash: string) => {
+    setShowConfirmModal(false);
+    setTransactionHash(txHash);
+    setIsMinting(true);
+
+    try {
+      const tx = await dispatch(createTransaction({
+        comicId: currentComic?._id,
+        walletAddress: account,
+        txHash,
+        price: currentComic?.nftId?.price || 0,
+        currency: 'HBAR',
+      } as any));
+      console.log("Transaction recorded:", tx);
+    } catch (error) {
+      console.error("Error recording transaction:", error);
+    } finally {
+      setIsMinting(false);
+      // Navigate to user profile to see minted comics
+      router.push(`/user-profile?tab=mintedComics`);
+    }
+  };
 
   return (
     <div className="relative font-mono w-full bg-[#111111] overflow-hidden">
@@ -167,7 +255,7 @@ const HeroSection = () => {
                       {isMinted ? 'Live' : 'Draft'}
                     </span>
                     {isMinted && (
-                      <Flame size={14} className="text-orange-500 fill-orange-500 animate-pulse" />
+                      <Flame size={14} className="text-orange-500 fill-[#FF9F1C] animate-pulse" />
                     )}
                   </div>
                 </div>
@@ -190,11 +278,27 @@ const HeroSection = () => {
 
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+              {/* Mint Now Button - Only show for direct listings, not for release campaigns */}
+              {isDirectListing && (
+                <button 
+                onClick={() => !isSoldOut && setShowConfirmModal(true)}
+                disabled={isMinting || isSoldOut}
+                className={`px-8 py-3.5 rounded-full font-semibold text-sm border transition-all duration-300 active:scale-95 text-center ${
+                  isSoldOut 
+                    ? 'bg-gray-600 text-white border-gray-600 cursor-not-allowed opacity-60' 
+                    : 'bg-[#FF9F1C] text-black border-orange-500 hover:bg-orange-600 hover:border-orange-600 disabled:opacity-60 disabled:cursor-not-allowed'
+                }`}>
+                  {isSoldOut ? 'Sold Out' : isMinting ? 'Minting...' : 'Mint Now'}
+                </button>
+              )}
+              
               <button 
               onClick={() => router.push(`/marketplace/detail/?id=${currentComic?._id}`)}
               className="px-8 py-3.5 rounded-full border border-white/30 text-white font-semibold text-sm hover:bg-white/30 hover:text-black hover:border-white transition-all duration-300 active:scale-95 text-center">
                 Add to Favourite
               </button>
+              
+            
               
               <div className="flex gap-4 justify-center sm:justify-start">
                 <button className="p-3.5 rounded-full border border-white/30 text-white hover:bg-white hover:text-[#000] hover:border-white transition-all duration-300 active:scale-95 group">
@@ -217,6 +321,18 @@ const HeroSection = () => {
           </div>
         </div>
       </div>
+
+      {/* Mint Confirmation Modal */}
+      <MintConfirmationModal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={handleConfirmMint}
+        comicTitle={currentComic?.title || 'Comic'}
+        coverImage={currentComic?.bannerImage || '/dev_images/avatar-2.png'}
+        price={String(currentComic?.nftId?.price ?? 0)}
+        walletAddress={account || ''}
+        edition={`1 of ${currentComic?.nftId?.maxSupply ?? 0}`}
+      />
     </div>
   );
 };

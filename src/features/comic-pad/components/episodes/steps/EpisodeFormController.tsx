@@ -4,7 +4,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import EpisodeDetailsStepComponent from './EpisodeDetailsStep';
 import ContentFilesStepComponent from './ContentFilesStep';
 import PreviewPublishStep from './PreviewPublishStep';
-import { useMintComic } from '@/hook/useMintComic'; // Adjust path as needed
+//import { useMintComic } from '@/hook/useMintComic'; // Adjust path as needed
 import { useHederaWallet } from '@/providers/HashPackProvider';
 import { useAppDispatch, useAppSelector } from '@/redux/hook';
 import {
@@ -94,11 +94,11 @@ const EpisodeFormController: React.FC<EpisodeFormControllerProps> = ({
 
   const { user } = useAppSelector((state: any) => state.wallet || {});
   
-  const { createComicNFT } = useMintComic({
-    accountId: account || user?.walletAddress || '',
-    signer: signer,
-    network: "testnet"
-  });
+  // const { createComicNFT } = useMintComic({
+  //   accountId: account || user?.walletAddress || '',
+  //   signer: signer,
+  //   network: "testnet"
+  // });
 
   // Handle errors
   useEffect(() => {

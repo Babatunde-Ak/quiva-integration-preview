@@ -1,14 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Search, ChevronDown, Gift, AlertCircle, Zap } from 'lucide-react';
+import { Search, ChevronDown, Gift, AlertCircle } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '@/redux/hook';
 import { useRouter } from 'next/navigation';
 import useMirrorNodeQueries from '@/hook/useMirrorNodeQueries';
 import { useHederaWallet } from '@/providers/HashPackProvider';
-import MintConfirmationModal from '@/features/comic-library/components/MintConfirmationModal';
-import MintProcessingModal from '@/features/comic-library/components/MintProcessingModal';
-import MintSuccessModal from '@/features/comic-library/components/MintSuccessModal';
-import { createTransaction } from '@/redux/slices/transactionSlice';
 
 interface ComicsViewProps {
   comicId?: string | null;
@@ -29,12 +25,6 @@ const ComicsView: React.FC<ComicsViewProps> = ({ comicId }) => {
   const [isLoadingNFTs, setIsLoadingNFTs] = useState(false);
   const [errorLoadingNFTs, setErrorLoadingNFTs] = useState<string | null>(null);
   const [directListingMintedCount, setDirectListingMintedCount] = useState(0);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [showProcessingModal, setShowProcessingModal] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [transactionHash, setTransactionHash] = useState('');
-  const [editionNumber, setEditionNumber] = useState('');
-  const [isMinting, setIsMinting] = useState(false);
   const router = useRouter();
   const dispatch = useAppDispatch();
 
@@ -136,31 +126,6 @@ const ComicsView: React.FC<ComicsViewProps> = ({ comicId }) => {
     setSortOrder(prev => prev === 'recent' ? 'oldest' : 'recent');
   };
 
-  const handleConfirmMint = async (txHash: string) => {
-    setShowConfirmModal(false);
-    setShowProcessingModal(true);
-    setIsMinting(true);
-    setTransactionHash(txHash);
-
-   const tx = await dispatch(createTransaction({
-      comicId: comicId,
-      walletAddress: account,
-      txHash,
-      price: currentComic?.nftId?.price || 0,
-      currency: 'HBAR',
-    } as any));
-    console.log("Update Tx", tx);
-    setEditionNumber(`${currentComic?.episodeNumber || 1}`);
-    setShowProcessingModal(false);
-    setShowSuccessModal(true);
-    setIsMinting(false);
-  };
-
-  const handleViewComic = () => {
-    setShowSuccessModal(false);
-    router.push(`/reader?id=${comicId}`);
-  };
-
   // Filter NFTs based on search
   const filteredNFTs = mintedNFTs.filter(nft =>
     currentComic?.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -189,112 +154,24 @@ const ComicsView: React.FC<ComicsViewProps> = ({ comicId }) => {
 
   // Handle direct listing card display
   if (hasDirectListing && !hasCampaignId) {
-    // Use data from backend - currentSupply is what's already minted, maxSupply is total available
-    const totalSupply = currentComic?.nftId?.maxSupply || 0;
-    const mintedCount = currentComic?.nftId?.currentSupply || 0;
-    const listingPrice = currentComic?.nftId?.price || 'N/A';
-    const availableCount = totalSupply > 0 ? totalSupply - mintedCount : 0;
-
-    console.log('🎯 Direct Listing Card Data:', {
-      comicTitle: currentComic?.title,
-      comicId: currentComic?._id,
-      totalSupply,
-      mintedCount,
-      availableCount,
-      listingPrice,
-      nftIdData: currentComic?.nftId
-    });
-
+    // 🎯 For direct listings: Only show RESALE listings (secondary market)
+    // Don't show the creator's initial direct listing card here
+    // This tab is for secondary market (user resales) only
+    
     return (
-      <>
-        <div className="animate-fade-in-up">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div 
-              className="bg-[#0A0A0A] rounded-2xl overflow-hidden border border-[#242424] hover:border-orange-500/30 transition-all duration-300 group hover:-translate-y-2 hover:shadow-[0_10px_30px_rgba(255,159,28,0.15)]"
-            >
-              {/* Comic Image */}
-              <div className="relative aspect-square bg-gray-900 overflow-hidden">
-                <Image 
-                  src={currentComic?.bannerImage || "/dev_images/avatar-2.png"} 
-                  alt={currentComic?.title || 'Comic'}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
-                />
-                {/* Direct Listing Badge */}
-                <div className="absolute top-3 right-3 bg-black/70 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-orange-500/50">
-                  <p className="text-orange-400 font-bold text-sm">Direct</p>
-                </div>
-              </div>
-
-              {/* Content */}
-              <div className="p-4">
-                <h4 className="font-bold text-lg mb-2 group-hover:text-orange-400 transition-colors line-clamp-2">
-                  {currentComic?.title || 'Comic Edition'}
-                </h4>
-                
-                {/* Listing Info */}
-                <div className="space-y-2 mb-4 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-white/50">Total Supply:</span>
-                    <span className="text-white font-bold">{totalSupply || 'Unlimited'}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-white/50">Minted:</span>
-                    <span className="text-blue-300 font-mono text-xs">{mintedCount} / {totalSupply || '∞'}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-white/50">Price:</span>
-                    <div className="flex items-center gap-1">
-                      <span className="text-white font-bold">
-                        {listingPrice}
-                      </span>
-                      <div className="w-4 h-4 bg-gradient rounded-full flex items-center justify-center">
-                        <span className="text-white text-xs font-bold">🔥</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Action Button */}
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setShowConfirmModal(true)}
-                    disabled={isMinting}
-                    className="w-full bg-[#FF9F1C] hover:bg-[#FFB045] text-black font-bold py-2.5 px-4 rounded-full transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
-                  >
-                    {isMinting ? 'Minting...' : 'Mint Now'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
+      <div className="animate-fade-in-up">
+        <div className="bg-[#0A0A0A] rounded-2xl p-8 border border-[#242424] text-center">
+          <Gift className="w-12 h-12 text-orange-500/40 mx-auto mb-4" />
+          <h3 className="text-xl font-bold text-white mb-2">No Resales Yet</h3>
+          <p className="text-white/60 mb-6">No one has listed this comic for resale on the secondary market yet</p>
+          <button
+            onClick={() => router.push('/marketplace')}
+            className="bg-[#FF9F1C] hover:bg-orange-700 text-white font-bold py-2 px-6 rounded-full transition-colors"
+          >
+            Explore Other Comics
+          </button>
         </div>
-
-        <MintConfirmationModal
-          isOpen={showConfirmModal}
-          onClose={() => setShowConfirmModal(false)}
-          onConfirm={handleConfirmMint}
-          comicTitle={currentComic?.title || 'Comic'}
-          coverImage={currentComic?.bannerImage || '/dev_images/avatar-2.png'}
-          price={String(currentComic?.nftId?.price ?? 0)}
-          walletAddress={account || ''}
-          edition={`1 of ${currentComic?.nftId?.maxSupply ?? 0}`}
-        />
-        <MintProcessingModal
-          isOpen={showProcessingModal}
-          transactionHash={transactionHash}
-        />
-        <MintSuccessModal
-          isOpen={showSuccessModal}
-          onClose={() => setShowSuccessModal(false)}
-          onViewComic={handleViewComic}
-          comicTitle={currentComic?.title || 'Comic'}
-          coverImage={currentComic?.bannerImage || '/dev_images/avatar-2.png'}
-          editionNumber={editionNumber}
-          transactionHash={transactionHash}
-          price={String(currentComic?.nftId?.price ?? 0)}
-        />
-      </>
+      </div>
     );
   }
 
@@ -480,7 +357,7 @@ const ComicsView: React.FC<ComicsViewProps> = ({ comicId }) => {
       )} */}
 
       {/* Mint Modals */}
-      <MintConfirmationModal
+      {/* <MintConfirmationModal
         isOpen={showConfirmModal}
         onClose={() => setShowConfirmModal(false)}
         onConfirm={handleConfirmMint}
@@ -489,12 +366,12 @@ const ComicsView: React.FC<ComicsViewProps> = ({ comicId }) => {
         price={String(currentComic?.nftId?.price ?? 0)}
         walletAddress={account || ''}
         edition={`1 of ${currentComic?.nftId?.maxSupply ?? 0}`}
-      />
-      <MintProcessingModal
+      /> */}
+      {/* <MintProcessingModal
         isOpen={showProcessingModal}
         transactionHash={transactionHash}
-      />
-      <MintSuccessModal
+      /> */}
+      {/* <MintSuccessModal
         isOpen={showSuccessModal}
         onClose={() => setShowSuccessModal(false)}
         onViewComic={handleViewComic}
@@ -503,7 +380,7 @@ const ComicsView: React.FC<ComicsViewProps> = ({ comicId }) => {
         editionNumber={editionNumber}
         transactionHash={transactionHash}
         price={String(currentComic?.nftId?.price ?? 0)}
-      />
+      /> */}
 
     </div>
   );
