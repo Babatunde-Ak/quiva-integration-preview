@@ -1,3 +1,18 @@
+export function useMintComic() {
+  return {
+    createComicNFT: async () => ({ transactionId: "", status: "skipped" }),
+    mintAdditionalCopies: async () => ({ transactionId: "", status: "skipped" }),
+    status: "idle",
+    progress: 0,
+    result: null,
+    error: null,
+    statusText: "",
+    reset: () => undefined,
+  };
+}
+
+export default useMintComic;
+
 // import { useState, useEffect, useRef } from "react";
 // import { Buffer } from "buffer";
 // import {

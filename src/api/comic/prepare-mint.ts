@@ -7,7 +7,7 @@ import {
   TokenMintTransaction,
   AccountId,
   PublicKey,
-} from "@hashgraph/sdk";
+} from "@hiero-ledger/sdk";
 import { createComicMetadata } from "@/lib/hashinal-helper";
 
 export async function POST(request: NextRequest) {

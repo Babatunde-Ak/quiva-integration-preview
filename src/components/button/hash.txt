@@ -5,7 +5,7 @@ import {
   DAppConnector,
   HederaChainId,
 } from "@hashgraph/hedera-wallet-connect";
-import { LedgerId } from "@hashgraph/sdk";
+import { LedgerId } from "@hiero-ledger/sdk";
 
 const projectId = "YOUR_WALLETCONNECT_PROJECT_ID"; // from cloud.walletconnect.com
 

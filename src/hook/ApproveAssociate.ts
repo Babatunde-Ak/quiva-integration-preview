@@ -1,4 +1,4 @@
-import { AccountAllowanceApproveTransaction, AccountId, Client, ContractExecuteTransaction, ContractFunctionParameters, ContractId, NftId, PrivateKey, TokenAssociateTransaction, TokenId, TransactionId } from "@hashgraph/sdk";
+import { AccountAllowanceApproveTransaction, AccountId, Client, ContractExecuteTransaction, ContractFunctionParameters, ContractId, NftId, PrivateKey, TokenAssociateTransaction, TokenId, TransactionId } from "@hiero-ledger/sdk";
 
 // Add this NEW function to associate marketplace with token
  export async function associateTokenWithMarketplace(

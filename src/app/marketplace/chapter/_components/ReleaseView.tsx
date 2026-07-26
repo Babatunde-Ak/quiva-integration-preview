@@ -131,7 +131,7 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Currency, Minus, Plus } from 'lucide-react';
 import { useMirrorNodeQueries } from '@/hook/useMirrorNodeQueries';
-import useComicPlatform, { CampaignType } from '@/hook/useMarkeplace';
+import useWagmiMarketplace, { CampaignType } from '@/hook/useWagmiMarketplace';
 import { useHederaWallet } from '@/providers/HashPackProvider';
 import { useAppDispatch, useAppSelector } from '@/redux/hook';
 import { getComicById } from '@/redux/slices/comicSlice';
@@ -175,11 +175,7 @@ const ReleaseView: React.FC<ReleaseViewProps> = ({ comicId }) => {
     mintFromCampaign,
     status,
     error: txError,
-  } = useComicPlatform({
-    accountId: account || user?.walletAddress || '',
-    network: "testnet",
-    signer: signer,
-  });
+  } = useWagmiMarketplace();
 
   // Fetch campaign data when component mounts or comic changes
   useEffect(() => {
@@ -250,7 +246,7 @@ const ReleaseView: React.FC<ReleaseViewProps> = ({ comicId }) => {
       console.log('✅ Mint successful:', result);
        const tx =   await dispatch(createTransaction({
             comicId: comicId,
-            walletAddress: account,
+            walletAddress: account || user?.walletAddress || '',
             txHash: result.transactionId,
             price: currentComic?.nftId?.price || 0,
             currency: 'HBAR',
@@ -298,7 +294,7 @@ const ReleaseView: React.FC<ReleaseViewProps> = ({ comicId }) => {
   const handleReadComic = () => {
     setShowSuccessModal(false);
     // Navigate to the comic reader
-    router.push(`/read/${comicId}`);
+    router.push(`/reader?id=${comicId}`);
   };
 
   // Get campaign type label
@@ -316,19 +312,18 @@ const ReleaseView: React.FC<ReleaseViewProps> = ({ comicId }) => {
   };
 
   // Calculate remaining supply
-  const remainingSupply = campaignData 
-    ? parseInt(campaignData.maxSupply) - parseInt(campaignData.totalMinted)
-    : 0;
+  const hasCampaignId = currentComic?.nftId?.campaignId && 
+    currentComic.nftId.campaignId !== null && 
+    currentComic.nftId.campaignId !== '' &&
+    currentComic.nftId.campaignType !== 'direct_listing';
+
+  const remainingSupply = campaignData
+    ? Math.max(0, parseInt(campaignData.maxSupply || '0') - parseInt(campaignData.totalMinted || '0'))
+    : Number(currentComic?.nftId?.maxSupply || 0);
 
   // Check if campaign is active
   const isCampaignActive = campaignData?.isActive || false;
-  const isSoldOut = remainingSupply <= 0;
-
-  // Check if this comic has a campaign at all
-  const hasCampaignId = currentComic?.nftId?.campaignId && 
-                       currentComic.nftId.campaignId !== null && 
-                       currentComic.nftId.campaignId !== '' &&
-                       currentComic.nftId.campaignType !== 'direct_listing';
+  const isSoldOut = hasCampaignId ? remainingSupply <= 0 : false;
 
   // Loading state
   if (campaign.isLoading) {

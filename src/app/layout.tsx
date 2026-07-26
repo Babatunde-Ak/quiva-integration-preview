@@ -3,6 +3,7 @@ import "./globals.css";
 import "swiper/css";
 import "swiper/css/pagination";
 import React from "react";
+import dynamic from "next/dynamic";
 import { HeroUIProvider } from "@heroui/react";
 // import ReduxProvider from "./redux-provider";
 import { Metadata } from "next";
@@ -10,7 +11,10 @@ import { SEO_CONFIG } from "@/components/utils/seoContants";
 import ReduxProviders from "@/redux/Provider";
 import RainbowProvider from "@/providers/RainbowProvider";
 import { ToastContainer } from "react-toastify";
-import { HashPackProvider } from "@/providers/HashPackProvider";
+const HashPackProvider = dynamic(
+  () => import("@/providers/HashPackProvider").then((mod) => mod.HashPackProvider),
+  { ssr: false }
+);
 
 const { description, keywords, title, url } = SEO_CONFIG.default;
 export const metadata: Metadata = {

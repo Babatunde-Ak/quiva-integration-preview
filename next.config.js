@@ -258,7 +258,7 @@ webpack: (config, { isServer }) => {
       'node:path': 'path-browserify',
       crypto: path.resolve(__dirname, 'src/polyfills/crypto.js'),
       path: 'path-browserify',
-      '@hiero-ledger/sdk': require.resolve('@hashgraph/sdk'),
+      '@hiero-ledger/sdk': path.resolve(__dirname, 'node_modules/@hiero-ledger/sdk/lib/browser.js'),
       '@hiero-ledger/proto': require.resolve('@hashgraph/proto'),
       '@hiero-ledger/cryptography': require.resolve('@hashgraph/cryptography'),
       // For client builds, redirect @hashgraph/sdk to its browser build (no gRPC/http2/fs).

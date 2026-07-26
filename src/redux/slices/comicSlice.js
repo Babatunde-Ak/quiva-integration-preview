@@ -192,8 +192,13 @@ export const updateComicToken = createAsyncThunk(
         maxSupply,
         serial,
         transactionId,
-        metadataTopicIds: metadataTopicIds || [],
       };
+
+      if (metadataTopicIds !== undefined) {
+        payload.metadataTopicIds = Array.isArray(metadataTopicIds)
+          ? JSON.stringify(metadataTopicIds)
+          : metadataTopicIds;
+      }
 
       const response = await axiosInstance.put(
         `/comics/token/${comicId}`,
