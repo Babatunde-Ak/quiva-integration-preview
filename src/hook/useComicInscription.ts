@@ -1,3 +1,36 @@
+import { useState } from "react";
+
+interface UseComicInscriptionProps {
+  accountId?: string;
+  signer?: any;
+  network?: "testnet" | "mainnet";
+}
+
+export function useComicInscription(_props: UseComicInscriptionProps = {}) {
+  const [status] = useState<"idle" | "inscribing" | "done" | "error">("idle");
+  const [progress] = useState(0);
+  const [result] = useState<any>(null);
+  const [error] = useState<string | null>(null);
+  const [uploadProgress] = useState(0);
+
+  return {
+    createInscription: async (metadataCid: string, dbComicId: string) => ({
+      transactionId: "",
+      topicId: "",
+      dbComicId,
+      metadataCid,
+      result: {},
+      status: "skipped",
+    }),
+    status,
+    progress,
+    result,
+    error,
+    uploadProgress,
+  };
+}
+
+export default useComicInscription;
 
 // import { useRef, useState } from "react";
 // import { inscribeWithSigner, retrieveInscription } from "@hashgraphonline/standards-sdk";

@@ -4,7 +4,8 @@ import React from 'react'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
 import { HbarIcon } from '@/components/ui/HbarIcon'
-import useComicPlatform from '@/hook/useMarkeplace';
+import useWagmiMarketplace from '@/hook/useWagmiMarketplace';
+import useMirrorNodeQueries from '@/hook/useMirrorNodeQueries';
 import { useHederaWallet } from '@/providers/HashPackProvider'
 import { useAppDispatch, useAppSelector } from '@/redux/hook'
 
@@ -46,23 +47,32 @@ const MintConfirmationModal: React.FC<MintConfirmationModalProps> = ({
 
         const {
           purchaseFromListing,
-          getDirectListing
-        } = useComicPlatform({
-          accountId: account || user?.walletAddress || '',
-          network: "testnet",
-          signer: signer,
+        } = useWagmiMarketplace();
 
-        })
+        const { fetchDirectListing } = useMirrorNodeQueries();
     
 
   const handleMintComic = async () => {
 
     try {
-      //fetch the info first
+      // Fetch authoritative listing price from mirror node to avoid insufficient-payment mismatches
+      const listingId = Number(currentComic?.nftId?.listingId || 0);
+      let pricePerNFT = parseFloat(String(price)) || 0;
+      try {
+        if (listingId) {
+          const listingInfo = await fetchDirectListing(listingId);
+          if (listingInfo?.pricePerNFT) {
+            pricePerNFT = parseFloat(String(listingInfo.pricePerNFT));
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to fetch listing info; falling back to local price', err);
+      }
+
       const result = await purchaseFromListing({
-        listingId: currentComic?.nftId?.listingId, // Replace with actual listing ID
-        quantity: currentComic?.nftId?.quantity || 1,
-        pricePerNFT: parseFloat(currentComic?.nftId?.price) || 0
+        listingId: listingId,
+        quantity: Number(currentComic?.nftId?.quantity || 1),
+        pricePerNFT: pricePerNFT,
       })
       
       if(result){

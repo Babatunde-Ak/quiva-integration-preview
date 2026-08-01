@@ -310,7 +310,7 @@ import { crownIcon, sportsMedal } from '../../../../../public/dev_images';
 
 type FlowStep = 'rarity' | 'drop-details' | 'mint-type' | 'whitelist' | 'schedule' | 'review' | 'success';
 
-import useComicPlatform, { CampaignType, PhaseType } from '@/hook/useMarkeplace';
+import useWagmiMarketplace, { CampaignType, PhaseType } from '@/hook/useWagmiMarketplace';
 import { useComicInscription } from '@/hook/useComicInscription';
 import { useAppDispatch, useAppSelector } from '@/redux/hook';
 import { useHederaWallet } from '@/providers/HashPackProvider';
@@ -468,19 +468,11 @@ const DropView: React.FC<DropViewProps> = ({
         createCampaign,
         addToWhitelist,
         addPhase,
-    } = useComicPlatform({
-        accountId: account || user?.walletAddress || '',
-        network: "testnet",
-        signer: signer,
-    });
+    } = useWagmiMarketplace();
 
     const {
         createInscription
-    } = useComicInscription({
-        accountId: account || user?.walletAddress || '',
-        network: "testnet",
-        signer: signer,
-    });
+    } = useComicInscription();
 
     const rarityOptions: Record<string, RarityOption> = {
         legendary: {

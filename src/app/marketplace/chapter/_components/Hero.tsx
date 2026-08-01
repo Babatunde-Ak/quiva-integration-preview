@@ -17,13 +17,14 @@ const HeroSection = () => {
   const { account } = useHederaWallet();
   const { currentComic, isLoading } = useAppSelector((state: any) => state.comic);
   const { user } = useAppSelector((state: any) => state.wallet);
-  const { fetchAllTokenNfts } = useMirrorNodeQueries();
+  const { fetchAllTokenNfts, fetchDirectListing } = useMirrorNodeQueries();
 
   // Modal state
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [transactionHash, setTransactionHash] = useState('');
   const [isMinting, setIsMinting] = useState(false);
   const [actualMintedCount, setActualMintedCount] = useState(0);
+  const [listingAvailableCount, setListingAvailableCount] = useState<number | null>(null);
 
   // Extract data from currentComic with fallbacks
   const coverImage = currentComic?.bannerImage || "/Naruto.jpg";
@@ -86,15 +87,45 @@ const HeroSection = () => {
       }).toUpperCase()
     : "TBA";
 
-  // Check if supply is exhausted
-  const maxSupply = currentComic?.nftId?.maxSupply || 0;
-  const isSoldOut = maxSupply > 0 && actualMintedCount >= maxSupply;
+  useEffect(() => {
+    const loadListingAvailability = async () => {
+      const listingId = currentComic?.nftId?.listingId;
 
-  // Check if this is a direct listing (no campaignId = direct listing, has campaignId = release campaign)
+      if (!listingId) {
+        setListingAvailableCount(null);
+        return;
+      }
+
+      try {
+        const listingInfo = await fetchDirectListing(Number(listingId));
+        const available = Number(listingInfo?.available ?? 0);
+        setListingAvailableCount(Number.isFinite(available) ? available : 0);
+      } catch (error) {
+        console.error('Error fetching direct listing availability:', error);
+        setListingAvailableCount(null);
+      }
+    };
+
+    if (currentComic) {
+      loadListingAvailability();
+    }
+  }, [currentComic, fetchDirectListing]);
+
+  // Check if supply is exhausted for direct listings.
+  // For a direct listing, sold out should be based on the listing's remaining availability,
+  // not the total number of NFTs already minted on-chain.
+  const maxSupply = Number(currentComic?.nftId?.maxSupply || 0);
+  const backendCurrentSupply = Number(currentComic?.nftId?.currentSupply || 0);
+  const resolvedCurrentSupply = backendCurrentSupply > 0 ? backendCurrentSupply : actualMintedCount;
   const hasCampaignId = currentComic?.nftId?.campaignId && 
                        currentComic.nftId.campaignId !== null && 
                        currentComic.nftId.campaignId !== '';
   const isDirectListing = !hasCampaignId;
+  const isSoldOut = isDirectListing
+    ? (listingAvailableCount !== null
+        ? listingAvailableCount <= 0
+        : maxSupply > 0 && resolvedCurrentSupply >= maxSupply)
+    : maxSupply > 0 && resolvedCurrentSupply >= maxSupply;
 
   // Handle mint confirmation
   const handleConfirmMint = async (txHash: string) => {
@@ -105,7 +136,7 @@ const HeroSection = () => {
     try {
       const tx = await dispatch(createTransaction({
         comicId: currentComic?._id,
-        walletAddress: account,
+        walletAddress: account || user?.walletAddress || '',
         txHash,
         price: currentComic?.nftId?.price || 0,
         currency: 'HBAR',
@@ -115,8 +146,8 @@ const HeroSection = () => {
       console.error("Error recording transaction:", error);
     } finally {
       setIsMinting(false);
-      // Navigate to user profile to see minted comics
-      router.push(`/user-profile?tab=mintedComics`);
+      // Navigate to user profile to see minted comics (app route)
+      router.push(`/marketplace/user-profile?tab=mintedComics`);
     }
   };
 

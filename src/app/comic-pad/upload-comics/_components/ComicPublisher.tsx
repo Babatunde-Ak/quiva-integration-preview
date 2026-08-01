@@ -14,7 +14,7 @@ import { useMintComic } from "@/hook/useMintComic";
 import { useComicInscription } from "@/hook/useComicInscription"
 import { useAccount } from "wagmi";
 import { useHederaWallet } from "@/providers/HashPackProvider";
-import {LedgerId, AccountId} from "@hashgraph/sdk"
+import {LedgerId, AccountId} from "@hiero-ledger/sdk"
 interface ExtractedFile {
 	name: string;
 	blob: Blob;
@@ -114,11 +114,7 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 		error: mintHookError,
 		statusText: mintStatusText,
 		reset: resetMint 
-	} = useMintComic({
-		accountId: account || user?.walletAddress || '',
-		signer: signer,
-		network: 'testnet'
-	});
+	} = useMintComic();
 
 	const { createInscription, status: inscriptionStatus, progress: inscriptionProgress, result: inscriptionResult, error: inscriptionError, uploadProgress } = useComicInscription({
 	accountId: account || user?.walletAddress || '',

@@ -7,7 +7,7 @@ import {
   TopicMessageSubmitTransaction,
   TopicId,
   TransactionReceipt 
-} from '@hashgraph/sdk';
+} from '@hiero-ledger/sdk';
 
 export interface HashinalInscriptionData {
   title: string;

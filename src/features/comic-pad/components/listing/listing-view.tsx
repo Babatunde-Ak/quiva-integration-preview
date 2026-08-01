@@ -716,7 +716,7 @@ import ListingDetails from './steps/ListingDetails';
 import ReviewDetails from './steps/ReviewDetails';
 import ListingSuccessModal from './steps/ListingSuccessModal';
 
-// Hooks
+//Hooks
 import { useAppDispatch, useAppSelector } from '@/redux/hook';
 import { useHederaWallet } from '@/providers/HashPackProvider';
 
@@ -729,7 +729,7 @@ import { crownIcon, sportsMedal } from '../../../../../public/dev_images';
 // Types
 type FlowStep = 'rarity' | 'listing' | 'review' | 'success';
 
-import useComicPlatform from '@/hook/useMarkeplace';
+ import useWagmiMarketplace from '@/hook/useWagmiMarketplace'
 
 interface ListViewProps {
     episodeTitle?: string;
@@ -862,12 +862,7 @@ const ListView: React.FC<ListViewProps> = ({
         createComicCollection,
         createDirectListing,
         statusMessage: hookStatusMessage,
-        usedFallback
-    } = useComicPlatform({
-        accountId: account || user?.walletAddress || '',
-        network: "testnet",
-        signer: signer,
-    });
+    } = useWagmiMarketplace();
 
     // Load transaction state from localStorage on mount
     useEffect(() => {
@@ -970,8 +965,18 @@ const ListView: React.FC<ListViewProps> = ({
                 console.log("✅ Indexed via Mirror Node (normal path)");
             }
             
+            const normalizedTokenId = result?.tokenId && /^0x[0-9a-fA-F]{40}$/.test(result.tokenId)
+                ? (() => {
+                    try {
+                        return require('@hiero-ledger/sdk').TokenId.fromEvmAddress(0, 0, result.tokenId).toString();
+                    } catch {
+                        return result.tokenId;
+                    }
+                })()
+                : result?.tokenId;
+
             const collectionData = {
-                tokenId: result.tokenId!,
+                tokenId: normalizedTokenId!,
                 transactionId: result.transactionId,
                 name: `${episodeData?.title || 'Unknown'} Collection`,
                 symbol: flowData.rarity!.type.toUpperCase().substring(0, 4),
@@ -1240,7 +1245,6 @@ const ListView: React.FC<ListViewProps> = ({
                 <LoadingOverlay 
                     message={hookStatusMessage || processingMessage || "Processing transaction..."}
                     retryCount={retryCount}
-                    usedFallback={usedFallback}
                 />
             )}
 

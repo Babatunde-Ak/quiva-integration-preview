@@ -10,7 +10,7 @@ import { walletAuth, walletVerifyAuth, setAuthenticated } from "@/redux/slices/w
 import { getUserProfile } from "@/redux/slices/authSlice";
 import { useState, useEffect } from "react";
 import { useHederaWallet } from '@/providers/HashPackProvider';
-import { AccountId } from "@hashgraph/sdk";
+import { AccountId } from "@hiero-ledger/sdk";
 export enum WalletType {
   ETHEREUM = 'ethereum',
   HEDERA = 'hedera'

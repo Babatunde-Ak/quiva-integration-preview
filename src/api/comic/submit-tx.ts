@@ -4,7 +4,7 @@ import {
   Transaction,
   TokenCreateTransaction,
   TokenMintTransaction,
-} from "@hashgraph/sdk";
+} from "@hiero-ledger/sdk";
 
 export async function POST(request: NextRequest) {
   try {

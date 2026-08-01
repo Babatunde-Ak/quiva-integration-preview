@@ -3,7 +3,7 @@
  * Utilities for querying Hedera Mirror Node API
  */
 
-import { ContractId } from "@hashgraph/sdk";
+import { ContractId } from "@hiero-ledger/sdk";
 
 export interface MirrorNodeConfig {
   network: 'testnet' | 'mainnet';
@@ -93,18 +93,43 @@ class MirrorNodeService {
   }
 
   /**
-   * Convert tinybars to HBAR
+   * Convert an amount expressed in Hedera units to HBAR.
+   *
+   * Mirror Node sometimes returns 18-decimal HBAR values for contract call results,
+   * and other APIs may return 8-decimal tinybars. We auto-detect the magnitude.
    */
-  tinybarsToHbar(tinybars: string | number): number {
-    return Number(tinybars) / 100000000;
+  tinybarsToHbar(value: string | number): number {
+    const raw = String(value).trim();
+    if (!raw) return 0;
+
+    const isNegative = raw.startsWith("-");
+    const abs = isNegative ? raw.slice(1) : raw;
+    const len = abs.replace(/^0+/, "").length;
+
+    if (len === 0) return 0;
+
+    const n = Number(raw);
+    if (Number.isNaN(n)) return 0;
+
+    if (len > 18) {
+      return n / 1e18;
+    }
+    if (len > 8) {
+      return n / 1e8;
+    }
+    return n;
   }
 
   /**
-   * Convert HBAR to tinybars
+   * Convert HBAR to tinybars.
    */
-  hbarToTinybars(hbar: string | number): string {
-    return (Number(hbar) * 100000000).toString();
-  }
+//   hbarToTinybars(hbar: string | number): string {
+//     const value = String(hbar).trim();
+//     const [whole, fraction = ""] = value.split('.');
+//     const normalizedFraction = (fraction + '00000000').slice(0, 8);
+//     const tinybars = BigInt(whole || '0') * 100000000n + BigInt(normalizedFraction);
+//     return tinybars.toString();
+//   }
 
   /**
    * Make contract call via Mirror Node
@@ -118,18 +143,46 @@ class MirrorNodeService {
       // Convert contract ID to EVM address if needed
       const contractAddress = this.hederaIdToEvmAddress(contractId);
 
+      const payload = {
+        block,
+        data: encodedData,
+        to: contractAddress,
+      };
+
       const response = await fetch(`${this.baseUrl}/api/v1/contracts/call`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          block,
-          data: encodedData,
-          to: contractAddress
-        })
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
-        throw new Error(`Mirror Node call failed: ${response.statusText}`);
+        const responseText = await response.text();
+        const fallbackPayload = {
+          block,
+          data: encodedData,
+          contract_id: contractId,
+        };
+
+        console.warn('Mirror Node call failed, trying fallback payload', {
+          status: response.status,
+          statusText: response.statusText,
+          responseText,
+          payload,
+          fallbackPayload,
+        });
+
+        const fallbackResponse = await fetch(`${this.baseUrl}/api/v1/contracts/call`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(fallbackPayload),
+        });
+
+        if (!fallbackResponse.ok) {
+          const fallbackText = await fallbackResponse.text();
+          throw new Error(`Mirror Node call failed: ${response.statusText} / ${responseText} / fallback: ${fallbackResponse.statusText} / ${fallbackText}`);
+        }
+
+        return await fallbackResponse.json();
       }
 
       return await response.json();
