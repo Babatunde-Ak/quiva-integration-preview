@@ -123,13 +123,13 @@ class MirrorNodeService {
   /**
    * Convert HBAR to tinybars.
    */
-  hbarToTinybars(hbar: string | number): string {
-    const value = String(hbar).trim();
-    const [whole, fraction = ""] = value.split('.');
-    const normalizedFraction = (fraction + '00000000').slice(0, 8);
-    const tinybars = BigInt(whole || '0') * 100000000n + BigInt(normalizedFraction);
-    return tinybars.toString();
-  }
+//   hbarToTinybars(hbar: string | number): string {
+//     const value = String(hbar).trim();
+//     const [whole, fraction = ""] = value.split('.');
+//     const normalizedFraction = (fraction + '00000000').slice(0, 8);
+//     const tinybars = BigInt(whole || '0') * 100000000n + BigInt(normalizedFraction);
+//     return tinybars.toString();
+//   }
 
   /**
    * Make contract call via Mirror Node

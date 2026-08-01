@@ -12,7 +12,7 @@ const MintComicModal = dynamic(() => import("@/features/comic-library/components
 import { useAppDispatch, useAppSelector } from "@/redux/hook";
 import { getComicById } from "@/redux/slices/comicSlice";
 import { getCollectionById } from "@/redux/slices/collectionSlice";
-import useMarketplace from "@/hook/useMarketplace";
+//import useMarketplace from "@/hook/useMarketplace";
 import useMirrorNodeQueries from "@/hook/useMirrorNodeQueries";
 import   { useHederaWallet } from "@/providers/HashPackProvider";
 import { useNftOwnershipCheck } from "@/hook/userNFTOwnershipCheck";
