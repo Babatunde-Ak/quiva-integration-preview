@@ -48,10 +48,10 @@ export const OFFER_AMOUNT = 120
 export const OFFER_EXPIRY_OPTIONS = ['24 hours', '3 days', '7 days', '30 days']
 
 export const FLOOR_OPTIONS = [
-  { label: 'Floor −6%', value: -6 },
-  { label: 'Floor −6%', value: -6 },
+  { label: 'Floor -10%', value: -10 },
+  { label: 'Floor -5%', value: -5 },
   { label: 'Floor', value: 0 },
-  { label: 'Floor +6%', value: 6 },
+  { label: 'Floor +5%', value: 5 },
 ]
 
 export const BREAKDOWN = {

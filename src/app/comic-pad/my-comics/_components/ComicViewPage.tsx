@@ -69,7 +69,7 @@ const ComicViewPage = ({ id }: ComicViewPageProps) => {
 					<div className='text-6xl mb-4'>📚</div>
 					<h3 className='text-white text-xl font-bold mb-2'>Comic Not Found</h3>
 					<p className='text-white/60 text-sm mb-6'>
-						The comic you're looking for doesn't exist or has been removed.
+						The comic you&apos;re looking for doesn&apos;t exist or has been removed.
 					</p>
 					<button
 						onClick={() => router.push("/comic-pad/my-comics")}
@@ -177,7 +177,7 @@ const ComicViewPage = ({ id }: ComicViewPageProps) => {
 					<div className='bg-gray-900 border border-white/20 rounded-xl p-6 max-w-md w-full shadow-2xl'>
 						<h3 className='text-white text-xl font-bold mb-3'>Delete Comic?</h3>
 						<p className='text-white/70 text-sm mb-6'>
-							Are you sure you want to delete "{comic.title}"? This action cannot
+							Are you sure you want to delete &quot;{comic.title}&quot;? This action cannot
 							be undone.
 						</p>
 						<div className='flex gap-4'>

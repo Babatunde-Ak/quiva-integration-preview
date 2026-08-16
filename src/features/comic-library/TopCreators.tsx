@@ -340,7 +340,7 @@ export default function TopCreators() {
         {/* Show message if no results after filtering */}
         {searchFilteredCreators.length === 0 && allCreators.length > 0 ? (
           <div className="text-center py-10">
-            <div className="text-white/60 text-lg">No creators found for "{searchQuery}"</div>
+            <div className="text-white/60 text-lg">No creators found for &quot;{searchQuery}&quot;</div>
             <button 
               onClick={() => setSearchQuery("")}
               className="mt-4 px-4 py-2 text-[#f59e0b] border border-[#f59e0b]/50 rounded-lg hover:bg-[#f59e0b]/10 transition-colors"
@@ -529,7 +529,7 @@ export default function TopCreators() {
           {/* Results info */}
           {searchQuery && (
             <div className="mt-4 text-white/60 text-sm">
-              Showing {searchFilteredCreators.length} results for "{searchQuery}"
+              Showing {searchFilteredCreators.length} results for &quot;{searchQuery}&quot;
             </div>
           )}
           

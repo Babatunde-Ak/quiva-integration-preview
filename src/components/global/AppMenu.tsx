@@ -67,7 +67,7 @@ const AppMenu = () => {
 					{/* Central Create Button - Comic Style */}
 					<div className='absolute -top-0 left-1/2 transform -translate-x-1/2 z-50'>
 						<Link
-							href={"/comic-pad/create"}
+							href={"/comic-pad/script-builder"}
 							className={`bg-gradient-to-br from-yellow-400 via-orange-500 to-red-500 size-12 rounded-full shadow-xl flex items-center justify-center transition-all duration-400 ease-out hover:scale-105 hover:rotate-6 border-3 border-white border-double hover:shadow-yellow-400/40 hover:shadow-lg relative overflow-hidden`}
 						>
 							<div className='absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -skew-x-12 translate-x-[-100%] hover:translate-x-[100%] transition-transform duration-800' />

@@ -1,13 +1,12 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import { motion } from 'framer-motion'
-import Image from 'next/image'
 import { HbarIcon } from '@/components/ui/HbarIcon'
 import useWagmiMarketplace from '@/hook/useWagmiMarketplace';
 import useMirrorNodeQueries from '@/hook/useMirrorNodeQueries';
 import { useHederaWallet } from '@/providers/HashPackProvider'
-import { useAppDispatch, useAppSelector } from '@/redux/hook'
+import { useAppSelector } from '@/redux/hook'
 
 interface MintConfirmationModalProps {
   isOpen: boolean
@@ -30,40 +29,36 @@ const MintConfirmationModal: React.FC<MintConfirmationModalProps> = ({
   edition = "",
   walletAddress = ""
 }) => {
+  const { account } = useHederaWallet();
+  const { user } = useAppSelector((state:any) => state.wallet);
+  const { currentComic } = useAppSelector((state: any) => state.comic);
+  const {
+    purchaseFromListing,
+    isProcessing,
+    error: marketplaceError,
+    statusMessage,
+    isConnected: isWagmiConnected,
+    address,
+  } = useWagmiMarketplace();
+  const { fetchDirectListing } = useMirrorNodeQueries();
+  const [localError, setLocalError] = useState<string | null>(null);
+
   if (!isOpen) return null
 
-  
-      const { 
-            account,
-            isConnected, 
-            provider,
-            signer,
-            connectWallet 
-        } = useHederaWallet();
-    
-        const { user } = useAppSelector((state:any) => state.wallet);
-        const dispatch = useAppDispatch();
-        const { currentComic, isLoading } = useAppSelector((state: any) => state.comic);
-
-        const {
-          purchaseFromListing,
-        } = useWagmiMarketplace();
-
-        const { fetchDirectListing } = useMirrorNodeQueries();
-    
-
   const handleMintComic = async () => {
-
+    setLocalError(null);
     try {
       // Fetch authoritative listing price from mirror node to avoid insufficient-payment mismatches
       const listingId = Number(currentComic?.nftId?.listingId || 0);
+      if (!listingId) {
+        throw new Error('This comic does not have an active marketplace listing.');
+      }
+
       let pricePerNFT = parseFloat(String(price)) || 0;
       try {
-        if (listingId) {
-          const listingInfo = await fetchDirectListing(listingId);
-          if (listingInfo?.pricePerNFT) {
-            pricePerNFT = parseFloat(String(listingInfo.pricePerNFT));
-          }
+        const listingInfo = await fetchDirectListing(listingId);
+        if (listingInfo?.pricePerNFT) {
+          pricePerNFT = parseFloat(String(listingInfo.pricePerNFT));
         }
       } catch (err) {
         console.warn('Failed to fetch listing info; falling back to local price', err);
@@ -71,19 +66,18 @@ const MintConfirmationModal: React.FC<MintConfirmationModalProps> = ({
 
       const result = await purchaseFromListing({
         listingId: listingId,
-        quantity: Number(currentComic?.nftId?.quantity || 1),
+        quantity: Math.max(1, Number(currentComic?.nftId?.quantity || 1)),
         pricePerNFT: pricePerNFT,
       })
       
-      if(result){
+      if (result?.transactionId) {
         onConfirm(result.transactionId)
       }
-    } catch (error) {
-        console.error('Minting failed:', error);
-    
+    } catch (error: any) {
+      const message = error?.message || 'Minting failed. Please try again.';
+      setLocalError(message);
+      console.error('Minting failed:', error);
     }
-
-  
   };
 
   // fallback image if coverImage is invalid
@@ -164,24 +158,37 @@ const MintConfirmationModal: React.FC<MintConfirmationModalProps> = ({
                 <div className="flex flex-col sm:flex-row items-start gap-2">
                   <div className="text-white/70 text-sm">Minting to:</div>
                   <div className="text-white font-medium text-sm truncate">
-                    {walletAddress}
+                    {address || walletAddress || account || user?.walletAddress || 'Connect a wallet'}
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
+          {(localError || marketplaceError) && (
+            <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-left text-sm text-red-200" role="alert">
+              {localError || marketplaceError}
+            </div>
+          )}
+
+          {!isWagmiConnected && (
+            <p className="mb-4 text-sm text-amber-300">
+              Connect a Wagmi-compatible wallet before confirming this purchase.
+            </p>
+          )}
+
           {/* Action Buttons */}
           <div className="flex gap-3">
             <button
-              // onClick={onConfirm}
               onClick={handleMintComic}
-              className="flex-1 bg-yellow-600 hover:bg-yellow-700 text-black font-medium py-3 rounded-xl transition-colors"
+              disabled={isProcessing}
+              className="flex-1 bg-yellow-600 hover:bg-yellow-700 disabled:cursor-not-allowed disabled:opacity-60 text-black font-medium py-3 rounded-xl transition-colors"
             >
-              Confirm
+              {isProcessing ? statusMessage || 'Processing...' : 'Confirm'}
             </button>
             <button
               onClick={onClose}
+              disabled={isProcessing}
               className="flex-1 border border-neutral-600 hover:border-neutral-500 text-white font-medium py-3 rounded-xl transition-colors"
             >
               Cancel
@@ -194,5 +201,4 @@ const MintConfirmationModal: React.FC<MintConfirmationModalProps> = ({
 }
 
 export default MintConfirmationModal
-
 

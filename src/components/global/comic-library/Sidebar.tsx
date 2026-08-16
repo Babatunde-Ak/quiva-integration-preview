@@ -369,6 +369,7 @@ export function Sidebar({ isMobileMenuOpen, onMobileMenuClose, isCollapsed, onTo
             <Button
               className="bg-secondary-200 hover:bg-secondary-300 text-white font-medium rounded-full transition-all duration-200 hover:scale-105 text-xs sidebar-focus"
               onClick={handleBecomeCreator}
+              data-tour="publish-comic"
             >
               <div className="flex items-center gap-2">
                 <PenTool className="w-4 h-4" />
@@ -454,6 +455,7 @@ export function Sidebar({ isMobileMenuOpen, onMobileMenuClose, isCollapsed, onTo
                   variant="ghost"
                   className="w-full p-3 bg-secondary-200 hover:bg-secondary-300 text-black hover:text-white transition-all duration-200 hover:scale-105 rounded-lg sidebar-focus"
                   onClick={handleBecomeCreator}
+                  data-tour="publish-comic"
                 >
                   <PenTool className="w-5 h-5" />
                   <div className="sidebar-tooltip">Publish on Comicpad</div>
@@ -463,8 +465,10 @@ export function Sidebar({ isMobileMenuOpen, onMobileMenuClose, isCollapsed, onTo
                   onClick={handleBecomeCreator}
                   className="text-xs !px-5 w-full flex items-center justify-center gap-2 transition-all duration-200 hover:scale-105 sidebar-focus"
                 >
-                  <PenTool className="w-4 h-4" />
-                  Publish on Comicpad
+                  <span data-tour="publish-comic" className="flex w-full items-center justify-center gap-2">
+                    <PenTool className="w-4 h-4" />
+                    Publish on Comicpad
+                  </span>
                 </MainButton>
               )}
             </div>

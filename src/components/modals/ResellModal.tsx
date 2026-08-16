@@ -107,7 +107,7 @@ const ListingStep = ({
     <div className="text-center mb-6">
       <h2 className="text-xl font-bold text-white mb-1">List comic for sale</h2>
       <p className="text-sm text-neutral-400">
-        You're about to put this comic up for sale. Set your price and let
+        You&apos;re about to put this comic up for sale. Set your price and let
         collectors grab it from you.
       </p>
     </div>

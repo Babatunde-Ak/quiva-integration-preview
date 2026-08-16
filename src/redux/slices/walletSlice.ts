@@ -1,4 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { API_ENDPOINTS } from "@/config/api";
 import axiosInstance from "../axios-instance";
 
 // Types
@@ -54,7 +55,7 @@ export const walletAuth = createAsyncThunk<
   { rejectValue: string }
 >("auth/walletAuth", async ({ walletAddress }, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.post("/auth/wallet/message", {
+    const response = await axiosInstance.post(API_ENDPOINTS.auth.walletMessage, {
       walletAddress,
     });
     // Backend wraps responses as { data: { ... } } — same pattern as walletVerifyAuth
@@ -74,7 +75,7 @@ export const walletVerifyAuth = createAsyncThunk<
   { rejectValue: string }
 >("auth/walletVerifyAuth", async (payload, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.post("/auth/wallet/verify", payload);
+    const response = await axiosInstance.post(API_ENDPOINTS.auth.walletVerify, payload);
 
     // Store token in localStorage if needed
     if (response.data.data.accessToken) {
@@ -97,7 +98,7 @@ export const creatorRegister = createAsyncThunk<
   { rejectValue: string }
 >("auth/creatorRegister", async (id, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.put(`/auth/${id}/become-creator`, {});
+    const response = await axiosInstance.put(API_ENDPOINTS.auth.becomeCreator(id), {});
     return response;
   } catch (error: any) {
     return rejectWithValue(

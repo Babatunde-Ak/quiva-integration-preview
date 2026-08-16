@@ -1,8 +1,5 @@
 {
-    "buildCommand": "npm run build",
-    "installCommand": "npm install --legacy-peer-deps",
-    "framework": "nextjs",
-    "env": {
-        "SKIP_ESLint": "1"
-    }
+    "buildCommand": "corepack pnpm@10 build",
+    "installCommand": "corepack pnpm@10 install --frozen-lockfile",
+    "framework": "nextjs"
 }

@@ -5,7 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { useAppSelector } from '@/redux/hook';
 
-const layout = ({ children }: { children: React.ReactNode }) => {
+const Layout = ({ children }: { children: React.ReactNode }) => {
     const authUser = useAppSelector((state) => state.auth?.user?.data);
     const profileData = useAppSelector((state) => state.auth?.profile?.data);
     const user = profileData?.user || profileData || authUser;
@@ -131,4 +131,4 @@ const layout = ({ children }: { children: React.ReactNode }) => {
     );
 };
 
-export default layout;
+export default Layout;

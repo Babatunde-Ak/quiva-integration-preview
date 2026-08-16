@@ -1,0 +1,58 @@
+export const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL?.trim() ||
+  "https://quiva-marketplace-backend.onrender.com/api";
+
+export const API_ENDPOINTS = {
+  comics: {
+    all: "/comics/all",
+    byId: (id: string) => `/comics/${id}`,
+    preview: (id: string) => `/comics/preview/${id}`,
+    paid: (id: string) => `/comics/paid/${id}`,
+    create: (collectionId: string) => `/comics/${collectionId}`,
+    createFull: (collectionId: string) => `/comics/full/${collectionId}`,
+    user: "/comics/user_comic",
+    trending: "/comics/trending/comics",
+    trendingCount: "/comics/trending/count",
+    update: (id: string) => `/comics/${id}`,
+    delete: (id: string) => `/comics/${id}`,
+    updateCover: (id: string) => `/comics/${id}/cover`,
+    updateToken: (id: string) => `/comics/token/${id}`,
+  },
+  collections: {
+    root: "/collections",
+    all: "/collections/all",
+    user: "/collections/user",
+    byId: (id: string) => `/collections/${id}`,
+  },
+  auth: {
+    root: "/auth",
+    byId: (id: string) => `/auth/${id}`,
+    profile: (id: string) => `/auth/${id}/profile`,
+    email: (id: string) => `/auth/${id}/email`,
+    username: (id: string) => `/auth/${id}/username`,
+    becomeCreator: (id: string) => `/auth/${id}/become-creator`,
+    refresh: "/auth/refresh",
+    collaborators: "/auth/collaborators/all",
+    walletMessage: "/auth/wallet/message",
+    walletVerify: "/auth/wallet/verify",
+  },
+  transactions: {
+    root: "/transactions",
+    byHash: (txHash: string) => `/transactions/hash/${txHash}`,
+    byComic: (comicId: string) => `/transactions/comic/${comicId}`,
+    userAll: "/transactions/user/all",
+    userLastPurchase: "/transactions/user/last_purchase",
+    verifyNft: (comicId: string) => `/transactions/user/verify_nft/${comicId}`,
+    status: "/transactions/status",
+  },
+  nfts: {
+    root: "/nfts",
+    all: "/nfts/all",
+    byId: (id: string) => `/nfts/${id}`,
+    byComic: (comicId: string) => `/nfts/comic/${comicId}`,
+  },
+  engagement: {
+    likeComic: (comicId: string) => `/like/comics/${comicId}`,
+    viewComic: (comicId: string) => `/view/comics/${comicId}`,
+  },
+} as const;

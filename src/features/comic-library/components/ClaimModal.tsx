@@ -237,7 +237,7 @@ const ClaimModal: React.FC<ClaimModalProps> = ({
               <div className="bg-secondary-200/10 border border-primary-500/30 rounded-xl p-4">
                 <p className="text-white text-sm text-center leading-relaxed">
                   🎁 This comic is completely free! Claim your NFT to get permanent
-                  reading access. You'll only pay gas fees.
+                  reading access. You&apos;ll only pay gas fees.
                 </p>
               </div>
 
@@ -296,7 +296,7 @@ const ClaimModal: React.FC<ClaimModalProps> = ({
               <div>
                 <p className="text-white font-semibold mb-1">Congratulations!</p>
                 <p className="text-white/60 text-sm">
-                  You've successfully claimed this comic NFT
+                  You&apos;ve successfully claimed this comic NFT
                 </p>
               </div>
 

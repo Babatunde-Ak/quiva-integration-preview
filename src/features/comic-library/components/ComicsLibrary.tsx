@@ -6,7 +6,7 @@ import {useState, useEffect} from "react"
 import EmptyState from "../utils/EmptyState"
 import { useAppDispatch, useAppSelector } from "@/redux/hook"
 import { getAllComics } from "@/redux/slices/comicSlice"
-import { transformApiComicsToComics } from "../utils/transformComicData"
+import { extractComicList, transformApiComicsToComics } from "../utils/transformComicData"
 
 const ComicsLibrary = ({
     title = "All"
@@ -26,9 +26,8 @@ const ComicsLibrary = ({
 
     // Transform API comics to the format expected by ComicCard
     const allComics = (() => {
-        if (!comics) return []
-        const comicsList = comics?.data?.comics?.data || comics?.data?.comics || comics?.data?.data || comics?.data || comics || []
-        if (!Array.isArray(comicsList)) return []
+        const comicsList = extractComicList(comics)
+        if (!comicsList.length) return []
         try {
             return transformApiComicsToComics(comicsList)
         } catch {

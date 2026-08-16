@@ -4,7 +4,7 @@ import { useEffect, useMemo } from 'react'
 import { ArrowRight } from 'lucide-react'
 import { useAppDispatch, useAppSelector } from '@/redux/hook'
 import { getAllComics } from '@/redux/slices/comicSlice'
-import { transformApiComicsToComics } from '@/features/comic-library/utils/transformComicData'
+import { extractComicList, transformApiComicsToComics } from '@/features/comic-library/utils/transformComicData'
 import { ComicCard } from '@/components/cards/ComicCard'
 import { SELLER } from '../data/data'
 
@@ -17,8 +17,7 @@ export default function MoreFromSection({ seller }: { seller: typeof SELLER }) {
   }, [dispatch])
 
   const transformedComics = useMemo(() => {
-    if (!comics?.data?.comics?.data) return []
-    return transformApiComicsToComics(comics.data.comics.data)
+    return transformApiComicsToComics(extractComicList(comics))
   }, [comics])
 
   return (

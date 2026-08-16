@@ -102,7 +102,7 @@ const PurchaseNFTModal: React.FC<PurchaseNFTModalProps> = ({
               </h2>
               <p className="text-white/70 text-sm">
                 You now own <span className="text-white font-semibold">{comicTitle}</span>. 
-                It's been added to your Library and your Wallet.
+                It&apos;s been added to your Library and your Wallet.
               </p>
             </div>
 
@@ -204,7 +204,7 @@ const PurchaseNFTModal: React.FC<PurchaseNFTModalProps> = ({
                 <span className="text-red-500 ml-2">✕</span>
               </h2>
               <p className="text-white/60 text-sm">
-                We couldn't complete the purchase. Please try again or contact support if the issue persists.
+                We couldn&apos;t complete the purchase. Please try again or contact support if the issue persists.
               </p>
               {purchaseError.message && (
                 <p className="text-red-400 text-xs mt-2">

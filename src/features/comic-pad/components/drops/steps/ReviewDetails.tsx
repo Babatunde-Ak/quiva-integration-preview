@@ -177,7 +177,7 @@ const ReviewDetails : React.FC < ReviewDetailsProps > = ({
                                 className="mt-0.5 w-4 h-4 rounded border-white/30 bg-transparent checked:bg-primary-500 checked:border-primary-500 cursor-pointer accent-primary-500"/>
                             <span
                                 className="text-white/70 text-xs group-hover:text-white/90 transition-colors">
-                                By clicking on "Mint" you agree to Quiva's{' '}
+                                By clicking on &quot;Mint&quot; you agree to Quiva&apos;s{' '}
                                 <span className="text-primary-500 hover:underline cursor-pointer">
                                     terms of service
                                 </span>

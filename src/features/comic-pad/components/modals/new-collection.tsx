@@ -321,7 +321,7 @@ const CreateCollectionForm : React.FC < CreateCollectionFormProps > = ({
 
                                 {/* Creator Details */}
                                 <div className="space-y-4">
-                                    <h3 className="text-lg font-semibold text-white">Creator's detail</h3>
+                                    <h3 className="text-lg font-semibold text-white">Creator&apos;s detail</h3>
                                     <Input
                                         value={formData.creatorDetails}
                                         onChange={(e) => setFormData(prev => ({

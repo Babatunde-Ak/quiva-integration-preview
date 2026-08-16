@@ -3,7 +3,7 @@
 import UserProfile from '@/features/user-profile/components/user-profile-view'
 import { useRouter } from 'next/navigation'
 
-function page() {
+function Page() {
     const router = useRouter()
     const onEditProfile = () => {
         // Handle edit profile action
@@ -21,4 +21,4 @@ function page() {
     )
 }
 
-export default page
+export default Page

@@ -1,190 +1,223 @@
 'use client'
 
-import { useState } from 'react'
-import Image from 'next/image'
-import { ChevronDown } from 'lucide-react'
-import { MainButton } from '@/components/button'
+import { useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { HbarIcon } from '@/components/ui/HbarIcon'
+import OfferActionModals, { OfferModalType } from '@/features/offers-bids/components/OfferActionModals'
 import {
   SELLER,
   COMIC,
   OFFER_STATS,
   OFFER_EXPIRY_OPTIONS,
   BREAKDOWN,
+  FLOOR_OPTIONS,
 } from '../data/data'
+
+type OfferMode = 'specific' | 'open'
 
 export default function OfferPanel({
   seller,
   comic,
   offerStats,
   breakdown,
+  initialMode = 'specific',
 }: {
   seller: typeof SELLER
   comic: typeof COMIC
   offerStats: typeof OFFER_STATS
   breakdown: typeof BREAKDOWN
+  initialMode?: OfferMode
 }) {
-  const [offerAmount, setOfferAmount] = useState('120')
+  const router = useRouter()
+  const [amount, setAmount] = useState('120')
   const [activeExpiry, setActiveExpiry] = useState('24 hours')
-  const [offerType, setOfferType] = useState<'specific' | 'open'>('specific')
+  const [mode, setMode] = useState<OfferMode>(initialMode)
+  const [activeModal, setActiveModal] = useState<OfferModalType>(null)
+
+  const numericAmount = Number(amount) || 0
+  const usdAmount = (numericAmount * 0.1295).toFixed(2)
+  const floorPrice = Number(offerStats.floorPrice.value) || 142
+  const floorDeltaCopy = useMemo(() => {
+    if (!numericAmount || !floorPrice) return 'Set a bid amount'
+    const delta = ((numericAmount - floorPrice) / floorPrice) * 100
+    const rounded = Math.abs(delta).toFixed(1)
+    if (delta < 0) return `${rounded}% below floor`
+    if (delta > 0) return `${rounded}% above floor`
+    return 'At floor fair price'
+  }, [floorPrice, numericAmount])
+
+  const setPresetAmount = (value: number) => {
+    const next = Math.max(1, Math.round(floorPrice + (floorPrice * value) / 100))
+    setAmount(String(next))
+  }
+
+  const title = mode === 'open' ? 'Place a Bid' : 'Make an Offer'
+  const amountLabel = mode === 'open' ? 'Your bid amount' : 'Your offer amount'
+  const expiryLabel = mode === 'open' ? 'Bid expires in' : 'Offer expires in'
+  const ctaLabel = mode === 'open' ? 'Place Bid' : `Submit Offer -> ${seller.handle}`
+  const helperCopy =
+    mode === 'open'
+      ? 'Any holder of this episode can accept your price. Funds stay locked until accepted or expired.'
+      : 'Offer is sent directly to the collector. Funds stay locked until accepted or expired.'
 
   return (
     <div className="flex flex-col gap-5">
-      {/* Header */}
       <div>
-        <h2 className="text-white font-bold text-xl">Make an Offer</h2>
-        <p className="text-white/40 text-xs mt-1">
-          to {seller.handle} · {comic.series}
+        <h2 className="text-2xl font-bold text-white">{title}</h2>
+        <p className="mt-2 text-sm text-white/40">
+          to {seller.handle} - {comic.series} {comic.episode} #42
         </p>
       </div>
 
-      {/* Offer type tabs */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <button
-          onClick={() => setOfferType('specific')}
-          className={`rounded-xl p-4 text-left border transition-colors ${
-            offerType === 'specific'
-              ? 'border-[#FAA31E] bg-[#FAA31E]/10'
-              : 'border-white/10 bg-[#1a1a1a]'
+          type="button"
+          onClick={() => setMode('specific')}
+          className={`rounded-xl border p-4 text-left outline-none transition focus-visible:ring-2 focus-visible:ring-[#FAA31E] ${
+            mode === 'specific'
+              ? 'border-[#FAA31E] bg-[#FAA31E]/15'
+              : 'border-white/10 bg-[#171717] hover:border-white/25'
           }`}
         >
-          <p className={`text-sm font-semibold ${offerType === 'specific' ? 'text-white' : 'text-white/60'}`}>
-            Specific Offer
-          </p>
-          <p className="text-[10px] text-white/40 mt-1">
-            For this edition only<br />
-            {seller.handle} receives
-          </p>
+          <p className="font-bold text-[#FAA31E]">Specific Offer</p>
+          <p className="mt-2 text-xs leading-5 text-white/45">Offer on this edition only. {seller.handle} decides.</p>
         </button>
         <button
-          onClick={() => setOfferType('open')}
-          className={`rounded-xl p-4 text-left border transition-colors ${
-            offerType === 'open'
-              ? 'border-[#FAA31E] bg-[#FAA31E]/10'
-              : 'border-white/10 bg-[#1a1a1a]'
+          type="button"
+          onClick={() => setMode('open')}
+          className={`rounded-xl border p-4 text-left outline-none transition focus-visible:ring-2 focus-visible:ring-[#FAA31E] ${
+            mode === 'open'
+              ? 'border-[#FAA31E] bg-[#FAA31E]/15'
+              : 'border-white/10 bg-[#171717] hover:border-white/25'
           }`}
         >
-          <p className={`text-sm font-semibold ${offerType === 'open' ? 'text-white' : 'text-white/60'}`}>
-            Open Bid
-          </p>
-          <p className="text-[10px] text-white/40 mt-1">
-            Any holder of this episode<br />
-            can accept your price
-          </p>
+          <p className="font-bold text-white/80">Open Bid</p>
+          <p className="mt-2 text-xs leading-5 text-white/45">Any holder of this episode can accept your price.</p>
         </button>
       </div>
 
-      {/* Stat row */}
-      <div className="grid grid-cols-4 gap-2 text-center">
+      <div className="grid grid-cols-2 overflow-hidden rounded-xl border border-white/10 bg-[#171717] md:grid-cols-4">
         {[
           { label: 'Listed at', value: offerStats.listed.value },
           { label: 'Floor price', value: offerStats.floorPrice.value },
-          { label: 'Top balance', value: offerStats.topBalance.value },
+          { label: 'Your balance', value: offerStats.topBalance.value },
           { label: 'Highest bid', value: offerStats.highestBid.value },
-        ].map(s => (
-          <div key={s.label} className="flex flex-col gap-0.5">
-            <p className="text-[10px] text-white/40">{s.label}</p>
-            <p className="text-sm font-bold text-white flex items-center justify-center gap-1">
-              {s.value}
-              <Image src="/hbar.png" alt="HBAR" width={12} height={12} className="object-contain opacity-70" />
-              <ChevronDown className="w-3 h-3 text-white/40" />
+        ].map((item, index) => (
+          <div key={item.label} className={`p-4 ${index > 0 ? 'md:border-l md:border-white/10' : ''}`}>
+            <p className="text-xs text-white/35">{item.label}</p>
+            <p className="mt-2 flex items-center gap-1 text-lg font-bold text-white">
+              {item.value} <HbarIcon size={14} />
             </p>
           </div>
         ))}
       </div>
 
-      {/* Offer amount input */}
-      <div>
-        <p className="text-xs text-white/40 mb-2">YOUR OFFER AMOUNT</p>
-        <div className="flex items-center bg-[#1a1a1a] border border-white/10 rounded-xl px-4 py-3">
+      <label className="block">
+        <span className="text-xs font-bold uppercase text-white/40">{amountLabel}</span>
+        <div className="mt-3 flex items-center rounded-xl border-2 border-[#FAA31E] bg-[#171717] px-6 py-5">
           <input
+            aria-label={amountLabel}
             type="number"
-            value={offerAmount}
-            onChange={e => setOfferAmount(e.target.value)}
-            className="flex-1 bg-transparent text-white text-3xl font-bold outline-none w-0"
+            value={amount}
+            onChange={(event) => setAmount(event.target.value)}
+            className="w-full bg-transparent text-4xl font-bold text-white outline-none"
           />
-          <div className="ml-2 w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
-            <Image src="/hbar.png" alt="HBAR" width={20} height={20} className="object-contain" />
-          </div>
+          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-black">
+            <HbarIcon size={24} />
+          </span>
         </div>
-        <div className="flex items-center justify-between mt-1.5">
-          <span className="text-[10px] text-white/40">≈ ${(Number(offerAmount) * 0.115).toFixed(2)} USD</span>
-          <span className="text-[10px] text-[#FAA31E]">15.5% below floor</span>
-        </div>
-      </div>
+        <span className="mt-2 flex flex-wrap gap-2 text-xs text-white/45">
+          <span>~ ${usdAmount} USD</span>
+          <span className={floorDeltaCopy.includes('below') ? 'text-red-400' : 'text-green-400'}>{floorDeltaCopy}</span>
+        </span>
+      </label>
 
-      {/* Floor quick-select */}
-      <div className="grid grid-cols-4 gap-2">
-        {['Floor −6%', 'Floor −6%', 'Floor', 'Floor +6%'].map((label, i) => (
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        {FLOOR_OPTIONS.map((option) => (
           <button
-            key={i}
-            className={`py-2 rounded-lg text-xs font-semibold border transition-colors ${
-              label === 'Floor'
-                ? 'bg-[#FAA31E] border-[#FAA31E] text-black'
-                : 'bg-transparent border-white/10 text-white/50 hover:border-white/30'
+            key={option.label}
+            type="button"
+            onClick={() => setPresetAmount(option.value)}
+            className={`rounded-lg border px-3 py-3 text-sm font-bold outline-none transition focus-visible:ring-2 focus-visible:ring-[#FAA31E] ${
+              option.value === 0
+                ? 'border-[#FAA31E] bg-[#FAA31E] text-black'
+                : 'border-white/10 bg-[#171717] text-white/50 hover:border-white/30 hover:text-white'
             }`}
           >
-            {label}
+            {option.label}
           </button>
         ))}
       </div>
 
-      {/* Expiry */}
       <div>
-        <p className="text-xs text-white/40 mb-2">OFFER EXPIRES IN</p>
-        <div className="grid grid-cols-4 gap-2">
-          {OFFER_EXPIRY_OPTIONS.map(opt => (
+        <p className="mb-3 text-xs font-bold uppercase text-white/40">{expiryLabel}</p>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          {OFFER_EXPIRY_OPTIONS.map((option) => (
             <button
-              key={opt}
-              onClick={() => setActiveExpiry(opt)}
-              className={`py-2 rounded-lg text-xs font-semibold border transition-colors ${
-                activeExpiry === opt
-                  ? 'bg-[#1a1a1a] border-white/40 text-white'
-                  : 'bg-transparent border-white/10 text-white/50 hover:border-white/30'
+              key={option}
+              type="button"
+              onClick={() => setActiveExpiry(option)}
+              className={`rounded-lg border px-3 py-3 text-sm font-bold outline-none transition focus-visible:ring-2 focus-visible:ring-[#FAA31E] ${
+                activeExpiry === option
+                  ? 'border-[#FAA31E] bg-[#FAA31E] text-black'
+                  : 'border-white/10 bg-[#171717] text-white/50 hover:border-white/30 hover:text-white'
               }`}
             >
-              {opt}
+              {option}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Funds locked note */}
-      <div className="flex items-center gap-2 bg-green-900/20 border border-green-500/20 rounded-lg px-3 py-2">
-        <div className="w-2 h-2 rounded-full bg-green-400 flex-shrink-0" />
-        <p className="text-[11px] text-white/60">
-          Funds locked on Hedera until accepted or expired — fully automatic.
-        </p>
+      <div className="flex items-center gap-3 rounded-xl border border-green-500/20 bg-green-500/10 px-4 py-3 text-sm text-white/60">
+        <span className="h-3 w-3 rounded-full bg-green-400" />
+        {helperCopy}
       </div>
 
-      {/* Breakdown */}
-      <div className="bg-[#1a1a1a] border border-white/10 rounded-xl p-4 space-y-3">
-        <p className="text-xs text-white/40 uppercase tracking-wider">Breakdown</p>
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-white/60">Creator royalty ({breakdown.creatorRoyalty.percent}%)</span>
-          <span className="text-sm text-white/60">{breakdown.creatorRoyalty.amount} HBAR</span>
-        </div>
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-white/60">Platform fee ({breakdown.platformFee.percent}%)</span>
-          <span className="text-sm text-white/60">{breakdown.platformFee.amount} HBAR</span>
-        </div>
-        <div className="border-t border-white/10 pt-3 flex items-center justify-between">
-          <span className="text-sm font-semibold text-white">Total locked in escrow</span>
-          <span className="text-sm font-bold text-[#FAA31E]">{breakdown.totalLocked} {breakdown.currency}</span>
+      <div className="rounded-xl border border-white/10 bg-[#1a1a1a]">
+        <div className="px-5 py-4 text-xs font-bold uppercase text-white/35">Breakdown</div>
+        <div className="space-y-4 px-5 pb-5 text-sm">
+          <div className="flex items-center justify-between text-white/55">
+            <span>Creator royalty ({breakdown.creatorRoyalty.percent}%)</span>
+            <span>{breakdown.creatorRoyalty.amount} HBAR</span>
+          </div>
+          <div className="flex items-center justify-between text-white/55">
+            <span>Platform fee ({breakdown.platformFee.percent}%)</span>
+            <span>{breakdown.platformFee.amount} HBAR</span>
+          </div>
+          <div className="flex items-center justify-between border-t border-white/10 pt-4 font-bold text-white">
+            <span>Total locked in escrow</span>
+            <span className="text-[#FAA31E]">{numericAmount} HBAR</span>
+          </div>
         </div>
       </div>
 
-      {/* Submit */}
-      <MainButton className="w-full !rounded-xl !py-3.5 !bg-[#FAA31E] !border-[#FAA31E] !text-black !font-bold !shadow-none">
-        Submit Offer → {seller.handle}
-      </MainButton>
+      <button
+        type="button"
+        onClick={() => setActiveModal('accepted')}
+        className="w-full rounded-xl bg-[#FAA31E] py-4 font-bold text-black outline-none transition hover:bg-[#ffb13b] focus-visible:ring-2 focus-visible:ring-white"
+      >
+        {ctaLabel}
+      </button>
 
-      <button className="text-sm text-white/40 hover:text-white transition-colors text-center">
+      <button
+        type="button"
+        onClick={() => router.push('/marketplace')}
+        className="w-full rounded-xl border border-white/10 py-3 text-sm text-white/40 outline-none transition hover:text-white focus-visible:ring-2 focus-visible:ring-[#FAA31E]"
+      >
         Cancel
       </button>
 
-      <p className="text-[10px] text-white/30 text-center">
-        Transaction is irreversible once accepted on Hedera
+      <p className="text-center text-xs text-white/30">
+        Preview UI only. No blockchain transfer or escrow transaction is submitted from this screen.
       </p>
+
+      <OfferActionModals
+        activeModal={activeModal}
+        onClose={() => setActiveModal(null)}
+        onReadNow={() => router.push('/reader')}
+        onViewEditions={() => router.push('/marketplace/user-profile?tab=mintedComics')}
+      />
     </div>
   )
 }

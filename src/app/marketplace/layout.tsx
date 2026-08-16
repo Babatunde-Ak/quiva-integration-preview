@@ -3,6 +3,7 @@
 import { Footer } from '@/components/global/comic-library/Footer'
 import { Header } from '@/components/global/comic-library/Header'
 import { Sidebar } from '@/components/global/comic-library/Sidebar'
+import MarketplaceTour from '@/components/onboarding/MarketplaceTour'
 import { useState } from 'react'
 
 export default function MainPage({ children }: { children: React.ReactNode }) {
@@ -23,6 +24,8 @@ export default function MainPage({ children }: { children: React.ReactNode }) {
 
     return (
         <div className="min-h-screen bg-black-500 w-full font-recursive">
+            <MarketplaceTour />
+
             {/* Mobile Layout */}
             <div className="lg:hidden">
                 <Header

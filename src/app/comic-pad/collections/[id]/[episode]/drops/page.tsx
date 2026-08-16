@@ -1,12 +1,13 @@
-import DropView from '@/features/comic-pad/components/drops/drop-view'
-import React from 'react'
+'use client';
 
-function page() {
-    return (
-        <div>
-            <DropView />
-        </div>
-    )
+import DropView from '@/features/comic-pad/components/drops/drop-view';
+
+function DropsPage() {
+  return (
+    <div>
+      <DropView />
+    </div>
+  );
 }
 
-export default page
+export default DropsPage;

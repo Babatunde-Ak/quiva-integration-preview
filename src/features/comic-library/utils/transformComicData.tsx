@@ -121,6 +121,30 @@ interface Comic extends BaseComic {
 
 export type { Comic, BaseComic, ApiComic, NFTId }
 
+function isComicArray(value: unknown): value is ApiComic[] {
+    return Array.isArray(value)
+}
+
+export function extractComicList(payload: unknown): ApiComic[] {
+    if (isComicArray(payload)) return payload
+
+    if (!payload || typeof payload !== 'object') return []
+
+    const root = payload as Record<string, any>
+    const data = root.data
+    const rootComics = root.comics
+    const dataComics = data?.comics
+
+    if (isComicArray(dataComics?.data)) return dataComics.data
+    if (isComicArray(dataComics)) return dataComics
+    if (isComicArray(rootComics?.data)) return rootComics.data
+    if (isComicArray(rootComics)) return rootComics
+    if (isComicArray(data?.data)) return data.data
+    if (isComicArray(data)) return data
+
+    return []
+}
+
 /**
  * Cleans genre strings that may be malformed JSON artifacts from the API
  * e.g. ["[\"action\"", "\"fantasy\"]"] → ["action", "fantasy"]

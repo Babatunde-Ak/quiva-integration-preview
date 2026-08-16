@@ -182,7 +182,7 @@ const ComicsView: React.FC<ComicsViewProps> = ({ comicId }) => {
         <div className="bg-[#0A0A0A] rounded-2xl p-8 border border-[#242424] text-center">
           <AlertCircle className="w-12 h-12 text-white/40 mx-auto mb-4" />
           <h3 className="text-xl font-bold text-white mb-2">No Campaign or Listing Found</h3>
-          <p className="text-white/60 mb-4">This comic doesn't have an active campaign or direct listing</p>
+          <p className="text-white/60 mb-4">This comic doesn&apos;t have an active campaign or direct listing</p>
         </div>
       </div>
     );

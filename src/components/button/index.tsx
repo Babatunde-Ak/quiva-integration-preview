@@ -1,10 +1,12 @@
-interface MainButtonProps {
+interface MainButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
-  disabled?: boolean;
-  onClick?: () => void;
   className?: string;
-  type?: "button" | "submit";
-  title?: string;
+}
+
+interface AnchorButtonProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
+  children: React.ReactNode;
+  className?: string;
+  href: string;
 }
 
 export const MainButton = ({
@@ -14,9 +16,11 @@ export const MainButton = ({
   className = "",
   type = "button",
   title,
+  ...props
 }: MainButtonProps) => {
   return (
     <button
+      {...props}
       onClick={onClick}
       type={type}
       title={title}
@@ -33,10 +37,15 @@ export const MainButton2 = ({
   onClick,
   disabled = false,
   className = "",
+  type = "button",
+  ...props
 }: MainButtonProps) => {
   return (
     <button
+      {...props}
       onClick={onClick}
+      type={type}
+      disabled={disabled}
       className={`bg-black/10 text-white font-recursive text-sm rounded-full px-7 py-3 border border-black/70 shadow-[2px_2px_0_0_black] transition-all duration-200 font-medium ${className} hover:scale-105`}
     >
       {children}
@@ -47,15 +56,18 @@ export const MainButton2 = ({
 export const AnchorButton = ({
   children,
   onClick,
-  disabled = false,
   className = "",
   href = "#",
-}: MainButtonProps & { href: string }) => {
+  target = "_blank",
+  rel = "noopener noreferrer",
+  ...props
+}: AnchorButtonProps) => {
   return (
     <a
+      {...props}
       href={href}
-      target="_blank"
-      rel="noopener noreferrer"
+      target={target}
+      rel={rel}
       onClick={onClick}
       className={`cursor-pointer bg-secondary-200 text-black-200 font-recursive text-sm rounded-full px-7 py-3 border-[3px] border-black-200 shadow-[2px_2px_0_0_black] transition-all duration-200 font-medium ${className} hover:scale-105`}
     >
@@ -68,15 +80,18 @@ export const AnchorButton = ({
 export const SecondaryAnchorButton = ({
   children,
   onClick,
-  disabled = false,
   className = "",
   href = "#",
-}: MainButtonProps & { href: string }) => {
+  target = "_blank",
+  rel = "noopener noreferrer",
+  ...props
+}: AnchorButtonProps) => {
   return (
     <a
+      {...props}
       href={href}
-      target="_blank"
-      rel="noopener noreferrer"
+      target={target}
+      rel={rel}
       onClick={onClick}
       className={`bg-black/10 text-white font-recursive text-sm rounded-full px-7 py-3 border border-black/70 shadow-[2px_2px_0_0_black] transition-all duration-200 font-medium ${className} hover:scale-105`}
     >
@@ -91,9 +106,11 @@ export const GradientButton = ({
   className = "",
   type = "button",
   disabled = false,
-}: MainButtonProps & { disabled?: boolean }) => {
+  ...props
+}: MainButtonProps) => {
   return (
     <button
+      {...props}
       onClick={onClick}
       type={type}
       disabled={disabled}
@@ -110,9 +127,11 @@ export const OrangeButton = ({
   className = "",
   type = "button",
   disabled = false,
-}: MainButtonProps & { disabled?: boolean }) => {
+  ...props
+}: MainButtonProps) => {
   return (
     <button
+      {...props}
       onClick={onClick}
       type={type}
       disabled={disabled}

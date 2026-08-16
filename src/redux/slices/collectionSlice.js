@@ -1,4 +1,5 @@
 import {createAsyncThunk, createSlice} from "@reduxjs/toolkit";
+import { API_ENDPOINTS } from "@/config/api";
 import axiosInstance from "../axios-instance";
 
 // Initial state
@@ -34,7 +35,7 @@ export const createCollection = createAsyncThunk("collections/create", async(pay
             formData.append("bannerImage", payload.bannerImage);
         }
 
-        const response = await axiosInstance.post("/collections", formData, {
+        const response = await axiosInstance.post(API_ENDPOINTS.collections.root, formData, {
             headers: {
                 "Content-Type": "multipart/form-data"
             }
@@ -50,7 +51,7 @@ export const createCollection = createAsyncThunk("collections/create", async(pay
 // Get all collections
 export const getAllCollections = createAsyncThunk("collections/getAll", async(_, {rejectWithValue}) => {
     try {
-        const response = await axiosInstance.get("/collections/all");
+        const response = await axiosInstance.get(API_ENDPOINTS.collections.all);
         return response.data;
     } catch (error) {
         return rejectWithValue(error.response
@@ -62,7 +63,7 @@ export const getAllCollections = createAsyncThunk("collections/getAll", async(_,
 // Get user collections
 export const getUserCollections = createAsyncThunk("collections/getUserCollections", async(_, {rejectWithValue}) => {
     try {
-        const response = await axiosInstance.get("/collections/user");
+        const response = await axiosInstance.get(API_ENDPOINTS.collections.user);
         return response.data;
     } catch (error) {
         return rejectWithValue(error.response
@@ -76,7 +77,7 @@ export const getCollectionById = createAsyncThunk("collections/getById", async({
     id
 }, {rejectWithValue}) => {
     try {
-        const response = await axiosInstance.get(`/collections/${id}`);
+        const response = await axiosInstance.get(API_ENDPOINTS.collections.byId(id));
         return response.data;
     } catch (error) {
         return rejectWithValue(error.response
@@ -91,7 +92,7 @@ export const updateCollection = createAsyncThunk("collections/update", async({
     ...payload
 }, {rejectWithValue}) => {
     try {
-        const response = await axiosInstance.put(`/collections/${id}`, payload, {
+        const response = await axiosInstance.put(API_ENDPOINTS.collections.byId(id), payload, {
             headers: {
                 "Content-Type": "application/json"
             }
@@ -109,7 +110,7 @@ export const deleteCollection = createAsyncThunk("collections/delete", async({
     id
 }, {rejectWithValue}) => {
     try {
-        await axiosInstance.delete(`/collections/${id}`);
+        await axiosInstance.delete(API_ENDPOINTS.collections.byId(id));
         return id;
     } catch (error) {
         return rejectWithValue(error.response

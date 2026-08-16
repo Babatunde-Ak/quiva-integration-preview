@@ -1,4 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { API_ENDPOINTS } from "@/config/api";
 import axiosInstance from "../axios-instance";
 
 // Initial state
@@ -23,6 +24,10 @@ export const createComic = createAsyncThunk(
   "comics/create",
   async (payload, { rejectWithValue }) => {
     try {
+      if (!payload.collectionId) {
+        return rejectWithValue("Collection ID is required to create a comic.");
+      }
+
       const formData = new FormData();
       formData.append("title", payload.title);
       if (payload.summary) {
@@ -32,7 +37,7 @@ export const createComic = createAsyncThunk(
         formData.append("bannerImage", payload.bannerImage);
       }
 
-      const response = await axiosInstance.post("/comics", formData, {
+      const response = await axiosInstance.post(API_ENDPOINTS.comics.create(payload.collectionId), formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
@@ -50,7 +55,7 @@ export const createFullComic = createAsyncThunk(
   async ({formData, collectionId}, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.post(
-        `/comics/full/${collectionId}`,
+        API_ENDPOINTS.comics.createFull(collectionId),
         formData,
         {
           headers: {
@@ -70,10 +75,10 @@ export const getAllComics = createAsyncThunk(
   "comics/getAll",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get("/comics/all");
+      const response = await axiosInstance.get(API_ENDPOINTS.comics.all);
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || error.message || "Failed to fetch comics");
+      return rejectWithValue(error.quivaSafeMessage || "Marketplace data could not be loaded. Please try again shortly.");
     }
   }
 );
@@ -83,11 +88,11 @@ export const getUserComics = createAsyncThunk(
   "comics/getUserComics",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get("/comics/user_comic");
+      const response = await axiosInstance.get(API_ENDPOINTS.comics.user);
       return response.data;
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.message || error.message || "Failed to fetch user comics"
+        error.quivaSafeMessage || "Marketplace data could not be loaded. Please try again shortly."
       );
     }
   }
@@ -98,7 +103,7 @@ export const getComicById = createAsyncThunk(
   "comics/getById",
   async ({ id }, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get(`/comics/${id}`);
+      const response = await axiosInstance.get(API_ENDPOINTS.comics.byId(id));
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message || "Failed to fetch comic");
@@ -111,7 +116,7 @@ export const getComicPreview = createAsyncThunk(
   "comics/preview",
   async ({ id }, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get(`/comics/preview/${id}`);
+      const response = await axiosInstance.get(API_ENDPOINTS.comics.preview(id));
       return response.data;
     } catch (error) {
       return rejectWithValue(
@@ -128,7 +133,7 @@ export const getPaidComic = createAsyncThunk(
   "comics/getPaid",
   async ({ id }, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get(`/comics/paid/${id}`);
+      const response = await axiosInstance.get(API_ENDPOINTS.comics.paid(id));
       return response.data;
     } catch (error) {
       return rejectWithValue(
@@ -145,7 +150,7 @@ export const updateComic = createAsyncThunk(
   "comics/update",
   async ({ id, ...payload }, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.put(`/comics/${id}`, payload);
+      const response = await axiosInstance.put(API_ENDPOINTS.comics.update(id), payload);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message || "Failed to update comic");
@@ -162,7 +167,7 @@ export const updateComicCover = createAsyncThunk(
       formData.append("coverImage", coverImage);
 
       const response = await axiosInstance.put(
-        `/comics/${id}/cover`,
+        API_ENDPOINTS.comics.updateCover(id),
         formData,
         {
           headers: {
@@ -194,6 +199,8 @@ export const updateComicToken = createAsyncThunk(
         transactionId,
       };
 
+      // Preserve the official serialization expected by the backend. Omitting
+      // this field is materially different from submitting an empty array.
       if (metadataTopicIds !== undefined) {
         payload.metadataTopicIds = Array.isArray(metadataTopicIds)
           ? JSON.stringify(metadataTopicIds)
@@ -201,7 +208,7 @@ export const updateComicToken = createAsyncThunk(
       }
 
       const response = await axiosInstance.put(
-        `/comics/token/${comicId}`,
+        API_ENDPOINTS.comics.updateToken(comicId),
         payload        
       );
       return response.data;
@@ -220,7 +227,7 @@ export const deleteComic = createAsyncThunk(
   "comics/delete",
   async ({ id }, { rejectWithValue }) => {
     try {
-      await axiosInstance.delete(`/comics/${id}`);
+      await axiosInstance.delete(API_ENDPOINTS.comics.delete(id));
       return id;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message || "Failed to delete comic");

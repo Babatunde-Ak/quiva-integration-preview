@@ -89,10 +89,11 @@ function ComicConnect() {
   };
 
   return (
-    <>
+    <div>
       {isAuthenticated === false ? (
         <>
           <MainButton 
+            data-tour="connect-wallet"
             className='text-xxs sm:text-sm !px-2 sm:px-4'
             onClick={handleConnect}
           >
@@ -154,7 +155,7 @@ function ComicConnect() {
           )}
         </>
       ) : (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2" data-tour="connect-wallet">
           {/* Show connected wallet info */}
           <div className="hidden lg:flex items-center gap-2 px-3 py-1 bg-primary-500/10 border border-primary-500/30 rounded-lg">
             <div className="w-2 h-2 bg-primary-500 rounded-full"></div>
@@ -165,7 +166,7 @@ function ComicConnect() {
           {renderConnectedWallet()}
         </div>
       )}
-    </>
+    </div>
   );
 }
 

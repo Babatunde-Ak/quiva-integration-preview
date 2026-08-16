@@ -53,7 +53,7 @@ const Step1WelcomeModal = ({
 
         {/* Description */}
         <p className="text-white/30 text-sm sm:text-base leading-relaxed mb-12 max-w-xl mx-auto font-light">
-          Your all-in-one studio for crafting, publishing, and monetizing your unique digital comics on the blockchain. Let's show you around.
+          Your all-in-one studio for crafting, publishing, and monetizing your unique digital comics on the blockchain. Let&apos;s show you around.
         </p>
 
         {/* Action Buttons */}

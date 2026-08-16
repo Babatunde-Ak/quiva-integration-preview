@@ -14,6 +14,7 @@ export default function AuctionView() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const comicId = searchParams.get('id')
+  const initialMode = searchParams.get('mode') === 'bid' ? 'open' : 'specific'
   const dispatch = useAppDispatch()
   const { currentComic } = useAppSelector((state: any) => state.comic)
 
@@ -81,6 +82,7 @@ export default function AuctionView() {
             comic={comic}
             offerStats={offerStats}
             breakdown={BREAKDOWN}
+            initialMode={initialMode}
           />
         </div>
 

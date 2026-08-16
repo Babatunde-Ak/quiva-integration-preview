@@ -67,7 +67,7 @@ const PublishedCollections: React.FC<PublishedCollectionsProps> = ({
             Create new collection
           </h3>
           <p className="text-white/40 text-xs sm:text-sm max-w-xs mx-auto leading-relaxed">
-            Publish your collection's metadata, artwork, and creator details to the blockchain.
+            Publish your collection&apos;s metadata, artwork, and creator details to the blockchain.
           </p>
           
           <Button
@@ -159,7 +159,7 @@ const PublishedCollections: React.FC<PublishedCollectionsProps> = ({
             Published Collections
           </h1>
           <p className="text-white/60 max-w-2xl mx-auto text-sm sm:text-base">
-            Collections you've published on-chain and made available to readers.
+            Collections you&apos;ve published on-chain and made available to readers.
           </p>
         </div>
 
@@ -211,7 +211,7 @@ const PublishedCollections: React.FC<PublishedCollectionsProps> = ({
             {searchTerm && filteredCollections.length === 0 && (
               <div className="text-center py-8 sm:py-12">
                 <p className="text-white/60 text-sm sm:text-base">
-                  No collections found matching "{searchTerm}"
+                  No collections found matching &quot;{searchTerm}&quot;
                 </p>
               </div>
             )}

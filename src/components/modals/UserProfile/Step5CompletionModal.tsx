@@ -172,13 +172,13 @@ const Step5CompletionModal = ({
 
 			{/* Title */}
 			<h1 className='text-xl sm:text-2xl font-semibold mb-2 tracking-tight text-white text-center'>
-				Let's personalize your profile
+				Let&apos;s personalize your profile
 			</h1>
 
 			{/* Description */}
 			<p className='text-white/30 text-sm sm:text-base leading-relaxed mb-8 max-w-xl mx-auto font-light text-center'>
 				Fill out the profile info below to make it yours. You can always edit
-				this later in Account Settingss or by clicking the "Edit Profile" button
+				this later in Account Settingss or by clicking the &quot;Edit Profile&quot; button
 				on your profile page.
 			</p>
 

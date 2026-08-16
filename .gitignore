@@ -8,6 +8,8 @@
 
 # testing
 /coverage
+/test-results/
+/playwright-report/
 
 # next.js
 /.next/
@@ -19,6 +21,11 @@
 # misc
 .DS_Store
 *.pem
+.vscode/
+.idea/
+.cache/
+.eslintcache
+*.tmp
 
 # debug
 npm-debug.log*
@@ -26,6 +33,9 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
+.env
+.env.*
+!.env.example
 .env*.local
 
 # vercel
@@ -34,3 +44,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# temporary files
+*.log
+prompt.txt
+__pycache__/
+*.pyc

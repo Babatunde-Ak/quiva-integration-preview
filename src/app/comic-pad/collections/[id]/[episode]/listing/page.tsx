@@ -1,12 +1,9 @@
-import ListView from '@/features/comic-pad/components/listing/listing-view'
-import React from 'react'
+'use client';
 
-function page() {
-    return (
-        <>
-            <ListView/>
-        </>
-    )
+import ListView from '@/features/comic-pad/components/listing/listing-view';
+
+function ListingPage() {
+  return <ListView />;
 }
 
-export default page
+export default ListingPage;

@@ -1,4 +1,5 @@
 import {createAsyncThunk, createSlice} from "@reduxjs/toolkit";
+import { API_ENDPOINTS } from "@/config/api";
 import axiosInstance from "../axios-instance";
 
 // Initial state
@@ -21,7 +22,7 @@ export const getAllTransactions = createAsyncThunk("transactions/getAll", async(
     skip = 0
 } = {}, {rejectWithValue}) => {
     try {
-        const response = await axiosInstance.get("/transactions", {
+        const response = await axiosInstance.get(API_ENDPOINTS.transactions.root, {
             params: {
                 limit,
                 skip
@@ -39,7 +40,7 @@ export const getAllTransactions = createAsyncThunk("transactions/getAll", async(
 export const createTransaction = createAsyncThunk("transactions/create", 
     async({comicId, walletAddress, txHash, price, currency}, {rejectWithValue}) => {
     try {
-        const response = await axiosInstance.post("/transactions", {comicId, walletAddress, txHash, price, currency}, {
+        const response = await axiosInstance.post(API_ENDPOINTS.transactions.root, {comicId, walletAddress, txHash, price, currency}, {
             headers: {
                 'Content-Type': 'application/json'
             }
@@ -55,7 +56,7 @@ export const createTransaction = createAsyncThunk("transactions/create",
 // Get all user transactions
 export const getAllUserTransactions = createAsyncThunk("transactions/getUserAll", async(_, {rejectWithValue}) => {
     try {
-        const response = await axiosInstance.get("/transactions/user/all");
+        const response = await axiosInstance.get(API_ENDPOINTS.transactions.userAll);
         return response.data;
     } catch (error) {
         return rejectWithValue(error.response
@@ -69,7 +70,7 @@ export const verifyNftPurchase = createAsyncThunk("transactions/verifyNft", asyn
     comicId
 }, {rejectWithValue}) => {
     try {
-        const response = await axiosInstance.get(`/transactions/user/verify_nft/${comicId}`);
+        const response = await axiosInstance.get(API_ENDPOINTS.transactions.verifyNft(comicId));
         return response.data;
     } catch (error) {
         return rejectWithValue(error.response
@@ -83,7 +84,7 @@ export const getBuyersByComic = createAsyncThunk("transactions/getBuyersByComic"
     comicId
 }, {rejectWithValue}) => {
     try {
-        const response = await axiosInstance.get(`/transactions/comic/${comicId}`);
+        const response = await axiosInstance.get(API_ENDPOINTS.transactions.byComic(comicId));
         return response.data;
     } catch (error) {
         return rejectWithValue(error.response
@@ -97,7 +98,7 @@ export const getTransactionByHash = createAsyncThunk("transactions/getByHash", a
     txHash
 }, {rejectWithValue}) => {
     try {
-        const response = await axiosInstance.get(`/transactions/hash/${txHash}`);
+        const response = await axiosInstance.get(API_ENDPOINTS.transactions.byHash(txHash));
         return response.data;
     } catch (error) {
         return rejectWithValue(error.response
@@ -113,7 +114,7 @@ export const updateTransactionStatus = createAsyncThunk("transactions/updateStat
 }, {rejectWithValue}) => {
 
     try {
-        const response = await axiosInstance.put("/transactions/status", {txHash, newStatus});
+        const response = await axiosInstance.put(API_ENDPOINTS.transactions.status, {txHash, newStatus});
         return response.data;
     } catch (error) {
         return rejectWithValue(error.response

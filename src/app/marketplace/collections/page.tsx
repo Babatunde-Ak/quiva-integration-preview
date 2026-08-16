@@ -5,7 +5,7 @@ import { ComicsTable } from "@/features/comic-library/components/ComicsTable";
 import { useAppDispatch, useAppSelector } from "@/redux/hook";
 import { getAllComics } from "@/redux/slices/comicSlice";
 import { useEffect, useMemo } from "react";
-import { transformApiComicsToComics } from '@/features/comic-library/utils/transformComicData';
+import { extractComicList, transformApiComicsToComics } from '@/features/comic-library/utils/transformComicData';
 
 const CollectionPage = () => {
   const dispatch = useAppDispatch();
@@ -18,18 +18,18 @@ const CollectionPage = () => {
 
   // Transform API comics to match Comic interface
   const transformedComics = useMemo(() => {
-    if (!comics?.data?.comics?.data) return [];
-    return transformApiComicsToComics(comics.data.comics.data);
+    return transformApiComicsToComics(extractComicList(comics));
   }, [comics]);
 
   // Create collections data by grouping comics by collectionId
   const collectionsData = useMemo(() => {
-    if (!comics?.data?.comics?.data) return [];
+    const apiComics = extractComicList(comics);
+    if (!apiComics.length) return [];
     
     // Group comics by collection and create collection summaries
     const collectionsMap = new Map();
     
-    comics.data.comics.data.forEach((comic: any) => {
+    apiComics.forEach((comic: any) => {
       const collectionId = comic.collectionId || `standalone_${comic._id}`;
       
       if (!collectionsMap.has(collectionId)) {

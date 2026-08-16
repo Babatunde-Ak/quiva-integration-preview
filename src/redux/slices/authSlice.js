@@ -1,4 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { API_ENDPOINTS } from '@/config/api';
 import axiosInstance from '../axios-instance';
 import { walletAuth, walletVerifyAuth } from './walletSlice';
 
@@ -136,7 +137,7 @@ export const createUser = createAsyncThunk(
     'auth/createUser',
     async (userData, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.post('/auth', userData);
+            const response = await axiosInstance.post(API_ENDPOINTS.auth.root, userData);
             return response.data;
         } catch (error) {
             return rejectWithValue(
@@ -153,7 +154,7 @@ export const getAllUsers = createAsyncThunk(
     'auth/getAllUsers',
     async (_, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.get('/auth');
+            const response = await axiosInstance.get(API_ENDPOINTS.auth.root);
             return response.data;
         } catch (error) {
             return rejectWithValue(
@@ -170,7 +171,7 @@ export const getUserById = createAsyncThunk(
     'auth/getUserById',
     async (id, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.get(`/auth/${id}`);
+            const response = await axiosInstance.get(API_ENDPOINTS.auth.byId(id));
             return response.data;
         } catch (error) {
             return rejectWithValue(
@@ -187,7 +188,7 @@ export const updateUserById = createAsyncThunk(
     'auth/updateUserById',
     async ({ id, userData }, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.put(`/auth/${id}`, userData);
+            const response = await axiosInstance.put(API_ENDPOINTS.auth.byId(id), userData);
             return response.data;
         } catch (error) {
             return rejectWithValue(
@@ -204,7 +205,7 @@ export const deleteUserById = createAsyncThunk(
     'auth/deleteUserById',
     async (id, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.delete(`/auth/${id}`);
+            const response = await axiosInstance.delete(API_ENDPOINTS.auth.byId(id));
             return response.data;
         } catch (error) {
             return rejectWithValue(
@@ -221,7 +222,7 @@ export const updateUserProfile = createAsyncThunk(
     'auth/updateUserProfile',
     async ({ id, profileData }, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.put(`/auth/${id}/profile`, profileData, {
+            const response = await axiosInstance.put(API_ENDPOINTS.auth.profile(id), profileData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
@@ -242,7 +243,7 @@ export const updateUserEmail = createAsyncThunk(
     'auth/updateUserEmail',
     async ({ id, email }, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.put(`/auth/${id}/email`, { email });
+            const response = await axiosInstance.put(API_ENDPOINTS.auth.email(id), { email });
             return response.data;
         } catch (error) {
             return rejectWithValue(
@@ -259,7 +260,7 @@ export const updateUserUsername = createAsyncThunk(
     'auth/updateUserUsername',
     async ({ id, username }, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.put(`/auth/${id}/username`, { username });
+            const response = await axiosInstance.put(API_ENDPOINTS.auth.username(id), { username });
             return response.data;
         } catch (error) {
             return rejectWithValue(
@@ -276,7 +277,7 @@ export const becomeCreator = createAsyncThunk(
     'auth/becomeCreator',
     async (id, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.put(`/auth/${id}/become-creator`);
+            const response = await axiosInstance.put(API_ENDPOINTS.auth.becomeCreator(id));
             return response.data;
         } catch (error) {
             return rejectWithValue(
@@ -293,7 +294,7 @@ export const refreshAccessToken = createAsyncThunk(
     'auth/refreshAccessToken',
     async (_, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.post('/auth/refresh');
+            const response = await axiosInstance.post(API_ENDPOINTS.auth.refresh);
             return response.data;
         } catch (error) {
             return rejectWithValue(
@@ -311,7 +312,7 @@ export const getAllCollaborators = createAsyncThunk(
     async (_, { rejectWithValue }) => {
         console.log("🚀 Fetching all collaborators in slice...");
         try {
-            const response = await axiosInstance.get('/auth/collaborators/all');
+            const response = await axiosInstance.get(API_ENDPOINTS.auth.collaborators);
             console.log("✅ Collaborators response:", response.data);
             return response.data;
         } catch (error) {
@@ -371,7 +372,7 @@ export const getUserProfile = createAsyncThunk(
     'auth/getUserProfile',
     async (id, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.get(`/auth/${id}`);
+            const response = await axiosInstance.get(API_ENDPOINTS.auth.byId(id));
             return response.data;
         } catch (error) {
             return rejectWithValue(

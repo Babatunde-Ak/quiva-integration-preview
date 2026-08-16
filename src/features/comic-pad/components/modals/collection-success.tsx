@@ -56,7 +56,7 @@ const CollectionSuccess: React.FC<CollectionSuccessModalProps> = ({
               Collection Published successfully!
             </h3>
             <p className="text-white/60 font-light">
-              You're all set. Start uploading your first episode.
+              You&apos;re all set. Start uploading your first episode.
             </p>
           </div>
 

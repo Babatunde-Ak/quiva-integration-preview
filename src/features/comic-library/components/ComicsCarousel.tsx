@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { ArrowRight, ArrowLeft } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { ArrowLeft, ArrowRight, ChevronRight } from 'lucide-react';
 import { SearchBar } from '@/components/search/SearchBar';
-import Picture from '@/components/picture/Index';
 import Link from 'next/link';
 import { Comic } from '@/features/comic-library/utils/transformComicData';
 
@@ -13,303 +12,322 @@ interface ComicsCarouselProps {
   onSearch?: (query: string) => void;
 }
 
+type VisibleCard = {
+  comic: Comic;
+  originalIndex: number;
+  position: number;
+  isCenter: boolean;
+};
+
 const ComicsCarousel: React.FC<ComicsCarouselProps> = ({
   comics,
   autoPlayInterval = 5000,
   showSearch = true,
   onComicSelect,
-  onSearch
+  onSearch,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [searchQuery, setSearchQuery] = useState('');
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
-  const [direction, setDirection] = useState<'next' | 'prev' | null>(null);
 
-  // Initialize and update currentIndex based on comics length
   useEffect(() => {
-    if (comics.length > 0) {
-      setCurrentIndex(Math.min(Math.floor(comics.length / 2), comics.length - 1));
-    } else {
+    if (comics.length === 0) {
       setCurrentIndex(0);
+      return;
     }
+
+    setCurrentIndex((previousIndex) =>
+      Math.min(previousIndex, comics.length - 1),
+    );
   }, [comics.length]);
 
-  // Auto-play functionality
   useEffect(() => {
     if (!isAutoPlaying || comics.length <= 1) return;
 
-    const interval = setInterval(() => {
-      setDirection('next');
-      setCurrentIndex((prevIndex) => 
-        prevIndex === comics.length - 1 ? 0 : prevIndex + 1
+    const interval = window.setInterval(() => {
+      setCurrentIndex((previousIndex) =>
+        previousIndex === comics.length - 1
+          ? 0
+          : previousIndex + 1,
       );
     }, autoPlayInterval);
 
-    return () => clearInterval(interval);
-  }, [isAutoPlaying, comics.length, autoPlayInterval]);
+    return () => window.clearInterval(interval);
+  }, [autoPlayInterval, comics.length, isAutoPlaying]);
 
   const goToPrevious = () => {
     if (comics.length === 0) return;
+
     setIsAutoPlaying(false);
-    setDirection('prev');
-    setCurrentIndex((prev) => prev === 0 ? comics.length - 1 : prev - 1);
+
+    setCurrentIndex((previousIndex) =>
+      previousIndex === 0
+        ? comics.length - 1
+        : previousIndex - 1,
+    );
   };
 
   const goToNext = () => {
     if (comics.length === 0) return;
+
     setIsAutoPlaying(false);
-    setDirection('next');
-    setCurrentIndex((prev) => prev === comics.length - 1 ? 0 : prev + 1);
+
+    setCurrentIndex((previousIndex) =>
+      previousIndex === comics.length - 1
+        ? 0
+        : previousIndex + 1,
+    );
   };
 
   const goToSlide = (index: number) => {
-    if (comics.length === 0 || index < 0 || index >= comics.length) return;
+    if (index < 0 || index >= comics.length) return;
+
     setIsAutoPlaying(false);
-    setDirection(index > currentIndex ? 'next' : 'prev');
     setCurrentIndex(index);
   };
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-    onSearch?.(e.target.value);
-  };
-
-  const handleComicClick = (comic: Comic, index: number) => {
-    if (index !== currentIndex) {
-      goToSlide(index);
-    } else {
-      onComicSelect?.(comic);
-    }
-  };
-
-  // Get visible cards with their positions
-  const getVisibleCards = () => {
+  const visibleCards = useMemo<VisibleCard[]>(() => {
     if (comics.length === 0) return [];
-    
-    const visibleCards = [];
-    const totalCards = Math.min(5, comics.length); // Show max 5 cards
-    const sideCards = Math.floor(totalCards / 2);
 
-    for (let i = -sideCards; i <= sideCards; i++) {
-      let index = currentIndex + i;
-      
-      // Handle wrapping with bounds checking
-      while (index < 0) index = comics.length + index;
-      while (index >= comics.length) index = index - comics.length;
-      
-      // Double check index is valid
-      if (index < 0 || index >= comics.length) {
-        console.warn("Invalid index calculated:", index, "comics.length:", comics.length);
-        continue;
-      }
-      
-      const comic = comics[index];
-      if (!comic) {
-        console.warn("No comic found at index:", index);
-        continue;
-      }
-      
-      visibleCards.push({
-        comic,
-        originalIndex: index,
-        position: i, // -2, -1, 0, 1, 2
-        isCenter: i === 0
-      });
+    let positions: number[];
+
+    if (comics.length === 1) {
+      positions = [0];
+    } else if (comics.length === 2) {
+      positions = [-1, 0];
+    } else if (comics.length === 3) {
+      positions = [-1, 0, 1];
+    } else if (comics.length === 4) {
+      positions = [-1, 0, 1, 2];
+    } else {
+      positions = [-2, -1, 0, 1, 2];
     }
-    
-    return visibleCards;
-  };
 
-  // Calculate card styles based on position
-  const getCardStyle = (position: number, isCenter: boolean) => {
-    const absPos = Math.abs(position);
-    
+    return positions.map((position) => {
+      const originalIndex =
+        (currentIndex + position + comics.length) % comics.length;
+
+      return {
+        comic: comics[originalIndex],
+        originalIndex,
+        position,
+        isCenter: position === 0,
+      };
+    });
+  }, [comics, currentIndex]);
+
+  const indicatorIndexes = useMemo(() => {
+    const maximumIndicators = 4;
+
+    if (comics.length <= maximumIndicators) {
+      return comics.map((_, index) => index);
+    }
+
+    const maximumStart = comics.length - maximumIndicators;
+
+    const start = Math.min(
+      Math.max(currentIndex - 1, 0),
+      maximumStart,
+    );
+
+    return Array.from(
+      { length: maximumIndicators },
+      (_, offset) => start + offset,
+    );
+  }, [comics, currentIndex]);
+
+  const getCardStyle = (
+    position: number,
+    isCenter: boolean,
+  ): React.CSSProperties => {
     if (isCenter) {
       return {
-        transform: 'translateX(0) scale(1.1) translateZ(0)',
+        transform: 'translateX(0) scale(1)',
         zIndex: 30,
         opacity: 1,
-        filter: 'blur(0px)',
+        filter: 'none',
       };
     }
-    
-    const offset = position * 120; // Horizontal spacing
-    const scale = 1 - (absPos * 0.15); // Progressive scaling
-    const opacity = 1 - (absPos * 0.1); // Progressive opacity
-    const blur = absPos * 2; // Progressive blur
-    const rotateY = position * 8; // Slight 3D rotation
-    
+
+    const distance = Math.abs(position);
+    const direction = position < 0 ? -1 : 1;
+
+    const horizontalOffset = distance === 1 ? 55 : 108;
+    const scale = distance === 1 ? 0.92 : 0.84;
+
+    // Blur applies only to side cards.
+    const blur = distance === 1 ? 3 : 6;
+
     return {
-      transform: `translateX(${offset}px) scale(${scale}) rotateY(${rotateY}deg) translateZ(0)`,
-      zIndex: 30 - absPos,
-      opacity: Math.max(opacity, 0.3),
+      transform: `translateX(${direction * horizontalOffset}%) scale(${scale})`,
+      zIndex: 30 - distance * 10,
+      opacity: distance === 1 ? 0.9 : 0.75,
       filter: `blur(${blur}px)`,
     };
   };
 
   if (comics.length === 0) {
     return (
-      <div className="w-full h-96 bg-gray-900 rounded-2xl flex items-center justify-center">
-        <p className="text-gray-400">No comics available</p>
+      <div className="flex h-96 w-full items-center justify-center rounded-2xl bg-gray-900">
+        <p className="text-gray-400">
+          No comics available
+        </p>
       </div>
     );
   }
 
+  const activeComic = comics[currentIndex];
+
+  const activeBackground =
+    activeComic.bannerImage || activeComic.image;
+
+  const safeBackgroundUrl = activeBackground.replace(
+    /"/g,
+    '\\"',
+  );
+
   return (
     <>
-     {/* Header */}
       <div className="relative z-10 my-8 mt-12">
-        <div className="flex flex-wrap gap-2 items-center justify-between">
-          <h2 className="text-2xl md:text-3xl font-medium text-white">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <h2 className="text-2xl font-medium text-white md:text-3xl">
             Get all you can read
           </h2>
-          
+
           {showSearch && (
             <SearchBar
               placeholder="Search comics/creators"
               onSearch={onSearch}
               onComicSelect={onComicSelect}
-              className="w-72 md:w-96"
+              className="w-full sm:w-72 md:w-96"
             />
           )}
         </div>
       </div>
-    <div className="w-full read_all-slider rounded-2xl p-8 relative overflow-hidden isolate z-0">
-      {/* Dynamic background from active comic */}
-      <div className='absolute inset-0 transition-all duration-700'>
-        <img
-          key={comics[currentIndex]?.id}
-          src={comics[currentIndex]?.image}
-          alt=''
-          className='w-full h-full object-cover scale-110 blur-2xl'
-        />
-        <div className='absolute inset-0 bg-black/90' />
-      </div>
 
-      {/* Carousel Container */}
-      <div className="relative">
-        <div className="relative overflow-visible">
-          {/* Comics Display Container */}
-          <div className="relative h-80 md:h-96 flex items-center justify-center perspective-1000">
-            {/* Cards Container - Card Deck Style */}
-            <div className="relative w-full h-full flex items-center justify-center">
-              {getVisibleCards().map(({ comic, originalIndex, position, isCenter }) => (
-                <Link 
+      <section className="relative isolate min-h-[470px] w-full overflow-hidden rounded-2xl border border-white/20 bg-[#141414] sm:min-h-[520px] lg:min-h-[580px]">
+        {/* Clear selected-comic background */}
+        <div className="absolute inset-0 overflow-hidden bg-[#141414]">
+          <div
+            key={activeComic.id}
+            data-carousel-background
+            aria-hidden="true"
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-700 ease-out"
+            style={{
+              backgroundImage: `url("${safeBackgroundUrl}")`,
+              filter: 'none',
+              transform: 'none',
+              opacity: 1,
+            }}
+          />
+
+          {/* Required dark overlay, #141414 at 32% */}
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundColor: 'rgba(20, 20, 20, 0.32)',
+            }}
+          />
+        </div>
+
+        <div className="relative z-10 flex min-h-[470px] flex-col items-center justify-center px-4 py-8 sm:min-h-[520px] sm:px-8 lg:min-h-[580px] lg:px-12">
+          <div className="relative flex h-[310px] w-full items-center justify-center sm:h-[370px] lg:h-[430px]">
+            {visibleCards.map(
+              ({
+                comic,
+                originalIndex,
+                position,
+                isCenter,
+              }) => (
+                <Link
                   href={`/marketplace/chapter?id=${comic.id}`}
-                  key={`${comic.id}-${originalIndex}`}
-                  className={`absolute cursor-pointer transform-gpu transition-all duration-700 ease-out ${
-                    isCenter ? 'hover:scale-105' : 'hover:scale-95'
-                  }`}
+                  key={`${comic.id}-${position}`}
+                  aria-label={
+                    isCenter
+                      ? `Open ${comic.title}`
+                      : `Select ${comic.title}`
+                  }
+                  className="absolute block transform-gpu transition-all duration-700 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
                   style={getCardStyle(position, isCenter)}
-                  onClick={() => handleComicClick(comic, originalIndex)}
+                  onClick={(event) => {
+                    if (!isCenter) {
+                      event.preventDefault();
+                      goToSlide(originalIndex);
+                      return;
+                    }
+
+                    onComicSelect?.(comic);
+                  }}
                 >
-                  <div className="group relative border border-white rounded-2xl overflow-hidden shadow-2xl w-64 h-72">
+                  <div className="group relative h-[280px] w-[220px] overflow-hidden rounded-2xl border border-white/50 bg-[#141414]/30 shadow-2xl sm:h-[331px] sm:w-[260px] lg:h-[413px] lg:w-[324px]">
                     <img
                       src={comic.image}
                       alt={comic.title}
-                      className="w-full h-full object-cover transition-all duration-700"
+                      className="h-full w-full object-cover"
                     />
-                    
-                    {/* Dark gradient overlay on image */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black-100/60 via-black-100/20 to-black-100/40" />
-                    
-                    {/* Dark overlay that's always present but gets darker on hover */}
-                    <div className="absolute inset-0 bg-black/30 group-hover:bg-black/60 transition-all duration-300" />
-                    
-                    {/* Original overlay gradient for title readability */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black-200/70 via-transparent to-transparent" />
-                    
-                    {/* Comic title overlay */}
-                    <div className="absolute bottom-0 left-0 right-0 p-4 z-10">
-                      <h3 className="font-bold shadow-md text-white text-lg leading-tight transition-all duration-700">
-                        {comic.title}
-                      </h3>
-                      {/* Show episode number if available */}
-                      {comic.episodeNumber && isCenter && (
-                        <p className="text-white/80 text-xs mt-1">
-                          Episode {comic.episodeNumber}
-                        </p>
-                      )}
-                      {/* Show description or summary for center card */}
-                      {(comic.description || comic.summary) && isCenter && (
-                        <p className="text-white/80 text-sm mt-1 line-clamp-2 transition-all duration-700">
-                          {comic.description || comic.summary}
-                        </p>
-                      )}
-                      {/* Show genre/subtitle if no description */}
-                      {!comic.description && !comic.summary && comic.subtitle && isCenter && (
-                        <p className="text-white/70 text-xs mt-1">
-                          {comic.subtitle}
-                        </p>
-                      )}
-                    </div>
 
-                    {/* Stats overlay (views, likes) for center card */}
-                    {isCenter && (comic.views !== undefined || comic.likes !== undefined) && (
-                      <div className="absolute top-3 left-3 z-10 flex gap-2">
-                        {comic.views !== undefined && (
-                          <div className="bg-black/50 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-full">
-                            👁 {comic.views}
-                          </div>
-                        )}
-                        {comic.likes !== undefined && (
-                          <div className="bg-black/50 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-full">
-                            ❤️ {comic.likes}
-                          </div>
-                        )}
-                      </div>
+                    {!isCenter && (
+                      <div className="absolute inset-0 bg-[#141414]/25" />
                     )}
 
-                    {/* Center card highlight border */}
                     {isCenter && (
-                      <div className="absolute inset-0 rounded-2xl ring-2 ring-primary-400 shadow-lg shadow-primary-500/30 transition-all duration-700" />
+                      <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/80" />
                     )}
-
                   </div>
                 </Link>
+              ),
+            )}
+          </div>
+
+          <div className="mt-3 flex items-center justify-center gap-3 sm:mt-5">
+            <button
+              type="button"
+              onClick={goToPrevious}
+              className="flex h-9 w-9 items-center justify-center rounded-full text-white/60 transition hover:scale-110 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400"
+              aria-label="Previous comic"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+
+            <div className="flex items-center gap-1.5">
+              {indicatorIndexes.map((index) => (
+                <button
+                  type="button"
+                  key={index}
+                  onClick={() => goToSlide(index)}
+                  className={`h-3 w-3 rounded-full transition-all duration-300 ${
+                    index === currentIndex
+                      ? 'border border-primary-300 bg-primary-500'
+                      : 'border border-white/60 bg-transparent hover:border-white hover:bg-white/20'
+                  }`}
+                  aria-label={`Go to slide ${index + 1}`}
+                  aria-current={
+                    index === currentIndex
+                      ? 'true'
+                      : undefined
+                  }
+                />
               ))}
             </div>
-          </div>
-        </div>
 
-        {/* Navigation with arrows and dots */}
-        <div className="flex items-center justify-center space-x-4 mt-8">
-          {/* Left Arrow */}
-          <button
-            onClick={goToPrevious}
-            className="flex items-center justify-center w-8 h-8 rounded-full text-white/50 hover-text-white transition-all duration-200 backdrop-blur-sm hover:scale-110"
-            aria-label="Previous comic"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </button>
-
-          {/* Dot indicators */}
-          <div className="flex items-center space-x-2">
-            {comics.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => goToSlide(index)}
-                className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
-                  index === currentIndex
-                    ? 'bg-primary-500 scale-125'
-                    : 'border border-white/50 bg-transparent hover:bg-gray-300 hover:scale-110'
-                }`}
-                aria-label={`Go to slide ${index + 1}`}
-              />
-            ))}
+            <button
+              type="button"
+              onClick={goToNext}
+              className="flex h-9 w-9 items-center justify-center rounded-full text-white/60 transition hover:scale-110 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400"
+              aria-label="Next comic"
+            >
+              <ArrowRight className="h-5 w-5" />
+            </button>
           </div>
 
-          {/* Right Arrow */}
-          <button
-            onClick={goToNext}
-            className="flex items-center justify-center w-8 h-8 rounded-full text-white/50 hover-text-white transition-all duration-200 backdrop-blur-sm hover:scale-110"
-            aria-label="Next comic"
+          <Link
+            href="/marketplace/collections"
+            className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-primary-500 transition hover:text-primary-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400"
           >
-            <ArrowRight className="w-4 h-4" />
-          </button>
+            See all
+            <ChevronRight className="h-4 w-4" />
+          </Link>
         </div>
-      </div>
-    </div>
+      </section>
     </>
   );
 };

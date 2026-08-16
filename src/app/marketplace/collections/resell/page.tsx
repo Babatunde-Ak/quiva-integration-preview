@@ -134,8 +134,8 @@ export default function ComicPage() {
               <h3 className="text-xl font-medium mb-4">About</h3>
               <p className=" leading-relaxed text-sm md:text-base">
                 In a world torn between the elements, a young avatar rises to
-                restore balance – not by choice, but by destiny. "Book of
-                Beginnings" marks the first chapter of the Avatar Chronicles,
+                restore balance – not by choice, but by destiny. &quot;Book of
+                Beginnings&quot; marks the first chapter of the Avatar Chronicles,
                 where every mint helps since the legend.
               </p>
             </div>

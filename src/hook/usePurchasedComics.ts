@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAccount } from 'wagmi';
 import { ethers } from 'ethers';
 import { useAppSelector } from '@/redux/hook';
+import { extractComicList } from '@/features/comic-library/utils/transformComicData';
 
 const MIRROR_BASE = 'https://testnet.mirrornode.hedera.com';
 const HASHIO_RPC = 'https://testnet.hashio.io/api';
@@ -37,7 +38,8 @@ export interface OwnedComic {
 
 export function useUserPurchasedComics() {
   const { address, isConnected } = useAccount();
-  const allComics = useAppSelector((state: any) => state.comic?.comics?.data?.comics?.data || state.comic?.comics?.data || []);
+  const comicsPayload = useAppSelector((state: any) => state.comic?.comics);
+  const allComics = useMemo(() => extractComicList(comicsPayload), [comicsPayload]);
   
   const [ownedComics, setOwnedComics] = useState<OwnedComic[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -46,6 +48,8 @@ export function useUserPurchasedComics() {
   const fetchPurchasedComics = useCallback(async () => {
     if (!isConnected || !address) {
       setOwnedComics([]);
+      setIsLoading(false);
+      setError(null);
       return;
     }
 

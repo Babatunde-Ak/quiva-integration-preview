@@ -46,7 +46,7 @@ export default function ChatWidget() {
           <div className="flex-1 bg-gradient-to-b from-[#4a2c15] to-black p-6 relative flex flex-col">
             <div className="mb-auto mt-8">
               <div className="relative rounded-2xl border border-white/80 p-4 text-sm font-medium text-white shadow-sm inline-block max-w-[85%]">
-                Hi there! I'm Zee, Quiva's AI support bot. How can I help?
+                Hi there! I&apos;m Zee, Quiva&apos;s AI support bot. How can I help?
               </div>
               <div className="mt-2 ml-1 flex items-center gap-2">
                 <span className="text-[10px] font-bold text-white/60">Zee . AI Agent</span>

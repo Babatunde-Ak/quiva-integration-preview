@@ -10,7 +10,7 @@ import GeneralModal from "@/components/modals/GeneralModal";
 import { useAppDispatch, useAppSelector } from "@/redux/hook";
 import { creatorRegister } from "@/redux/slices/walletSlice";
 
-const layout = ({children}) => {
+const Layout = ({children}) => {
     const { user } = useAppSelector((state:any) => state.wallet);
     const dispatch = useAppDispatch();
 
@@ -61,4 +61,4 @@ const layout = ({children}) => {
     );
 };
 
-export default layout;
+export default Layout;

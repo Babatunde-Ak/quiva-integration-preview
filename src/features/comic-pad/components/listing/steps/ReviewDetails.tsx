@@ -304,7 +304,7 @@ const ReviewDetails: React.FC<ReviewDetailsProps> = ({
                                         ? 'text-red-400'
                                         : 'text-white/70 group-hover:text-white/90'
                                 }`}>
-                                    By clicking on "Mint" you agree to Quiva's{' '}
+                                    By clicking on &quot;Mint&quot; you agree to Quiva&apos;s{' '}
                                     <span className="text-yellow-400 hover:text-yellow-300 cursor-pointer underline">
                                         terms of service
                                     </span>

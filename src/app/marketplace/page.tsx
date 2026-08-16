@@ -8,15 +8,23 @@ import { useAppDispatch, useAppSelector } from "@/redux/hook"
 import { getAllComics } from "@/redux/slices/comicSlice"
 import { useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
-import { transformApiComicsToComics } from '@/features/comic-library/utils/transformComicData'
+import { extractComicList, transformApiComicsToComics } from '@/features/comic-library/utils/transformComicData'
 import { transformApiComicsToTopComics } from '@/features/comic-library/utils/transformtopcomicsdata'
 import ComicsCarousel from '@/features/comic-library/components/ComicsCarousel'
 import { GridSection } from '@/features/comic-library/components/sections/GridSection'
 import { popularFilters } from '@/features/comic-library/data/content'
 import { SortComicSection } from '@/features/comic-library/components/sections/SortComicSection'
+import { API_ENDPOINTS } from '@/config/api'
+
+function shouldLogMarketplaceComics() {
+  if (process.env.NODE_ENV === 'development') return true
+  if (typeof window === 'undefined') return false
+
+  return window.location.hostname.endsWith('.vercel.app')
+}
 
 export default function MainPage() {
-  const { comics, isLoading } = useAppSelector((state: any) => state.comic)
+  const { comics, isLoading, error } = useAppSelector((state: any) => state.comic)
   const dispatch = useAppDispatch()
   const router = useRouter()
   
@@ -24,11 +32,23 @@ export default function MainPage() {
     dispatch(getAllComics())
   }, [dispatch])
 
+  const apiComicList = useMemo(() => extractComicList(comics), [comics])
+
+  useEffect(() => {
+    if (!shouldLogMarketplaceComics() || !comics) return
+
+    console.log('[Marketplace comics]', {
+      requestUrl: `/api/quiva${API_ENDPOINTS.comics.all}`,
+      httpStatus: comics?.status,
+      responseKeys: Object.keys(comics || {}),
+      comicCount: apiComicList.length,
+    })
+  }, [apiComicList.length, comics])
+
   // Transform API comics to match Comic interface
   const transformedComics = useMemo(() => {
-    if (!comics?.data?.comics?.data) return []
-    return transformApiComicsToComics(comics.data.comics.data)
-  }, [comics])
+    return transformApiComicsToComics(apiComicList)
+  }, [apiComicList])
 
   // Only comics with a real campaignId (drops) appear in the hero slider
   const dropComics = useMemo(() => transformedComics.filter((c: any) => {
@@ -43,11 +63,12 @@ export default function MainPage() {
   // Filter comics with campaignId for "Get all you can read" section
   const campaignComics = useMemo(() => {
     const filtered = transformedComics.filter(comic => {
-      const hasCampaign = typeof comic.nftId === 'object' &&
-                        comic.nftId?.campaignId !== undefined &&
-                        comic.nftId?.campaignId !== null &&
-                        comic.nftId?.campaignId !== '';
-                        comic.nftId?.campaignType !== 'direct_listing';
+      const hasCampaign =
+        typeof comic.nftId === "object" &&
+        comic.nftId?.campaignId !== undefined &&
+        comic.nftId?.campaignId !== null &&
+        comic.nftId?.campaignId !== "" &&
+        comic.nftId?.campaignType !== "direct_listing";
       return hasCampaign;
     });
 
@@ -55,7 +76,7 @@ export default function MainPage() {
       console.log('=== Campaign Comics Debug ===');
       console.log('Total transformed comics:', transformedComics.length);
       console.log('Campaign comics found:', filtered.length);
-      console.log('Sample raw comic data:', comics?.data?.comics?.data?.[0]);
+      console.log('Sample raw comic data:', apiComicList[0]);
       console.log('Sample transformed comic:', transformedComics[0]);
       if (filtered.length > 0) {
         console.log('Sample campaign comic:', filtered[0]);
@@ -74,13 +95,12 @@ export default function MainPage() {
     }
 
     return filtered;
-  }, [transformedComics, comics]);
+  }, [transformedComics, apiComicList]);
 
   // Transform API comics to TopComic format for the table
   const topNftComics = useMemo(() => {
-    if (!comics?.data?.comics?.data) return []
-    return transformApiComicsToTopComics(comics.data.comics.data)
-  }, [comics])
+    return transformApiComicsToTopComics(apiComicList)
+  }, [apiComicList])
 
   const handleComicSelect = (comic: any) => {
     console.log('Selected comic:', comic);
@@ -105,8 +125,21 @@ export default function MainPage() {
 
       {/* Main content sections */}
       <div className="w-full space-y-6 sm:space-y-8 md:space-y-10 lg:space-y-12">
+        {error && !isLoading && (
+          <div className="flex flex-col gap-3 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-100 sm:flex-row sm:items-center sm:justify-between">
+            <span>{error}</span>
+            <button
+              type="button"
+              onClick={() => dispatch(getAllComics())}
+              className="w-full rounded-full border border-red-200/30 px-4 py-2 text-sm font-semibold text-red-50 transition hover:border-red-100 hover:bg-red-100/10 sm:w-auto"
+            >
+              Retry comics
+            </button>
+          </div>
+        )}
+
         {/* Comics Carousel Section - "Get all you can read" */}
-        <div className="w-full">
+        <div className="w-full" data-tour="upcoming-sales">
           <div className="max-w-full">
             {/* <div className="mb-4 px-4 sm:px-6 md:px-8">
               <h2 className="text-2xl sm:text-3xl font-bold mb-1">Get all you can read</h2>
@@ -123,12 +156,12 @@ export default function MainPage() {
         </div>
 
         {/* Top Comics Table */}
-        <div className="w-full">
+        <div className="w-full" data-tour="canon-table">
           <TopComicsTable comics={topNftComics} />
         </div>
 
         {/* Trending & Popular Collections */}
-        <div className="w-full">
+        <div className="w-full" data-tour="trending-collections">
           <ComicSection 
             title="Trending & Popular Collections" 
             subtitle='Highest sales in the past hours'

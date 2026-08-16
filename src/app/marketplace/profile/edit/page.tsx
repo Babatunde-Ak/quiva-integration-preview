@@ -4,7 +4,7 @@ import EditProfileView from '@/features/user-profile/components/edit-profile-vie
 import { useAppSelector } from '@/redux/hook'
 import React from 'react'
 
-function page() {
+function Page() {
     const authUser = useAppSelector((state) => state.auth?.user?.data);
     const profileData = useAppSelector((state) => state.auth?.profile?.data);
     const userData = profileData?.user || profileData || authUser;
@@ -16,4 +16,4 @@ function page() {
     )
 }
 
-export default page
+export default Page
