@@ -1,7 +1,7 @@
-export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL?.trim() ||
-  "https://quiva-marketplace-backend.onrender.com/api";
-
+export const API_BASE_URL ="http://localhost:5000/api";
+  // process.env.NEXT_PUBLIC_API_URL?.trim() ||
+  // process.env.NEXT_PUBLIC_LOCAL_API_URL?.trim() ||
+  // "https://quiva-marketplace-backend.onrender.com/api";
 export const API_ENDPOINTS = {
   comics: {
     all: "/comics/all",
@@ -50,6 +50,17 @@ export const API_ENDPOINTS = {
     all: "/nfts/all",
     byId: (id: string) => `/nfts/${id}`,
     byComic: (comicId: string) => `/nfts/comic/${comicId}`,
+  },
+  marketplace: {
+    listings: "/marketplace/listings",
+    listing: (listingId: string) => `/marketplace/listings/${listingId}`,
+    offers: "/marketplace/offers",
+    offer: (offerId: string) => `/marketplace/offers/${offerId}`,
+    auctions: "/marketplace/auctions",
+    auction: (auctionId: string) => `/marketplace/auctions/${auctionId}`,
+    bids: "/marketplace/bids",
+    myOffers: "/marketplace/offers/mine",
+    receivedOffers: "/marketplace/offers/received",
   },
   engagement: {
     likeComic: (comicId: string) => `/like/comics/${comicId}`,

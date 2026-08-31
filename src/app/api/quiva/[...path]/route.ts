@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 const BACKEND_API_BASE =
   process.env.QUIVA_BACKEND_API_URL?.trim() ||
   process.env.NEXT_PUBLIC_API_URL?.trim() ||
+  process.env.NEXT_PUBLIC_LOCAL_API_URL?.trim() ||
   "https://quiva-marketplace-backend.onrender.com/api";
 
 // Keep the proxy constrained to API groups used by this frontend. This includes
@@ -18,6 +19,7 @@ const APPROVED_PATH_GROUPS = new Set([
   "creators",
   "leaderboard",
   "like",
+  "marketplace",
   "nfts",
   "referrals",
   "transactions",
@@ -156,18 +158,32 @@ async function proxyRequest(request: NextRequest, context: RouteContext) {
     const backendResponse = await fetch(getBackendUrl(request, validatedPath), init);
     const contentType = backendResponse.headers.get("content-type") || "application/json";
 
+    const responseBody = await backendResponse.arrayBuffer();
+
     if (!backendResponse.ok) {
+      const rawBody = Buffer.from(responseBody).toString("utf-8");
+      let parsedBody: any = null;
+
+      try {
+        parsedBody = JSON.parse(rawBody);
+      } catch {
+        parsedBody = null;
+      }
+
       return NextResponse.json(
         {
           success: false,
           status: backendResponse.status,
-          message: "Quiva API request failed.",
+          message:
+            parsedBody?.message ||
+            parsedBody?.error ||
+            rawBody ||
+            "Quiva API request failed.",
+          details: parsedBody ?? null,
         },
         { status: backendResponse.status }
       );
     }
-
-    const responseBody = await backendResponse.arrayBuffer();
     const responseHeaders = new Headers();
 
     responseHeaders.set("content-type", contentType);

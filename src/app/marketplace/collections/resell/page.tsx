@@ -1,21 +1,23 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { HbarIcon } from "@/components/ui/HbarIcon";
 import { ChevronLeft, Lock } from "lucide-react";
 import ResellModal from "@/components/modals/ResellModal";
-
-const mockComicData = {
-  id: "c-8832",
-  title: "Book of Beginnings #1",
-  collection: "Avatar: The Last Airbender",
-  edition: 12,
-  totalEditions: 100,
-  imageUrl: "/dev_images/Rectangle3051.png",
-};
+import { useSearchParams } from "next/navigation";
+import { useAppDispatch, useAppSelector } from "@/redux/hook";
+import { getComicById } from "@/redux/slices/comicSlice";
+import { useHederaWallet } from "@/providers/HashPackProvider";
+import { useNftOwnershipCheck } from "@/hook/userNFTOwnershipCheck";
 
 export default function ComicPage() {
   const [isResellOpen, setIsResellOpen] = useState(false);
+  const searchParams = useSearchParams();
+  const dispatch = useAppDispatch();
+  const { account } = useHederaWallet();
+  const { currentComic, isLoading } = useAppSelector((state: any) => state.comic);
+  const { checkOwnership } = useNftOwnershipCheck();
+  const [ownedSerial, setOwnedSerial] = useState<number>();
 
   const images = {
     cover: "/dev_images/Rectangle3051.png",
@@ -24,6 +26,53 @@ export default function ComicPage() {
     cross: "/dev_images/Group427320759.png",
     mj: "/dev_images/Grouup9.png",
   };
+
+  const comicId = searchParams.get("id");
+  const nftData = currentComic?.nftId || {};
+  const tokenId = nftData.tokenId || nftData.tokenAddress || nftData.contractAddress;
+  const tokenAddress =
+    nftData.contractAddress ||
+    nftData.evmAddress ||
+    nftData.tokenAddress ||
+    nftData.tokenId ||
+    "";
+  const storedSerial = Number(nftData.serialNumber ?? nftData.serial ?? nftData.serial_id ?? nftData.nftSerial ?? 0);
+
+  useEffect(() => {
+    if (comicId) void (dispatch as any)((getComicById as any)({ id: comicId }));
+  }, [comicId, dispatch]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const resolveSerial = async () => {
+      if (storedSerial > 0) {
+        setOwnedSerial(storedSerial);
+        return;
+      }
+      if (!account || !tokenId) return;
+      const result = await checkOwnership(account, tokenId);
+      if (!cancelled) setOwnedSerial(result.serialNumbers[0]);
+    };
+    void resolveSerial();
+    return () => { cancelled = true; };
+  }, [account, checkOwnership, storedSerial, tokenId]);
+
+  const comic = useMemo(() => currentComic ? {
+    id: currentComic._id,
+    title: currentComic.title || "Untitled comic",
+    collection: currentComic.collection?.title || currentComic.collectionTitle || "Comic collection",
+    edition: ownedSerial || 0,
+    totalEditions: Number(nftData.maxSupply || 0),
+    imageUrl: currentComic.bannerImage || currentComic.coverImage || images.cover,
+    tokenAddress,
+    serialNumber: ownedSerial,
+  } : null, [currentComic, images.cover, nftData.maxSupply, ownedSerial, tokenAddress]);
+
+  if (!comicId || (!isLoading && !comic)) {
+    return <div className="flex min-h-screen items-center justify-center bg-[#0a0a0a] px-6 text-center text-white">
+      <p>Select an owned comic from your collection to resell.</p>
+    </div>;
+  }
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-gray-200 font-sans selection:bg-orange-500 selection:text-white pb-20">
@@ -61,7 +110,7 @@ export default function ComicPage() {
             {/* Hero Info */}
             <div className="flex-1 pb-2 flex flex-col">
               <h1 className="text-3xl font-mono font-bold text-white mb-2 flex gap-2 items-center tracking-tight">
-                <p>Avatar -Book of Beginnings #1</p>
+                  <p>{comic?.collection} - {comic?.title}</p>
                 <span className="px-2 py-0.5 rounded-lg bg-[#000] border border-green-500/30 text-[#fff] text-xs font-bold flex items-center gap-1">
                   Owned ✅
                 </span>
@@ -311,7 +360,7 @@ export default function ComicPage() {
       <ResellModal
         isOpen={isResellOpen}
         onClose={() => setIsResellOpen(false)}
-        comic={mockComicData}
+        comic={comic!}
       />
     </div>
   );

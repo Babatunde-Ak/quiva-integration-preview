@@ -82,7 +82,7 @@ export function useUserPurchasedComics() {
         const tokenEvmAddress = toEvmAddress(tokenId);
 
         // Find matching comic in Redux store or backend list
-        const matchedComic = Array.isArray(allComics)
+        const matchedComic: any = Array.isArray(allComics)
           ? allComics.find((c: any) => {
               const comicToken = c.tokenId || c.nftId?.tokenId || c.tokenAddress;
               if (!comicToken) return false;
@@ -100,13 +100,13 @@ export function useUserPurchasedComics() {
         }
 
         items.push({
-          comicId: matchedComic?._id || matchedComic?.id || tokenId,
+          comicId: matchedComic?._id || tokenId,
           tokenId: tokenId,
           tokenEvmAddress: tokenEvmAddress,
           serialNumber: nft.serial_number,
           title: matchedComic?.title || `Comic #${nft.serial_number}`,
-          bannerImage: matchedComic?.bannerImage || matchedComic?.coverImage || '/placeholder-comic.png',
-          summary: matchedComic?.summary || matchedComic?.description || '',
+          bannerImage: matchedComic?.bannerImage || '/placeholder-comic.png',
+          summary: matchedComic?.summary || '',
           canRead: canRead,
           rawComicData: matchedComic,
         });

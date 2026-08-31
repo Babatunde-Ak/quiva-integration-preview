@@ -21,11 +21,14 @@ export default function ComicDetail() {
   const [isResellOpen, setIsResellOpen] = useState(false);
   const [localActiveTab, setLocalActiveTab] = useState('details');
   const [showMintPage, setShowMintPage] = useState(false);
+  const [resolvedTokenId, setResolvedTokenId] = useState<string>("");
+  const [resolvedSerialNumber, setResolvedSerialNumber] = useState<number | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
   const {user} = useAppSelector((state: any) => state.wallet);
   const { account, signer } = useHederaWallet();
+  const { checkOwnership } = useNftOwnershipCheck();
 
   // const { canReadComic } = useMarketplace({
   //   accountId: user?.walletAddress || "",
@@ -33,7 +36,6 @@ export default function ComicDetail() {
   //   network: "testnet",
   // });
 //  const {checkCanReadComic} = useMirrorNodeQueries();
- const { checkOwnership } = useNftOwnershipCheck();
   const comicId = searchParams.get('id');
 
   const { currentComic, isLoading } = useAppSelector((state: any) => state.comic);
@@ -61,8 +63,52 @@ export default function ComicDetail() {
 
 
   
+  useEffect(() => {
+    const routeTokenId = searchParams.get("tokenId") || "";
+    const routeSerialNumber = searchParams.get("serialNumber");
+
+    if (routeTokenId) {
+      setResolvedTokenId(routeTokenId);
+    } else if (currentComic?.nftId?.tokenId) {
+      setResolvedTokenId(currentComic.nftId.tokenId);
+    }
+
+    if (routeSerialNumber) {
+      setResolvedSerialNumber(Number(routeSerialNumber));
+    } else if (currentComic?.nftId?.serialNumber || currentComic?.nftId?.serial) {
+      setResolvedSerialNumber(Number(currentComic.nftId.serialNumber ?? currentComic.nftId.serial ?? 0));
+    } else if (account && currentComic?.nftId?.tokenId) {
+      checkOwnership(account, currentComic.nftId.tokenId).then((result) => {
+        if (result.serialNumbers?.length) {
+          setResolvedSerialNumber(Number(result.serialNumbers[0]));
+        }
+      });
+    }
+  }, [account, checkOwnership, currentComic?.nftId?.serialNumber, currentComic?.nftId?.serial, currentComic?.nftId?.tokenId, searchParams]);
+
   const nftData = currentComic?.nftId || {};
+  const routeTokenId = searchParams.get("tokenId") || "";
+  const routeSerialNumber = searchParams.get("serialNumber");
   const chapters = currentComic?.chapters || [];
+  const tokenAddress =
+    resolvedTokenId ||
+    routeTokenId ||
+    nftData?.contractAddress ||
+    nftData?.evmAddress ||
+    nftData?.tokenAddress ||
+    nftData?.tokenId ||
+    nftData?.contract?.address ||
+    "";
+  const nftSerialNumber = Number(
+    resolvedSerialNumber ??
+    routeSerialNumber ??
+    nftData?.serialNumber ??
+    nftData?.serial ??
+    nftData?.serial_id ??
+    nftData?.nftSerial ??
+    0
+  );
+  const nftTokenId = resolvedTokenId || routeTokenId || nftData?.tokenId || nftData?.contractId || nftData?.token_id || "";
   
   const mintPrice = nftData?.price?.toFixed(2) || "0";
   const maxSupply = nftData?.maxSupply?.toLocaleString() || "0";
@@ -511,7 +557,10 @@ export default function ComicDetail() {
                   collection: currentCollection?.title || "Avatar: The Last Airbender",
                   edition: currentSupply,
                   totalEditions: parseInt(maxSupply.replace(/,/g, '')),
-                  imageUrl: images.cover, 
+                  imageUrl: images.cover,
+                  tokenAddress,
+                  tokenId: nftTokenId,
+                  serialNumber: nftSerialNumber || undefined,
                 }}
               />
             </div>

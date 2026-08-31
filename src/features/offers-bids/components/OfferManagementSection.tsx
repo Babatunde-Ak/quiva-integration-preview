@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { HbarIcon } from '@/components/ui/HbarIcon'
+import { useWagmiMarketplace } from '@/hook/useWagmiMarketplace'
 import OfferActionModals, { OfferModalType } from './OfferActionModals'
 import {
   acceptedOffers,
@@ -55,6 +56,22 @@ export default function OfferManagementSection({ view }: { view: OfferView }) {
   const router = useRouter()
   const [filter, setFilter] = useState<SentFilter>('active')
   const [activeModal, setActiveModal] = useState<OfferModalType>(null)
+  const [selectedOfferId, setSelectedOfferId] = useState<number | null>(null)
+  const [transactionError, setTransactionError] = useState<string | null>(null)
+  const { cancelOffer } = useWagmiMarketplace()
+
+  const requestCancelOffer = async () => {
+    if (selectedOfferId === null) {
+      setTransactionError('This preview offer has no on-chain offer ID yet.')
+      return
+    }
+    try {
+      await cancelOffer(selectedOfferId)
+      setActiveModal(null)
+    } catch (error: any) {
+      setTransactionError(error?.message || 'Offer cancellation failed.')
+    }
+  }
 
   const goToOffer = (mode: 'offer' | 'bid') => {
     router.push(`/marketplace/auction?mode=${mode === 'bid' ? 'bid' : 'offer'}`)
@@ -239,7 +256,11 @@ export default function OfferManagementSection({ view }: { view: OfferView }) {
                     )}
                     <button
                       type="button"
-                      onClick={() => setActiveModal('cancel')}
+                      onClick={() => {
+                        setTransactionError(null)
+                        setSelectedOfferId(/^\d+$/.test(offer.id) ? Number(offer.id) : null)
+                        setActiveModal('cancel')
+                      }}
                       className={`w-full rounded-xl border border-white/10 px-4 py-3 text-sm text-white/50 transition hover:text-white ${focusClass}`}
                     >
                       Cancel offer
@@ -253,6 +274,7 @@ export default function OfferManagementSection({ view }: { view: OfferView }) {
           <p className="text-center text-sm text-white/40">
             Cancelling returns your HBAR instantly. Accepted offers transfer ownership only through the real marketplace flow.
           </p>
+          {transactionError && <p className="text-center text-sm text-red-400">{transactionError}</p>}
         </>
       )}
 
@@ -325,6 +347,7 @@ export default function OfferManagementSection({ view }: { view: OfferView }) {
       <OfferActionModals
         activeModal={activeModal}
         onClose={() => setActiveModal(null)}
+        onCancelOffer={requestCancelOffer}
         onReadNow={() => router.push('/reader')}
         onViewEditions={() => router.push('/marketplace/user-profile?tab=mintedComics')}
       />
