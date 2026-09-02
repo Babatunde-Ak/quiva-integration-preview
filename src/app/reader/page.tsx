@@ -67,9 +67,20 @@ const ComicReaderViewer = () => {
     checkOwnership(userWalletAddress, tokenId).then((result) => {
       if (!result.hasNft) {
         router.replace(`/marketplace/detail?id=${comicId}`);
+        return;
       }
+
+      const serialNumber = result.serialNumbers?.[0];
+      if (!serialNumber && serialNumber !== 0) {
+        router.replace(`/marketplace/detail?id=${comicId}&tokenId=${encodeURIComponent(tokenId)}`);
+        return;
+      }
+
+      router.replace(
+        `/marketplace/detail?id=${comicId}&tokenId=${encodeURIComponent(tokenId)}&serialNumber=${serialNumber}`
+      );
     });
-  }, [currentComic, account, walletUser?.walletAddress]);
+  }, [currentComic, account, walletUser?.walletAddress, checkOwnership, comicId, router]);
 
   const activeComic = useMemo(() => {
     const comic = currentComic;

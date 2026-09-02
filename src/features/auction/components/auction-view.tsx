@@ -14,6 +14,10 @@ export default function AuctionView() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const comicId = searchParams.get('id')
+  const listingId = searchParams.get('listingId')
+  const auctionId = searchParams.get('auctionId')
+  const tokenAddress = searchParams.get('tokenAddress') || undefined
+  const serialNumber = searchParams.get('serialNumber') ? Number(searchParams.get('serialNumber')) : undefined
   const initialMode = searchParams.get('mode') === 'bid' ? 'open' : 'specific'
   const dispatch = useAppDispatch()
   const { currentComic } = useAppSelector((state: any) => state.comic)
@@ -83,6 +87,10 @@ export default function AuctionView() {
             offerStats={offerStats}
             breakdown={BREAKDOWN}
             initialMode={initialMode}
+            listingId={listingId ? Number(listingId) : undefined}
+            auctionId={auctionId ? Number(auctionId) : undefined}
+            tokenAddress={tokenAddress}
+            serialNumber={serialNumber}
           />
         </div>
 

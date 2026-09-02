@@ -1,0 +1,222 @@
+"use client";
+
+/**
+ * useResaleListings
+ *
+ * Reads the secondary-market (resale) listings a collection currently has open on the
+ * COMIC_MARKETPLACE contract. Everything here is read-only and goes through the Hedera
+ * mirror node, so it works without a wallet connection and without the backend indexer.
+ *
+ * Discovery is two-tiered:
+ *   1. Scan the marketplace's `NFTListed` logs for this token to collect candidate listing ids.
+ *   2. If the log query returns nothing, walk back from `listingCounter` instead.
+ * Either way every candidate is then confirmed with `getListing`, which is the authoritative
+ * source for the current price and whether the listing is still active (cancelled and sold
+ * listings only flip `isActive` in contract state).
+ */
+
+import { useCallback, useEffect, useState } from 'react';
+import { ethers } from 'ethers';
+import { TokenId } from '@hiero-ledger/sdk';
+import { HEDERA_CONTRACTS } from '@/contracts/HederaContractConfig';
+import { mirrorNodeService } from './MirrorNodeService';
+
+const MIRROR_NODE_BASE =
+  process.env.NEXT_PUBLIC_MIRROR_NODE_URL || 'https://testnet.mirrornode.hedera.com';
+
+const MARKETPLACE_ABI = [
+  'event NFTListed(uint256 indexed listingId, address indexed tokenAddress, int64 serialNumber, address indexed seller, uint256 price)',
+  'function getListing(uint256 listingId) external view returns (address tokenAddress, int64 serialNumber, address seller, uint256 price, bool isActive)',
+  'function listingCounter() external view returns (uint256)',
+];
+
+const marketplaceInterface = new ethers.Interface(MARKETPLACE_ABI);
+
+// How far back to look when we have to fall back to walking `listingCounter`.
+const COUNTER_SCAN_DEPTH = 60;
+const LOG_PAGE_LIMIT = 100;
+const LOG_MAX_PAGES = 3;
+
+export interface ResaleListing {
+  listingId: number;
+  tokenAddress: string; // EVM address, lowercase
+  serialNumber: number;
+  seller: string; // EVM address, lowercase
+  /**
+   * Raw on-chain price, in TINYBARS (8dp).
+   *
+   * The marketplace compares this against `msg.value`, and inside the Hedera EVM `msg.value`
+   * is denominated in tinybars - the JSON-RPC relay divides the transaction's 18dp `value`
+   * by 10^10 before execution. Reading this as weibars makes every listing look 10^10 times
+   * cheaper than the contract actually requires, and `purchaseNFT` reverts "Insufficient
+   * payment". See the unit-scale note in CLAUDE.md.
+   */
+  priceTinybars: string;
+  priceHbar: number;
+  isActive: boolean;
+}
+
+/** Accepts a Hedera id (`0.0.x`) or an EVM address and returns a lowercase EVM address. */
+export const toEvmAddress = (value?: string | null): string | null => {
+  if (!value) return null;
+  const trimmed = value.trim();
+
+  if (/^0x[0-9a-fA-F]{40}$/.test(trimmed)) return trimmed.toLowerCase();
+  if (/^[0-9a-fA-F]{40}$/.test(trimmed)) return `0x${trimmed}`.toLowerCase();
+
+  if (/^\d+\.\d+\.\d+$/.test(trimmed)) {
+    try {
+      const solidity = TokenId.fromString(trimmed).toSolidityAddress();
+      return (solidity.startsWith('0x') ? solidity : `0x${solidity}`).toLowerCase();
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
+};
+
+const marketplaceId = () => HEDERA_CONTRACTS.COMIC_MARKETPLACE.address;
+
+const marketplaceLogAddress = () => {
+  const evm = toEvmAddress(HEDERA_CONTRACTS.COMIC_MARKETPLACE.evmAddress);
+  if (evm && evm !== '0x0000000000000000000000000000000000000000') return evm;
+  return marketplaceId();
+};
+
+const callMarketplace = async (functionName: string, args: unknown[] = []) => {
+  const data = marketplaceInterface.encodeFunctionData(functionName, args);
+  const response = await mirrorNodeService.makeContractCall(marketplaceId(), data);
+  return marketplaceInterface.decodeFunctionResult(functionName, response.result);
+};
+
+/**
+ * Listing ids seen in `NFTListed` logs for this token, newest first.
+ *
+ * The logs are fetched unfiltered and decoded here: the mirror node only accepts `topic0`
+ * filters alongside a timestamp range of at most 7 days, which would hide older listings.
+ */
+const listingIdsFromLogs = async (tokenEvmAddress: string): Promise<number[]> => {
+  const ids: number[] = [];
+  let url:
+    | string
+    | undefined = `${MIRROR_NODE_BASE}/api/v1/contracts/${marketplaceLogAddress()}/results/logs?order=desc&limit=${LOG_PAGE_LIMIT}`;
+
+  for (let page = 0; page < LOG_MAX_PAGES && url; page += 1) {
+    const response = await fetch(url);
+    if (!response.ok) break;
+
+    const json = await response.json();
+    for (const log of json?.logs || []) {
+      try {
+        const decoded = marketplaceInterface.parseLog({ topics: log.topics, data: log.data });
+        if (!decoded) continue;
+        if (String(decoded.args.tokenAddress).toLowerCase() !== tokenEvmAddress) continue;
+        ids.push(Number(decoded.args.listingId));
+      } catch {
+        // Not an event we can decode - the marketplace emits others too.
+      }
+    }
+
+    const next = json?.links?.next;
+    url = next ? (next.startsWith('http') ? next : `${MIRROR_NODE_BASE}${next}`) : undefined;
+  }
+
+  return Array.from(new Set(ids));
+};
+
+/** Fallback: the most recent `COUNTER_SCAN_DEPTH` listing ids the contract has ever issued. */
+const recentListingIds = async (): Promise<number[]> => {
+  const [counter] = await callMarketplace('listingCounter');
+  const total = Number(counter);
+  if (!Number.isFinite(total) || total <= 0) return [];
+
+  const start = Math.max(0, total - COUNTER_SCAN_DEPTH);
+  const ids: number[] = [];
+  for (let id = total - 1; id >= start; id -= 1) ids.push(id);
+  return ids;
+};
+
+const fetchListing = async (listingId: number): Promise<ResaleListing | null> => {
+  try {
+    const decoded = await callMarketplace('getListing', [listingId]);
+    const priceTinybars = decoded[3].toString();
+
+    return {
+      listingId,
+      tokenAddress: String(decoded[0]).toLowerCase(),
+      serialNumber: Number(decoded[1]),
+      seller: String(decoded[2]).toLowerCase(),
+      priceTinybars,
+      priceHbar: Number(ethers.formatUnits(priceTinybars, 8)),
+      isActive: Boolean(decoded[4]),
+    };
+  } catch (error) {
+    console.warn(`Unable to read marketplace listing ${listingId}`, error);
+    return null;
+  }
+};
+
+/**
+ * Active resale listings for a single collection token.
+ * `tokenId` may be a Hedera token id (`0.0.x`) or an EVM address.
+ */
+export async function getActiveResaleListings(tokenId: string): Promise<ResaleListing[]> {
+  const tokenEvmAddress = toEvmAddress(tokenId);
+  if (!tokenEvmAddress) throw new Error(`"${tokenId}" is not a valid token id or EVM address.`);
+
+  let candidateIds: number[] = [];
+  try {
+    candidateIds = await listingIdsFromLogs(tokenEvmAddress);
+  } catch (error) {
+    console.warn('Marketplace log scan failed, falling back to listingCounter', error);
+  }
+
+  if (candidateIds.length === 0) {
+    candidateIds = await recentListingIds();
+  }
+
+  const listings = await Promise.all(candidateIds.map(fetchListing));
+
+  return listings
+    .filter((listing): listing is ResaleListing => Boolean(listing))
+    .filter((listing) => listing.isActive && listing.tokenAddress === tokenEvmAddress)
+    .sort((a, b) => b.listingId - a.listingId);
+}
+
+export function useResaleListings(tokenId?: string | null) {
+  const [listings, setListings] = useState<ResaleListing[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const refresh = useCallback(async () => {
+    if (!tokenId) {
+      setListings([]);
+      return [];
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const active = await getActiveResaleListings(tokenId);
+      setListings(active);
+      return active;
+    } catch (err: any) {
+      console.error('Error loading resale listings:', err);
+      setError(err?.message || 'Failed to load resale listings');
+      setListings([]);
+      return [];
+    } finally {
+      setIsLoading(false);
+    }
+  }, [tokenId]);
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+
+  return { listings, isLoading, error, refresh };
+}
+
+export default useResaleListings;

@@ -21,8 +21,10 @@ import {
 import { getDirectListingInfo, getMarketplaceFee } from './ContractQueries';
 import {
   COMIC_CORE_ABI,
+  COMIC_MARKETPLACE_ABI,
   COMIC_SALES_ABI,
   HEDERA_CONTRACTS,
+  HTS_ERC721_ABI,
 } from "@/contracts/HederaContractConfig";
 
 
@@ -68,6 +70,31 @@ interface UseWagmiMarketplaceResult {
     quantity: number;
     pricePerNFT: number;
   }) => Promise<any>;
+  listForResale: (params: {
+    tokenAddress: string;
+    serialNumber: number;
+    priceInHbar: number;
+  }) => Promise<any>;
+  purchaseResaleListing: (params: {
+    listingId: number;
+    priceTinybars?: string;
+    tokenAddress?: string;
+  }) => Promise<any>;
+  cancelResaleListing: (listingId: number) => Promise<any>;
+  createOffer: (params: { listingId: number; amountInHbar: number; expiresAt: number }) => Promise<any>;
+  cancelOffer: (offerId: number) => Promise<any>;
+  acceptOffer: (offerId: number) => Promise<any>;
+  rejectOffer: (offerId: number) => Promise<any>;
+  expireOffer: (offerId: number) => Promise<any>;
+  createAuction: (params: {
+    tokenAddress: string;
+    serialNumber: number;
+    reservePriceInHbar: number;
+    durationInSeconds: number;
+  }) => Promise<any>;
+  placeBid: (params: { auctionId: number; amountInHbar: number }) => Promise<any>;
+  settleAuction: (auctionId: number) => Promise<any>;
+  cancelAuction: (auctionId: number) => Promise<any>;
   createCampaign: (params: {
     episodeId: string;
     campaignType: CampaignType;
@@ -156,7 +183,29 @@ const rawUnitsToHbar = (rawValue: string): number => {
 
 const toAddress = (value: string | undefined | null): Address | undefined => {
   if (!value) return undefined;
-  return /^0x[a-fA-F0-9]{40}$/.test(value) ? (value as Address) : undefined;
+
+  const trimmed = value.trim();
+  const withPrefix = trimmed.startsWith("0x") ? trimmed : `0x${trimmed}`;
+
+  if (/^0x[a-fA-F0-9]{40}$/.test(withPrefix)) {
+    return withPrefix as Address;
+  }
+
+  if (/^[a-fA-F0-9]{40}$/.test(trimmed)) {
+    return `0x${trimmed}` as Address;
+  }
+
+  if (/^\d+\.\d+\.\d+$/.test(trimmed)) {
+    try {
+      const hedgeAddress = TokenId.fromString(trimmed).toSolidityAddress();
+      const normalized = hedgeAddress.startsWith("0x") ? hedgeAddress : `0x${hedgeAddress}`;
+      return /^0x[a-fA-F0-9]{40}$/.test(normalized) ? (normalized as Address) : undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
+  return undefined;
 };
 
 const normalizeAddress = (value: string | undefined | null): Address => {
@@ -249,6 +298,54 @@ const fetchMirrorTransaction = async (txHash: string) => {
     return null;
   }
 };
+
+// Weibars (18dp, what the JSON-RPC relay reports) per tinybar (8dp, what HTS charges).
+// Mixing these up is off by 10^10 and fails silently - see the unit-scale note in CLAUDE.md.
+const WEIBARS_PER_TINYBAR = BigInt(10_000_000_000);
+
+// A resale price this large can only be a unit mistake: listings written before listForResale
+// was corrected below stored the price in weibars, so their on-chain price is 10^10 too large
+// and no wallet on earth can cover it. 10^14 tinybars is 1,000,000 HBAR.
+const MAX_SANE_LISTING_TINYBARS = BigInt(100_000_000_000_000);
+
+// HIP-719: every HTS token exposes a proxy contract at its own EVM address, so an EOA can
+// associate itself with the token through a plain EVM call. It returns an HTS response code
+// instead of reverting - 194 (TOKEN_ALREADY_ASSOCIATED_TO_ACCOUNT) is a no-op, not a failure.
+const HTS_TOKEN_ASSOCIATE_ABI = [
+  {
+    inputs: [],
+    name: "associate",
+    outputs: [{ internalType: "int256", name: "responseCode", type: "int256" }],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+] as const;
+
+// Total of a token's HBAR royalty fallback fees, in tinybars. On any NFT transfer where the
+// sender receives no fungible value - which is exactly what an escrow deposit is - HTS charges
+// these fallbacks to the *receiver*, i.e. the marketplace contract. Returns 0 if the token has
+// no fallbacks or the read fails, so a mirror-node blip can never block a listing outright.
+const fetchRoyaltyFallbackTinybars = async (tokenAddress: string): Promise<bigint> => {
+  const tokenId = toHederaTokenId(tokenAddress);
+  if (!tokenId) return BigInt(0);
+
+  try {
+    const res = await fetch(`${MIRROR_NODE_BASE}/api/v1/tokens/${tokenId}`);
+    if (!res.ok) return BigInt(0);
+
+    const json = await res.json();
+    const royaltyFees: any[] = json?.custom_fees?.royalty_fees ?? [];
+
+    return royaltyFees.reduce((total: bigint, fee: any) => {
+      const fallback = fee?.fallback_fee;
+      // A non-null denominating_token_id means the fallback is paid in a token, not HBAR.
+      if (!fallback || fallback.denominating_token_id) return total;
+      return total + BigInt(fallback.amount ?? 0);
+    }, BigInt(0));
+  } catch {
+    return BigInt(0);
+  }
+};
   const ensureWallet = () => {
     if (!isConnected || !address) {
       throw new Error("Please connect your wallet before continuing.");
@@ -268,12 +365,238 @@ const fetchMirrorTransaction = async (txHash: string) => {
     return publicClient.waitForTransactionReceipt({ hash });
   };
 
+  // Reads the HTS allowance through the token's ERC-721 facade so we can skip a redundant
+  // approval transaction. Treated as "not approved" if the read fails for any reason - a
+  // duplicate approval is harmless, a missing one reverts the listing.
+  const isMarketplaceApprovedForNft = async (
+    tokenAddress: Address,
+    serialNumber: number,
+    marketplaceAddress: Address
+  ): Promise<boolean> => {
+    if (!publicClient || !address) return false;
+
+    const matches = (value: unknown) =>
+      typeof value === "string" && value.toLowerCase() === marketplaceAddress.toLowerCase();
+
+    // Bypassing Viem's overly strict ABI type inference, as elsewhere in this hook.
+    const read = (publicClient as any).readContract.bind(publicClient);
+
+    try {
+      const operatorApproved = await read({
+        address: tokenAddress,
+        abi: HTS_ERC721_ABI as any,
+        functionName: "isApprovedForAll",
+        args: [address, marketplaceAddress],
+      });
+      if (operatorApproved === true) return true;
+    } catch {
+      // Fall through to the per-serial check.
+    }
+
+    try {
+      const approvedSpender = await read({
+        address: tokenAddress,
+        abi: HTS_ERC721_ABI as any,
+        functionName: "getApproved",
+        args: [BigInt(serialNumber)],
+      });
+      return matches(approvedSpender);
+    } catch {
+      return false;
+    }
+  };
+
+  // An escrow deposit moves the NFT to the marketplace without sending the seller any fungible
+  // value, so HTS bills the collection's royalty fallback fees to the marketplace contract. If
+  // the contract cannot cover them the precompile returns a non-SUCCESS code and the contract
+  // reverts with a bare "Transfer failed", which tells the seller nothing. Check up front so the
+  // user gets an actionable message instead of paying gas for a guaranteed revert.
+  const ensureEscrowCanPayFallbackFees = async (
+    tokenAddress: Address,
+    marketplaceAddress: Address
+  ) => {
+    if (!publicClient) return;
+
+    const requiredTinybars = await fetchRoyaltyFallbackTinybars(tokenAddress);
+    if (requiredTinybars === BigInt(0)) return;
+
+    const balanceWeibars = await publicClient.getBalance({ address: marketplaceAddress });
+    const balanceTinybars = balanceWeibars / WEIBARS_PER_TINYBAR;
+    if (balanceTinybars >= requiredTinybars) return;
+
+    throw new Error(
+      `The marketplace escrow (${HEDERA_CONTRACTS.COMIC_MARKETPLACE.address}) holds ` +
+        `${rawUnitsToHbar(balanceTinybars.toString())} HBAR but needs at least ` +
+        `${rawUnitsToHbar(requiredTinybars.toString())} HBAR to cover this collection's royalty ` +
+        `fallback fees. Ask an admin to top up the marketplace contract before listing.`
+    );
+  };
+
+  // Both escrow entry points - depositAndListForResale and createAuction - hand the NFT to the
+  // marketplace, so both need the same two preconditions satisfied first.
+  const prepareEscrowDeposit = async (
+    tokenAddress: Address,
+    serialNumber: number,
+    marketplaceAddress: Address
+  ) => {
+    // Hedera will not let the marketplace pull the NFT out of the seller's account on the
+    // strength of the transaction signature alone - it needs an explicit HTS allowance.
+    // Grant it via the token's ERC-721 facade, otherwise transferNFT returns a non-SUCCESS
+    // code and the contract reverts with "Transfer failed".
+    const alreadyApproved = await isMarketplaceApprovedForNft(
+      tokenAddress,
+      serialNumber,
+      marketplaceAddress
+    );
+
+    if (!alreadyApproved) {
+      setStatusMessage("Approve the marketplace to transfer this NFT...");
+      const approvalHash = await writeContractAsync({
+        address: tokenAddress,
+        abi: HTS_ERC721_ABI,
+        functionName: "approve",
+        args: [marketplaceAddress, BigInt(serialNumber)],
+        account: address,
+        chain: publicClient?.chain,
+        gas: BigInt(1_000_000),
+      });
+
+      setStatusMessage("Waiting for the approval to confirm...");
+      const approvalReceipt = await waitForReceipt(approvalHash);
+      if (isReceiptFailed(approvalReceipt)) {
+        throw new Error(`NFT approval transaction reverted (tx=${approvalHash}).`);
+      }
+    }
+
+    setStatusMessage("Checking the marketplace can cover this collection's royalty fees...");
+    await ensureEscrowCanPayFallbackFees(tokenAddress, marketplaceAddress);
+  };
+
+  // The buyer's side of the same HTS rule the escrow deposit hits: an account can only be
+  // handed an NFT if it is associated with that token. Most wallets are created with unlimited
+  // automatic association (-1) and need nothing, but an account without a free slot would only
+  // find out through a bare "NFT transfer failed" revert inside _settleNFT, after paying gas.
+  const ensureBuyerAssociated = async (tokenAddress: string) => {
+    const normalizedToken = toAddress(tokenAddress);
+    const hederaTokenId = toHederaTokenId(tokenAddress);
+    if (!normalizedToken || !hederaTokenId || !address) return;
+
+    try {
+      const [tokensRes, accountRes] = await Promise.all([
+        fetch(`${MIRROR_NODE_BASE}/api/v1/accounts/${address}/tokens?token.id=${hederaTokenId}&limit=1`),
+        fetch(`${MIRROR_NODE_BASE}/api/v1/accounts/${address}?limit=1`),
+      ]);
+
+      if (tokensRes.ok) {
+        const tokensJson = await tokensRes.json();
+        if ((tokensJson?.tokens?.length ?? 0) > 0) return;
+      }
+
+      if (accountRes.ok) {
+        const accountJson = await accountRes.json();
+        // -1 is unlimited auto-association, so HTS associates the token on delivery.
+        if (Number(accountJson?.max_automatic_token_associations) === -1) return;
+      }
+    } catch (err) {
+      // A mirror node hiccup should not block the purchase - associating twice is harmless.
+      console.warn("Could not confirm token association, associating anyway", err);
+    }
+
+    setStatusMessage("Associating your wallet with this collection...");
+    const associateHash = await writeContractAsync({
+      address: normalizedToken,
+      abi: HTS_TOKEN_ASSOCIATE_ABI,
+      functionName: "associate",
+      args: [],
+      account: address,
+      chain: publicClient?.chain,
+      gas: BigInt(900_000),
+    });
+
+    setStatusMessage("Waiting for the association to confirm...");
+    const associateReceipt = await waitForReceipt(associateHash);
+    if (isReceiptFailed(associateReceipt)) {
+      throw new Error(`Token association transaction reverted (tx=${associateHash}).`);
+    }
+  };
+
+  // Handing the NFT out of escrow sends the marketplace no fungible value, so HTS bills the
+  // collection's royalty fallback fees to the receiver - the buyer - on top of the sale price.
+  // Say so before the wallet prompt instead of after an out-of-funds revert.
+  const ensureBuyerCanCoverPurchase = async (tokenAddress: string, priceTinybars: bigint) => {
+    if (!publicClient || !address) return;
+
+    const fallbackTinybars = await fetchRoyaltyFallbackTinybars(tokenAddress);
+    const requiredTinybars = priceTinybars + fallbackTinybars;
+    const balanceTinybars =
+      (await publicClient.getBalance({ address })) / WEIBARS_PER_TINYBAR;
+
+    if (balanceTinybars >= requiredTinybars) return;
+
+    throw new Error(
+      `This purchase needs about ${rawUnitsToHbar(requiredTinybars.toString())} HBAR ` +
+        `(the ${rawUnitsToHbar(priceTinybars.toString())} HBAR price plus this collection's ` +
+        `royalty fallback fees) but your wallet holds ` +
+        `${rawUnitsToHbar(balanceTinybars.toString())} HBAR.`
+    );
+  };
+
+  // Releasing an NFT from marketplace escrow - cancelListing returning it to the seller, or
+  // purchaseNFT delivering it to the buyer - moves no fungible value to the sender, so HTS
+  // charges the collection's HBAR royalty fallback fees to the RECEIVER. When that receiver is a
+  // wallet rather than a contract, the charge has to be authorized by the wallet's key, and a
+  // transaction submitted through the JSON-RPC relay cannot do that: the HTS precompile answers
+  // 326 INVALID_FULL_PREFIX_SIGNATURE_FOR_PRECOMPILE and the contract reverts with a bare
+  // "NFT return failed" / "NFT transfer failed".
+  //
+  // Verified on testnet: cancelListing tx 0xbf13fd0bdcc19e84ae2ff1f753a3f67fd97950e3f2de9c9905784
+  // b105586f027 died exactly this way, while depositAndListForResale in the other direction
+  // succeeded because the *contract* was the receiver and could authorize its own 1.5 HBAR fee.
+  // The deposit's child transfer shows that fee: 0.0.10232416 -1.5 HBAR, 0.0.7225845 +1.5 HBAR.
+  //
+  // Drop this guard once escrow release no longer settles with a bare transferNFT.
+  const ensureEscrowReleaseIsPossible = async (tokenAddress: string) => {
+    const fallbackTinybars = await fetchRoyaltyFallbackTinybars(tokenAddress);
+    if (fallbackTinybars === BigInt(0)) return;
+
+    throw new Error(
+      `Hedera cannot release this NFT from marketplace escrow: the collection charges ` +
+        `${rawUnitsToHbar(fallbackTinybars.toString())} HBAR of royalty fallback fees to whoever ` +
+        `receives it, and a contract call made over the JSON-RPC relay cannot authorize that ` +
+        `charge against a wallet (HTS status 326). The marketplace contract has to settle escrow ` +
+        `releases differently before this listing can be cancelled or bought.`
+    );
+  };
+
+  // Contract state is the only authority on a listing: the mirror node snapshot the UI renders
+  // can be stale by the time the buyer confirms, and purchaseNFT compares msg.value against
+  // exactly this price.
+  const readMarketplaceListing = async (listingId: number) => {
+    if (!publicClient) throw new Error("No RPC client available to read the listing.");
+
+    // Bypassing Viem's overly strict ABI type inference, as elsewhere in this hook.
+    const listing = (await (publicClient as any).readContract({
+      address: normalizeAddress(HEDERA_CONTRACTS.COMIC_MARKETPLACE.evmAddress),
+      abi: COMIC_MARKETPLACE_ABI as any,
+      functionName: "getListing",
+      args: [BigInt(listingId)],
+    })) as any[];
+
+    return {
+      tokenAddress: String(listing[0]),
+      serialNumber: Number(listing[1]),
+      seller: String(listing[2]),
+      priceTinybars: BigInt(listing[3].toString()),
+      isActive: Boolean(listing[4]),
+    };
+  };
+
   const createComicCollection = async ({
     episodeId,
     name,
     symbol,
     maxSupply,
-    hbarDeposit = 80,
+    hbarDeposit =50,
     autoRenewPeriod = 7000000,
   }: {
     episodeId: string;
@@ -647,6 +970,305 @@ const fetchMirrorTransaction = async (txHash: string) => {
     }
   };
 
+  const listForResale = async ({
+    tokenAddress,
+    serialNumber,
+    priceInHbar,
+  }: {
+    tokenAddress: string;
+    serialNumber: number;
+    priceInHbar: number;
+  }) => {
+    try {
+      ensureWallet();
+
+      const normalizedTokenAddress = toAddress(tokenAddress);
+      if (!normalizedTokenAddress) {
+        throw new Error("A valid EVM token address is required to list this NFT.");
+      }
+      if (!Number.isSafeInteger(serialNumber) || serialNumber <= 0) {
+        throw new Error("A valid NFT serial number is required to list this NFT.");
+      }
+      if (!Number.isFinite(priceInHbar) || priceInHbar <= 0) {
+        throw new Error("Enter a resale price greater than zero.");
+      }
+
+      setStatus("processing");
+      setError(null);
+
+      const marketplaceAddress = normalizeAddress(HEDERA_CONTRACTS.COMIC_MARKETPLACE.evmAddress);
+
+      await prepareEscrowDeposit(normalizedTokenAddress, serialNumber, marketplaceAddress);
+
+      setStatusMessage("Confirm the resale listing in your wallet...");
+      const hash = await writeContractAsync({
+        address: marketplaceAddress,
+        abi: COMIC_MARKETPLACE_ABI,
+        functionName: "depositAndListForResale",
+        // The stored price is compared against msg.value, and msg.value inside the Hedera EVM
+        // is denominated in TINYBARS - the relay divides the 18dp transaction value by 10^10
+        // before execution. Storing weibars here makes the listing cost 10^10x its face value,
+        // and no purchase can then satisfy the "Insufficient payment" require.
+        args: [normalizedTokenAddress, BigInt(serialNumber), hbarToTinybars(priceInHbar)],
+        account: address,
+        chain: publicClient?.chain,
+        gas: BigInt(5_000_000),
+      });
+
+      setTxHash(hash);
+      setStatusMessage("Waiting for the resale listing to confirm...");
+      const receipt = await waitForReceipt(hash);
+      if (isReceiptFailed(receipt)) {
+        throw new Error(`Resale listing transaction reverted (tx=${hash}).`);
+      }
+
+      const listingId = extractEventArg(receipt, COMIC_MARKETPLACE_ABI, "NFTListed", "listingId");
+      setStatus("done");
+      setStatusMessage("NFT listed for resale successfully.");
+      return { txHash: hash, transactionId: hash, listingId, status: "SUCCESS" };
+    } catch (err: any) {
+      const message = err?.message || "Resale listing failed";
+      setError(message);
+      setStatus("error");
+      setStatusMessage(message);
+      throw err;
+    }
+  };
+
+  const executeMarketplaceTransaction = async ({
+    functionName,
+    args,
+    value,
+    successMessage,
+  }: {
+    functionName: string;
+    args: readonly unknown[];
+    value?: bigint;
+    successMessage: string;
+  }) => {
+    ensureWallet();
+    setStatus("processing");
+    setError(null);
+    setStatusMessage("Confirm the transaction in your wallet...");
+
+    const marketplaceAddress = normalizeAddress(HEDERA_CONTRACTS.COMIC_MARKETPLACE.evmAddress);
+    const hash = await writeContractAsync({
+      address: marketplaceAddress,
+      abi: COMIC_MARKETPLACE_ABI,
+      functionName: functionName as any,
+      args: args as any,
+      ...(value === undefined ? {} : { value }),
+      account: address,
+      chain: publicClient?.chain,
+      gas: BigInt(5_000_000),
+    } as any);
+
+    setTxHash(hash);
+    setStatusMessage("Waiting for the transaction to confirm...");
+    const receipt = await waitForReceipt(hash);
+    if (isReceiptFailed(receipt)) {
+      throw new Error(`Marketplace transaction reverted (tx=${hash}).`);
+    }
+
+    setStatus("done");
+    setStatusMessage(successMessage);
+    return { txHash: hash, transactionId: hash, status: "SUCCESS" };
+  };
+
+  /**
+   * Buy an edition another holder put up for resale.
+   *
+   * `priceTinybars` / `tokenAddress` are the values the caller already read from the mirror
+   * node; they are only a fallback for when the contract read fails, because the contract's
+   * own copy of the listing is what purchaseNFT checks.
+   */
+  const purchaseResaleListing = async ({
+    listingId,
+    priceTinybars,
+    tokenAddress,
+  }: {
+    listingId: number;
+    priceTinybars?: string;
+    tokenAddress?: string;
+  }) => {
+    try {
+      ensureWallet();
+      if (!Number.isSafeInteger(listingId) || listingId < 0) {
+        throw new Error("A valid listing ID is required to buy this NFT.");
+      }
+
+      setStatus("processing");
+      setError(null);
+      setStatusMessage("Reading the listing from the contract...");
+
+      const marketplaceAddress = normalizeAddress(HEDERA_CONTRACTS.COMIC_MARKETPLACE.evmAddress);
+
+      const listing = await readMarketplaceListing(listingId).catch((readErr) => {
+        console.warn("purchaseResaleListing: could not read the listing on-chain", readErr);
+        return null;
+      });
+
+      if (listing && !listing.isActive) {
+        throw new Error("This listing is no longer active - it was already sold or cancelled.");
+      }
+      if (listing && address && listing.seller.toLowerCase() === address.toLowerCase()) {
+        throw new Error("This is your own listing. Cancel it instead of buying it.");
+      }
+
+      const rawPriceTinybars =
+        listing?.priceTinybars ?? (priceTinybars ? BigInt(priceTinybars) : null);
+      if (rawPriceTinybars === null || rawPriceTinybars <= BigInt(0)) {
+        throw new Error("Could not read this listing's price from the marketplace contract.");
+      }
+      if (rawPriceTinybars > MAX_SANE_LISTING_TINYBARS) {
+        throw new Error(
+          "This listing's price was recorded in the wrong unit by an earlier build of the app, " +
+            "so it cannot be paid. The seller needs to cancel the listing and list it again."
+        );
+      }
+
+      const listingToken = listing?.tokenAddress || tokenAddress;
+      if (listingToken) {
+        setStatusMessage("Checking your wallet can receive this NFT...");
+        await ensureEscrowReleaseIsPossible(listingToken);
+        await ensureBuyerAssociated(listingToken);
+        await ensureBuyerCanCoverPurchase(listingToken, rawPriceTinybars);
+      }
+
+      // The contract holds the price in tinybars; the value crossing the JSON-RPC relay is
+      // 18dp weibars, so scale up by 10^10. See the unit-scale note in CLAUDE.md.
+      setStatusMessage("Confirm the purchase in your wallet...");
+      const hash = await writeContractAsync({
+        address: marketplaceAddress,
+        abi: COMIC_MARKETPLACE_ABI,
+        functionName: "purchaseNFT",
+        args: [BigInt(listingId)],
+        value: rawPriceTinybars * WEIBARS_PER_TINYBAR,
+        account: address,
+        chain: publicClient?.chain,
+        gas: BigInt(5_000_000),
+      });
+
+      setTxHash(hash);
+      setStatusMessage("Waiting for the purchase to confirm...");
+      const receipt = await waitForReceipt(hash);
+      if (isReceiptFailed(receipt)) {
+        throw new Error(`Purchase transaction reverted (tx=${hash}).`);
+      }
+
+      setStatus("done");
+      setStatusMessage("Purchase completed successfully.");
+      return { txHash: hash, transactionId: hash, status: "SUCCESS" };
+    } catch (err: any) {
+      const message = err?.message || "Purchase failed";
+      setError(message);
+      setStatus("error");
+      setStatusMessage(message);
+      throw err;
+    }
+  };
+
+  /**
+   * Withdraw your own resale listing. cancelListing returns the escrowed NFT to the seller, and
+   * because that transfer sends the marketplace no fungible value, HTS charges the collection's
+   * royalty fallback fees to the seller receiving it back - so the caller needs a little HBAR
+   * on hand beyond gas.
+   */
+  const cancelResaleListing = async (listingId: number) => {
+    if (!Number.isSafeInteger(listingId) || listingId < 0) {
+      throw new Error("A valid listing ID is required to cancel this listing.");
+    }
+
+    const listing = await readMarketplaceListing(listingId).catch((readErr) => {
+      console.warn("cancelResaleListing: could not read the listing on-chain", readErr);
+      return null;
+    });
+    if (listing?.tokenAddress) await ensureEscrowReleaseIsPossible(listing.tokenAddress);
+
+    return executeMarketplaceTransaction({
+      functionName: "cancelListing",
+      args: [BigInt(listingId)],
+      successMessage: "Listing cancelled and the NFT returned to your wallet.",
+    });
+  };
+
+  const createOffer = async ({ listingId, amountInHbar, expiresAt }: {
+    listingId: number;
+    amountInHbar: number;
+    expiresAt: number;
+  }) => {
+    if (!Number.isSafeInteger(listingId) || listingId < 0) throw new Error("A valid listing ID is required.");
+    if (!Number.isFinite(amountInHbar) || amountInHbar <= 0) throw new Error("Offer amount must be greater than zero.");
+    if (!Number.isSafeInteger(expiresAt) || expiresAt <= Math.floor(Date.now() / 1000)) {
+      throw new Error("Offer expiry must be in the future.");
+    }
+    return executeMarketplaceTransaction({
+      functionName: "createOffer",
+      args: [BigInt(listingId), BigInt(expiresAt)],
+      value: hbarToWei(amountInHbar),
+      successMessage: "Offer submitted successfully.",
+    });
+  };
+
+  const cancelOffer = (offerId: number) => executeMarketplaceTransaction({
+    functionName: "cancelOffer", args: [BigInt(offerId)], successMessage: "Offer cancelled and funds returned.",
+  });
+  const acceptOffer = (offerId: number) => executeMarketplaceTransaction({
+    functionName: "acceptOffer", args: [BigInt(offerId)], successMessage: "Offer accepted successfully.",
+  });
+  const rejectOffer = (offerId: number) => executeMarketplaceTransaction({
+    functionName: "rejectOffer", args: [BigInt(offerId)], successMessage: "Offer rejected and funds returned.",
+  });
+  const expireOffer = (offerId: number) => executeMarketplaceTransaction({
+    functionName: "expireOffer", args: [BigInt(offerId)], successMessage: "Expired offer funds returned.",
+  });
+
+  const createAuction = async ({ tokenAddress, serialNumber, reservePriceInHbar, durationInSeconds }: {
+    tokenAddress: string;
+    serialNumber: number;
+    reservePriceInHbar: number;
+    durationInSeconds: number;
+  }) => {
+    const normalizedTokenAddress = toAddress(tokenAddress);
+    if (!normalizedTokenAddress) throw new Error("A valid EVM token address is required to create an auction.");
+    if (!Number.isSafeInteger(serialNumber) || serialNumber <= 0) throw new Error("A valid NFT serial number is required.");
+    if (!Number.isFinite(reservePriceInHbar) || reservePriceInHbar < 0) throw new Error("Reserve price cannot be negative.");
+    if (!Number.isSafeInteger(durationInSeconds) || durationInSeconds <= 0) throw new Error("Auction duration must be positive.");
+
+    ensureWallet();
+    setStatus("processing");
+    setError(null);
+    await prepareEscrowDeposit(
+      normalizedTokenAddress,
+      serialNumber,
+      normalizeAddress(HEDERA_CONTRACTS.COMIC_MARKETPLACE.evmAddress)
+    );
+
+    return executeMarketplaceTransaction({
+      functionName: "createAuction",
+      // The reserve is stored and then compared against a bid's msg.value, which the EVM sees
+      // in TINYBARS - same rule as a resale listing's price. Storing weibars here puts the
+      // reserve 10^10 out of reach and every bid comes back "Bid too low".
+      args: [normalizedTokenAddress, BigInt(serialNumber), hbarToTinybars(reservePriceInHbar), BigInt(durationInSeconds)],
+      successMessage: "Auction created successfully.",
+    });
+  };
+
+  const placeBid = async ({ auctionId, amountInHbar }: { auctionId: number; amountInHbar: number }) => {
+    if (!Number.isSafeInteger(auctionId) || auctionId < 0) throw new Error("A valid auction ID is required.");
+    if (!Number.isFinite(amountInHbar) || amountInHbar <= 0) throw new Error("Bid amount must be greater than zero.");
+    return executeMarketplaceTransaction({
+      functionName: "placeBid", args: [BigInt(auctionId)], value: hbarToWei(amountInHbar), successMessage: "Bid submitted successfully.",
+    });
+  };
+
+  const settleAuction = (auctionId: number) => executeMarketplaceTransaction({
+    functionName: "settleAuction", args: [BigInt(auctionId)], successMessage: "Auction settled successfully.",
+  });
+  const cancelAuction = (auctionId: number) => executeMarketplaceTransaction({
+    functionName: "cancelAuction", args: [BigInt(auctionId)], successMessage: "Auction cancelled successfully.",
+  });
+
   const createCampaign = async ({
     episodeId,
     campaignType,
@@ -923,6 +1545,18 @@ const fetchMirrorTransaction = async (txHash: string) => {
       createComicCollection,
       createDirectListing,
       purchaseFromListing,
+      listForResale,
+      purchaseResaleListing,
+      cancelResaleListing,
+      createOffer,
+      cancelOffer,
+      acceptOffer,
+      rejectOffer,
+      expireOffer,
+      createAuction,
+      placeBid,
+      settleAuction,
+      cancelAuction,
       createCampaign,
       addToWhitelist,
       addPhase,
@@ -939,6 +1573,15 @@ const fetchMirrorTransaction = async (txHash: string) => {
       status,
       statusMessage,
       txHash,
+      createOffer,
+      cancelOffer,
+      acceptOffer,
+      rejectOffer,
+      expireOffer,
+      createAuction,
+      placeBid,
+      settleAuction,
+      cancelAuction,
     ]
   );
 }

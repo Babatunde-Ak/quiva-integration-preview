@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Check, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { HbarIcon } from "@/components/ui/HbarIcon";
+import { useWagmiMarketplace } from "@/hook/useWagmiMarketplace";
 
 interface ComicData {
   id: string;
@@ -13,6 +14,9 @@ interface ComicData {
   edition: number;
   totalEditions: number;
   imageUrl: string;
+  tokenAddress?: string;
+  tokenId?: string;
+  serialNumber?: number | string;
 }
 
 interface ResellModalProps {
@@ -26,9 +30,11 @@ export default function ResellModal({
   onClose,
   comic,
 }: ResellModalProps) {
+  const { listForResale, isConnected, error: marketplaceError } = useWagmiMarketplace();
   const [step, setStep] = useState<"input" | "success">("input");
   const [amount, setAmount] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
 
   // Reset state when modal closes
   React.useEffect(() => {
@@ -37,20 +43,47 @@ export default function ResellModal({
         setStep("input");
         setAmount("");
         setIsLoading(false);
+        setLocalError(null);
       }, 300);
     }
   }, [isOpen]);
 
   const handleListForSale = async () => {
-    if (!amount) return;
+    const priceInHbar = Number(amount);
+    const routeParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+    const routeTokenId = routeParams?.get("tokenId") || "";
+    const routeSerial = routeParams?.get("serialNumber");
+    const serialNumber = Number(comic.serialNumber ?? routeSerial ?? 0);
+    const tokenAddress = comic.tokenAddress || comic.tokenId || routeTokenId;
+
+    if (!Number.isFinite(priceInHbar) || priceInHbar < 0.1) {
+      setLocalError("Enter a resale price of at least 0.1 HBAR.");
+      return;
+    }
+    if (!isConnected) {
+      setLocalError("Connect your wallet before listing this NFT.");
+      return;
+    }
+    if (!tokenAddress || !Number.isFinite(serialNumber) || serialNumber <= 0) {
+      setLocalError("This comic is missing its NFT token address or serial number.");
+      return;
+    }
 
     setIsLoading(true);
+    setLocalError(null);
 
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      await listForResale({
+        tokenAddress,
+        serialNumber,
+        priceInHbar,
+      });
       setIsLoading(false);
       setStep("success");
-    }, 1500);
+    } catch (error: any) {
+      setIsLoading(false);
+      setLocalError(error?.message || "Unable to list this comic for resale.");
+    }
   };
 
   if (!isOpen) return null;
@@ -78,6 +111,7 @@ export default function ResellModal({
               onCancel={onClose}
               onConfirm={handleListForSale}
               isLoading={isLoading}
+              error={localError || marketplaceError}
             />
           ) : (
             <SuccessStep key="step-success" comic={comic} onClose={onClose} />
@@ -96,6 +130,7 @@ const ListingStep = ({
   onCancel,
   onConfirm,
   isLoading,
+  error,
 }: any) => (
   <motion.div
     initial={{ opacity: 0, scale: 0.95, y: 10 }}
@@ -157,6 +192,9 @@ const ListingStep = ({
         Minimum resale price: 0.1
         <HbarIcon size={12} />
       </p>
+      {error && (
+        <p className="mt-2 text-xs text-red-400">{error}</p>
+      )}
     </div>
 
     {/* Actions */}

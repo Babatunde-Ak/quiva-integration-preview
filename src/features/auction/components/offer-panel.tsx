@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { HbarIcon } from '@/components/ui/HbarIcon'
-import OfferActionModals, { OfferModalType } from '@/features/offers-bids/components/OfferActionModals'
+import { useWagmiMarketplace } from '@/hook/useWagmiMarketplace'
 import {
   SELLER,
   COMIC,
@@ -21,18 +21,26 @@ export default function OfferPanel({
   offerStats,
   breakdown,
   initialMode = 'specific',
+  listingId,
+  auctionId,
+  tokenAddress,
+  serialNumber,
 }: {
   seller: typeof SELLER
   comic: typeof COMIC
   offerStats: typeof OFFER_STATS
   breakdown: typeof BREAKDOWN
   initialMode?: OfferMode
+  listingId?: number
+  auctionId?: number
+  tokenAddress?: string
+  serialNumber?: number
 }) {
   const router = useRouter()
+  const { createOffer, placeBid, isProcessing, error } = useWagmiMarketplace()
   const [amount, setAmount] = useState('120')
   const [activeExpiry, setActiveExpiry] = useState('24 hours')
   const [mode, setMode] = useState<OfferMode>(initialMode)
-  const [activeModal, setActiveModal] = useState<OfferModalType>(null)
 
   const numericAmount = Number(amount) || 0
   const usdAmount = (numericAmount * 0.1295).toFixed(2)
@@ -59,6 +67,32 @@ export default function OfferPanel({
     mode === 'open'
       ? 'Any holder of this episode can accept your price. Funds stay locked until accepted or expired.'
       : 'Offer is sent directly to the collector. Funds stay locked until accepted or expired.'
+
+  const expirySeconds = activeExpiry === '24 hours'
+    ? 24 * 60 * 60
+    : activeExpiry === '3 days'
+      ? 3 * 24 * 60 * 60
+      : activeExpiry === '7 days'
+        ? 7 * 24 * 60 * 60
+        : 30 * 24 * 60 * 60
+
+  const submitTransaction = async () => {
+    try {
+      if (mode === 'open') {
+        if (auctionId === undefined) throw new Error('This auction is missing its auction ID.')
+        await placeBid({ auctionId, amountInHbar: numericAmount })
+      } else {
+        if (listingId === undefined) throw new Error('This resale listing is missing its listing ID.')
+        await createOffer({
+          listingId,
+          amountInHbar: numericAmount,
+          expiresAt: Math.floor(Date.now() / 1000) + expirySeconds,
+        })
+      }
+    } catch {
+      // The hook exposes the transaction error for display below.
+    }
+  }
 
   return (
     <div className="flex flex-col gap-5">
@@ -194,11 +228,14 @@ export default function OfferPanel({
 
       <button
         type="button"
-        onClick={() => setActiveModal('accepted')}
-        className="w-full rounded-xl bg-[#FAA31E] py-4 font-bold text-black outline-none transition hover:bg-[#ffb13b] focus-visible:ring-2 focus-visible:ring-white"
+        onClick={submitTransaction}
+        disabled={isProcessing}
+        className="w-full rounded-xl bg-[#FAA31E] py-4 font-bold text-black outline-none transition hover:bg-[#ffb13b] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-white"
       >
-        {ctaLabel}
+        {isProcessing ? 'Confirming transaction...' : ctaLabel}
       </button>
+
+      {error && <p className="text-sm text-red-400">{error}</p>}
 
       <button
         type="button"
@@ -209,15 +246,8 @@ export default function OfferPanel({
       </button>
 
       <p className="text-center text-xs text-white/30">
-        Preview UI only. No blockchain transfer or escrow transaction is submitted from this screen.
+        {mode === 'open' ? 'Your bid is held in escrow until the auction settles.' : 'Your HBAR is held in escrow until the seller accepts or the offer expires.'}
       </p>
-
-      <OfferActionModals
-        activeModal={activeModal}
-        onClose={() => setActiveModal(null)}
-        onReadNow={() => router.push('/reader')}
-        onViewEditions={() => router.push('/marketplace/user-profile?tab=mintedComics')}
-      />
     </div>
   )
 }

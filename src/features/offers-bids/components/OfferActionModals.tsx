@@ -11,6 +11,7 @@ export type OfferModalType = 'raise' | 'cancel' | 'accepted' | null
 interface OfferActionModalsProps {
   activeModal: OfferModalType
   onClose: () => void
+  onCancelOffer?: () => void
   onReadNow?: () => void
   onViewEditions?: () => void
 }
@@ -18,6 +19,7 @@ interface OfferActionModalsProps {
 export default function OfferActionModals({
   activeModal,
   onClose,
+  onCancelOffer,
   onReadNow,
   onViewEditions,
 }: OfferActionModalsProps) {
@@ -124,7 +126,10 @@ export default function OfferActionModals({
             Cancellation is instant. Full amount returned, no fees.
           </div>
 
-          <button className="w-full rounded-xl bg-red-500 py-3.5 font-bold text-white outline-none transition hover:bg-red-400 focus-visible:ring-2 focus-visible:ring-white">
+          <button
+            onClick={onCancelOffer}
+            className="w-full rounded-xl bg-red-500 py-3.5 font-bold text-white outline-none transition hover:bg-red-400 focus-visible:ring-2 focus-visible:ring-white"
+          >
             Yes, cancel offer
           </button>
           <button
