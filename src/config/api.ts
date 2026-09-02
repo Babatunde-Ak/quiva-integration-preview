@@ -1,7 +1,4 @@
-export const API_BASE_URL ="http://localhost:5000/api";
-  // process.env.NEXT_PUBLIC_API_URL?.trim() ||
-  // process.env.NEXT_PUBLIC_LOCAL_API_URL?.trim() ||
-  // "https://quiva-marketplace-backend.onrender.com/api";
+export const API_BASE_URL = "/api/quiva";
 export const API_ENDPOINTS = {
   comics: {
     all: "/comics/all",

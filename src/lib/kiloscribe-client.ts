@@ -1,50 +1,14 @@
-// lib/kiloscribe-client.ts
-export interface InscriptionRequest {
-  fileURL: string;
-  jsonFileURL?: string;
-  metadata?: {
-    name: string;
-    description?: string;
-    creator?: string;
-    collection?: string;
-    traits?: Record<string, any>;
-  };
-}
+import "server-only";
 
-export interface InscriptionResponse {
-  transactionBytes: string;
-  transactionId: string;
-  inscriptionId?: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
-  estimatedCost?: number;
-}
-
-export interface InscriptionStatus {
-  transactionId: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
-  inscriptionId?: string;
-  hashinalsUrl?: string;
-  metadata?: any;
-  createdAt: string;
-  completedAt?: string;
-  error?: string;
-}
-
-export interface HashinalMetadata {
-  inscriptionId: string;
-  name: string;
-  description?: string;
-  creator: string;
-  collection?: string;
-  fileType: string;
-  fileSize: number;
-  traits?: Record<string, any>;
-  createdAt: string;
-  hcsReference: string;
-}
+import type {
+  HashinalMetadata,
+  InscriptionRequest,
+  InscriptionResponse,
+  InscriptionStatus,
+} from "./kiloscribe-types";
 
 class KiloScribeClient {
-  private baseURL = process.env.NEXT_PUBLIC_KILOSCRIBE_API_URL || 'https://api.kiloscribe.com';
+  private baseURL = process.env.KILOSCRIBE_API_URL || 'https://api.kiloscribe.com';
   private apiKey = process.env.KILOSCRIBE_API_KEY;
 
   constructor(apiKey?: string) {

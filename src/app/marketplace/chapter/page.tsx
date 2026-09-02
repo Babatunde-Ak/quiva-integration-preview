@@ -16,6 +16,7 @@ import { useAppDispatch, useAppSelector } from '@/redux/hook';
 import { getAllComics, getComicById } from '@/redux/slices/comicSlice';
 import { getCollectionById } from '@/redux/slices/collectionSlice';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { PRODUCTION_FEATURES } from '@/config/features';
 
 const Marketplace = () => {
   const searchParams = useSearchParams();
@@ -23,7 +24,8 @@ const Marketplace = () => {
   const comicId = searchParams.get('id');
   const tabParam = searchParams.get('tab');
 
-  const [activeTab, setActiveTab] = useState(tabParam || 'Comics');
+  const defaultTab = PRODUCTION_FEATURES.resale ? 'Comics' : 'Release';
+  const [activeTab, setActiveTab] = useState(tabParam || defaultTab);
 
   const dispatch = useAppDispatch();
 
@@ -38,7 +40,7 @@ const Marketplace = () => {
     if (tabParam) {
       // If tab is explicitly specified in URL
       const tabName = tabParam.charAt(0).toUpperCase() + tabParam.slice(1);
-      setActiveTab(tabName);
+      setActiveTab(tabName === 'Comics' && !PRODUCTION_FEATURES.resale ? defaultTab : tabName);
     } else if (currentComic && comicId) {
       // Auto-switch tab based on comic type
       const hasCampaign = currentComic.nftId?.campaignId !== undefined && 
@@ -54,11 +56,10 @@ const Marketplace = () => {
         // If comic has a campaign, show Release tab
         setActiveTab('Release');
       } else if (hasDirectListing) {
-        // If comic has direct listing, stay on Comics tab
-        setActiveTab('Comics');
+        setActiveTab(defaultTab);
       }
     }
-  }, [tabParam, currentComic, comicId]);
+  }, [tabParam, currentComic, comicId, defaultTab]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -85,12 +86,20 @@ const Marketplace = () => {
     fetchData();
   }, [dispatch, comicId]);
   
-  const tabs = ["Comics", "Release", "Holders", "Offers", "Activity", "Collections", "About"];
+  const tabs = [
+    ...(PRODUCTION_FEATURES.resale ? ["Comics"] : []),
+    "Release",
+    "Holders",
+    ...(PRODUCTION_FEATURES.offers ? ["Offers"] : []),
+    "Activity",
+    "Collections",
+    "About",
+  ];
 
   // Handle tab change and update URL
   const handleTabChange = (tab: string) => {
     // Offers tab routes to the standalone auction page
-    if (tab === 'Offers') {
+    if (tab === 'Offers' && PRODUCTION_FEATURES.offers && PRODUCTION_FEATURES.auction) {
       const params = new URLSearchParams();
       if (comicId) params.set('id', comicId);
       router.push(`/marketplace/auction?${params.toString()}`);
@@ -162,10 +171,10 @@ const Marketplace = () => {
           {/* Content Views */}
           {!isLoading && !error && (
             <>
-              {activeTab === 'Comics' && <ComicsView comicId={comicId} />}
+              {PRODUCTION_FEATURES.resale && activeTab === 'Comics' && <ComicsView comicId={comicId} />}
               {activeTab === 'Release' && <ReleaseView comicId={comicId} />}
               {activeTab === 'Holders' && <HoldersView />}
-              {activeTab === 'Offers' && <OffersView />}
+              {PRODUCTION_FEATURES.offers && activeTab === 'Offers' && <OffersView />}
               {activeTab === 'Activity' && <ActivityView />}
               {activeTab === 'Collections' && <CollectionsView />}
               {activeTab === 'About' && <AboutView />}

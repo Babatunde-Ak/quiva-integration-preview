@@ -14,8 +14,16 @@ import { getUserComics } from '@/redux/slices/comicSlice';
 import { useAccount } from 'wagmi';
 import { useUserPurchasedComics } from '@/hook/usePurchasedComics';
 import OfferManagementSection from '@/features/offers-bids/components/OfferManagementSection';
+import { PRODUCTION_FEATURES } from '@/config/features';
 
-const VALID_PROFILE_TABS = ['currentReads', 'mintedComics', 'favoriteComics', 'listedComics', 'offersBids', 'offersReceived'];
+const OFFER_PROFILE_TABS = ['offersBids', 'offersReceived'];
+const VALID_PROFILE_TABS = [
+    'currentReads',
+    'mintedComics',
+    'favoriteComics',
+    'listedComics',
+    ...(PRODUCTION_FEATURES.offers ? OFFER_PROFILE_TABS : []),
+];
 
 const UserProfile = ({ onEditProfile, onComicAction }) => {
     const router = useRouter();
@@ -86,8 +94,10 @@ const UserProfile = ({ onEditProfile, onComicAction }) => {
         { key: 'mintedComics', label: 'Minted Comics' },
         { key: 'favoriteComics', label: 'Favorite Comics' },
         { key: 'listedComics', label: 'Listed Comics' },
-        { key: 'offersBids', label: 'Offers/Bids' },
-        { key: 'offersReceived', label: 'Offers Received' }
+        ...(PRODUCTION_FEATURES.offers ? [
+            { key: 'offersBids', label: 'Offers/Bids' },
+            { key: 'offersReceived', label: 'Offers Received' },
+        ] : []),
     ];
 
     const formatNumber = (value) => {
@@ -106,7 +116,7 @@ const UserProfile = ({ onEditProfile, onComicAction }) => {
                 router.push('/marketplace');
                 break;
             case 'list':
-                router.push('/marketplace/collections/resell');
+                router.push(PRODUCTION_FEATURES.resale ? '/marketplace/collections/resell' : '/marketplace');
                 break;
             default:
                 router.push('/marketplace');
@@ -203,11 +213,11 @@ const UserProfile = ({ onEditProfile, onComicAction }) => {
             );
         }
 
-        if (activeTab === 'offersBids') {
+        if (PRODUCTION_FEATURES.offers && activeTab === 'offersBids') {
             return <OfferManagementSection view="sent" />;
         }
 
-        if (activeTab === 'offersReceived') {
+        if (PRODUCTION_FEATURES.offers && activeTab === 'offersReceived') {
             return <OfferManagementSection view="received" />;
         }
 
@@ -220,7 +230,7 @@ const UserProfile = ({ onEditProfile, onComicAction }) => {
         );
     };
 
-    const shouldShowContentHeading = !['offersBids', 'offersReceived'].includes(activeTab);
+    const shouldShowContentHeading = !PRODUCTION_FEATURES.offers || !OFFER_PROFILE_TABS.includes(activeTab);
 
     return (
         <div className="min-h-screen w-full min-w-0 overflow-x-clip bg-background-primary text-text-primary font-space relative">

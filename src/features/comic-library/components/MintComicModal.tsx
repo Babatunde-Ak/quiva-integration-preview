@@ -9,6 +9,7 @@ import MintProcessingModal from './MintProcessingModal'
 import MintSuccessModal from './MintSuccessModal'
 import { useAppDispatch, useAppSelector } from '@/redux/hook'
 import { createTransaction } from '@/redux/slices/transactionSlice'
+import { PRODUCTION_FEATURES } from '@/config/features'
 
 interface MintComicModalProps {
   title: string
@@ -483,15 +484,17 @@ const MintComicModal: React.FC<MintComicModalProps> = ({
               </p>
 
               <div className="space-y-3 mb-6">
-                <button
-                  onClick={handleConnectWallet}
-                  className="w-full bg-white/10 hover:bg-white/20 text-white font-medium py-4 rounded-xl transition-all flex items-center justify-center gap-3"
-                >
-                  <div className="w-8 h-8 bg-yellow-600 rounded-lg flex items-center justify-center">
-                    <HbarIcon size={20} />
-                  </div>
-                  <span>Hedera HashPack</span>
-                </button>
+                {PRODUCTION_FEATURES.hashPackWallet && (
+                  <button
+                    onClick={handleConnectWallet}
+                    className="w-full bg-white/10 hover:bg-white/20 text-white font-medium py-4 rounded-xl transition-all flex items-center justify-center gap-3"
+                  >
+                    <div className="w-8 h-8 bg-yellow-600 rounded-lg flex items-center justify-center">
+                      <HbarIcon size={20} />
+                    </div>
+                    <span>Hedera HashPack</span>
+                  </button>
+                )}
                 
                 <button
                   onClick={handleConnectWallet}

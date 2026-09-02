@@ -226,7 +226,7 @@ export default function OnboardingPage({ onclose, comicData }: OnboardingPagePro
 											<p className='text-white/70 text-xs leading-relaxed'>
 												{publishType === "free" 
 													? `✨ Free comics with NFTs: Readers can claim your comic as an NFT for free (gas fees only). Each reader can claim once until max supply is reached.`
-													: `💰 Paid comics with NFTs: Each NFT copy can be purchased at the price you set above. NFT buyers get permanent access and can resell their copies.`
+											: `💰 Paid comics with NFTs: Each NFT copy can be purchased at the price you set above. NFT buyers get permanent reading access.`
 												}
 											</p>
 										</div>

@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 
 const BACKEND_API_BASE =
   process.env.QUIVA_BACKEND_API_URL?.trim() ||
-  process.env.NEXT_PUBLIC_API_URL?.trim() ||
-  process.env.NEXT_PUBLIC_LOCAL_API_URL?.trim() ||
   "https://quiva-marketplace-backend.onrender.com/api";
 
 // Keep the proxy constrained to API groups used by this frontend. This includes

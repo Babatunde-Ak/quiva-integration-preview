@@ -14,6 +14,8 @@ import Picture from "@/components/picture/Index";
 // import { RainbowConnect } from "@/components/modals/ConnectWalletModal";
 
 const Hero = () => {
+	const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://quiva.app';
+
 	return (
 		<section className='min-h-screen grid place-items-center relative bg-black-100 overflow-hidden'>
 			<div className='absolute inset-0'>
@@ -40,7 +42,7 @@ const Hero = () => {
 
 					<div className='hidden lg:flex items-center gap-2'>
 						<AnchorButton href="https://t.me/Quiva_bot/quivaGame">Quiva Games</AnchorButton>
-						<SecondaryAnchorButton href={`${process.env.NEXT_LOCAL_WEBSITE_URL || 'https://quiva.app'}/waitlist`} className='bg-transparent capitalize'>
+						<SecondaryAnchorButton href={`${appUrl}/waitlist`} className='bg-transparent capitalize'>
 							join creators Waitlist 
 						</SecondaryAnchorButton>
 						{/* <RainbowConnect /> */}
@@ -55,7 +57,7 @@ const Hero = () => {
 						className='flex flex-col lg:hidden items-center gap-3 lg:gap-2 lg:pt-20 pb-0 w-fit'
 					>
 						<AnchorButton href="https://t.me/Quiva_bot/quivaGame" className='w-full lg:w-fit'>Quiva Games</AnchorButton>
-						<SecondaryAnchorButton href={`${process.env.NEXT_LOCAL_WEBSITE_URL || 'https://quiva.app'}/waitlist`} className='bg-transparent w-full lg:w-fit !border-white !border-[3px] text-white capitalize'>
+						<SecondaryAnchorButton href={`${appUrl}/waitlist`} className='bg-transparent w-full lg:w-fit !border-white !border-[3px] text-white capitalize'>
 							join creators Waitlist 
 						</SecondaryAnchorButton>
 					</motion.div>

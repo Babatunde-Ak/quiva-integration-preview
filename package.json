@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "local-build": "cross-env NODE_OPTIONS=--max-old-space-size=8192 next build",
+    "local-build": "node --max-old-space-size=8192 node_modules/next/dist/bin/next build",
     "start": "next start",
     "lint": "next lint"
   },
@@ -51,6 +51,7 @@
     "https-browserify": "^1.0.0",
     "jszip": "^3.10.1",
     "lucide-react": "^0.544.0",
+    "long": "^5.3.2",
     "next": "^14.2.33",
     "node-polyfill-webpack-plugin": "^4.1.0",
     "os-browserify": "^0.3.0",

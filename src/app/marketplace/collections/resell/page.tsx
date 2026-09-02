@@ -9,6 +9,7 @@ import { useAppDispatch, useAppSelector } from "@/redux/hook";
 import { getComicById } from "@/redux/slices/comicSlice";
 import { useHederaWallet } from "@/providers/HashPackProvider";
 import { useNftOwnershipCheck } from "@/hook/userNFTOwnershipCheck";
+import { PRODUCTION_FEATURES } from "@/config/features";
 
 export default function ComicPage() {
   const [isResellOpen, setIsResellOpen] = useState(false);
@@ -67,6 +68,12 @@ export default function ComicPage() {
     tokenAddress,
     serialNumber: ownedSerial,
   } : null, [currentComic, images.cover, nftData.maxSupply, ownedSerial, tokenAddress]);
+
+  if (!PRODUCTION_FEATURES.resale) {
+    return <div className="flex min-h-screen items-center justify-center bg-[#0a0a0a] px-6 text-center text-white">
+      <p>Resale is not available in this production release.</p>
+    </div>;
+  }
 
   if (!comicId || (!isLoading && !comic)) {
     return <div className="flex min-h-screen items-center justify-center bg-[#0a0a0a] px-6 text-center text-white">

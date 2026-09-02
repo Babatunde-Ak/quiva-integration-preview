@@ -1,4 +1,5 @@
-// lib/kiloscribe-service.ts (Working Version)
+import "server-only";
+
 import { 
   AccountId, 
   PrivateKey, 
@@ -8,37 +9,7 @@ import {
   TopicId,
   TransactionReceipt 
 } from '@hiero-ledger/sdk';
-
-export interface HashinalInscriptionData {
-  title: string;
-  description: string;
-  creator: string;
-  collection?: string;
-  fileData: Blob;
-  metadata: {
-    genre: string[];
-    tags: string[];
-    ageRating: string;
-    comicId: string;
-    pages?: number;
-    originalFormat: string;
-  };
-}
-
-export interface InscriptionResult {
-  transactionId: string;
-  inscriptionId?: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
-  hashinalsUrl?: string;
-  hcsTopicId?: string;
-  error?: string;
-}
-
-export interface InscriptionProgress {
-  step: string;
-  percentage: number;
-  message: string;
-}
+import type { InscriptionProgress, InscriptionResult } from './kiloscribe-types';
 
 /**
  * Simplified KiloScribe Service using direct Hedera HCS

@@ -1,5 +1,5 @@
 {
-    "buildCommand": "corepack pnpm@10 build",
+    "buildCommand": "corepack pnpm@10 run local-build",
     "installCommand": "corepack pnpm@10 install --frozen-lockfile",
     "framework": "nextjs"
 }
