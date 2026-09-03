@@ -9,7 +9,7 @@ import { useAppDispatch, useAppSelector } from "@/redux/hook";
 // import { useComicMinting } from "../../;
 // import { useFreeComicMinting } from "@/hook/useFreeComicMinting";
 // import { useAccount } from "@/hook/useUnifiedWallet";
-import { kiloScribeService, InscriptionProgress, InscriptionResult } from "@/lib/kiloscribe-service";
+import type { InscriptionProgress, InscriptionResult } from "@/lib/kiloscribe-types";
 import { useMintComic } from "@/hook/useMintComic";
 import { useComicInscription } from "@/hook/useComicInscription"
 import { useAccount } from "wagmi";
@@ -140,29 +140,46 @@ export default function ComicPublisher({ onclose, comicData, monetizationData }:
 	const tokenId: any = null;
 	const mintHash: string | null = null;
 
-	// Check Hashinal inscription support on component mount
-	// useEffect(() => {
+	useEffect(() => {
+		if (!monetizationData.enableHashinal) return;
+
+		const controller = new AbortController();
+
 		const checkHashinalSupport = async () => {
-			if (monetizationData.enableHashinal) {
-				try {
-					const supportCheck = await kiloScribeService.isInscriptionSupported(comicData, comicData.pages);
-					setHashinalState(prev => ({
-						...prev,
-						isSupported: supportCheck.supported,
-						supportReason: supportCheck.reason
-					}));
-				} catch (error) {
-					console.error('Error checking Hashinal support:', error);
-					setHashinalState(prev => ({
-						...prev,
-						isSupported: false,
-						supportReason: 'Error checking inscription compatibility'
-					}));
-				}
+			try {
+				const response = await fetch('/api/kiloscribe/support', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						coverSize: comicData.coverImage?.size || 0,
+						pageSizes: comicData.pages.map((page) => page.blob?.size || 0),
+					}),
+					signal: controller.signal,
+				});
+
+				if (!response.ok) throw new Error('Support check failed');
+
+				const supportCheck = await response.json();
+				setHashinalState((previous) => ({
+					...previous,
+					isSupported: supportCheck.supported,
+					supportReason: supportCheck.reason,
+				}));
+			} catch (supportError) {
+				if (controller.signal.aborted) return;
+				console.error('Error checking Hashinal support:', supportError);
+				setHashinalState((previous) => ({
+					...previous,
+					isSupported: false,
+					supportReason: 'Error checking inscription compatibility',
+				}));
 			}
 		};
 
-		checkHashinalSupport();
+		void checkHashinalSupport();
+
+		return () => controller.abort();
+	}, [comicData.coverImage, comicData.pages, monetizationData.enableHashinal]);
 
 	// Monitor completion and handle Hashinal inscription
 	// useEffect(() => {

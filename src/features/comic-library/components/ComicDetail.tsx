@@ -8,6 +8,7 @@ import ResellModal from "@/components/modals/ResellModal";
 import { useRouter } from "next/navigation";
 import { ACTIVITY_DATA } from "@/components/utils/dummy-data";
 import dynamic from "next/dynamic";
+import { PRODUCTION_FEATURES } from "@/config/features";
 const MintComicModal = dynamic(() => import("@/features/comic-library/components/MintComicModal"), { ssr: false });
 
 // PROPS INTERFACE FOR BACKWARD COMPATIBILITY
@@ -216,12 +217,14 @@ export default function ComicDetail({
                     >
                       Start Read
                     </button>
-                    <button
-                      onClick={() => setIsResellOpen(true)}
-                      className="flex-1 bg-transparent border border-white text-white font-medium py-2 px-1 rounded-full hover:bg-white/5 transition-all"
-                    >
-                      Resell
-                    </button>
+                    {PRODUCTION_FEATURES.resale && (
+                      <button
+                        onClick={() => setIsResellOpen(true)}
+                        className="flex-1 bg-transparent border border-white text-white font-medium py-2 px-1 rounded-full hover:bg-white/5 transition-all"
+                      >
+                        Resell
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -469,7 +472,7 @@ export default function ComicDetail({
             </div>
           </div>
 
-          <ResellModal
+          {PRODUCTION_FEATURES.resale && <ResellModal
             isOpen={isResellOpen}
             onClose={() => setIsResellOpen(false)}
             comic={{
@@ -480,7 +483,7 @@ export default function ComicDetail({
               totalEditions: 100,
               imageUrl: images.cover, 
             }}
-          />
+          />}
         </div>
       )}
     </>
