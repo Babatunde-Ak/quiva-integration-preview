@@ -3,22 +3,46 @@
 import { useEffect } from 'react'
 import { ChevronLeft } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { SELLER, COMIC, OFFER_STATS, BREAKDOWN } from '../data/data'
 import SellerProfile from './seller-profile'
 import OfferPanel from './offer-panel'
 import MoreFromSection from './more-from-section'
 import { useAppSelector, useAppDispatch } from '@/redux/hook'
 import { getComicById } from '@/redux/slices/comicSlice'
+import { useListingContext } from '@/hook/useListingContext'
+
+export type OfferComic = {
+  title?: string
+  series?: string
+  episode?: string
+  creator?: string
+  image?: string
+  backgroundImage?: string
+  serialNumber?: number
+  totalEditions?: number
+  listedPriceHbar?: number
+  usdPrice?: string
+  floorPriceHbar?: number
+  tokenAddress?: string
+}
+
+export type OfferSeller = {
+  address?: string
+  editionsHeld?: number
+}
 
 export default function AuctionView() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const comicId = searchParams.get('id')
-  const listingId = searchParams.get('listingId')
-  const auctionId = searchParams.get('auctionId')
-  const tokenAddress = searchParams.get('tokenAddress') || undefined
-  const serialNumber = searchParams.get('serialNumber') ? Number(searchParams.get('serialNumber')) : undefined
+  const listingIdParam = searchParams.get('listingId')
+  const auctionIdParam = searchParams.get('auctionId')
+  const tokenAddressParam = searchParams.get('tokenAddress') || undefined
+  const serialParam = searchParams.get('serialNumber')
   const initialMode = searchParams.get('mode') === 'bid' ? 'open' : 'specific'
+
+  const listingId = listingIdParam ? Number(listingIdParam) : undefined
+  const auctionId = auctionIdParam ? Number(auctionIdParam) : undefined
+
   const dispatch = useAppDispatch()
   const { currentComic } = useAppSelector((state: any) => state.comic)
 
@@ -28,46 +52,35 @@ export default function AuctionView() {
     }
   }, [comicId, currentComic?._id, dispatch])
 
-  const comic = currentComic ? {
-    id: currentComic._id || COMIC.id,
-    title: currentComic.title || COMIC.title,
-    series: currentComic.collectionTitle || currentComic.collection?.title || COMIC.series,
-    episode: currentComic.episodeNumber ? `Episode ${String(currentComic.episodeNumber).padStart(2, '0')}` : COMIC.episode,
-    creator: currentComic.creatorId?.username ||
-      (currentComic.creatorId?.walletAddress
+  // The listing is the authority on price, seller and serial - not the comic record, which
+  // describes the collection rather than this particular edition or who currently holds it.
+  const listing = useListingContext(listingId, tokenAddressParam || currentComic?.nftId?.tokenId)
+
+  const comic: OfferComic = {
+    title: currentComic?.title,
+    series: currentComic?.collectionTitle || currentComic?.collection?.title,
+    episode: currentComic?.episodeNumber
+      ? `Episode ${String(currentComic.episodeNumber).padStart(2, '0')}`
+      : undefined,
+    creator:
+      currentComic?.creatorId?.username ||
+      (currentComic?.creatorId?.walletAddress
         ? `${currentComic.creatorId.walletAddress.slice(0, 6)}...${currentComic.creatorId.walletAddress.slice(-4)}`
-        : COMIC.creator),
-    image: currentComic.bannerImage || COMIC.image,
-    backgroundImage: currentComic.bannerImage || COMIC.backgroundImage,
-    editionNumber: currentComic.editionNumber || COMIC.editionNumber,
-    totalEditions: currentComic.totalEditions || COMIC.totalEditions,
-    currentPrice: currentComic.price ?? COMIC.currentPrice,
-    currency: COMIC.currency,
-    usdPrice: currentComic.price != null
-      ? (currentComic.price * 0.115).toFixed(2)
-      : COMIC.usdPrice,
-    floorPrice: currentComic.price ?? COMIC.floorPrice,
-    floorStatus: COMIC.floorStatus,
-    floorPercent: COMIC.floorPercent,
-    activity: currentComic.activity || COMIC.activity,
-    onHatiko: COMIC.onHatiko,
-  } : COMIC
+        : undefined),
+    image: currentComic?.bannerImage,
+    backgroundImage: currentComic?.bannerImage,
+    serialNumber: listing.serialNumber ?? (serialParam ? Number(serialParam) : undefined),
+    totalEditions: currentComic?.totalEditions,
+    listedPriceHbar: listing.listedPriceHbar,
+    floorPriceHbar: listing.floorPriceHbar,
+    tokenAddress: listing.tokenAddress || tokenAddressParam,
+  }
 
-  const seller = currentComic?.creatorId ? {
-    handle: `@${currentComic.creatorId.username || 'Unknown'}`,
-    displayName: currentComic.creatorId.username || 'Unknown',
-    initials: (currentComic.creatorId.username || 'UK').slice(0, 2).toUpperCase(),
-    verified: true,
-    rating: SELLER.rating,
-    stats: SELLER.stats,
-  } : SELLER
-
-  const offerStats = currentComic?.price != null ? {
-    listed: { value: currentComic.price, currency: 'ℏ' },
-    floorPrice: { value: currentComic.price, currency: 'ℏ' },
-    topBalance: OFFER_STATS.topBalance,
-    highestBid: OFFER_STATS.highestBid,
-  } : OFFER_STATS
+  // Whoever currently holds the edition, which on a resale is not the creator.
+  const seller: OfferSeller = {
+    address: listing.sellerAddress,
+    editionsHeld: listing.sellerEditions,
+  }
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -80,21 +93,23 @@ export default function AuctionView() {
         </button>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <SellerProfile seller={seller} comic={comic} />
+          <SellerProfile seller={seller} comic={comic} isLoading={listing.isLoading} />
           <OfferPanel
-            seller={seller}
             comic={comic}
-            offerStats={offerStats}
-            breakdown={BREAKDOWN}
+            listedPriceHbar={listing.listedPriceHbar}
+            floorPriceHbar={listing.floorPriceHbar}
+            highestOfferHbar={listing.highestOfferHbar}
+            balanceHbar={listing.balanceHbar}
+            royaltyPercent={listing.royaltyPercent}
+            platformFeePercent={listing.platformFeePercent}
             initialMode={initialMode}
-            listingId={listingId ? Number(listingId) : undefined}
-            auctionId={auctionId ? Number(auctionId) : undefined}
-            tokenAddress={tokenAddress}
-            serialNumber={serialNumber}
+            listingId={listingId}
+            auctionId={auctionId}
+            onSubmitted={() => void listing.refresh()}
           />
         </div>
 
-        <MoreFromSection seller={seller} />
+        <MoreFromSection />
       </div>
     </div>
   )

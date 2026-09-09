@@ -8,6 +8,15 @@ import { useWagmiMarketplace } from '@/hook/useWagmiMarketplace';
 
 interface ComicsViewProps {
   comicId?: string | null;
+  /**
+   * `buy` is the Comics tab: the editions on sale, bought outright.
+   * `offer` is the Offers tab: the same editions, but the action is to bid on one instead.
+   *
+   * Both render from the same listings because an offer is always made against a specific
+   * live listing - `createOffer` takes a listing id, so there is nothing to offer on that
+   * isn't already in this grid.
+   */
+  mode?: 'buy' | 'offer';
 }
 
 const shorten = (value?: string | null, lead = 6) =>
@@ -18,7 +27,8 @@ const shorten = (value?: string | null, lead = 6) =>
  * marketplace contract. The creator's own drop is not part of this - that lives on the sales
  * contract and is already buyable from the hero at the top of the page.
  */
-const ComicsView: React.FC<ComicsViewProps> = ({ comicId }) => {
+const ComicsView: React.FC<ComicsViewProps> = ({ comicId, mode = 'buy' }) => {
+  const isOfferMode = mode === 'offer';
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState('recent');
   const [pendingListingId, setPendingListingId] = useState<number | null>(null);
@@ -63,6 +73,17 @@ const ComicsView: React.FC<ComicsViewProps> = ({ comicId }) => {
           : a.serialNumber - b.serialNumber
       );
   }, [listings, searchQuery, sortOrder, currentComic?.title]);
+
+  /** Everything the offer panel needs to talk to the contract about this exact listing. */
+  const offerHref = (listing: ResaleListing) => {
+    const params = new URLSearchParams({
+      listingId: String(listing.listingId),
+      tokenAddress: listing.tokenAddress,
+      serialNumber: String(listing.serialNumber),
+    });
+    if (comicId || currentComic?._id) params.set('id', String(comicId || currentComic._id));
+    return `/marketplace/auction?${params.toString()}`;
+  };
 
   const isSeller = (listing: ResaleListing) =>
     Boolean(address && listing.seller.toLowerCase() === address.toLowerCase());
@@ -159,9 +180,13 @@ const ComicsView: React.FC<ComicsViewProps> = ({ comicId }) => {
       <div className="animate-fade-in-up">
         <div className="bg-[#0A0A0A] rounded-2xl p-8 border border-[#242424] text-center">
           <Gift className="w-12 h-12 text-orange-500/40 mx-auto mb-4" />
-          <h3 className="text-xl font-bold text-white mb-2">No Resales Yet</h3>
+          <h3 className="text-xl font-bold text-white mb-2">
+            {isOfferMode ? 'Nothing to Bid On Yet' : 'No Resales Yet'}
+          </h3>
           <p className="text-white/60 mb-6">
-            No one has listed this comic for resale on the secondary market yet
+            {isOfferMode
+              ? 'Offers are made against a live listing, and no holder has listed this comic yet'
+              : 'No one has listed this comic for resale on the secondary market yet'}
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3">
             <button
@@ -189,10 +214,13 @@ const ComicsView: React.FC<ComicsViewProps> = ({ comicId }) => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
           <h3 className="text-xl font-bold">
-            {listings.length} {listings.length === 1 ? 'edition' : 'editions'} for resale
+            {listings.length} {listings.length === 1 ? 'edition' : 'editions'}{' '}
+            {isOfferMode ? 'you can bid on' : 'for resale'}
           </h3>
           <p className="text-white/50 text-sm mt-1">
-            Listed by holders on the secondary market
+            {isOfferMode
+              ? 'Offer below the asking price - your HBAR is held until the seller accepts'
+              : 'Listed by holders on the secondary market'}
           </p>
         </div>
 
@@ -284,9 +312,23 @@ const ComicsView: React.FC<ComicsViewProps> = ({ comicId }) => {
                     <p className="text-orange-400 font-bold text-sm">#{listing.serialNumber}</p>
                   </div>
                   {/* Resale Badge */}
-                  <div className="absolute top-3 left-3 bg-[#FF9F1C]/20 border border-[#FF9F1C]/60 rounded-lg px-2 py-1 backdrop-blur-sm">
-                    <p className="text-[#FF9F1C] font-bold text-xs">
-                      {ownedByViewer ? 'Your listing' : 'Resale'}
+                  <div
+                    className={`absolute top-3 left-3 rounded-lg px-2 py-1 backdrop-blur-sm border ${
+                      listing.isFillable
+                        ? 'bg-[#FF9F1C]/20 border-[#FF9F1C]/60'
+                        : 'bg-neutral-700/30 border-neutral-500/60'
+                    }`}
+                  >
+                    <p
+                      className={`font-bold text-xs ${
+                        listing.isFillable ? 'text-[#FF9F1C]' : 'text-neutral-300'
+                      }`}
+                    >
+                      {!listing.isFillable
+                        ? 'Unavailable'
+                        : ownedByViewer
+                          ? 'Your listing'
+                          : 'Resale'}
                     </p>
                   </div>
                   {/* Seller Badge */}
@@ -328,13 +370,36 @@ const ComicsView: React.FC<ComicsViewProps> = ({ comicId }) => {
                   {/* Action Button */}
                   <div className="flex gap-2">
                     {ownedByViewer ? (
+                      // The contract rejects an offer from the listing's own seller, so in offer
+                      // mode this card has no action at all - only the cancel it already had.
+                      isOfferMode ? (
+                        <div className="w-full border border-neutral-700 text-white/50 text-sm font-medium py-2.5 px-4 rounded-full text-center">
+                          You can&apos;t offer on your own listing
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => handleCancel(listing)}
+                          disabled={isPending}
+                          className="w-full border border-neutral-600 hover:border-neutral-400 disabled:opacity-50 text-white font-bold py-2.5 px-4 rounded-full transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                        >
+                          {isPending && <Loader2 size={16} className="animate-spin" />}
+                          Cancel Listing
+                        </button>
+                      )
+                    ) : !listing.isFillable ? (
+                      // The seller moved this edition or revoked the marketplace's approval, so
+                      // the sale would revert. Say so instead of taking their gas to find out.
+                      <div className="w-full border border-neutral-700 text-white/50 text-sm font-medium py-2.5 px-4 rounded-full text-center">
+                        Seller no longer holds this edition
+                      </div>
+                    ) : isOfferMode ? (
+                      // The offer panel reads its target from the query string, so this link is
+                      // what binds an offer to a real, active listing.
                       <button
-                        onClick={() => handleCancel(listing)}
-                        disabled={isPending}
-                        className="w-full border border-neutral-600 hover:border-neutral-400 disabled:opacity-50 text-white font-bold py-2.5 px-4 rounded-full transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                        onClick={() => router.push(offerHref(listing))}
+                        className="w-full bg-[#FF9F1C] hover:bg-[#FFB045] text-black font-bold py-2.5 px-4 rounded-full transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                       >
-                        {isPending && <Loader2 size={16} className="animate-spin" />}
-                        Cancel Listing
+                        Make an offer
                       </button>
                     ) : (
                       <button

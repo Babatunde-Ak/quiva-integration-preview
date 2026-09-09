@@ -19,6 +19,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ethers } from 'ethers';
 import { TokenId } from '@hiero-ledger/sdk';
 import { HEDERA_CONTRACTS } from '@/contracts/HederaContractConfig';
+import { marketplaceApi } from '@/lib/marketplace-api';
 import { mirrorNodeService } from './MirrorNodeService';
 
 const MIRROR_NODE_BASE =
@@ -28,6 +29,7 @@ const MARKETPLACE_ABI = [
   'event NFTListed(uint256 indexed listingId, address indexed tokenAddress, int64 serialNumber, address indexed seller, uint256 price)',
   'function getListing(uint256 listingId) external view returns (address tokenAddress, int64 serialNumber, address seller, uint256 price, bool isActive)',
   'function listingCounter() external view returns (uint256)',
+  'function isListingFillable(uint256 listingId) external view returns (bool)',
 ];
 
 const marketplaceInterface = new ethers.Interface(MARKETPLACE_ABI);
@@ -54,6 +56,16 @@ export interface ResaleListing {
   priceTinybars: string;
   priceHbar: number;
   isActive: boolean;
+  /**
+   * Whether the seller still owns the serial and still has the marketplace approved.
+   *
+   * The marketplace no longer escrows NFTs, so a seller can move one out from under a live
+   * listing. The contract checks this before taking any payment, but the UI should hide or
+   * disable such a listing rather than let someone pay gas to discover it. Defaults to true
+   * when the contract can't answer - notably against the pre-V3 implementation, which has no
+   * such function.
+   */
+  isFillable: boolean;
 }
 
 /** Accepts a Hedera id (`0.0.x`) or an EVM address and returns a lowercase EVM address. */
@@ -137,10 +149,30 @@ const recentListingIds = async (): Promise<number[]> => {
   return ids;
 };
 
+/**
+ * Whether the seller still owns the serial and still has the marketplace approved.
+ *
+ * Deliberately NOT called once per card. Nothing emits an event when a seller moves an NFT out
+ * from under a live listing, so this can only be answered on-chain, and asking per listing is
+ * what made the grid slow. Call it for the single listing someone is about to buy instead -
+ * that is the only place the answer changes what happens.
+ *
+ * Falls back to `true`: an unanswerable check must not block an otherwise good listing.
+ */
+export const checkListingFillable = async (listingId: number): Promise<boolean> => {
+  try {
+    const [fillable] = await callMarketplace('isListingFillable', [listingId]);
+    return Boolean(fillable);
+  } catch {
+    return true;
+  }
+};
+
 const fetchListing = async (listingId: number): Promise<ResaleListing | null> => {
   try {
     const decoded = await callMarketplace('getListing', [listingId]);
     const priceTinybars = decoded[3].toString();
+    const isActive = Boolean(decoded[4]);
 
     return {
       listingId,
@@ -149,7 +181,8 @@ const fetchListing = async (listingId: number): Promise<ResaleListing | null> =>
       seller: String(decoded[2]).toLowerCase(),
       priceTinybars,
       priceHbar: Number(ethers.formatUnits(priceTinybars, 8)),
-      isActive: Boolean(decoded[4]),
+      isActive,
+      isFillable: isActive,
     };
   } catch (error) {
     console.warn(`Unable to read marketplace listing ${listingId}`, error);
@@ -157,8 +190,76 @@ const fetchListing = async (listingId: number): Promise<ResaleListing | null> =>
   }
 };
 
+type BackendListingRow = {
+  listingId?: string;
+  entityId?: string;
+  tokenAddress?: string;
+  serialNumber?: string | number;
+  sellerWalletAddress?: string;
+  price?: string | number;
+  active?: boolean;
+};
+
 /**
- * Active resale listings for a single collection token.
+ * Active listings as the backend indexer has them.
+ *
+ * One request instead of a log sweep plus a `getListing` per candidate, which is the whole
+ * reason this path exists. The indexer decodes the same mirror-node logs the fallback below
+ * reads directly, so the two agree - the endpoint is just already finished when we ask.
+ *
+ * Returns null (rather than throwing or returning []) when the endpoint can't answer, so the
+ * caller can tell "backend says there are none" apart from "backend didn't answer" and only
+ * falls back to the slow path for the latter.
+ */
+const listingsFromBackend = async (tokenEvmAddress: string): Promise<ResaleListing[] | null> => {
+  try {
+    const response = await marketplaceApi.getListings<{ data?: BackendListingRow[] }>({
+      tokenAddress: tokenEvmAddress,
+      active: true,
+    });
+
+    const rows = Array.isArray(response?.data) ? response.data : null;
+    if (!rows) return null;
+
+    return rows
+      .map((row): ResaleListing | null => {
+        const listingId = Number(row.listingId ?? row.entityId);
+        const priceTinybars = String(row.price ?? '');
+        if (!Number.isSafeInteger(listingId) || !/^\d+$/.test(priceTinybars)) return null;
+
+        return {
+          listingId,
+          tokenAddress: String(row.tokenAddress || '').toLowerCase(),
+          serialNumber: Number(row.serialNumber),
+          seller: String(row.sellerWalletAddress || '').toLowerCase(),
+          priceTinybars,
+          priceHbar: Number(ethers.formatUnits(priceTinybars, 8)),
+          isActive: row.active !== false,
+          // The database cannot know this - no event fires when a seller moves the NFT out.
+          // Assumed true here and verified on-chain at purchase time.
+          isFillable: true,
+        };
+      })
+      .filter((listing): listing is ResaleListing => Boolean(listing))
+      .filter((listing) => listing.tokenAddress === tokenEvmAddress)
+      .sort((a, b) => b.listingId - a.listingId);
+  } catch (error) {
+    console.warn('Marketplace listings endpoint unavailable, reading the chain instead', error);
+    return null;
+  }
+};
+
+/** Ask the backend to index new events now rather than at its next poll. */
+export const syncMarketplaceIndex = async (): Promise<void> => {
+  try {
+    await fetch('/api/quiva/marketplace/sync', { method: 'POST' });
+  } catch (error) {
+    console.warn('Could not trigger a marketplace sync', error);
+  }
+};
+
+/**
+ * Active resale listings for a single collection token, read straight from the chain.
  * `tokenId` may be a Hedera token id (`0.0.x`) or an EVM address.
  */
 export async function getActiveResaleListings(tokenId: string): Promise<ResaleListing[]> {
@@ -199,7 +300,13 @@ export function useResaleListings(tokenId?: string | null) {
     setError(null);
 
     try {
-      const active = await getActiveResaleListings(tokenId);
+      const tokenEvmAddress = toEvmAddress(tokenId);
+      if (!tokenEvmAddress) throw new Error(`"${tokenId}" is not a valid token id or EVM address.`);
+
+      // Endpoint first; the chain scan is the fallback for when the indexer is down, still
+      // backfilling, or pointed at a different contract.
+      const fromBackend = await listingsFromBackend(tokenEvmAddress);
+      const active = fromBackend ?? (await getActiveResaleListings(tokenId));
       setListings(active);
       return active;
     } catch (err: any) {
