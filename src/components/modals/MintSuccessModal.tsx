@@ -99,7 +99,7 @@ const MintSuccessModal: React.FC<MintSuccessModalProps> = ({
           {/* Additional Info */}
           <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
             <p className="text-blue-400 text-sm">
-              ℹ️ Your minted NFTs are now visible in the <strong>Comics tab</strong>. You can view, make offers, or read your minted editions there.
+              ℹ️ Your minted NFTs are now visible in the <strong>Comics tab</strong>. You can view or read your minted editions there.
             </p>
           </div>
         </ModalBody>

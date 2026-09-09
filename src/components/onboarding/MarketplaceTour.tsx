@@ -51,7 +51,7 @@ const steps: TourStep[] = [
   {
     target: "connect-wallet",
     title: "Trade your collection",
-    description: "Connecting a wallet is optional, and unlocks ownership, selling, trading, and other transaction features when you are ready.",
+    description: "Connect with RainbowKit to unlock the supported ownership and purchase features.",
     placement: "bottom-left",
   },
   {
@@ -63,19 +63,19 @@ const steps: TourStep[] = [
   {
     target: "canon-table",
     title: "Trade Your Collection",
-    description: "Buy, sell, and trade comics in the marketplace. Prices are set by the community.",
+    description: "Buy and collect supported comic releases in the marketplace.",
     placement: "above",
   },
   {
     target: "publish-comic",
     title: "Publish your work",
-    description: "You created it. You profit every time it changes hands. Upload to ComicPad and let Quiva do the rest.",
+    description: "Upload and publish your work through ComicPad.",
     placement: "right",
   },
   {
     target: "trending-collections",
     title: "Collect On-chain",
-    description: "Mint a comic to own it on-chain. Every resale automatically pays the original creator.",
+    description: "Mint a comic to own it on-chain and read it from your collection.",
     placement: "above",
   },
 ];

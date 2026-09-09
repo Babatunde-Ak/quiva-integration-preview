@@ -6,7 +6,7 @@ import { Share2, Hash, CheckCircle, Copy, ExternalLink, AlertCircle } from "luci
 import Picture from "@/components/picture/Index";
 import { QuivaLogo } from "@/components/utils/function";
 import { useState } from "react";
-import { InscriptionResult } from "@/lib/kiloscribe-service";
+import type { InscriptionResult } from "@/lib/kiloscribe-types";
 
 interface ComicNotificationProps {
 	onclose: () => void;

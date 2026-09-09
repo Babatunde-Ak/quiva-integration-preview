@@ -10,6 +10,7 @@ import { useAccount } from 'wagmi';
  import { useHederaWallet } from '@/providers/HashPackProvider';
 //import { HashpackConnector, useEvmAddress, useWallet } from '@reown/walletkit';
 import { QuivaLogo } from '@/components/utils/function';
+import { PRODUCTION_FEATURES } from '@/config/features';
 
 enum WalletType {
   NONE = 'none',
@@ -63,9 +64,9 @@ function ComicConnect() {
       case WalletType.RAINBOW:
         return <RainbowConnect />;
       case WalletType.HASHPACK:
+        return PRODUCTION_FEATURES.hashPackWallet ? <HashConnectButton /> : <RainbowConnect />;
       default:
-        // Default to HashConnectButton — it handles its own session restoration
-        return <HashConnectButton />;
+        return <RainbowConnect />;
     }
   };
 
@@ -126,21 +127,23 @@ function ComicConnect() {
                 )}
 
                 <div className="flex flex-col gap-3">
-                  {/* HashPack Connection */}
-                  <div className="flex flex-col gap-2">
-                    <div className='flex items-center justify-center'>
-                      <div>
-                        <HashConnectButton />
+                  {PRODUCTION_FEATURES.hashPackWallet && (
+                    <>
+                      <div className="flex flex-col gap-2">
+                        <div className='flex items-center justify-center'>
+                          <div>
+                            <HashConnectButton />
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
 
-                  {/* Divider */}
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1 h-px bg-white/20"></div>
-                    <span className="text-white/60 text-xs">OR</span>
-                    <div className="flex-1 h-px bg-white/20"></div>
-                  </div>
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1 h-px bg-white/20"></div>
+                        <span className="text-white/60 text-xs">OR</span>
+                        <div className="flex-1 h-px bg-white/20"></div>
+                      </div>
+                    </>
+                  )}
 
                   {/* Rainbow Kit Connection */}
                   <div className="flex flex-col gap-2">
