@@ -6,7 +6,7 @@ import { Check, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { HbarIcon } from "@/components/ui/HbarIcon";
 import { useWagmiMarketplace } from "@/hook/useWagmiMarketplace";
-
+import { useAppDispatch, useAppSelector } from "@/redux/hook";
 interface ComicData {
   id: string;
   title: string;
@@ -35,7 +35,7 @@ export default function ResellModal({
   const [amount, setAmount] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
-
+  const { currentComic } = useAppSelector((state: any) => state.comic);
   // Reset state when modal closes
   React.useEffect(() => {
     if (!isOpen) {
@@ -54,7 +54,7 @@ export default function ResellModal({
     const routeTokenId = routeParams?.get("tokenId") || "";
     const routeSerial = routeParams?.get("serialNumber");
     const serialNumber = Number(comic.serialNumber ?? routeSerial ?? 0);
-    const tokenAddress = comic.tokenAddress || comic.tokenId || routeTokenId;
+    const tokenAddress = comic.tokenAddress || comic.tokenId || routeTokenId || currentComic.nftId.tokenId;
 
     if (!Number.isFinite(priceInHbar) || priceInHbar < 0.1) {
       setLocalError("Enter a resale price of at least 0.1 HBAR.");

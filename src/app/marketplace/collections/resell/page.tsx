@@ -65,7 +65,7 @@ export default function ComicPage() {
     edition: ownedSerial || 0,
     totalEditions: Number(nftData.maxSupply || 0),
     imageUrl: currentComic.bannerImage || currentComic.coverImage || images.cover,
-    tokenAddress,
+    tokenAddress: tokenAddress,
     serialNumber: ownedSerial,
   } : null, [currentComic, images.cover, nftData.maxSupply, ownedSerial, tokenAddress]);
 

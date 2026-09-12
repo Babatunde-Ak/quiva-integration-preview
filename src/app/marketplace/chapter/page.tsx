@@ -98,14 +98,10 @@ const Marketplace = () => {
 
   // Handle tab change and update URL
   const handleTabChange = (tab: string) => {
-    // Offers tab routes to the standalone auction page
-    if (tab === 'Offers' && PRODUCTION_FEATURES.offers && PRODUCTION_FEATURES.auction) {
-      const params = new URLSearchParams();
-      if (comicId) params.set('id', comicId);
-      router.push(`/marketplace/auction?${params.toString()}`);
-      return;
-    }
-
+    // The Offers tab used to jump straight to the standalone offer page. That page builds its
+    // transaction from a listing id in the query string, so arriving without one left it with
+    // nothing to submit. It now stays here and lists the editions that can be bid on; picking
+    // one is what carries its listing id across.
     setActiveTab(tab);
 
     const params = new URLSearchParams(searchParams.toString());
@@ -174,7 +170,7 @@ const Marketplace = () => {
               {PRODUCTION_FEATURES.resale && activeTab === 'Comics' && <ComicsView comicId={comicId} />}
               {activeTab === 'Release' && <ReleaseView comicId={comicId} />}
               {activeTab === 'Holders' && <HoldersView />}
-              {PRODUCTION_FEATURES.offers && activeTab === 'Offers' && <OffersView />}
+              {activeTab === 'Offers' && <OffersView comicId={comicId} />}
               {activeTab === 'Activity' && <ActivityView />}
               {activeTab === 'Collections' && <CollectionsView />}
               {activeTab === 'About' && <AboutView />}

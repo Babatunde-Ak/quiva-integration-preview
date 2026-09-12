@@ -24,6 +24,7 @@ export type MarketplaceListQuery = {
   walletAddress?: string;
   tokenAddress?: string;
   comicId?: string;
+  listingId?: string;
   active?: boolean;
 };
 

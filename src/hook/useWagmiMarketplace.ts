@@ -19,6 +19,7 @@ import {
   type TransactionReceipt,
 } from "viem";
 import { getDirectListingInfo, getMarketplaceFee } from './ContractQueries';
+import { checkListingFillable, syncMarketplaceIndex } from './useResaleListings';
 import {
   COMIC_CORE_ABI,
   COMIC_MARKETPLACE_ABI,
@@ -86,6 +87,8 @@ interface UseWagmiMarketplaceResult {
   acceptOffer: (offerId: number) => Promise<any>;
   rejectOffer: (offerId: number) => Promise<any>;
   expireOffer: (offerId: number) => Promise<any>;
+  readPendingReturn: (walletAddress?: string) => Promise<bigint>;
+  withdrawPendingReturn: () => Promise<any>;
   createAuction: (params: {
     tokenAddress: string;
     serialNumber: number;
@@ -321,31 +324,6 @@ const HTS_TOKEN_ASSOCIATE_ABI = [
   },
 ] as const;
 
-// Total of a token's HBAR royalty fallback fees, in tinybars. On any NFT transfer where the
-// sender receives no fungible value - which is exactly what an escrow deposit is - HTS charges
-// these fallbacks to the *receiver*, i.e. the marketplace contract. Returns 0 if the token has
-// no fallbacks or the read fails, so a mirror-node blip can never block a listing outright.
-const fetchRoyaltyFallbackTinybars = async (tokenAddress: string): Promise<bigint> => {
-  const tokenId = toHederaTokenId(tokenAddress);
-  if (!tokenId) return BigInt(0);
-
-  try {
-    const res = await fetch(`${MIRROR_NODE_BASE}/api/v1/tokens/${tokenId}`);
-    if (!res.ok) return BigInt(0);
-
-    const json = await res.json();
-    const royaltyFees: any[] = json?.custom_fees?.royalty_fees ?? [];
-
-    return royaltyFees.reduce((total: bigint, fee: any) => {
-      const fallback = fee?.fallback_fee;
-      // A non-null denominating_token_id means the fallback is paid in a token, not HBAR.
-      if (!fallback || fallback.denominating_token_id) return total;
-      return total + BigInt(fallback.amount ?? 0);
-    }, BigInt(0));
-  } catch {
-    return BigInt(0);
-  }
-};
   const ensureWallet = () => {
     if (!isConnected || !address) {
       throw new Error("Please connect your wallet before continuing.");
@@ -406,70 +384,37 @@ const fetchRoyaltyFallbackTinybars = async (tokenAddress: string): Promise<bigin
     }
   };
 
-  // An escrow deposit moves the NFT to the marketplace without sending the seller any fungible
-  // value, so HTS bills the collection's royalty fallback fees to the marketplace contract. If
-  // the contract cannot cover them the precompile returns a non-SUCCESS code and the contract
-  // reverts with a bare "Transfer failed", which tells the seller nothing. Check up front so the
-  // user gets an actionable message instead of paying gas for a guaranteed revert.
-  const ensureEscrowCanPayFallbackFees = async (
-    tokenAddress: Address,
-    marketplaceAddress: Address
-  ) => {
-    if (!publicClient) return;
-
-    const requiredTinybars = await fetchRoyaltyFallbackTinybars(tokenAddress);
-    if (requiredTinybars === BigInt(0)) return;
-
-    const balanceWeibars = await publicClient.getBalance({ address: marketplaceAddress });
-    const balanceTinybars = balanceWeibars / WEIBARS_PER_TINYBAR;
-    if (balanceTinybars >= requiredTinybars) return;
-
-    throw new Error(
-      `The marketplace escrow (${HEDERA_CONTRACTS.COMIC_MARKETPLACE.address}) holds ` +
-        `${rawUnitsToHbar(balanceTinybars.toString())} HBAR but needs at least ` +
-        `${rawUnitsToHbar(requiredTinybars.toString())} HBAR to cover this collection's royalty ` +
-        `fallback fees. Ask an admin to top up the marketplace contract before listing.`
-    );
-  };
-
-  // Both escrow entry points - depositAndListForResale and createAuction - hand the NFT to the
-  // marketplace, so both need the same two preconditions satisfied first.
-  const prepareEscrowDeposit = async (
+  // The marketplace never takes custody now, so the only thing a seller has to do before
+  // listing is grant the HTS allowance that lets the contract move the NFT at sale time.
+  // Without it the sale's cryptoTransfer returns a non-SUCCESS code and the contract reverts.
+  const ensureMarketplaceApproval = async (
     tokenAddress: Address,
     serialNumber: number,
     marketplaceAddress: Address
   ) => {
-    // Hedera will not let the marketplace pull the NFT out of the seller's account on the
-    // strength of the transaction signature alone - it needs an explicit HTS allowance.
-    // Grant it via the token's ERC-721 facade, otherwise transferNFT returns a non-SUCCESS
-    // code and the contract reverts with "Transfer failed".
     const alreadyApproved = await isMarketplaceApprovedForNft(
       tokenAddress,
       serialNumber,
       marketplaceAddress
     );
+    if (alreadyApproved) return;
 
-    if (!alreadyApproved) {
-      setStatusMessage("Approve the marketplace to transfer this NFT...");
-      const approvalHash = await writeContractAsync({
-        address: tokenAddress,
-        abi: HTS_ERC721_ABI,
-        functionName: "approve",
-        args: [marketplaceAddress, BigInt(serialNumber)],
-        account: address,
-        chain: publicClient?.chain,
-        gas: BigInt(1_000_000),
-      });
+    setStatusMessage("Approve the marketplace to transfer this NFT...");
+    const approvalHash = await writeContractAsync({
+      address: tokenAddress,
+      abi: HTS_ERC721_ABI,
+      functionName: "approve",
+      args: [marketplaceAddress, BigInt(serialNumber)],
+      account: address,
+      chain: publicClient?.chain,
+      gas: BigInt(1_000_000),
+    });
 
-      setStatusMessage("Waiting for the approval to confirm...");
-      const approvalReceipt = await waitForReceipt(approvalHash);
-      if (isReceiptFailed(approvalReceipt)) {
-        throw new Error(`NFT approval transaction reverted (tx=${approvalHash}).`);
-      }
+    setStatusMessage("Waiting for the approval to confirm...");
+    const approvalReceipt = await waitForReceipt(approvalHash);
+    if (isReceiptFailed(approvalReceipt)) {
+      throw new Error(`NFT approval transaction reverted (tx=${approvalHash}).`);
     }
-
-    setStatusMessage("Checking the marketplace can cover this collection's royalty fees...");
-    await ensureEscrowCanPayFallbackFees(tokenAddress, marketplaceAddress);
   };
 
   // The buyer's side of the same HTS rule the escrow deposit hits: an account can only be
@@ -523,54 +468,109 @@ const fetchRoyaltyFallbackTinybars = async (tokenAddress: string): Promise<bigin
   // Handing the NFT out of escrow sends the marketplace no fungible value, so HTS bills the
   // collection's royalty fallback fees to the receiver - the buyer - on top of the sale price.
   // Say so before the wallet prompt instead of after an out-of-funds revert.
-  const ensureBuyerCanCoverPurchase = async (tokenAddress: string, priceTinybars: bigint) => {
+  // The royalty now comes out of the seller's proceeds, so the buyer only needs the price
+  // itself (plus gas). No fallback fee lands on them any more.
+  const ensureBuyerCanCoverPurchase = async (priceTinybars: bigint) => {
     if (!publicClient || !address) return;
 
-    const fallbackTinybars = await fetchRoyaltyFallbackTinybars(tokenAddress);
-    const requiredTinybars = priceTinybars + fallbackTinybars;
     const balanceTinybars =
       (await publicClient.getBalance({ address })) / WEIBARS_PER_TINYBAR;
-
-    if (balanceTinybars >= requiredTinybars) return;
-
-    throw new Error(
-      `This purchase needs about ${rawUnitsToHbar(requiredTinybars.toString())} HBAR ` +
-        `(the ${rawUnitsToHbar(priceTinybars.toString())} HBAR price plus this collection's ` +
-        `royalty fallback fees) but your wallet holds ` +
-        `${rawUnitsToHbar(balanceTinybars.toString())} HBAR.`
-    );
-  };
-
-  // Releasing an NFT from marketplace escrow - cancelListing returning it to the seller, or
-  // purchaseNFT delivering it to the buyer - moves no fungible value to the sender, so HTS
-  // charges the collection's HBAR royalty fallback fees to the RECEIVER. When that receiver is a
-  // wallet rather than a contract, the charge has to be authorized by the wallet's key, and a
-  // transaction submitted through the JSON-RPC relay cannot do that: the HTS precompile answers
-  // 326 INVALID_FULL_PREFIX_SIGNATURE_FOR_PRECOMPILE and the contract reverts with a bare
-  // "NFT return failed" / "NFT transfer failed".
-  //
-  // Verified on testnet: cancelListing tx 0xbf13fd0bdcc19e84ae2ff1f753a3f67fd97950e3f2de9c9905784
-  // b105586f027 died exactly this way, while depositAndListForResale in the other direction
-  // succeeded because the *contract* was the receiver and could authorize its own 1.5 HBAR fee.
-  // The deposit's child transfer shows that fee: 0.0.10232416 -1.5 HBAR, 0.0.7225845 +1.5 HBAR.
-  //
-  // Drop this guard once escrow release no longer settles with a bare transferNFT.
-  const ensureEscrowReleaseIsPossible = async (tokenAddress: string) => {
-    const fallbackTinybars = await fetchRoyaltyFallbackTinybars(tokenAddress);
-    if (fallbackTinybars === BigInt(0)) return;
+    if (balanceTinybars >= priceTinybars) return;
 
     throw new Error(
-      `Hedera cannot release this NFT from marketplace escrow: the collection charges ` +
-        `${rawUnitsToHbar(fallbackTinybars.toString())} HBAR of royalty fallback fees to whoever ` +
-        `receives it, and a contract call made over the JSON-RPC relay cannot authorize that ` +
-        `charge against a wallet (HTS status 326). The marketplace contract has to settle escrow ` +
-        `releases differently before this listing can be cancelled or bought.`
+      `This listing costs ${rawUnitsToHbar(priceTinybars.toString())} HBAR but your wallet ` +
+        `holds ${rawUnitsToHbar(balanceTinybars.toString())} HBAR.`
     );
   };
 
   // Contract state is the only authority on a listing: the mirror node snapshot the UI renders
   // can be stale by the time the buyer confirms, and purchaseNFT compares msg.value against
   // exactly this price.
+  /**
+   * HBAR the marketplace owes this wallet, in tinybars.
+   *
+   * Being outbid does not push the previous bid back - `placeBid` credits it to `pendingReturns`
+   * and the bidder pulls it out themselves, so an auction can never be stalled by a bidder whose
+   * wallet rejects transfers. That means an outbid collector has money sitting in the contract
+   * until something calls `withdrawPendingReturn`.
+   */
+  const readPendingReturn = async (walletAddress?: string): Promise<bigint> => {
+    const owner = toAddress(walletAddress || address);
+    if (!publicClient || !owner) return BigInt(0);
+
+    try {
+      const pending = await (publicClient as any).readContract({
+        address: normalizeAddress(HEDERA_CONTRACTS.COMIC_MARKETPLACE.evmAddress),
+        abi: COMIC_MARKETPLACE_ABI as any,
+        functionName: "pendingReturns",
+        args: [owner],
+      });
+      return BigInt(pending?.toString?.() ?? 0);
+    } catch (err) {
+      console.warn("Could not read pending returns", err);
+      return BigInt(0);
+    }
+  };
+
+  const withdrawPendingReturn = () =>
+    executeMarketplaceTransaction({
+      functionName: "withdrawPendingReturn",
+      args: [],
+      successMessage: "Your HBAR has been returned to your wallet.",
+    });
+
+  /**
+   * The live listing id for an edition, or null if it has none.
+   *
+   * Prefers the contract's own `activeListingFor`, which is exact. That view only exists in the
+   * implementation carrying the duplicate guard, so when the call fails this falls back to
+   * scanning recent listings - correct for anything inside the scan window, which is where a
+   * seller's own listings realistically are.
+   */
+  const findActiveListingForSerial = async (
+    tokenAddress: Address,
+    serialNumber: number
+  ): Promise<number | null> => {
+    if (!publicClient) return null;
+
+    try {
+      const [listingId, exists] = (await (publicClient as any).readContract({
+        address: normalizeAddress(HEDERA_CONTRACTS.COMIC_MARKETPLACE.evmAddress),
+        abi: COMIC_MARKETPLACE_ABI as any,
+        functionName: "activeListingFor",
+        args: [tokenAddress, BigInt(serialNumber)],
+      })) as [bigint, boolean];
+      return exists ? Number(listingId) : null;
+    } catch {
+      // View not deployed yet - fall through to the scan.
+    }
+
+    try {
+      const counter = (await (publicClient as any).readContract({
+        address: normalizeAddress(HEDERA_CONTRACTS.COMIC_MARKETPLACE.evmAddress),
+        abi: COMIC_MARKETPLACE_ABI as any,
+        functionName: "listingCounter",
+      })) as bigint;
+
+      const total = Number(counter);
+      const target = tokenAddress.toLowerCase();
+      for (let id = total - 1; id >= Math.max(0, total - 50); id -= 1) {
+        const listing = await readMarketplaceListing(id).catch(() => null);
+        if (
+          listing?.isActive &&
+          listing.serialNumber === serialNumber &&
+          listing.tokenAddress.toLowerCase() === target
+        ) {
+          return id;
+        }
+      }
+    } catch (err) {
+      console.warn("Could not check for an existing listing", err);
+    }
+
+    return null;
+  };
+
   const readMarketplaceListing = async (listingId: number) => {
     if (!publicClient) throw new Error("No RPC client available to read the listing.");
 
@@ -996,15 +996,29 @@ const fetchRoyaltyFallbackTinybars = async (tokenAddress: string): Promise<bigin
       setStatus("processing");
       setError(null);
 
+      // One live listing per edition. The deployed implementation does not enforce this yet -
+      // it was structurally impossible under escrow and the guard was not carried over when
+      // custody was dropped - so check here too. Once the contract carrying the duplicate
+      // guard is live this becomes a fast, friendlier version of its revert.
+      const alreadyListed = await findActiveListingForSerial(normalizedTokenAddress, serialNumber);
+      if (alreadyListed !== null) {
+        throw new Error(
+          `Edition #${serialNumber} is already listed as listing #${alreadyListed}. ` +
+            "Cancel that listing before listing it again."
+        );
+      }
+
       const marketplaceAddress = normalizeAddress(HEDERA_CONTRACTS.COMIC_MARKETPLACE.evmAddress);
 
-      await prepareEscrowDeposit(normalizedTokenAddress, serialNumber, marketplaceAddress);
+      await ensureMarketplaceApproval(normalizedTokenAddress, serialNumber, marketplaceAddress);
 
       setStatusMessage("Confirm the resale listing in your wallet...");
       const hash = await writeContractAsync({
         address: marketplaceAddress,
         abi: COMIC_MARKETPLACE_ABI,
-        functionName: "depositAndListForResale",
+        // V3 leaves the NFT in the seller's wallet. depositAndListForResale still exists as a
+        // deprecated alias, but this is the name that describes what actually happens.
+        functionName: "listForResale",
         // The stored price is compared against msg.value, and msg.value inside the Hedera EVM
         // is denominated in TINYBARS - the relay divides the 18dp transaction value by 10^10
         // before execution. Storing weibars here makes the listing cost 10^10x its face value,
@@ -1023,6 +1037,7 @@ const fetchRoyaltyFallbackTinybars = async (tokenAddress: string): Promise<bigin
       }
 
       const listingId = extractEventArg(receipt, COMIC_MARKETPLACE_ABI, "NFTListed", "listingId");
+      void syncMarketplaceIndex();
       setStatus("done");
       setStatusMessage("NFT listed for resale successfully.");
       return { txHash: hash, transactionId: hash, listingId, status: "SUCCESS" };
@@ -1069,6 +1084,10 @@ const fetchRoyaltyFallbackTinybars = async (tokenAddress: string): Promise<bigin
     if (isReceiptFailed(receipt)) {
       throw new Error(`Marketplace transaction reverted (tx=${hash}).`);
     }
+
+    // Nudge the indexer so the change shows up on the next refresh instead of after its poll
+    // interval. Fire and forget - the indexer would catch this on its own regardless.
+    void syncMarketplaceIndex();
 
     setStatus("done");
     setStatusMessage(successMessage);
@@ -1127,13 +1146,23 @@ const fetchRoyaltyFallbackTinybars = async (tokenAddress: string): Promise<bigin
         );
       }
 
+      // The seller keeps custody while listed, so a listing can go stale without emitting
+      // anything. This is the one place that matters, and one call here replaces the per-card
+      // check the grid used to make.
+      setStatusMessage("Checking this listing can still be filled...");
+      if (!(await checkListingFillable(listingId))) {
+        throw new Error(
+          "The seller no longer holds this edition or has withdrawn the marketplace's approval, " +
+            "so this listing can't be completed. It will disappear on the next refresh."
+        );
+      }
+
       const listingToken = listing?.tokenAddress || tokenAddress;
       if (listingToken) {
         setStatusMessage("Checking your wallet can receive this NFT...");
-        await ensureEscrowReleaseIsPossible(listingToken);
         await ensureBuyerAssociated(listingToken);
-        await ensureBuyerCanCoverPurchase(listingToken, rawPriceTinybars);
       }
+      await ensureBuyerCanCoverPurchase(rawPriceTinybars);
 
       // The contract holds the price in tinybars; the value crossing the JSON-RPC relay is
       // 18dp weibars, so scale up by 10^10. See the unit-scale note in CLAUDE.md.
@@ -1156,6 +1185,7 @@ const fetchRoyaltyFallbackTinybars = async (tokenAddress: string): Promise<bigin
         throw new Error(`Purchase transaction reverted (tx=${hash}).`);
       }
 
+      void syncMarketplaceIndex();
       setStatus("done");
       setStatusMessage("Purchase completed successfully.");
       return { txHash: hash, transactionId: hash, status: "SUCCESS" };
@@ -1169,26 +1199,22 @@ const fetchRoyaltyFallbackTinybars = async (tokenAddress: string): Promise<bigin
   };
 
   /**
-   * Withdraw your own resale listing. cancelListing returns the escrowed NFT to the seller, and
-   * because that transfer sends the marketplace no fungible value, HTS charges the collection's
-   * royalty fallback fees to the seller receiving it back - so the caller needs a little HBAR
-   * on hand beyond gas.
+   * Withdraw your own resale listing.
+   *
+   * Nothing moves on the token side: V3 never took custody, so this only clears the listing and
+   * the approval the seller granted becomes unused. Costs gas and nothing else.
    */
   const cancelResaleListing = async (listingId: number) => {
     if (!Number.isSafeInteger(listingId) || listingId < 0) {
       throw new Error("A valid listing ID is required to cancel this listing.");
     }
 
-    const listing = await readMarketplaceListing(listingId).catch((readErr) => {
-      console.warn("cancelResaleListing: could not read the listing on-chain", readErr);
-      return null;
-    });
-    if (listing?.tokenAddress) await ensureEscrowReleaseIsPossible(listing.tokenAddress);
-
+    // V3 never took the NFT, so cancelling only clears the listing - there is no transfer left
+    // to fail on the HTS side.
     return executeMarketplaceTransaction({
       functionName: "cancelListing",
       args: [BigInt(listingId)],
-      successMessage: "Listing cancelled and the NFT returned to your wallet.",
+      successMessage: "Listing cancelled. The edition stays in your wallet.",
     });
   };
 
@@ -1238,7 +1264,7 @@ const fetchRoyaltyFallbackTinybars = async (tokenAddress: string): Promise<bigin
     ensureWallet();
     setStatus("processing");
     setError(null);
-    await prepareEscrowDeposit(
+    await ensureMarketplaceApproval(
       normalizedTokenAddress,
       serialNumber,
       normalizeAddress(HEDERA_CONTRACTS.COMIC_MARKETPLACE.evmAddress)
@@ -1553,6 +1579,8 @@ const fetchRoyaltyFallbackTinybars = async (tokenAddress: string): Promise<bigin
       acceptOffer,
       rejectOffer,
       expireOffer,
+      readPendingReturn,
+      withdrawPendingReturn,
       createAuction,
       placeBid,
       settleAuction,
@@ -1578,6 +1606,8 @@ const fetchRoyaltyFallbackTinybars = async (tokenAddress: string): Promise<bigin
       acceptOffer,
       rejectOffer,
       expireOffer,
+      readPendingReturn,
+      withdrawPendingReturn,
       createAuction,
       placeBid,
       settleAuction,
