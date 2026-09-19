@@ -1718,6 +1718,35 @@ export const COMIC_MARKETPLACE_ABI = [
 		"type": "function"
 	},
 	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "tokenAddress",
+				"type": "address"
+			},
+			{
+				"internalType": "int64",
+				"name": "serialNumber",
+				"type": "int64"
+			}
+		],
+		"name": "activeListingFor",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "listingId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bool",
+				"name": "exists",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
 		"inputs": [],
 		"name": "accumulatedFees",
 		"outputs": [

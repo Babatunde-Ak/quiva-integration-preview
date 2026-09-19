@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Loader2 } from 'lucide-react'
 import { HbarIcon } from '@/components/ui/HbarIcon'
 import { useWagmiMarketplace } from '@/hook/useWagmiMarketplace'
@@ -10,9 +10,15 @@ import PreviewDialog from './PreviewDialog'
 interface ReceivedOffersModalProps {
   group: ListingOfferGroup | null
   onClose: () => void
-  /** Called after a successful accept or reject so the caller can refetch. */
+  /**
+   * Called after a successful accept, reject or release so the caller can refetch. The caller is
+   * expected to re-select this listing's refreshed group, which is what lets the seller settle
+   * several offers without reopening the dialog between each one.
+   */
   onSettled: () => void
 }
+
+type OfferAction = 'accept' | 'reject' | 'release'
 
 const shorten = (value: string) =>
   value ? `${value.slice(0, 6)}...${value.slice(-4)}` : '-'
@@ -22,29 +28,55 @@ export default function ReceivedOffersModal({
   onClose,
   onSettled,
 }: ReceivedOffersModalProps) {
-  const { acceptOffer, rejectOffer, statusMessage } = useWagmiMarketplace()
+  const { acceptOffer, rejectOffer, expireOffer, statusMessage } = useWagmiMarketplace()
 
   const [pendingOfferId, setPendingOfferId] = useState<number | null>(null)
   const [offerToReject, setOfferToReject] = useState<ReceivedOffer | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const run = async (
-    offer: ReceivedOffer,
-    action: 'accept' | 'reject'
-  ) => {
+  // Offers this dialog has already settled on-chain. The refetch behind `onSettled` is racing the
+  // indexer - the contract call returns as soon as the receipt lands, while the backend only sees
+  // the event on its next poll - so a settled offer would otherwise reappear as live for a few
+  // seconds. The receipt is the authority here; this just stops the UI contradicting it.
+  const [settledOfferIds, setSettledOfferIds] = useState<number[]>([])
+
+  const listingId = group?.listingId
+
+  useEffect(() => {
+    setSettledOfferIds([])
+    setError(null)
+  }, [listingId])
+
+  const visibleOffers = useMemo(
+    () => (group?.offers || []).filter((offer) => !settledOfferIds.includes(offer.offerId)),
+    [group, settledOfferIds]
+  )
+
+  const run = async (offer: ReceivedOffer, action: OfferAction) => {
     setError(null)
     setPendingOfferId(offer.offerId)
 
     try {
       if (action === 'accept') {
         await acceptOffer(offer.offerId)
-      } else {
-        await rejectOffer(offer.offerId)
-        setOfferToReject(null)
+
+        // Accepting settles the listing, so there is nothing left to decide here.
+        onSettled()
+        onClose()
+        return
       }
 
+      if (action === 'reject') {
+        await rejectOffer(offer.offerId)
+        setOfferToReject(null)
+      } else {
+        await expireOffer(offer.offerId)
+      }
+
+      // Rejecting or releasing one offer says nothing about the others on this listing, so the
+      // dialog stays open on the refreshed group and the seller can clear the rest.
+      setSettledOfferIds((current) => [...current, offer.offerId])
       onSettled()
-      onClose()
     } catch (err: any) {
       setError(err?.message || `Unable to ${action} this offer.`)
     } finally {
@@ -96,8 +128,30 @@ export default function ReceivedOffersModal({
               escrowed HBAR and leaves the edition with you.
             </div>
 
+            {visibleOffers.some((offer) => offer.isExpired) && (
+              <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm leading-6 text-white/55">
+                An offer past its deadline can no longer be accepted or
+                declined, but the buyer&apos;s HBAR is still held by the
+                marketplace until someone releases it. Use{' '}
+                <span className="font-semibold text-white">Release</span> to
+                send it back and clear the offer from this list.
+              </div>
+            )}
+
             <div className="space-y-3">
-              {group.offers.map((offer) => {
+              {visibleOffers.length === 0 && (
+                <div className="rounded-xl border border-white/10 bg-[#181818] p-6 text-center">
+                  <p className="font-semibold text-white">
+                    Every offer here has been settled
+                  </p>
+
+                  <p className="mt-2 text-sm text-white/45">
+                    Nothing is left to accept or decline on this edition.
+                  </p>
+                </div>
+              )}
+
+              {visibleOffers.map((offer) => {
                 const isPending = pendingOfferId === offer.offerId
                 const isBusy = pendingOfferId !== null
 
@@ -124,26 +178,42 @@ export default function ReceivedOffersModal({
                       </div>
 
                       <div className="flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          disabled={isBusy || offer.isExpired}
-                          onClick={() => void run(offer, 'accept')}
-                          className="flex items-center gap-2 rounded-xl bg-[#FAA31E] px-5 py-2.5 text-sm font-bold text-black transition hover:bg-[#ffb13b] disabled:cursor-not-allowed disabled:opacity-40"
-                        >
-                          {isPending && (
-                            <Loader2 size={14} className="animate-spin" />
-                          )}
-                          Accept
-                        </button>
+                        {offer.isExpired ? (
+                          <button
+                            type="button"
+                            disabled={isBusy}
+                            onClick={() => void run(offer, 'release')}
+                            className="flex items-center gap-2 rounded-xl border border-white/10 px-5 py-2.5 text-sm font-semibold text-white/60 transition hover:border-[#FAA31E]/50 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                          >
+                            {isPending && (
+                              <Loader2 size={14} className="animate-spin" />
+                            )}
+                            Release
+                          </button>
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              disabled={isBusy}
+                              onClick={() => void run(offer, 'accept')}
+                              className="flex items-center gap-2 rounded-xl bg-[#FAA31E] px-5 py-2.5 text-sm font-bold text-black transition hover:bg-[#ffb13b] disabled:cursor-not-allowed disabled:opacity-40"
+                            >
+                              {isPending && (
+                                <Loader2 size={14} className="animate-spin" />
+                              )}
+                              Accept
+                            </button>
 
-                        <button
-                          type="button"
-                          disabled={isBusy || offer.isExpired}
-                          onClick={() => requestReject(offer)}
-                          className="rounded-xl border border-white/10 px-5 py-2.5 text-sm text-white/60 transition hover:border-[#FAA31E]/50 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
-                        >
-                          Reject
-                        </button>
+                            <button
+                              type="button"
+                              disabled={isBusy}
+                              onClick={() => requestReject(offer)}
+                              className="rounded-xl border border-white/10 px-5 py-2.5 text-sm text-white/60 transition hover:border-[#FAA31E]/50 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                            >
+                              Reject
+                            </button>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>

@@ -221,7 +221,7 @@ const listingsFromBackend = async (tokenEvmAddress: string): Promise<ResaleListi
     const rows = Array.isArray(response?.data) ? response.data : null;
     if (!rows) return null;
 
-    return rows
+    const mapped = rows
       .map((row): ResaleListing | null => {
         const listingId = Number(row.listingId ?? row.entityId);
         const priceTinybars = String(row.price ?? '');
@@ -243,10 +243,42 @@ const listingsFromBackend = async (tokenEvmAddress: string): Promise<ResaleListi
       .filter((listing): listing is ResaleListing => Boolean(listing))
       .filter((listing) => listing.tokenAddress === tokenEvmAddress)
       .sort((a, b) => b.listingId - a.listingId);
+
+    return keepNewestPerEdition(mapped);
   } catch (error) {
     console.warn('Marketplace listings endpoint unavailable, reading the chain instead', error);
     return null;
   }
+};
+
+/**
+ * One card per edition.
+ *
+ * The deployed marketplace has no uniqueness guard, so one serial can hold several live listings
+ * at once and each arrives here as its own row. Only one of them can ever be filled - the first
+ * sale moves the NFT and the contract's delivery check then fails for the rest - so showing them
+ * all just invites a buyer to spend gas discovering which. The backend collapses these too; this
+ * keeps the chain-read fallback agreeing with it instead of the grid changing shape whenever the
+ * indexer is unavailable.
+ *
+ * Callers pass a list already sorted newest-first, so the first row seen for an edition is the
+ * newest, which is the one carrying the seller's current price. The key is token + serial, not
+ * the serial alone: a seller's own listings span collections, where serial 1 of two different
+ * comics are unrelated editions that must not collapse into each other.
+ */
+const keepNewestPerEdition = (listings: ResaleListing[]): ResaleListing[] => {
+  const seen = new Set<string>();
+
+  return listings.filter((listing) => {
+    // Never collapse rows we cannot key.
+    if (!Number.isFinite(listing.serialNumber) || !listing.tokenAddress) return true;
+
+    const key = `${listing.tokenAddress}:${listing.serialNumber}`;
+    if (seen.has(key)) return false;
+
+    seen.add(key);
+    return true;
+  });
 };
 
 /** Ask the backend to index new events now rather than at its next poll. */
@@ -279,10 +311,38 @@ export async function getActiveResaleListings(tokenId: string): Promise<ResaleLi
 
   const listings = await Promise.all(candidateIds.map(fetchListing));
 
-  return listings
+  const active = listings
     .filter((listing): listing is ResaleListing => Boolean(listing))
     .filter((listing) => listing.isActive && listing.tokenAddress === tokenEvmAddress)
     .sort((a, b) => b.listingId - a.listingId);
+
+  return keepNewestPerEdition(active);
+}
+
+/**
+ * Every live listing a given wallet is the seller of, read straight from the chain.
+ *
+ * The log-scan route the per-token reader uses is no help here: `NFTListed` indexes the seller,
+ * but a listing that has since been cancelled or sold still has its original log, so the logs
+ * alone cannot say what is live now. Walking `listingCounter` backwards and reading each listing
+ * gives the current state directly, which is what a seller's own list has to show.
+ *
+ * Bounded by `COUNTER_SCAN_DEPTH`, so this is the backend endpoint's fallback rather than its
+ * equal - a wallet whose listings are older than that window needs the indexer.
+ */
+export async function getActiveListingsForSeller(seller: string): Promise<ResaleListing[]> {
+  const sellerEvmAddress = toEvmAddress(seller);
+  if (!sellerEvmAddress) return [];
+
+  const candidateIds = await recentListingIds();
+  const listings = await Promise.all(candidateIds.map(fetchListing));
+
+  const mine = listings
+    .filter((listing): listing is ResaleListing => Boolean(listing))
+    .filter((listing) => listing.isActive && listing.seller === sellerEvmAddress)
+    .sort((a, b) => b.listingId - a.listingId);
+
+  return keepNewestPerEdition(mine);
 }
 
 export function useResaleListings(tokenId?: string | null) {

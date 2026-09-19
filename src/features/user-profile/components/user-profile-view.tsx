@@ -14,6 +14,7 @@ import { getUserComics } from '@/redux/slices/comicSlice';
 import { useAccount } from 'wagmi';
 import { useUserPurchasedComics } from '@/hook/usePurchasedComics';
 import OfferManagementSection from '@/features/offers-bids/components/OfferManagementSection';
+import ListedComicsSection from './ListedComicsSection';
 import { PRODUCTION_FEATURES } from '@/config/features';
 
 const OFFER_PROFILE_TABS = ['offersBids', 'offersReceived'];
@@ -210,6 +211,18 @@ const UserProfile = ({ onEditProfile, onComicAction }) => {
                         </div>
                     ))}
                 </div>
+            );
+        }
+
+        // Editions this wallet has up for resale. Gated on `resale` because without it there is
+        // no way to create a listing, so the tab could only ever be empty.
+        if (activeTab === 'listedComics' && PRODUCTION_FEATURES.resale) {
+            return (
+                <ListedComicsSection
+                    walletAddress={userWalletAddress}
+                    ownedComics={ownedComics}
+                    onAction={handleEmptyStateAction}
+                />
             );
         }
 

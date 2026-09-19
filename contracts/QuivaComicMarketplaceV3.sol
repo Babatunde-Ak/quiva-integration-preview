@@ -59,9 +59,10 @@ interface IHtsErc721 {
  *
  * ## Upgrade safety
  *
- * Storage layout is byte-identical to V2 (slots 0-12 plus the 40-slot gap), verified against the
- * live proxy's storage. No new state variables. UUPS is retained - dropping it would leave the
- * proxy permanently frozen.
+ * Slots 0-12 are byte-identical to V2, verified against the live proxy's storage. One state
+ * variable is appended at slot 13 (`activeListingRef`), taken out of the reserve gap, which
+ * shrinks from 40 to 39 - so nothing above it moves and the gap still covers the same total
+ * range. UUPS is retained: dropping it would leave the proxy permanently frozen.
  */
 contract QuivaComicMarketplaceV3 is
     Initializable,
