@@ -17,6 +17,7 @@ import {
   selectSuccessMessage
 } from '@/redux/slices/comicSlice';
 import { toast } from 'react-toastify';
+import { uploadFileDirect, uploadFilesDirect } from '@/lib/direct-upload';
 
 interface EpisodeFormData {
   // Episode Details
@@ -225,26 +226,6 @@ const EpisodeFormController: React.FC<EpisodeFormControllerProps> = ({
     dispatch(clearError());
     dispatch(clearSuccessMessage());
 
-    const formDataToSend = new FormData();
-    formDataToSend.append('title', formData.title);
-    formDataToSend.append('episodeNumber', formData.episodeNumber);
-    formDataToSend.append('summary', formData.summary);
-    formDataToSend.append('maturityRating', formData.maturityRating);
-    formDataToSend.append('genre', JSON.stringify(formData.genre));
-    
-    if (formData.bannerImage) {
-      formDataToSend.append('bannerImage', formData.bannerImage);
-    }
-    
-    formDataToSend.append('collaborators', JSON.stringify(formData.collaborators));
-    formDataToSend.append('contentType', formData.contentType || '');
-    
-    formData.pages.forEach((file, index) => {
-      formDataToSend.append('pages', file);
-    });
-    
-    formDataToSend.append('collectionId', collectionId);
-
     const nftDetails = {
       "mintStatus": "pending",
       "price": 0,
@@ -255,26 +236,50 @@ const EpisodeFormController: React.FC<EpisodeFormControllerProps> = ({
       "royaltyPercentage": 0
     };
 
-    formDataToSend.append('nftDetails', JSON.stringify(nftDetails));
+    const loadingToast = toast.loading("Uploading episode files...");
 
-    // Show loading toast
-    const loadingToast = toast.loading("Publishing episode...");
-
-    // Dispatch Redux action instead of direct API call
     try {
-      const result = await dispatch(createFullComic({ 
-        formData: formDataToSend, 
-        collectionId 
+      // Files go straight to storage from here. Sending them through our own API instead put
+      // every page in one request body, which production rejects above 4.5 MB - see
+      // lib/direct-upload.ts. Only the resulting references are posted below.
+      const uploadedBanner = formData.bannerImage
+        ? await uploadFileDirect(formData.bannerImage)
+        : null;
+
+      const uploadedPages = await uploadFilesDirect(formData.pages, (progress) => {
+        toast.update(loadingToast, {
+          render: `Uploading page ${Math.min(progress.completed + 1, progress.total)} of ${progress.total}...`,
+        });
+      });
+
+      toast.update(loadingToast, { render: "Publishing episode..." });
+
+      const result = await dispatch(createFullComic({
+        payload: {
+          title: formData.title,
+          episodeNumber: formData.episodeNumber,
+          summary: formData.summary,
+          maturityRating: formData.maturityRating,
+          genre: formData.genre,
+          collaborators: formData.collaborators,
+          contentType: formData.contentType || '',
+          collectionId,
+          nftDetails,
+          coverImage: uploadedBanner?.imageUrl,
+          coverCid: uploadedBanner?.imageCid,
+          pages: uploadedPages,
+        },
+        collectionId
       } as any)).unwrap();
-      
+
       toast.dismiss(loadingToast);
       toast.success("Episode published successfully!");
-      
+
       onSubmit(formData);
     } catch (err: any) {
-      console.error("Redux dispatch failed:", err);
+      console.error("Episode publish failed:", err);
       toast.dismiss(loadingToast);
-      toast.error("Failed to publish episode. Please try again.");
+      toast.error(err?.message || "Failed to publish episode. Please try again.");
     }
   }, [formData, collectionId, dispatch, onSubmit]);
 
