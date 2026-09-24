@@ -6,7 +6,7 @@ import { ethers } from 'ethers'
 import { RefreshCw } from 'lucide-react'
 import { HbarIcon } from '@/components/ui/HbarIcon'
 import { useWagmiMarketplace } from '@/hook/useWagmiMarketplace'
-import { useReceivedOffers, type ListingOfferGroup } from '@/hook/useReceivedOffers'
+import { groupByListing, useReceivedOffers, type ListingOfferGroup } from '@/hook/useReceivedOffers'
 import { useMyOffers, type MyMarketplaceItem } from '@/hook/useMyOffers'
 import ReceivedOffersModal from './ReceivedOffersModal'
 import PreviewDialog from './PreviewDialog'
@@ -134,6 +134,17 @@ export default function OfferManagementSection({ view }: { view: OfferView }) {
     }
   }
 
+  // Settling one offer leaves the rest of the listing's offers untouched, so rather than closing
+  // the dialog we hand it the refreshed group. It closes itself only once the listing has no
+  // offers left, which is also what happens when the seller accepts one.
+  const settleSelectedGroup = useCallback(async () => {
+    const refreshed = await refreshReceived()
+    setSelectedGroup((current) => {
+      if (!current) return null
+      return groupByListing(refreshed).find((group) => group.listingId === current.listingId) ?? null
+    })
+  }, [refreshReceived])
+
   const goToOffer = (mode: 'offer' | 'bid') => {
     router.push(`/marketplace/auction?mode=${mode === 'bid' ? 'bid' : 'offer'}`)
   }
@@ -241,7 +252,7 @@ export default function OfferManagementSection({ view }: { view: OfferView }) {
         <ReceivedOffersModal
           group={selectedGroup}
           onClose={() => setSelectedGroup(null)}
-          onSettled={() => void refreshReceived()}
+          onSettled={() => void settleSelectedGroup()}
         />
       </section>
     )

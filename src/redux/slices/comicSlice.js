@@ -52,20 +52,27 @@ export const createComic = createAsyncThunk(
 // Create a full comic with pages
 export const createFullComic = createAsyncThunk(
   "comics/createFull",
-  async ({formData, collectionId}, { rejectWithValue }) => {
+  async ({formData, payload, collectionId}, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post(
-        API_ENDPOINTS.comics.createFull(collectionId),
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+      // `payload` means the files were uploaded to storage already and only their references
+      // are being sent, which keeps the request small enough to survive production's body
+      // limit. `formData` is the older multipart path, kept for any caller still using it.
+      const response = payload
+        ? await axiosInstance.post(API_ENDPOINTS.comics.createFull(collectionId), payload)
+        : await axiosInstance.post(
+            API_ENDPOINTS.comics.createFull(collectionId),
+            formData,
+            {
+              headers: {
+                "Content-Type": "multipart/form-data",
+              },
+            }
+          );
       return response.data;
     } catch (error) {
-      throw error.message || "Failed to create full comic";
+      const message =
+        error?.response?.data?.message || error?.message || "Failed to create full comic";
+      return rejectWithValue(message);
     }
   }
 );

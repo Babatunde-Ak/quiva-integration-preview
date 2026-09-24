@@ -522,10 +522,14 @@ const HTS_TOKEN_ASSOCIATE_ABI = [
   /**
    * The live listing id for an edition, or null if it has none.
    *
-   * Prefers the contract's own `activeListingFor`, which is exact. That view only exists in the
-   * implementation carrying the duplicate guard, so when the call fails this falls back to
-   * scanning recent listings - correct for anything inside the scan window, which is where a
-   * seller's own listings realistically are.
+   * `activeListingFor` is the contract's own index, so a hit from it is authoritative. A miss is
+   * not: the index is only written by listings created after the duplicate-guard implementation
+   * went live, and it is not backfilled, so every listing older than that upgrade reads as
+   * "unlisted" through it. The contract has the same blind spot and will let those be listed a
+   * second time - this scan is what stops the app from walking a seller into it.
+   *
+   * The scan is also the whole answer on an implementation where the view does not exist yet,
+   * where the read throws instead of returning false.
    */
   const findActiveListingForSerial = async (
     tokenAddress: Address,
@@ -540,9 +544,9 @@ const HTS_TOKEN_ASSOCIATE_ABI = [
         functionName: "activeListingFor",
         args: [tokenAddress, BigInt(serialNumber)],
       })) as [bigint, boolean];
-      return exists ? Number(listingId) : null;
+      if (exists) return Number(listingId);
     } catch {
-      // View not deployed yet - fall through to the scan.
+      // View not deployed yet - the scan below is the only check available.
     }
 
     try {
