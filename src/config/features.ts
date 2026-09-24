@@ -12,6 +12,6 @@
 export const PRODUCTION_FEATURES = {
   resale: true,
   offers: true,
-  auction: false,
-  hashPackWallet: false,
+  auction: true,
+  hashPackWallet: true,
 } as const;
