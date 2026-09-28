@@ -14,6 +14,7 @@ import { getComicById } from "@/redux/slices/comicSlice";
 import { getCollectionById } from "@/redux/slices/collectionSlice";
 //import useMarketplace from "@/hook/useMarketplace";
 import useMirrorNodeQueries from "@/hook/useMirrorNodeQueries";
+import { useAccount } from "wagmi";
 import   { useHederaWallet } from "@/providers/HashPackProvider";
 import { useNftOwnershipCheck } from "@/hook/userNFTOwnershipCheck";
 import { PRODUCTION_FEATURES } from "@/config/features";
@@ -24,11 +25,15 @@ export default function ComicDetail() {
   const [showMintPage, setShowMintPage] = useState(false);
   const [resolvedTokenId, setResolvedTokenId] = useState<string>("");
   const [resolvedSerialNumber, setResolvedSerialNumber] = useState<number | null>(null);
+  const [isCheckingAccess, setIsCheckingAccess] = useState(false);
+  const [readError, setReadError] = useState<string | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
   const {user} = useAppSelector((state: any) => state.wallet);
   const { account, signer } = useHederaWallet();
+  // Wagmi is the wallet in use; HashPack and the stored address stay as fallbacks.
+  const { address } = useAccount();
   const { checkOwnership } = useNftOwnershipCheck();
 
   // const { canReadComic } = useMarketplace({
@@ -158,67 +163,47 @@ export default function ComicDetail() {
   // Creator description with real data
   const creatorDescription = `${displayAuthorName} is a visionary ${currentCollection?.comic?.length > 1 ? 'series creator' : 'artist'} dedicated to pushing the boundaries of digital art and interactive narratives. ${currentCollection?.description || ''}`.trim();
 
-  // const handleReadClick = async () => {
-  //   // TODO: Implement logic to determine if user can read full comic or just preview based on ownership
-  //   //const readingAccess = await  canReadComic(currentComic?._id, user?.walletAddress);
-  //     //  const readingAccess = await checkCanReadComic(currentComic?._id, user?.walletAddress); 
-  //     if (readingAccess === false) {
-  //       alert("You have preview access to this comic. Please mint to unlock the full story!");
-  //         setShowMintPage(true);
-  //     } else {
-  //          router.push(`/reader?id=${currentComic?._id}`);
-  //     }
-  // };
+  /**
+   * Start Read is where reading actually begins. The profile card opens this page rather than
+   * jumping into the reader, so the ownership check that used to sit on the card lives here.
+   *
+   * Owning the NFT is what grants access, so it is checked against the chain rather than against
+   * anything the page was handed. Without a copy the mint panel opens instead of a dead end.
+   */
+  const handleReadClick = async () => {
+    const userWalletAddress = address || account || user?.walletAddress;
 
+    if (!userWalletAddress) {
+      setReadError("Connect your wallet to read this comic.");
+      return;
+    }
 
-  
-  // const handleReadClick = async () => {
-  //   console.log('📖 Start Reading clicked');
-    
-  //   // Get user's wallet address
-  //   const userWalletAddress = account || user?.walletAddress;
-    
-  //   // Get comic's token ID
-  //   const comicTokenId = currentComic?.nftId?.tokenId;
-    
-  //   console.log('🔍 Checking read access:', {
-  //     userWallet: userWalletAddress,
-  //     comicTokenId,
-  //     comicTitle: currentComic?.title
-  //   });
+    if (!nftTokenId) {
+      setReadError("This comic is not available as an NFT yet.");
+      return;
+    }
 
-  //   if (!userWalletAddress) {
-  //     alert("Please connect your wallet to read this comic!");
-  //     return;
-  //   }
+    setReadError(null);
+    setIsCheckingAccess(true);
 
-  //   if (!comicTokenId) {
-  //     console.warn('⚠️ No tokenId found for this comic');
-  //     alert("This comic is not available as an NFT yet.");
-  //     return;
-  //   }
+    try {
+      const ownership = await checkOwnership(userWalletAddress, nftTokenId);
 
-  //   try {
-  //     // ✅ Check if user owns this NFT by checking their wallet
-  //     const ownershipResult = await checkOwnership(userWalletAddress, comicTokenId);
-      
-  //     console.log('🎯 Ownership result:', ownershipResult);
+      if (ownership.hasNft) {
+        router.push(`/reader?id=${comicId || currentComic?._id}`);
+        return;
+      }
 
-  //     if (ownershipResult.hasNft) {
-  //       // User owns the NFT - allow full reading
-  //       console.log(`✅ User owns NFT! Serial numbers: ${ownershipResult.serialNumbers.join(', ')}`);
-  //       router.push(`/reader?id=${currentComic?._id}`);
-  //     } else {
-  //       // User doesn't own the NFT - show mint page
-  //       console.log('❌ User does not own this NFT');
-  //       alert("You need to own this NFT to read the full comic. Please mint to unlock!");
-  //       setShowMintPage(true);
-  //     }
-  //   } catch (error) {
-  //     console.error('❌ Error checking NFT ownership:', error);
-  //     alert("Error checking NFT ownership. Please try again.");
-  //   }
-  // };
+      setReadError("You need to own this edition to read it. Mint one to unlock the full story.");
+      setShowMintPage(true);
+    } catch (error) {
+      console.error("Error checking NFT ownership:", error);
+      setReadError("Could not confirm ownership just now. Please try again.");
+    } finally {
+      setIsCheckingAccess(false);
+    }
+  };
+
   const handleBackFromMint = () => {
     setShowMintPage(false);
   };
@@ -336,12 +321,19 @@ export default function ComicDetail() {
                         ))}
                       </div>
 
+                      {readError && (
+                        <p className="max-w-md mb-3 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+                          {readError}
+                        </p>
+                      )}
+
                       <div className="flex gap-4 font-mono max-w-md">
-                        <button 
-                          // onClick={handleReadClick}
-                          className="flex-1 bg-[#FAA31E] text-black font-bold py-2 px-1 rounded-full hover:brightness-110 transition-all shadow-lg shadow-orange-500/20"
+                        <button
+                          onClick={handleReadClick}
+                          disabled={isCheckingAccess}
+                          className="flex-1 bg-[#FAA31E] text-black font-bold py-2 px-1 rounded-full hover:brightness-110 transition-all shadow-lg shadow-orange-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                          Start Read
+                          {isCheckingAccess ? "Checking access..." : "Start Read"}
                         </button>
                         {PRODUCTION_FEATURES.resale && (
                           <button

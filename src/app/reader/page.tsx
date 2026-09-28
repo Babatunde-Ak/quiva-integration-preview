@@ -14,6 +14,7 @@ import { getComicById, clearCurrentComic } from '@/redux/slices/comicSlice';
 import { Footer } from '@/components/global/comic-library/Footer';
 import { useNftOwnershipCheck } from '@/hook/userNFTOwnershipCheck';
 import { useHederaWallet } from '@/providers/HashPackProvider';
+import { useAccount } from 'wagmi';
 
 const COMICS_PER_PAGE = 3;
 
@@ -30,6 +31,7 @@ const ComicReaderViewer = () => {
   const dispatch = useAppDispatch();
   const { currentComic, isLoading } = useAppSelector((state: any) => state.comic);
   const { account } = useHederaWallet();
+  const { address } = useAccount();
   const { user: walletUser } = useAppSelector((state: any) => state.wallet);
   const { checkOwnership } = useNftOwnershipCheck();
 
@@ -43,44 +45,69 @@ const ComicReaderViewer = () => {
 
   /* data fetching */
 
+  // Tracks the component itself, so it is its own effect. It used to be cleared by the cleanup
+  // below, which also runs whenever the comic changes and on React's development double-mount -
+  // and nothing ever set it back to true, so the scroll handler stopped updating progress.
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
   useEffect(() => {
     if (comicId) dispatch(getComicById({ id: comicId } as any));
     return () => {
       dispatch(clearCurrentComic());
-      isMounted.current = false;
     };
   }, [comicId, dispatch]);
 
-  // Guard: verify wallet owns the NFT before allowing read access
+  /**
+   * Guard: you can only read an edition you own.
+   *
+   * Every branch here used to end in a redirect to the detail page - including the one reached
+   * after ownership was confirmed - so opening the reader always bounced straight back out. Owning
+   * the NFT now simply falls through and the comic renders.
+   */
   useEffect(() => {
     if (!currentComic) return;
 
     const tokenId = currentComic?.nftId?.tokenId;
-    if (!tokenId) return; // no NFT gate, allow read
+    if (!tokenId) return; // Nothing to gate on - this comic was never minted.
 
-    const userWalletAddress = account || walletUser?.walletAddress;
+    // Wagmi is the wallet in production; HashPack and the stored address are fallbacks. Reading
+    // only `account` meant the check saw no wallet for ordinary users and ejected them.
+    const userWalletAddress = address || account || walletUser?.walletAddress;
+
+    const backToDetail = (extra = "") =>
+      router.replace(`/marketplace/detail?id=${comicId}${extra}`);
+
     if (!userWalletAddress) {
-      router.replace(`/marketplace/detail?id=${comicId}`);
+      backToDetail();
       return;
     }
 
-    checkOwnership(userWalletAddress, tokenId).then((result) => {
-      if (!result.hasNft) {
-        router.replace(`/marketplace/detail?id=${comicId}`);
-        return;
-      }
+    let cancelled = false;
 
-      const serialNumber = result.serialNumbers?.[0];
-      if (!serialNumber && serialNumber !== 0) {
-        router.replace(`/marketplace/detail?id=${comicId}&tokenId=${encodeURIComponent(tokenId)}`);
-        return;
-      }
+    checkOwnership(userWalletAddress, tokenId)
+      .then((result) => {
+        if (cancelled) return;
+        if (!result.hasNft) {
+          backToDetail(`&tokenId=${encodeURIComponent(tokenId)}`);
+        }
+        // Owns it: stay here and read.
+      })
+      .catch((error) => {
+        // A mirror-node hiccup should not eject someone mid-read. Access was already checked on
+        // the detail page to get here, and the pages themselves are public IPFS URLs, so this
+        // gate is about sending non-owners somewhere useful rather than protecting a secret.
+        console.warn("Could not confirm NFT ownership for the reader:", error);
+      });
 
-      router.replace(
-        `/marketplace/detail?id=${comicId}&tokenId=${encodeURIComponent(tokenId)}&serialNumber=${serialNumber}`
-      );
-    });
-  }, [currentComic, account, walletUser?.walletAddress, checkOwnership, comicId, router]);
+    return () => {
+      cancelled = true;
+    };
+  }, [currentComic, address, account, walletUser?.walletAddress, checkOwnership, comicId, router]);
 
   const activeComic = useMemo(() => {
     const comic = currentComic;
