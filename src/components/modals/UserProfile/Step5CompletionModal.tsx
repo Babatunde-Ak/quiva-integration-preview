@@ -5,7 +5,12 @@ import { Camera, Upload, X } from "lucide-react";
 import { MainButton } from "@/components/button";
 
 import { useAppSelector, useAppDispatch } from "@/redux/hook";
-import { updateUserProfile } from "@/redux/slices/authSlice";
+import {
+	updateUserProfile,
+	updateUserUsername,
+	getUserProfile,
+	resetProfileStates,
+} from "@/redux/slices/authSlice";
 import { useRouter } from "next/navigation";
 
 interface ProfilePictureData {
@@ -36,7 +41,12 @@ const Step5CompletionModal = ({
 	initialData = {},
 }: Props) => {
 	const { profile } = useAppSelector((state: any) => state.auth);
-	const [username, setUsername] = useState(profile?.data?.displayName || "");
+	// Seeded from the real username, falling back to the display name for accounts created before
+	// this field set a username at all.
+	const [username, setUsername] = useState(
+		profile?.data?.username || profile?.data?.displayName || "",
+	);
+	const [usernameError, setUsernameError] = useState<string | null>(null);
 	const [profilePreview, setProfilePreview] = useState<string | null>(
 		profile?.data?.avatar || null,
 	);
@@ -51,17 +61,31 @@ const Step5CompletionModal = ({
 	);
 	const [bio, setBio] = useState(profile?.data?.bio || "");
 	const [showSuccess, setShowSuccess] = useState(false);
+	// Edits not yet sent. Lets Next save on the user's behalf instead of silently dropping them.
+	const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
 	const profileFileInputRef = useRef<HTMLInputElement>(null);
 	const bannerFileInputRef = useRef<HTMLInputElement>(null);
 	const router = useRouter();
 
-	const { user } = useAppSelector((state: any) => state.wallet);
+	const { user: walletUser } = useAppSelector((state: any) => state.wallet);
+	const authUser = useAppSelector((state: any) => state.auth?.user?.data);
+	// Same fallback Edit Profile uses. The wallet slice is not always populated by the time a
+	// first-time creator reaches this step, and the auth session is the other source of the id.
+	const userId: string | undefined = walletUser?._id || authUser?._id;
+
 	const { updateProfile } = useAppSelector((state: any) => state.auth);
 	const isLoading = updateProfile?.isLoading || false;
 	const error = updateProfile?.error || null;
 	const success = updateProfile?.success || false;
 	const dispatch = useAppDispatch();
+
+	// `updateProfile` lives in the shared auth slice, so an earlier failed or successful save -
+	// from Edit Profile or a previous visit here - would otherwise show on open as if it were
+	// this form's result.
+	useEffect(() => {
+		dispatch(resetProfileStates());
+	}, [dispatch]);
 
 	// Show success message when profile updates successfully
 	useEffect(() => {
@@ -77,6 +101,7 @@ const Step5CompletionModal = ({
 
 	// Clear success message when user starts editing
 	const handleInputChange = () => {
+		setHasUnsavedChanges(true);
 		if (showSuccess) {
 			setShowSuccess(false);
 		}
@@ -120,15 +145,16 @@ const Step5CompletionModal = ({
 		}
 	};
 
-	const handleSave = async () => {
-		if (!user?._id) {
+	/** Returns whether the save succeeded, so Next can decide whether to move on. */
+	const handleSave = async (): Promise<boolean> => {
+		if (!userId) {
 			alert("User ID not found. Please log in again.");
 			router.push("/marketplace");
-			return;
+			return false;
 		}
 
+		// The id belongs in the URL, not the form - the route is PUT /auth/:id/profile.
 		const formData = new FormData();
-		formData.append("id", user._id);
 
 		if (username) {
 			formData.append("displayName", username);
@@ -147,14 +173,55 @@ const Step5CompletionModal = ({
 		}
 
 		try {
-			await dispatch(updateUserProfile(formData as any)).unwrap();
+			// The thunk destructures `{ id, profileData }`. Passing the FormData itself left both
+			// undefined, so the request went to /auth/undefined/profile with no body and the
+			// backend failed with "Cannot destructure property 'displayName' of 'req.body'".
+			// This is the same call shape Edit Profile uses, which is why that screen worked.
+			await dispatch(
+				updateUserProfile({ id: userId, profileData: formData } as any),
+			).unwrap();
 		} catch (err) {
 			console.error("Failed to update profile:", err);
+			return false;
 		}
+
+		// The field is labelled Username, so it sets the actual username - a separate record with
+		// its own uniqueness check - rather than only the display name. Done after the profile
+		// save so a name that is already taken does not discard the avatar, banner and bio.
+		const desiredUsername = username.trim();
+		const currentUsername = profile?.data?.username || "";
+
+		if (desiredUsername && desiredUsername !== currentUsername) {
+			try {
+				await dispatch(
+					updateUserUsername({ id: userId, username: desiredUsername } as any),
+				).unwrap();
+			} catch (err: any) {
+				setUsernameError(
+					typeof err === "string"
+						? err
+						: err?.message || "That username is not available.",
+				);
+				// Thunk is defined in plain JS, so TS infers its argument as `undefined`.
+				dispatch((getUserProfile as any)(userId));
+				return false;
+			}
+		}
+
+		setUsernameError(null);
+		setHasUnsavedChanges(false);
+		// Refresh so the header avatar and name reflect the new profile straight away.
+		dispatch((getUserProfile as any)(userId));
+		return true;
 	};
 
+	// Next is the primary button, so this is where most people finish. Save anything they have
+	// entered first rather than dropping it, and stay put if the save fails so they can see why.
 	const handleNext = async () => {
-		// await handleSave();
+		if (hasUnsavedChanges) {
+			const saved = await handleSave();
+			if (!saved) return;
+		}
 		onNext();
 	};
 
@@ -208,12 +275,20 @@ const Step5CompletionModal = ({
 						value={username}
 						onChange={(e) => {
 							setUsername(e.target.value);
+							setUsernameError(null);
 							handleInputChange();
 						}}
 						disabled={isLoading}
-						className='flex-1 px-4 py-3 bg-zinc-800/50 border border-zinc-700 rounded-lg focus:outline-none focus:border-amber-500 focus:bg-zinc-800 transition text-white placeholder:text-zinc-500 disabled:opacity-50 disabled:cursor-not-allowed'
+						className={`flex-1 px-4 py-3 bg-zinc-800/50 border rounded-lg focus:outline-none focus:bg-zinc-800 transition text-white placeholder:text-zinc-500 disabled:opacity-50 disabled:cursor-not-allowed ${
+							usernameError
+								? "border-red-500/70 focus:border-red-500"
+								: "border-zinc-700 focus:border-amber-500"
+						}`}
 					/>
 				</div>
+				{usernameError && (
+					<p className='mt-2 text-sm text-red-400'>{usernameError}</p>
+				)}
 			</div>
 
 			{/* Profile Picture and Banner Image */}
@@ -337,8 +412,10 @@ const Step5CompletionModal = ({
 
 			{/* Navigation Buttons */}
 			<div className='flex flex-col items-center gap-4'>
+				{/* Skipping moves on without saving. It used to call onBack, which sent the user to
+				    the previous step instead of past this one. */}
 				<button
-					onClick={onBack}
+					onClick={onNext}
 					disabled={isLoading}
 					className='w-full max-w-lg py-4 px-8 bg-transparent hover:bg-zinc-800 text-white font-semibold text-base rounded-full border-2 border-white hover:border-white/80 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed'
 				>

@@ -5,9 +5,7 @@ import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import Picture from '@/components/picture/Index'
 import { hbar } from '../../../../../public/dev_images'
-import { useHederaWallet } from '@/providers/HashPackProvider'
-import { useNftOwnershipCheck } from "@/hook/userNFTOwnershipCheck";
-import { useAccount } from 'wagmi'
+
 interface ComicCardProps {
   id?: string
   title: string
@@ -28,6 +26,8 @@ interface ComicCardProps {
   buttonVariant?: 'default' | 'outline'
   size?: 'small' | 'medium' | 'large'
   tokenId?: string
+  /** The edition this card represents. Carried through so the detail page opens on that serial. */
+  serialNumber?: number
 }
 
 
@@ -42,59 +42,32 @@ export function MintComicCard({
   premium = false,
   free = false,
   number = 1,
-  tokenId
+  tokenId,
+  serialNumber
 }: ComicCardProps) {
 
   const router = useRouter()
-  const { account, user } = useHederaWallet();
-  const { address } = useAccount();
-  const { checkOwnership } = useNftOwnershipCheck();
 
-  const handleReadClick = async () => {
-    console.log('📖 Start Reading clicked');
-    
-    // Prefer the active Wagmi account, while preserving HashPack as a fallback.
-    const userWalletAddress = address || account || user?.walletAddress;
-    
-    // Get comic's token ID from prop
-    const comicTokenId = tokenId;
-    
-    console.log('🔍 Checking read access:', {
-      userWallet: userWalletAddress,
-      comicTokenId,
-      comicTitle: title
-    });
+  /**
+   * Opens the comic's detail page rather than the reader.
+   *
+   * The card used to check ownership itself and jump straight into the reader, which skipped the
+   * detail page entirely - so the edition's own page, its activity and the Resell action were
+   * unreachable from a comic you own. Reading now starts from Start Read on that page, which is
+   * where the ownership check lives.
+   *
+   * Token and serial ride along in the query so the page opens on this exact edition instead of
+   * having to work out which one of yours you meant.
+   */
+  const handleOpenDetail = () => {
+    const params = new URLSearchParams()
+    if (id) params.set('id', String(id))
+    if (tokenId) params.set('tokenId', String(tokenId))
 
-    if (!userWalletAddress) {
-      alert("Please connect your wallet to read this comic!");
-      return;
-    }
+    const serial = serialNumber ?? number
+    if (serial !== undefined && serial !== null) params.set('serialNumber', String(serial))
 
-    if (!comicTokenId) {
-      console.warn('⚠️ No tokenId found for this comic');
-      alert("This comic is not available as an NFT yet.");
-      return;
-    }
-
-    try {
-      // ✅ Check if user owns this NFT by checking their wallet
-      const ownershipResult = await checkOwnership(userWalletAddress, comicTokenId);
-      
-      console.log('🎯 Ownership result:', ownershipResult);
-
-      if (ownershipResult.hasNft) {
-        // User owns the NFT - allow full reading
-        console.log(`✅ User owns NFT! Serial numbers: ${ownershipResult.serialNumbers.join(', ')}`);
-        router.push(`/reader?id=${id}`);
-      } else {
-        // User doesn't own the NFT - show mint page
-        console.log('❌ User does not own this NFT');
-        alert("You need to own this NFT to read the full comic. Please mint to unlock!");
-      }
-    } catch (error) {
-      console.error('❌ Error checking NFT ownership:', error);
-      alert("Error checking NFT ownership. Please try again.");
-    }
+    router.push(`/marketplace/detail?${params.toString()}`)
   };
 
   return (
@@ -108,8 +81,7 @@ export function MintComicCard({
         transition: { duration: 0.2, ease: "easeInOut" }
       }}
       whileTap={{ scale: 0.98 }}
-      //onClick={() => router.push(`/chapter/${id}`)}
-      onClick={handleReadClick}
+      onClick={handleOpenDetail}
     >
       {/* Image Container with Number Badge */}
       <div className="relative">

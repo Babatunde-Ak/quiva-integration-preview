@@ -206,6 +206,7 @@ const UserProfile = ({ onEditProfile, onComicAction }) => {
                                 views={item.rawComicData?.views?.toString() || '0'}
                                 image={item.bannerImage}
                                 number={item.serialNumber}
+                                serialNumber={item.serialNumber}
                                 tokenId={item.tokenId}
                             />
                         </div>
