@@ -20,7 +20,8 @@ export interface TopComic {
   title: string
   author: string
   floorPrice: string
-  priceChange: number
+  /** Undefined when no historical price exists to compare against, which is currently always. */
+  priceChange?: number
   copies: number
   sales: number
   volume: string
@@ -30,15 +31,24 @@ export interface TopComic {
 
 interface TopComicsTableProps {
   comics: TopComic[]
+  /** Told which window the viewer picked, so the caller can refetch volume over it. */
+  onPeriodChange?: (period: string) => void
 }
 
-export function TopComicsTable({ comics }: TopComicsTableProps) {
+export function TopComicsTable({ comics, onPeriodChange }: TopComicsTableProps) {
   const router = useRouter()
 
   const timePeriods = ['10m', '1h', '6h', '1d', '7d', '30d']
 
-  const [selectedPeriod, setSelectedPeriod] = useState('10m')
-  
+  // Defaults to a day: these buttons used to be decorative, and on a marketplace this quiet the
+  // shorter windows are almost always empty.
+  const [selectedPeriod, setSelectedPeriod] = useState('1d')
+
+  const handlePeriodChange = (period: string) => {
+    setSelectedPeriod(period)
+    onPeriodChange?.(period)
+  }
+
   return (
     <section className="my-8 mt-12">
       <div className="flex items-center justify-between mb-4">
@@ -54,7 +64,7 @@ export function TopComicsTable({ comics }: TopComicsTableProps) {
                   ? ' text-white' 
                   : 'text-white/25 hover:text-white'
               }`}
-              onClick={() => setSelectedPeriod(period)}
+              onClick={() => handlePeriodChange(period)}
             >
               {period}
             </button>
@@ -70,7 +80,7 @@ export function TopComicsTable({ comics }: TopComicsTableProps) {
               <TableHead className="text-white text-sm ">Floor Price</TableHead>
               <TableHead className="text-white text-sm ">Supply</TableHead>
               <TableHead className="text-white text-sm ">Sales</TableHead>
-              <TableHead className="text-white text-sm ">24h Volume</TableHead>
+              <TableHead className="text-white text-sm ">{selectedPeriod} Volume</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -107,12 +117,14 @@ export function TopComicsTable({ comics }: TopComicsTableProps) {
                     <span className="text-white font-light flex items-center gap-1">{comic.floorPrice} 
                       <span><Picture src={hbar} alt="hbar" loading="eager" className="w-6 h-6" /></span>
                     </span>
-                    <span className={`text-xs flex ${
-                      comic.priceChange > 0 ? 'text-green-400' : 'text-red-400'
-                    }`}>
-                      <span>{comic.priceChange > 0 ? <ChevronUp className="w-4 h-4 text-green-400" /> : <ChevronDown className="w-4 h-4 text-red-400" />}</span>
-                      {comic.priceChange}%
-                    </span>
+                    {comic.priceChange !== undefined && (
+                      <span className={`text-xs flex ${
+                        comic.priceChange > 0 ? 'text-green-400' : 'text-red-400'
+                      }`}>
+                        <span>{comic.priceChange > 0 ? <ChevronUp className="w-4 h-4 text-green-400" /> : <ChevronDown className="w-4 h-4 text-red-400" />}</span>
+                        {comic.priceChange}%
+                      </span>
+                    )}
                   </div>
                 </TableCell>
                 

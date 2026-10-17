@@ -59,10 +59,23 @@ interface ApiComic {
     nftMetadataCid?: string
 }
 
+export interface ComicMarketStats {
+    sales: number
+    volume: number
+}
+
 /**
- * Transform API comic data to TopComic format for the TopComicsTable component
+ * Transform API comic data to TopComic format for the TopComicsTable component.
+ *
+ * `stats` carries the real figures, keyed by comic id. Sales used to be the comic's view count -
+ * which is why a comic with ten copies could report hundreds of sales - and volume was picked at
+ * random from a hard-coded list on every render. A comic with no purchases yet reports zero;
+ * nothing here invents a number.
  */
-export function transformApiComicsToTopComics(apiComics: ApiComic[]): TopComic[] {
+export function transformApiComicsToTopComics(
+    apiComics: ApiComic[],
+    stats: Record<string, ComicMarketStats> = {}
+): TopComic[] {
     return apiComics
         .map((comic, index) => {
             const walletAddr = comic.creatorId.walletAddress
@@ -74,6 +87,7 @@ export function transformApiComicsToTopComics(apiComics: ApiComic[]): TopComic[]
                 : '—'
 
             const maxSupply = comic.nftId?.maxSupply ?? 0
+            const comicStats = stats[comic._id]
 
             return {
                 id: comic._id,
@@ -81,21 +95,15 @@ export function transformApiComicsToTopComics(apiComics: ApiComic[]): TopComic[]
                 title: comic.title,
                 author,
                 floorPrice,
-                priceChange: generateMockPriceChange(),
+                // Nothing records a historical floor price, so a change against "24h ago" cannot
+                // be computed. The column hides itself rather than showing an invented swing.
+                priceChange: undefined,
                 copies: maxSupply,
-                sales: comic.views || 0,
-                volume: generateMockVolume(),
+                sales: comicStats?.sales ?? 0,
+                // Trimmed to two decimals, then of trailing zeros: 7.5 rather than 7.50.
+                volume: String(Number((comicStats?.volume ?? 0).toFixed(2))),
                 image: comic.bannerImage,
             }
         })
         .slice(0, 10)
-}
-
-function generateMockPriceChange(): number {
-    return Math.floor(Math.random() * 200) - 100
-}
-
-function generateMockVolume(): string {
-    const volumes = ['1.2', '2.4', '3.6', '4.8', '5.1', '6.3', '7.5', '8.7']
-    return volumes[Math.floor(Math.random() * volumes.length)]
 }

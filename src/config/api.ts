@@ -41,6 +41,7 @@ export const API_ENDPOINTS = {
     userLastPurchase: "/transactions/user/last_purchase",
     verifyNft: (comicId: string) => `/transactions/user/verify_nft/${comicId}`,
     status: "/transactions/status",
+    comicStats: "/transactions/stats/comics",
   },
   nfts: {
     root: "/nfts",

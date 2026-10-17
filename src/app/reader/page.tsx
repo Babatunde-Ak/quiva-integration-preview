@@ -18,6 +18,25 @@ import { useAccount } from 'wagmi';
 
 const COMICS_PER_PAGE = 3;
 
+/**
+ * Whether a page is a PDF rather than an image.
+ *
+ * Three signals because no single one covers everything already in the database. Pages uploaded
+ * through the multipart route record `contentType: "pdf"`; pages uploaded straight from the
+ * browser never sent a contentType at all and were stored as images, so their `mimeType` is the
+ * only evidence. The extension is a last resort and usually absent, since IPFS gateway URLs end
+ * in a CID.
+ */
+const isPdfPage = (page: any) => {
+  if (String(page?.contentType || "").toLowerCase() === "pdf") return true;
+  if (String(page?.mimeType || "").toLowerCase() === "application/pdf") return true;
+
+  return String(page?.imageUrl || "")
+    .toLowerCase()
+    .split("?")[0]
+    .endsWith(".pdf");
+};
+
 const ComicReaderViewer = () => {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [isScrolling, setIsScrolling] = useState(false);
@@ -147,7 +166,8 @@ const ComicReaderViewer = () => {
             pageNumber: page.pageNumber,
             chapterNumber: chapter.chapterNumber,
             chapterTitle: chapter.title,
-            contentType: page.contentType
+            contentType: page.contentType,
+            mimeType: page.mimeType
           });
         });
       }
@@ -320,12 +340,43 @@ const ComicReaderViewer = () => {
               <div key={index} className="flex items-center justify-center w-full mb-3 sm:mb-6 last:mb-0">
                 <div className="w-full px-2 sm:px-4">
                   <div className="relative w-full mx-auto">
-                  
-                    <img
-                      src={page.imageUrl}
-                      alt={`${activeComic.title} - Page ${actualPageNumber}`}
-                      className="w-[90%] sm:w-[80%] h-auto object-contain rounded-lg shadow-lg min-h-[calc(70vh-80px)] max-h-[80vh] sm:min-h-[calc(80vh-100px)] sm:max-h-[90vh] md:min-h-[calc(160vh-200px)] md:max-h-[180vh] mx-auto"
-                    />
+                    {isPdfPage(page) ? (
+                      // A PDF is a whole document, not a single frame, so it gets a viewer with
+                      // its own scrolling rather than an <img> tag - which is what produced a
+                      // broken-image icon. <object> renders it inline; the nested iframe and
+                      // link are the fallbacks for browsers that decline to.
+                      <object
+                        data={page.imageUrl}
+                        type="application/pdf"
+                        aria-label={`${activeComic.title} - Page ${actualPageNumber}`}
+                        className="w-[90%] sm:w-[80%] h-[80vh] md:h-[120vh] mx-auto block rounded-lg shadow-lg bg-white"
+                      >
+                        <iframe
+                          src={page.imageUrl}
+                          title={`${activeComic.title} - Page ${actualPageNumber}`}
+                          className="w-full h-[80vh] md:h-[120vh] rounded-lg bg-white"
+                        />
+                        <div className="p-6 text-center">
+                          <p className="text-white/60 mb-3">
+                            This browser can&apos;t display the PDF inline.
+                          </p>
+                          <a
+                            href={page.imageUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-block rounded-full bg-[#FAA31E] px-6 py-2 font-bold text-black"
+                          >
+                            Open page {actualPageNumber}
+                          </a>
+                        </div>
+                      </object>
+                    ) : (
+                      <img
+                        src={page.imageUrl}
+                        alt={`${activeComic.title} - Page ${actualPageNumber}`}
+                        className="w-[90%] sm:w-[80%] h-auto object-contain rounded-lg shadow-lg min-h-[calc(70vh-80px)] max-h-[80vh] sm:min-h-[calc(80vh-100px)] sm:max-h-[90vh] md:min-h-[calc(160vh-200px)] md:max-h-[180vh] mx-auto"
+                      />
+                    )}
                   </div>
                 </div>
               </div>
