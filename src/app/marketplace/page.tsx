@@ -6,15 +6,26 @@ import { HeroComicSlider } from '@/features/comic-library/components/HeroComicSl
 import { TopComicsTable } from '@/features/comic-library/components/TopComicsTable'
 import { useAppDispatch, useAppSelector } from "@/redux/hook"
 import { getAllComics } from "@/redux/slices/comicSlice"
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { extractComicList, transformApiComicsToComics } from '@/features/comic-library/utils/transformComicData'
 import { transformApiComicsToTopComics } from '@/features/comic-library/utils/transformtopcomicsdata'
+import { useComicMarketStats } from '@/features/comic-library/hooks/useComicMarketStats'
 import ComicsCarousel from '@/features/comic-library/components/ComicsCarousel'
 import { GridSection } from '@/features/comic-library/components/sections/GridSection'
 import { popularFilters } from '@/features/comic-library/data/content'
 import { SortComicSection } from '@/features/comic-library/components/sections/SortComicSection'
 import { API_ENDPOINTS } from '@/config/api'
+
+/** The table's period buttons, as hours, for the volume window. */
+const PERIOD_HOURS: Record<string, number> = {
+  '10m': 10 / 60,
+  '1h': 1,
+  '6h': 6,
+  '1d': 24,
+  '7d': 24 * 7,
+  '30d': 24 * 30,
+}
 
 function shouldLogMarketplaceComics() {
   if (process.env.NODE_ENV === 'development') return true
@@ -97,10 +108,18 @@ export default function MainPage() {
     return filtered;
   }, [transformedComics, apiComicList]);
 
+  // Real sales and volume for the table, fetched for the listed comics in one request.
+  const [volumeWindowHours, setVolumeWindowHours] = useState(24)
+  const topComicIds = useMemo(
+    () => apiComicList.slice(0, 10).map((comic: any) => comic?._id).filter(Boolean),
+    [apiComicList]
+  )
+  const { stats: comicMarketStats } = useComicMarketStats(topComicIds, volumeWindowHours)
+
   // Transform API comics to TopComic format for the table
   const topNftComics = useMemo(() => {
-    return transformApiComicsToTopComics(apiComicList)
-  }, [apiComicList])
+    return transformApiComicsToTopComics(apiComicList, comicMarketStats)
+  }, [apiComicList, comicMarketStats])
 
   const handleComicSelect = (comic: any) => {
     console.log('Selected comic:', comic);
@@ -157,7 +176,10 @@ export default function MainPage() {
 
         {/* Top Comics Table */}
         <div className="w-full" data-tour="canon-table">
-          <TopComicsTable comics={topNftComics} />
+          <TopComicsTable
+            comics={topNftComics}
+            onPeriodChange={(period) => setVolumeWindowHours(PERIOD_HOURS[period] ?? 24)}
+          />
         </div>
 
         {/* Trending & Popular Collections */}
