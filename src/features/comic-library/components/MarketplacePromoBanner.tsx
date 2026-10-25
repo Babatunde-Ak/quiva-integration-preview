@@ -73,7 +73,7 @@ export default function MarketplacePromoBanner() {
 
   return (
     <section
-      className="relative isolate aspect-[53/29] w-full overflow-hidden rounded-2xl border border-white/10 bg-black"
+      className="relative isolate aspect-video w-full overflow-hidden rounded-2xl border border-white/10 bg-black"
       aria-label="Quiva promotional video banner"
       data-testid="marketplace-promo-banner"
     >
