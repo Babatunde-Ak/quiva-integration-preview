@@ -323,6 +323,15 @@ const HeroSection = () => {
                 </button>
               )}
               
+              <button
+                type="button"
+                disabled={!currentComic?._id}
+                onClick={() => router.push(`/marketplace/preview?id=${encodeURIComponent(currentComic?._id || '')}`)}
+                className="rounded-full border border-secondary-200/60 px-8 py-3.5 text-center text-sm font-semibold text-secondary-200 transition hover:bg-secondary-200 hover:text-black disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Preview sample pages
+              </button>
+
               <button 
               onClick={() => router.push(`/marketplace/detail/?id=${currentComic?._id}`)}
               className="px-8 py-3.5 rounded-full border border-white/30 text-white font-semibold text-sm hover:bg-white/30 hover:text-black hover:border-white transition-all duration-300 active:scale-95 text-center">

@@ -50,7 +50,7 @@ const EpisodesList : React.FC < EpisodesListProps > = ({
     const [selectedEpisodes,
         setSelectedEpisodes] = useState < string[] > ([]);
 
-    const filteredEpisodes = episodes.filter(episode => episode.title.toLowerCase().includes(searchTerm.toLowerCase()));
+    const filteredEpisodes = episodes.filter(episode => (episode.title || '').toLowerCase().includes(searchTerm.toLowerCase()));
 
     const handleGoBack = () => {
         if (onGoBack) {
@@ -64,8 +64,7 @@ const EpisodesList : React.FC < EpisodesListProps > = ({
         if (onUploadEpisode) {
             onUploadEpisode();
         } else {
-            router.push(`/collections/${params
-                ?.id}`);
+            router.push(`/comic-pad/collections/${params?.id}/upload-episode`);
         }
     };
 

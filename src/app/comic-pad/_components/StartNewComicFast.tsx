@@ -17,7 +17,7 @@ const StartNewComicFast = () => {
 	} = useDisclosure();
 
 	const handleStartNewProject = () => {
-		// router.push("/comic-pad/script-builder");
+		router.push("/comic-pad/script-builder");
 	};
 
 	return (
@@ -33,11 +33,10 @@ const StartNewComicFast = () => {
 			<div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-3 lg:gap-8 px-2 lg:px-0'>
 				<CreateComicCard
 					imageSrc={paintIcon}
-					title='Create Amazing Art'
-					description='Draw, drag, drop, customize, and export all inside ComicPad.'
-					className='!cursor-not-allowed'
+					title='Script & Layout Studio'
+					description='Write your script and plan scenes in the existing creator workspace.'
 					onClick={handleStartNewProject}
-					buttonText="Coming Soon"
+					buttonText="Open Script Builder"
 				/>
 				{/* <CreateComicCard
 					imageSrc={robotIcon}

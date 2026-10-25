@@ -27,7 +27,7 @@ const EpisodeDetailsView: React.FC<EpisodeDetailsViewProps> = ({
 
     const tabs: { key: TabType; label: string }[] = [
         { key: 'overview', label: 'Overview' },
-        { key: 'editing', label: 'Continue Editing' },
+        { key: 'editing', label: 'Editing Options' },
         { key: 'analytics', label: 'Analytics' },
     ];
 
@@ -55,8 +55,9 @@ const EpisodeDetailsView: React.FC<EpisodeDetailsViewProps> = ({
     };
 
     const handleEdit = () => {
-        // Navigate to episode edit — for now go back to collection
-        router.push(`/comic-pad/collections/${collectionId}`);
+        // Script Builder is a separate workspace, not a persisted editor for this episode.
+        // Never imply edits are being saved against an already-published episode.
+        router.push('/comic-pad/script-builder');
     };
 
     return (
@@ -133,8 +134,9 @@ const EpisodeDetailsView: React.FC<EpisodeDetailsViewProps> = ({
                             onClick={handleEdit}
                             className="w-full max-w-xs"
                         >
-                            Edit
+                            Open Script Builder (new draft)
                         </MainButton>
+                        <p className="mt-2 text-xs text-white/50">Opens a separate script workspace. It does not overwrite this episode or its on-chain metadata.</p>
                     </div>
                 </div>
             </div>

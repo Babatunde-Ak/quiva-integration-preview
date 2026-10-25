@@ -9,10 +9,13 @@ interface TabNavigationProps {
 const TabNavigation = ({ tabs, activeTab, onTabChange }: TabNavigationProps) => {
   return (
     <div className="w-full max-w-7xl mx-auto mb-8 overflow-x-auto no-scrollbar pb-2 md:pb-0 animate-fade-in-up delay-200">
-      <div className="flex gap-2 min-w-max px-1">
+      <div className="flex gap-2 min-w-max px-1" role="tablist" aria-label="Comic chapter sections">
         {tabs.map((tab) => (
           <button
             key={tab}
+            type="button"
+            role="tab"
+            aria-selected={activeTab === tab}
             onClick={() => onTabChange(tab)}
             className={`px-6 py-2 font-mono rounded-full text-sm font-medium transition-all duration-300 active:scale-95 ${
               activeTab === tab 
