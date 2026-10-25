@@ -1,6 +1,7 @@
 'use client';
 
 import { ComicSection } from '@/features/comic-library/components/sections/ComicSection'
+import MarketplacePromoBanner from '@/features/comic-library/components/MarketplacePromoBanner'
 import { CreatorsSection } from '@/features/comic-library/components/CreatorsSection'
 import { HeroComicSlider } from '@/features/comic-library/components/HeroComicSlider'
 import { TopComicsTable } from '@/features/comic-library/components/TopComicsTable'
@@ -140,6 +141,11 @@ export default function MainPage() {
         <div className="w-full max-w-full">
           <HeroComicSlider comics={dropComics.slice(0, 5)} onComicClick={handleSliderComicClick} />
         </div>
+      </div>
+
+      {/* Landscape promotional video â€” separate from the dynamic comic hero slider */}
+      <div className="mb-6 w-full sm:mb-8 md:mb-10 lg:mb-12">
+        <MarketplacePromoBanner />
       </div>
 
       {/* Main content sections */}
